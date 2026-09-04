@@ -1,8 +1,19 @@
-import { ArrowRight, BookOpen, ChartNoAxesColumn, Settings, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  ChartNoAxesColumn,
+  Settings,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import type { AuditDto } from "@/entities/audit/types";
+import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
+import { useDeleteAudit } from "@/features/audit-dashboard/useDeleteAudit";
 
 const rules = [
   ["오도형", "중요 정보를 사실과 다르게 인식시키는 표현과 선택 구조"],
@@ -72,15 +83,85 @@ export function SettingsPage() {
   );
 }
 
+function AuditRow({ audit }: { audit: AuditDto }) {
+  const [confirming, setConfirming] = useState(false);
+  const remove = useDeleteAudit();
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+      <div className="min-w-0">
+        <Link className="font-semibold hover:underline" to={`/app/overview?audit=${audit.id}`}>
+          {audit.name}
+        </Link>
+        <p className="mt-1 text-xs text-muted">
+          화면 {audit.screens.length}개 · 탐지 {audit.findings.length}건 ·{" "}
+          {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short" }).format(
+            new Date(audit.updatedAt),
+          )}
+        </p>
+      </div>
+      {confirming ? (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-danger">화면과 탐지 결과가 함께 삭제됩니다.</span>
+          <Button
+            className="px-3 py-2 text-xs"
+            disabled={remove.isPending}
+            onClick={() => remove.mutate(audit.id)}
+          >
+            {remove.isPending ? "삭제 중" : "삭제"}
+          </Button>
+          <Button
+            className="px-3 py-2 text-xs"
+            disabled={remove.isPending}
+            onClick={() => setConfirming(false)}
+            variant="outline"
+          >
+            취소
+          </Button>
+        </div>
+      ) : (
+        <Button
+          aria-label={`${audit.name} 삭제`}
+          className="flex items-center gap-2 px-3 py-2 text-xs"
+          onClick={() => setConfirming(true)}
+          variant="outline"
+        >
+          <Trash2 size={14} /> 삭제
+        </Button>
+      )}
+    </li>
+  );
+}
+
 export function AuditManagementPage() {
+  const { data, isPending, isError } = useDashboardSummary();
+
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="text-3xl font-bold">진단 관리</h1>
-      <p className="mt-3 text-sm text-muted">대시보드에서 기존 진단을 확인하거나 새 진단을 시작하세요.</p>
+      <p className="mt-3 text-sm text-muted">기존 진단을 열어보거나 정리하고, 새 진단을 시작하세요.</p>
       <div className="mt-7 grid gap-4 sm:grid-cols-2">
         <Card className="p-6"><h2 className="font-bold">기존 진단</h2><p className="mt-2 text-sm text-muted">수집된 화면과 탐지 결과를 확인합니다.</p><Button asChild className="mt-5" variant="outline"><Link to="/app/overview">대시보드 열기</Link></Button></Card>
         <Card className="p-6"><h2 className="font-bold">새 진단</h2><p className="mt-2 text-sm text-muted">URL 또는 스크린샷으로 검사를 시작합니다.</p><Button asChild className="mt-5"><Link to="/app/audits/new">진단 만들기</Link></Button></Card>
       </div>
+
+      <Card className="mt-4 overflow-hidden">
+        <h2 className="border-b border-border px-6 py-4 text-sm font-bold">등록된 진단</h2>
+        {isPending && <p className="px-6 py-8 text-sm text-muted">불러오는 중입니다.</p>}
+        {isError && (
+          <p className="px-6 py-8 text-sm text-danger">진단 목록을 불러오지 못했습니다.</p>
+        )}
+        {data && data.audits.length === 0 && (
+          <p className="px-6 py-8 text-sm text-muted">아직 등록된 진단이 없습니다.</p>
+        )}
+        {data && data.audits.length > 0 && (
+          <ul className="divide-y divide-border">
+            {data.audits.map((audit) => (
+              <AuditRow audit={audit} key={audit.id} />
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
 }

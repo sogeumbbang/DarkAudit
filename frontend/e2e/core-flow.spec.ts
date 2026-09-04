@@ -67,3 +67,17 @@ test("finding can be marked as resolved", async ({ page }) => {
   await page.getByRole("button", { name: "해결됨으로 표시" }).click();
   await expect(page.getByText("해결됨").first()).toBeVisible();
 });
+
+test("audit can be deleted from the management page", async ({ page }) => {
+  await page.goto("/app/audits");
+  const target = page.getByRole("listitem").filter({ hasText: "적금 가입 흐름 v2" });
+  await expect(target).toBeVisible();
+
+  // 실수로 지우는 일이 없도록 한 번 더 확인받는다.
+  await target.getByRole("button", { name: /삭제/ }).click();
+  await expect(page.getByText("화면과 탐지 결과가 함께 삭제됩니다.")).toBeVisible();
+  await target.getByRole("button", { name: "삭제", exact: true }).click();
+
+  await expect(target).toHaveCount(0);
+  await expect(page.getByText("보험 가입 흐름 v1")).toBeVisible();
+});

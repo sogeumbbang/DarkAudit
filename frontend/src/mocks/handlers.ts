@@ -147,6 +147,15 @@ export const handlers = [
     if (audit) audit.status = job.status === "completed" ? "completed" : "analyzing";
     return HttpResponse.json(job);
   }),
+  http.delete("*/api/v1/audits/:auditId", async ({ params }) => {
+    const index = dashboardFixture.audits.findIndex((audit) => audit.id === params.auditId);
+    if (index < 0) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    dashboardFixture.audits.splice(index, 1);
+    if (dashboardFixture.activeAuditId === params.auditId) {
+      dashboardFixture.activeAuditId = dashboardFixture.audits[0]?.id ?? null;
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
   http.patch("*/api/v1/findings/:findingId", async ({ params, request }) => {
     const { status } = (await request.json()) as { status: FindingStatus };
     const finding = dashboardFixture.audits

@@ -90,6 +90,10 @@ export async function getAnalysisStatus(jobId: string) {
   return analysisJobSchema.parse(await apiRequest<unknown>(`/api/v1/analysis-jobs/${jobId}`));
 }
 
+export function deleteAudit(auditId: string) {
+  return apiRequest<void>(`/api/v1/audits/${auditId}`, { method: "DELETE" });
+}
+
 export function updateFindingStatus(findingId: string, status: FindingStatus) {
   return apiRequest<{ id: string; status: FindingStatus }>(`/api/v1/findings/${findingId}`, {
     method: "PATCH",
