@@ -24,6 +24,7 @@ from ai.schemas.audit_schema import (
     ScreenReference,
 )
 from backend.api import service
+from backend.app.models import Audit, AuditRun, Element, FlowType, RunStatus, Screen
 from backend.app.rule_engine.severity import ScoredFinding
 
 service.DATA_DIR = _temp_root
@@ -371,6 +372,96 @@ class ApiIntegrationTest(unittest.TestCase):
     def test_regression_endpoint_missing_audit_returns_404(self) -> None:
         response = self.client.get("/api/v1/audits/audit-999999/regression")
         self.assertEqual(response.status_code, 404, response.text)
+
+    def test_da15_primary_bbox_is_kept_on_final_evidence_screen(self) -> None:
+        with service.SessionLocal() as session:
+            audit = Audit(name="Sequential pricing", product_name="mobile-web")
+            run = AuditRun(version=1, status=RunStatus.DONE)
+            audit.runs.append(run)
+            run.screens.extend([
+                Screen(
+                    flow_type=FlowType.join,
+                    screen_index=1,
+                    flow_step="mobile: initial price",
+                    image_path="/artifacts/initial.png",
+                    viewport_w=390,
+                    viewport_h=844,
+                ),
+                Screen(
+                    flow_type=FlowType.join,
+                    screen_index=2,
+                    flow_step="mobile: final price",
+                    image_path="/artifacts/final.png",
+                    viewport_w=390,
+                    viewport_h=844,
+                ),
+            ])
+            session.add(audit)
+            session.flush()
+            audit_id = f"audit-{audit.id}"
+            initial_element = Element(
+                screen=run.screens[0], dom_id="initial-price", element_type="price",
+                text="Initial advertised price", bbox_x=0.1, bbox_y=0.3,
+                bbox_w=0.4, bbox_h=0.06, source="dom",
+            )
+            final_element = Element(
+                screen=run.screens[1], dom_id="final-price", element_type="price",
+                text="Final total price", bbox_x=0.2, bbox_y=0.7,
+                bbox_w=0.5, bbox_h=0.08, source="dom",
+            )
+            session.add_all([initial_element, final_element])
+            session.flush()
+            candidate = {
+                "candidate_id": "DA-15:final:final-price",
+                "rule_id": "DA-15",
+                "screen_id": "final",
+                "screen_index": 2,
+                "primary_element_id": "final-price",
+                "triggered_checks": ["DA-15.price_increase_across_screens"],
+                "measurements": {"initial": 1000, "final": 1500, "delta": 500},
+                "related_element_ids": ["initial-price"],
+            }
+            output = HybridAuditOutput.from_dict(
+                {
+                    "audit_id": audit_id,
+                    "schema_version": "1.1",
+                    "screens": [
+                        {"screen_id": "initial", "flow_step": "mobile: initial price"},
+                        {"screen_id": "final", "flow_step": "mobile: final price"},
+                    ],
+                    "candidate_decisions": [{
+                        "candidate_id": candidate["candidate_id"],
+                        "decision": "KEEP",
+                        "reason": "The final price is higher than the initial price.",
+                        "confidence": 0.94,
+                        "base_severity": "HIGH",
+                    }],
+                    "semantic_findings": [],
+                },
+                [RuleCandidate.from_dict(candidate)],
+            )
+
+            service._store_output(
+                session,
+                run,
+                output,
+                [ScoredFinding(
+                    rule_id="DA-15", label_unit="flow", screen_index=None,
+                    primary_id="final-price", related_ids=["initial-price"],
+                    screen_indices=[1, 2],
+                )],
+                {"initial-price": initial_element, "final-price": final_element},
+                [candidate],
+            )
+            session.commit()
+
+        dashboard = self.client.get("/api/v1/dashboard/summary").json()
+        stored_audit = next(item for item in dashboard["audits"] if item["id"] == audit_id)
+        finding = stored_audit["findings"][0]
+        self.assertEqual(finding["screenIds"], ["screen-01", "screen-02"])
+        self.assertEqual(finding["bbox"]["screenId"], "screen-02")
+        self.assertEqual(finding["bbox"]["coordinateSystem"], "image")
+        self.assertEqual(finding["relatedElements"][0]["bbox"]["screenId"], "screen-01")
 
     def test_rejects_analysis_without_uploaded_screens(self) -> None:
         audit_id = self.client.post(

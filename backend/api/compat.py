@@ -9,13 +9,11 @@
 
 그래서 노출 가능한 값을 여기서 통제한다.
 
-    FRONTEND_CONTRACT = "v1"   프론트 타입 미배포. 기존 값만 내보낸다
-    FRONTEND_CONTRACT = "v2"   프론트 타입 배포 완료. 전체 개방
+    FRONTEND_CONTRACT = "v2"   프론트 타입 배포 완료. 전체 개방 (기본값)
+    FRONTEND_CONTRACT = "v1"   롤백 시 기존 값만 내보낸다
 
-전환 절차
-    1. 백엔드를 v1 로 배포한다 (프론트 무변경, 아무것도 깨지지 않음)
-    2. 프론트 타입·Zod 스키마 PR 을 머지한다
-    3. 환경변수로 v2 로 올린다
+프론트 타입·Zod 스키마가 전체 enum 을 지원하므로 기본 계약은 v2 다.
+호환성 롤백이 필요할 때만 환경변수를 v1 로 지정한다.
 
 이 파일이 없으면 "언제 열지"가 코드 곳곳에 흩어져 추적이 어려워진다.
 """
@@ -24,7 +22,7 @@ from __future__ import annotations
 
 import os
 
-CONTRACT = os.getenv("DARKAUDIT_FRONTEND_CONTRACT", "v1")
+CONTRACT = os.getenv("DARKAUDIT_FRONTEND_CONTRACT", "v2")
 
 # 프론트 v1 타입이 아는 값
 V1_RULE_IDS = {"DA-03", "DA-04", "DA-12", "DA-15"}
