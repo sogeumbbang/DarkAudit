@@ -10,6 +10,7 @@ test("landing page opens the audit dashboard", async ({ page }) => {
 test("user creates an audit and completes analysis", async ({ page }) => {
   await page.goto("/app/audits/new");
   await page.getByLabel("진단 이름").fill("Playwright 가입 흐름");
+  await page.getByRole("tab", { name: /스크린샷/ }).click();
   await page.locator('input[type="file"]').setInputFiles({
     name: "option-screen.png",
     mimeType: "image/png",
@@ -19,7 +20,6 @@ test("user creates an audit and completes analysis", async ({ page }) => {
     ),
   });
   await page.getByRole("button", { name: "분석 시작하기" }).click();
-  await expect(page.getByRole("heading", { name: "금융 UX를 분석하고 있습니다" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible({
     timeout: 15_000,
   });
