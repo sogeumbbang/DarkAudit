@@ -244,9 +244,9 @@ export function LandingPage() {
               온라인 금융상품 판매 관련 다크패턴 가이드라인의 4개 범주와 15개 유형을 기반으로 검토를
               제공합니다.
             </p>
-            <button className="mt-6 rounded-control bg-brand-100 px-4 py-3 text-xs font-semibold text-brand-700">
+            <Link className="mt-6 inline-block rounded-control bg-brand-100 px-4 py-3 text-xs font-semibold text-brand-700" to="/app/guidelines">
               전체 검토 기준 보기 →
-            </button>
+            </Link>
           </div>
           <Card className="grid grid-cols-2 divide-x divide-border p-8 text-center">
             <div>

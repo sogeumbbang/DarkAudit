@@ -9,14 +9,15 @@ import {
   FileText,
   MonitorSmartphone,
   MoreVertical,
+  RotateCcw,
   RefreshCw,
-  Search,
   ShieldCheck,
   Smartphone,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -30,16 +31,21 @@ function FlowOverview({
   screens,
   selectedScreenId,
   onSelect,
+  onShowAll,
 }: {
   screens: AuditScreenDto[];
   selectedScreenId: string;
   onSelect: (screenId: string) => void;
+  onShowAll: () => void;
 }) {
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold">가입 흐름 요약</h2>
-        <button className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-xs font-semibold text-brand-700">
+        <button
+          className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-xs font-semibold text-brand-700"
+          onClick={onShowAll}
+        >
           전체 흐름 보기 <ArrowRight size={13} />
         </button>
       </div>
@@ -81,29 +87,38 @@ function FlowOverview({
 }
 
 function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: FindingDto }) {
+  const [scale, setScale] = useState(1);
+  const previewRef = useRef<HTMLDivElement>(null);
+
   return (
+    <div ref={previewRef}>
     <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
       <h2 className="text-sm font-bold">화면 미리보기</h2>
       <div className="absolute inset-x-0 bottom-0 top-14 flex items-center justify-center overflow-auto bg-gradient-to-b from-white to-brand-50/60 p-5">
-        <ScreenCanvas
-          alt={`${screen.flowStep} 캡처 화면 미리보기`}
-          className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
-          finding={finding}
-          screen={screen}
-        />
+        <div className="transition-transform" style={{ transform: `scale(${scale})` }}>
+          <ScreenCanvas
+            alt={`${screen.flowStep} 캡처 화면 미리보기`}
+            className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
+            finding={finding}
+            screen={screen}
+          />
+        </div>
       </div>
       <div className="absolute right-4 top-20 overflow-hidden rounded-control border border-border bg-white shadow-sm">
-        {[ZoomIn, ZoomOut, Search, Expand].map((Icon, index) => (
-          <button
-            aria-label={["확대", "축소", "배율", "전체 화면"][index]}
-            className="flex h-10 w-9 items-center justify-center border-b border-border last:border-0"
-            key={index}
-          >
-            <Icon size={15} />
-          </button>
-        ))}
+        <button aria-label="확대" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale((value) => Math.min(2, value + 0.2))}><ZoomIn size={15} /></button>
+        <button aria-label="축소" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale((value) => Math.max(0.5, value - 0.2))}><ZoomOut size={15} /></button>
+        <button aria-label="배율 초기화" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale(1)}><RotateCcw size={15} /></button>
+        <button
+          aria-label="전체 화면"
+          className="flex h-10 w-9 items-center justify-center"
+          onClick={async () => {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await previewRef.current?.requestFullscreen();
+          }}
+        ><Expand size={15} /></button>
       </div>
     </Card>
+    </div>
   );
 }
 
@@ -111,24 +126,36 @@ function FindingDetails({
   finding,
   position,
   total,
+  onNext,
+  onPrevious,
 }: {
   finding?: FindingDto;
   position: number;
   total: number;
+  onNext: () => void;
+  onPrevious: () => void;
 }) {
   const findingStatus = useFindingStatus();
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(false);
 
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <h2 className="text-sm font-bold">탐지 항목 상세</h2>
         <div className="flex items-center gap-3 text-sm">
-          <ChevronLeft size={15} />
+          <button aria-label="이전 탐지 항목" disabled={total < 2} onClick={onPrevious}>
+            <ChevronLeft size={15} />
+          </button>
           <span>
             {total ? position + 1 : 0} / {total}
           </span>
-          <ChevronRight size={15} />
-          <MoreVertical size={16} />
+          <button aria-label="다음 탐지 항목" disabled={total < 2} onClick={onNext}>
+            <ChevronRight size={15} />
+          </button>
+          <button aria-label="탐지 메타데이터" onClick={() => setShowMetadata((value) => !value)}>
+            <MoreVertical size={16} />
+          </button>
         </div>
       </div>
       {finding ? (
@@ -162,9 +189,23 @@ function FindingDetails({
               <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
             </div>
           </div>
-          <button className="mt-6 flex w-full items-center justify-center gap-3 rounded-control border border-brand-700 py-3 text-sm font-semibold text-brand-700">
-            개선 권고안 보기 <ArrowRight size={15} />
+          <button
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-control border border-brand-700 py-3 text-sm font-semibold text-brand-700"
+            onClick={() => setShowRecommendation((value) => !value)}
+          >
+            개선 권고안 보기
+            <ArrowRight size={15} />
           </button>
+          {showRecommendation && (
+            <div className="mt-3 rounded-card bg-brand-50 p-4 text-sm leading-6 text-brand-950">
+              {finding.recommendation}
+            </div>
+          )}
+          {showMetadata && (
+            <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
+              신뢰도 {Math.round(finding.confidence * 100)}% · 심각도 {finding.severity}
+            </div>
+          )}
           <button
             className={cn(
               "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-3 text-sm font-semibold text-white disabled:opacity-50",
@@ -208,11 +249,12 @@ function FindingsRow({
   selectedFindingId?: string;
   onSelect: (finding: FindingDto) => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
   if (!findings.length) return null;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.05fr]">
-      {findings.slice(0, 3).map((finding) => (
+      {findings.slice(0, showAll ? findings.length : 3).map((finding) => (
         <button className="text-left" key={finding.id} onClick={() => onSelect(finding)}>
           <Card
             className={cn(
@@ -244,15 +286,19 @@ function FindingsRow({
           </Card>
         </button>
       ))}
-      <Card className="flex items-center justify-between p-5">
-        <div>
-          <p className="font-bold">탐지 항목 전체 보기</p>
-          <p className="mt-2 text-xs text-muted">총 {findings.length}개</p>
-        </div>
-        <span className="flex size-8 items-center justify-center rounded-full bg-brand-700 text-white">
-          <ArrowRight size={15} />
-        </span>
-      </Card>
+      {findings.length > 3 && (
+        <button className="text-left" onClick={() => setShowAll((value) => !value)}>
+          <Card className="flex h-full items-center justify-between p-5">
+            <div>
+              <p className="font-bold">{showAll ? "탐지 항목 접기" : "탐지 항목 전체 보기"}</p>
+              <p className="mt-2 text-xs text-muted">총 {findings.length}개</p>
+            </div>
+            <span className="flex size-8 items-center justify-center rounded-full bg-brand-700 text-white">
+              <ArrowRight size={15} />
+            </span>
+          </Card>
+        </button>
+      )}
     </div>
   );
 }
@@ -268,9 +314,9 @@ function RecentAudits({
     <Card className="mt-4 overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <h2 className="text-sm font-bold">최근 진단</h2>
-        <button className="flex items-center gap-2 text-xs font-semibold text-brand-700">
+        <Link className="flex items-center gap-2 text-xs font-semibold text-brand-700" to="/app/audits">
           전체 진단 보기 <ArrowRight size={13} />
-        </button>
+        </Link>
       </div>
       <div aria-label="최근 진단 표" className="overflow-x-auto" tabIndex={0}>
         <table className="w-full min-w-[780px] text-left text-xs">
@@ -354,6 +400,7 @@ function DashboardLoading() {
 export function OverviewPage() {
   const { data, isPending, isError, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFlow, setShowFlow] = useState(false);
 
   if (isPending) {
     return <DashboardLoading />;
@@ -383,6 +430,12 @@ export function OverviewPage() {
         <p className="mt-2 text-sm text-muted">
           첫 금융상품 가입 흐름을 등록하고 UX 검토를 시작하세요.
         </p>
+        <Link
+          className="mx-auto mt-6 inline-flex rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
+          to="/app/audits/new"
+        >
+          새 진단 시작하기
+        </Link>
       </Card>
     );
   }
@@ -401,6 +454,12 @@ export function OverviewPage() {
             ? "자동 캡처 또는 AI 분석이 실패했습니다. 새 진단에서 URL과 서버 설정을 확인해주세요."
             : "화면 업로드나 URL 캡처가 아직 시작되지 않은 진단입니다."}
         </p>
+        <Link
+          className="mx-auto mt-6 inline-flex rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
+          to="/app/audits/new"
+        >
+          새 진단 시작하기
+        </Link>
       </Card>
     );
   }
@@ -459,6 +518,22 @@ export function OverviewPage() {
     });
   }
 
+  function moveFinding(offset: number) {
+    if (!audit.findings.length) return;
+    const nextIndex = (findingPosition + offset + audit.findings.length) % audit.findings.length;
+    selectFinding(audit.findings[nextIndex]!);
+  }
+
+  function selectMetric(label: string) {
+    const next =
+      label === "해결됨"
+        ? audit.findings.find((item) => item.status === "resolved")
+        : label === "검토 필요"
+          ? audit.findings.find((item) => item.status !== "resolved")
+          : audit.findings[0];
+    if (next) selectFinding(next);
+  }
+
   return (
     <div className="mx-auto max-w-[1500px]">
       <h1 className="text-2xl font-bold tracking-tight">대시보드</h1>
@@ -485,7 +560,12 @@ export function OverviewPage() {
           </div>
           <div className="grid grid-cols-1 divide-y divide-white/15 rounded-card border border-white/20 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             {metrics.map(({ label, value, icon: Icon, action, color }) => (
-              <div className="p-5" key={label}>
+              <button
+                className="p-5 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={value === 0}
+                key={label}
+                onClick={() => selectMetric(label)}
+              >
                 <div className="flex items-center gap-3">
                   <Icon className={color} size={22} />
                   <span className="text-2xl font-bold">{value}</span>
@@ -494,7 +574,7 @@ export function OverviewPage() {
                 <p className="mt-5 flex items-center gap-2 text-xs text-brand-400">
                   {action} <ArrowRight size={12} />
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -505,13 +585,17 @@ export function OverviewPage() {
             screens={audit.screens}
             selectedScreenId={screen.id}
             onSelect={selectScreen}
+            onShowAll={() => setShowFlow(true)}
           />
           <ScreenPreview finding={finding} screen={screen} />
         </div>
         <FindingDetails
           finding={finding}
+          key={finding?.id ?? "no-finding"}
           position={findingPosition}
           total={audit.findings.length}
+          onNext={() => moveFinding(1)}
+          onPrevious={() => moveFinding(-1)}
         />
       </div>
       <div className="mt-4">
@@ -522,6 +606,24 @@ export function OverviewPage() {
         />
       </div>
       <RecentAudits audits={data.audits} onSelect={selectAudit} />
+      {showFlow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="전체 가입 흐름">
+          <Card className="max-h-[90vh] w-full max-w-5xl overflow-auto p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">전체 가입 흐름</h2>
+              <button className="rounded-control border border-border px-4 py-2 text-sm" onClick={() => setShowFlow(false)}>닫기</button>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {audit.screens.map((item) => (
+                <button className="rounded-card border border-border p-4 text-left hover:border-brand-500" key={item.id} onClick={() => { selectScreen(item.id); setShowFlow(false); }}>
+                  <img alt={`${item.flowStep} 전체 흐름 화면`} className="mx-auto h-64 max-w-full object-contain" src={item.imageUrl} />
+                  <p className="mt-3 text-sm font-bold">{item.order}. {item.flowStep}</p>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -37,11 +37,34 @@ export const router = createBrowserRouter([
           Component: (await import("@/pages/overview/OverviewPage")).OverviewPage,
         }),
       },
-      { path: "audits", element: <Navigate to="/app/audits/new" replace /> },
+      {
+        path: "audits",
+        lazy: async () => ({
+          Component: (await import("@/pages/support/SupportPages")).AuditManagementPage,
+        }),
+      },
       {
         path: "audits/new",
         lazy: async () => ({
           Component: (await import("@/pages/audit-create/AuditCreatePage")).AuditCreatePage,
+        }),
+      },
+      {
+        path: "guidelines",
+        lazy: async () => ({
+          Component: (await import("@/pages/support/SupportPages")).GuidelinesPage,
+        }),
+      },
+      {
+        path: "benchmark",
+        lazy: async () => ({
+          Component: (await import("@/pages/support/SupportPages")).BenchmarkPage,
+        }),
+      },
+      {
+        path: "settings",
+        lazy: async () => ({
+          Component: (await import("@/pages/support/SupportPages")).SettingsPage,
         }),
       },
     ],

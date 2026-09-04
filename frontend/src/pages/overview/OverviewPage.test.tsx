@@ -37,4 +37,21 @@ describe("OverviewPage", () => {
       expect.stringContaining("/mock/savings.png"),
     );
   });
+
+  it("opens flow, recommendation, metadata, and navigates findings", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("heading", { name: "보험 가입 흐름 v1" });
+
+    await user.click(screen.getByRole("button", { name: /전체 흐름 보기/ }));
+    expect(screen.getByRole("dialog", { name: "전체 가입 흐름" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "닫기" }));
+
+    await user.click(screen.getByRole("button", { name: /개선 권고안 보기/ }));
+    expect(screen.getByText(/추가 비용이 발생하는 옵션의 기본 선택을 해제/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "탐지 메타데이터" }));
+    expect(screen.getByText(/신뢰도 94%/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "다음 탐지 항목" }));
+    expect(screen.getAllByRole("heading", { name: "감정적 압박" })[0]).toBeInTheDocument();
+  });
 });

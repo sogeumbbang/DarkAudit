@@ -10,9 +10,10 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
+import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 
 const navigation = [
@@ -23,22 +24,34 @@ const navigation = [
   { label: "설정", icon: Settings, to: "/app/settings" },
 ];
 
-function Sidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
+function Sidebar({
+  collapsed = false,
+  mobile = false,
+  onCollapse,
+  onNavigate,
+}: {
+  collapsed?: boolean;
+  mobile?: boolean;
+  onCollapse?: () => void;
+  onNavigate?: () => void;
+}) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-20 w-[280px] flex-col bg-brand-950 p-5 text-white",
+        "fixed inset-y-0 left-0 z-20 flex-col bg-brand-950 p-5 text-white transition-[width]",
+        collapsed && !mobile ? "w-[88px]" : "w-[280px]",
         mobile ? "flex lg:hidden" : "hidden lg:flex",
       )}
     >
       <div className="flex items-center justify-between px-2 py-2">
-        <Brand />
+        {!collapsed || mobile ? <Brand /> : <span className="px-1 text-xl font-bold text-brand-400">D</span>}
         <button
-          aria-label="사이드바 접기"
+          aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
           className={cn(
             "rounded-control border border-white/20 p-2 text-white/80",
             mobile && "invisible",
           )}
+          onClick={onCollapse}
         >
           <Menu size={17} />
         </button>
@@ -57,26 +70,36 @@ function Sidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?
             to={to}
           >
             <Icon aria-hidden="true" size={19} />
-            {label}
+            {(!collapsed || mobile) && label}
           </NavLink>
         ))}
       </nav>
       <div className="mt-auto space-y-4">
-        <div className="rounded-card border border-white/20 p-4">
+        <div className={cn("rounded-card border border-white/20 p-4", collapsed && !mobile && "hidden")}>
           <p className="flex items-center gap-2 text-sm font-semibold">
             <ShieldCheck className="text-brand-400" size={21} /> 안전한 규제 준수
           </p>
           <p className="mt-3 text-xs leading-5 text-white/55">
             금융보안 및 개인정보 보호 기준을 준수하여 안전하게 운영됩니다.
           </p>
-          <button className="mt-4 text-xs font-semibold text-brand-400">자세히 보기 →</button>
+          <Link className="mt-4 inline-block text-xs font-semibold text-brand-400" to="/app/guidelines">
+            자세히 보기 →
+          </Link>
         </div>
       </div>
     </aside>
   );
 }
 
-function AppHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
+function AppHeader({
+  notificationsOpen,
+  onOpenMenu,
+  onToggleNotifications,
+}: {
+  notificationsOpen: boolean;
+  onOpenMenu: () => void;
+  onToggleNotifications: () => void;
+}) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-5 lg:h-18 lg:px-9">
       <div className="flex items-center gap-3 lg:hidden">
@@ -91,21 +114,41 @@ function AppHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
       </div>
       <div className="hidden lg:block" />
       <div className="flex items-center gap-4">
-        <button aria-label="알림" className="relative p-2 text-text">
+        <button
+          aria-expanded={notificationsOpen}
+          aria-label="알림"
+          className="relative p-2 text-text"
+          onClick={onToggleNotifications}
+        >
           <Bell size={20} />
           <span className="absolute right-1.5 top-1.5 size-2 rounded-full border-2 border-white bg-success" />
         </button>
+        {notificationsOpen && (
+          <Card className="absolute right-5 top-14 z-30 w-72 p-4 shadow-xl lg:right-9 lg:top-16">
+            <p className="text-sm font-bold">알림</p>
+            <p className="mt-3 rounded-control bg-brand-50 p-3 text-xs leading-5 text-muted">
+              새 진단이 완료되면 이곳에서 확인할 수 있습니다.
+            </p>
+          </Card>
+        )}
       </div>
     </header>
   );
 }
 
 export function AppLayout() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background lg:pl-[280px]">
-      <Sidebar />
+    <div
+      className={cn(
+        "min-h-screen bg-background transition-[padding]",
+        isCollapsed ? "lg:pl-[88px]" : "lg:pl-[280px]",
+      )}
+    >
+      <Sidebar collapsed={isCollapsed} onCollapse={() => setIsCollapsed((value) => !value)} />
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
@@ -125,7 +168,11 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      <AppHeader onOpenMenu={() => setIsMenuOpen(true)} />
+      <AppHeader
+        notificationsOpen={notificationsOpen}
+        onOpenMenu={() => setIsMenuOpen(true)}
+        onToggleNotifications={() => setNotificationsOpen((value) => !value)}
+      />
       <main className="min-w-0 p-4 sm:p-6 lg:p-8">
         <Outlet />
       </main>
