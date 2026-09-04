@@ -49,12 +49,13 @@ function FlowOverview({
           전체 흐름 보기 <ArrowRight size={13} />
         </button>
       </div>
-      <div className="mt-7 grid grid-cols-5 gap-2 overflow-x-auto">
+      <div className="mt-5 grid grid-cols-5 gap-2 overflow-x-auto py-2">
         {screens.map((screen, index) => (
           <button
             className={cn(
-              "relative min-w-20 rounded-control border border-transparent p-1 text-center",
-              selectedScreenId === screen.id && "border-brand-400 bg-brand-50",
+              "relative min-w-20 rounded-control p-1 text-center",
+              selectedScreenId === screen.id &&
+                "bg-brand-50 ring-2 ring-inset ring-brand-500",
             )}
             key={screen.id}
             onClick={() => onSelect(screen.id)}
