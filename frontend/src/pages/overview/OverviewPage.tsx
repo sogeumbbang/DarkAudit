@@ -53,8 +53,8 @@ function FlowOverview({
         {screens.map((screen, index) => (
           <button
             className={cn(
-              "relative min-w-20 rounded-control p-1 text-center",
-              selectedScreenId === screen.id && "bg-brand-50 ring-1 ring-brand-400",
+              "relative min-w-20 rounded-control border border-transparent p-1 text-center",
+              selectedScreenId === screen.id && "border-brand-400 bg-brand-50",
             )}
             key={screen.id}
             onClick={() => onSelect(screen.id)}
