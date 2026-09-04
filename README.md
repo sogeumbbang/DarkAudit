@@ -10,15 +10,31 @@
 ## 현재 구현 범위
 
 - React 기반 Audit 생성 및 결과 검토 화면
-- FastAPI 기반 Audit 생성, 화면 업로드, 분석 작업 조회, Finding 상태 변경 API
+- FastAPI 기반 Audit 생성, 화면 업로드, URL 캡처, Figma 임포트, 분석 작업 조회,
+  Finding 상태 변경, Audit 삭제 API
 - OpenAI Responses API를 이용한 멀티모달 분석과 비용 없는 Fake provider
-- MVP 규칙 `DA-03`, `DA-04`, `DA-12`, `DA-15` 탐지
+- MVP 규칙 `DA-03`, `DA-04`, `DA-07`, `DA-12`, `DA-15` 탐지
+- Rule Engine이 deterministic 후보를 만들고 LLM이 이를 검증하는 Hybrid Pipeline
+- 위험 요소의 좌표(`bbox`)와 대립 선택지(`relatedElements`)를 캡처 화면 위에 강조
+- 회차(Run) 간 해결·유지·신규·재발을 비교하는 Before/After 회귀 분석 API
 - 15개 다크패턴 유형의 YAML Rule Base와 검증/JSON 빌드 도구
 - Risky/Clean 쌍으로 구성된 Synthetic UI 데이터셋 생성 및 라벨 검수 도구
 
-현재 백엔드와 AI 분석기는 Audit 하나당 순서가 있는 이미지 **1~5개**를 처리합니다.
-데이터는 메모리에 저장되므로 백엔드를 재시작하면 Audit과 분석 결과가 초기화됩니다.
-업로드한 이미지는 `data/uploads/`에 저장됩니다.
+### 입력 경로별 차이
+
+| 입력 | 화면 확보 | Rule Engine | LLM이 새로 만들 수 있는 Finding |
+| --- | --- | --- | --- |
+| URL 캡처 | Playwright 캡처 + DOM 추출 | 후보 생성 | 의미 판단이 필요한 `DA-03`, `DA-12`만 |
+| 스크린샷 업로드 · Figma | 이미지만 | 후보 없음 | 전체 (DOM이 없어 시각 판단에 의존) |
+
+URL 경로는 deterministic 규칙을 Rule Engine 후보로만 다룹니다. 모델이 이 정책을 벗어난
+Finding을 내면 해당 항목만 버리고 나머지 판정으로 진행하며, 버린 규칙은 경고 로그와
+`last_run_telemetry["dropped_semantic_rule_ids"]`에 남습니다.
+
+백엔드와 AI 분석기는 Audit 하나당 순서가 있는 이미지 **1~5개**를 처리합니다.
+데이터는 SQLite(`data/darkaudit.db`, `DARKAUDIT_DB_URL`로 변경 가능)에 저장되고
+업로드·캡처 이미지는 `data/` 아래에 남습니다. 배포 환경에서 이 경로를 영속 디스크에
+연결하지 않으면 재시작할 때 함께 사라집니다.
 
 ## 프로젝트 구조
 
@@ -33,6 +49,8 @@ docs/        라벨링 가이드와 프로젝트 문서
 
 세부 내용은 [AI](ai/README.md), [Backend](backend/README.md),
 [Frontend](frontend/README.md), [Dataset Generator](data/generator/README.md) 문서를 참고하세요.
+배포 절차는 [배포 가이드](docs/deploy.md), 라벨링 기준은
+[라벨링 가이드](docs/labeling_guide.md)에 있습니다.
 
 ## 빠른 시작
 
@@ -166,6 +184,23 @@ npx playwright install chromium
 npm run test:e2e
 npm run test:a11y
 ```
+
+E2E는 `--mode e2e`로 dev 서버를 띄워 `frontend/.env.e2e`를 적용합니다. 목업 API와
+목업 스크린샷만 사용하므로 개발자의 로컬 `.env` 설정이나 백엔드 상태에 영향을 받지
+않습니다. 화면을 바꾼 뒤 visual 스냅샷을 갱신하려면 `npm run test:e2e:update`를
+실행합니다.
+
+## 배포
+
+백엔드는 Render(Docker), 프런트엔드는 Vercel에 배포합니다. 순서와 환경 변수는
+[docs/deploy.md](docs/deploy.md)를 따르며, 요약하면 다음과 같습니다.
+
+- 백엔드를 먼저 배포해 URL을 얻고, 그 값을 프런트엔드의 `VITE_API_BASE_URL`에 넣습니다.
+- 프런트엔드는 Root Directory를 `frontend`로 지정하고 `VITE_USE_MOCKS=false`를 설정합니다.
+- `data/`를 영속 디스크에 연결해야 진단 기록과 캡처 이미지가 재배포 후에도 남습니다.
+
+CORS는 `*.vercel.app` 서브도메인을 정규식으로 허용하므로 프리뷰 배포마다 설정을 바꿀
+필요가 없습니다. 커스텀 도메인을 쓸 때만 `DARKAUDIT_CORS_ORIGINS`를 지정합니다.
 
 ## 팀
 
