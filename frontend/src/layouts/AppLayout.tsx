@@ -7,7 +7,9 @@ import {
   Menu,
   Settings,
   ShieldCheck,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
@@ -21,14 +23,22 @@ const navigation = [
   { label: "설정", icon: Settings, to: "/app/settings" },
 ];
 
-function Sidebar() {
+function Sidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-[280px] flex-col bg-brand-950 p-5 text-white lg:flex">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-20 w-[280px] flex-col bg-brand-950 p-5 text-white",
+        mobile ? "flex lg:hidden" : "hidden lg:flex",
+      )}
+    >
       <div className="flex items-center justify-between px-2 py-2">
         <Brand />
         <button
           aria-label="사이드바 접기"
-          className="rounded-control border border-white/20 p-2 text-white/80"
+          className={cn(
+            "rounded-control border border-white/20 p-2 text-white/80",
+            mobile && "invisible",
+          )}
         >
           <Menu size={17} />
         </button>
@@ -43,6 +53,7 @@ function Sidebar() {
               )
             }
             key={to}
+            onClick={onNavigate}
             to={to}
           >
             <Icon aria-hidden="true" size={19} />
@@ -65,10 +76,17 @@ function Sidebar() {
   );
 }
 
-function AppHeader() {
+function AppHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-5 lg:h-18 lg:px-9">
-      <div className="lg:hidden">
+      <div className="flex items-center gap-3 lg:hidden">
+        <button
+          aria-label="메뉴 열기"
+          className="rounded-control border border-border p-2 text-text"
+          onClick={onOpenMenu}
+        >
+          <Menu size={20} />
+        </button>
         <Brand dark />
       </div>
       <div className="hidden lg:block" />
@@ -83,10 +101,31 @@ function AppHeader() {
 }
 
 export function AppLayout() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background lg:pl-[280px]">
       <Sidebar />
-      <AppHeader />
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            aria-label="메뉴 닫기"
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="relative h-full w-[280px] shadow-2xl">
+            <Sidebar mobile onNavigate={() => setIsMenuOpen(false)} />
+            <button
+              aria-label="메뉴 닫기"
+              className="absolute right-5 top-7 rounded-control border border-white/20 p-2 text-white lg:hidden"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <X size={17} />
+            </button>
+          </div>
+        </div>
+      )}
+      <AppHeader onOpenMenu={() => setIsMenuOpen(true)} />
       <main className="min-w-0 p-4 sm:p-6 lg:p-8">
         <Outlet />
       </main>

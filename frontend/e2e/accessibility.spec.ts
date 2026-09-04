@@ -9,7 +9,7 @@ for (const route of ["/", "/app/overview", "/app/audits/new"]) {
         ? /금융상품 UX를/
         : route === "/app/overview"
           ? "보험 가입 흐름 v1"
-          : "금융상품 가입 흐름 등록";
+          : "AI UX 진단 시작";
     await page.getByRole("heading", { name: expectedHeading }).waitFor();
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter((violation) =>

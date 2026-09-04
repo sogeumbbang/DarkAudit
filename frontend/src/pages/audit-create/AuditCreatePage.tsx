@@ -1,5 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, LoaderCircle, Play } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  CircleAlert,
+  Images,
+  LoaderCircle,
+  Play,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -51,6 +59,8 @@ export function AuditCreatePage() {
   const [uploadPlatform, setUploadPlatform] = useState<AuditDto["platform"]>("mobile-web");
   const [screens, setScreens] = useState<UploadScreen[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [loadingSamples, setLoadingSamples] = useState(false);
+  const [sampleError, setSampleError] = useState<string>();
   const [jobId, setJobId] = useState<string>();
   const [auditId, setAuditId] = useState<string>();
   const screenInputRef = useRef<HTMLInputElement>(null);
@@ -66,11 +76,52 @@ export function AuditCreatePage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<AuditForm>({
     resolver: zodResolver(auditSchema),
     defaultValues: { name: "" },
   });
+
+  async function loadSampleScreens() {
+    const samples = [
+      ["01-product-intro.png", "상품 안내"],
+      ["02-preselected-addon.png", "유료 옵션 선택"],
+      ["03-consent-pressure.png", "약관 동의"],
+      ["04-delayed-price.png", "최종 금액 확인"],
+      ["05-buried-cancellation.png", "가입 완료"],
+    ] as const;
+
+    setLoadingSamples(true);
+    setSampleError(undefined);
+    try {
+      const loaded = await Promise.all(
+        samples.map(async ([fileName, flowStep]) => {
+          const response = await fetch(`/sample-audit/${fileName}`);
+          if (!response.ok) throw new Error(`${fileName}을 불러오지 못했습니다.`);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: blob.type || "image/png" });
+          return {
+            id: crypto.randomUUID(),
+            file,
+            previewUrl: URL.createObjectURL(file),
+            flowStep,
+          };
+        }),
+      );
+      setScreens((current) => {
+        current.forEach((screen) => URL.revokeObjectURL(screen.previewUrl));
+        return loaded;
+      });
+      setSource("screenshots");
+      setUploadPlatform("mobile-web");
+      setValue("name", "샘플 보험 가입 화면 검사", { shouldValidate: true });
+    } catch (error) {
+      setSampleError(error instanceof Error ? error.message : "샘플 화면을 불러오지 못했습니다.");
+    } finally {
+      setLoadingSamples(false);
+    }
+  }
 
   function addFiles(files: FileList | File[]) {
     const images = Array.from(files)
@@ -199,6 +250,27 @@ export function AuditCreatePage() {
           구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다.
         </p>
       </div>
+      <Card className="mt-7 flex flex-col gap-4 border-brand-400 bg-brand-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="flex items-center gap-2 font-bold text-brand-900">
+            <Images size={19} /> 파일 없이 MVP 검사해보기
+          </p>
+          <p className="mt-1 text-xs leading-5 text-muted">
+            보험 가입 샘플 스크린샷 5장을 불러와 업로드부터 분석 결과까지 확인합니다.
+          </p>
+          {sampleError && <p className="mt-2 text-xs text-danger">{sampleError}</p>}
+        </div>
+        <Button
+          className="shrink-0"
+          disabled={loadingSamples || pending}
+          type="button"
+          variant="outline"
+          onClick={loadSampleScreens}
+        >
+          {loadingSamples ? <LoaderCircle className="animate-spin" size={16} /> : <Play size={16} />}
+          샘플 5장 불러오기
+        </Button>
+      </Card>
       <form
         className="mt-8 grid gap-6 lg:grid-cols-[0.68fr_1.32fr]"
         onSubmit={handleSubmit(submit)}

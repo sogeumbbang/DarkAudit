@@ -16,8 +16,9 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     hydrateFallbackElement: routeFallback,
     children: [
+      { path: "/", element: <Navigate to="/app/overview" replace /> },
       {
-        path: "/",
+        path: "/landing",
         lazy: async () => ({
           Component: (await import("@/pages/landing/LandingPage")).LandingPage,
         }),
