@@ -72,7 +72,8 @@ def merge(detections: list[Detection], rb: RuleBase) -> list[ScoredFinding]:
     for d in detections:
         rule = rb.get(d.rule_id)
         unit = rule["label_unit"]
-        key = d.key
+        # Evidence anchors must not split one screen/flow-level Rule finding.
+        key = d.key if unit == "element" else (d.rule_id, d.screen_index, None)
 
         f = buckets.get(key)
         if f is None:

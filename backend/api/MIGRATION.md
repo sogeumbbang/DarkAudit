@@ -10,7 +10,7 @@ Team A 가 만든 API 계층을 Team B 가 이어받아 DB 기반으로 교체�
 - `Audit 1:N AuditRun`, `AuditRun 1:N Finding` 구조
 - Rule Engine 을 LLM 앞단 후보 생성 단계로 배치
 - 새 필드는 모두 optional 또는 기본값
-- **`LOW` 와 신규 ruleId 는 프론트 타입 배포 전까지 응답하지 않는다**
+- 프론트 타입과 Zod 스키마가 전체 ruleId 및 `LOW`를 지원하므로 기본 계약은 `v2`
 
 ## 파일 상태
 
@@ -69,13 +69,12 @@ backend/
 `compat.py` 가 노출 가능한 enum 값을 통제한다.
 
 ```
-DARKAUDIT_FRONTEND_CONTRACT=v1   (기본) DA-03/04/12/15, HIGH/REVIEW 만 노출
-DARKAUDIT_FRONTEND_CONTRACT=v2          전체 개방
+DARKAUDIT_FRONTEND_CONTRACT=v2   (기본) 전체 개방
+DARKAUDIT_FRONTEND_CONTRACT=v1          롤백 시 DA-03/04/12/15, HIGH/REVIEW 만 노출
 ```
 
-1. 백엔드를 `v1` 로 배포 — 프론트 무변경, 아무것도 깨지지 않음
-2. 프론트 TypeScript 타입 · Zod 스키마 PR 머지
-3. 환경변수를 `v2` 로 전환
+프론트 TypeScript 타입과 Zod 스키마 전환이 완료되어 백엔드는 환경변수가 없어도
+`v2`로 동작한다. 구버전 프론트로 롤백해야 할 때만 환경변수를 `v1`로 지정한다.
 
 `v1` 에서 걸러진 Finding 도 DB 에는 그대로 저장된다. 노출만 막으므로
 평가 스크립트는 게이트를 거치지 않고 전체 유형으로 성능을 측정한다.

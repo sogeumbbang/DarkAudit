@@ -126,14 +126,12 @@ function FindingDetails({
   finding,
   position,
   total,
-  onNext,
-  onPrevious,
+  onStep,
 }: {
   finding?: FindingDto;
   position: number;
   total: number;
-  onNext: () => void;
-  onPrevious: () => void;
+  onStep: (delta: number) => void;
 }) {
   const findingStatus = useFindingStatus();
   const [showRecommendation, setShowRecommendation] = useState(false);
@@ -144,13 +142,25 @@ function FindingDetails({
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <h2 className="text-sm font-bold">탐지 항목 상세</h2>
         <div className="flex items-center gap-3 text-sm">
-          <button aria-label="이전 탐지 항목" disabled={total < 2} onClick={onPrevious}>
+          <button
+            aria-label="이전 탐지 항목"
+            className="disabled:opacity-30"
+            disabled={total < 2}
+            onClick={() => onStep(-1)}
+            type="button"
+          >
             <ChevronLeft size={15} />
           </button>
           <span>
             {total ? position + 1 : 0} / {total}
           </span>
-          <button aria-label="다음 탐지 항목" disabled={total < 2} onClick={onNext}>
+          <button
+            aria-label="다음 탐지 항목"
+            className="disabled:opacity-30"
+            disabled={total < 2}
+            onClick={() => onStep(1)}
+            type="button"
+          >
             <ChevronRight size={15} />
           </button>
           <button aria-label="탐지 메타데이터" onClick={() => setShowMetadata((value) => !value)}>
@@ -463,10 +473,15 @@ export function OverviewPage() {
       </Card>
     );
   }
-  const screen =
-    audit.screens.find((item) => item.id === searchParams.get("screen")) ?? audit.screens[0]!;
   const finding =
     audit.findings.find((item) => item.id === searchParams.get("finding")) ?? audit.findings[0];
+  // 화면을 명시하지 않았다면 선택된 항목이 있는 화면을 띄운다. 둘을 각각 고르면
+  // 첫 진입에서 "1번 화면 + 2번 화면의 탐지 항목"처럼 어긋나 위치 강조가 안 보인다.
+  const screen =
+    audit.screens.find((item) => item.id === searchParams.get("screen")) ??
+    audit.screens.find((item) => item.id === finding?.bbox?.screenId) ??
+    audit.screens.find((item) => item.id === finding?.screenIds[0]) ??
+    audit.screens[0]!;
   const findingPosition = finding ? audit.findings.findIndex((item) => item.id === finding.id) : 0;
   const needsReview = audit.findings.filter((item) => item.status !== "resolved").length;
   const resolved = audit.findings.filter((item) => item.status === "resolved").length;
@@ -513,15 +528,11 @@ export function OverviewPage() {
   function selectFinding(nextFinding: FindingDto) {
     setSearchParams({
       audit: audit.id,
-      screen: nextFinding.screenIds[0] ?? screen.id,
+      // 위치 강조가 보이도록 bbox 가 있는 화면을 우선한다. DA-15 처럼 여러 화면에
+      // 걸친 항목은 screenIds[0](최초 화면)과 bbox 화면(마지막 근거)이 다르다.
+      screen: nextFinding.bbox?.screenId ?? nextFinding.screenIds[0] ?? screen.id,
       finding: nextFinding.id,
     });
-  }
-
-  function moveFinding(offset: number) {
-    if (!audit.findings.length) return;
-    const nextIndex = (findingPosition + offset + audit.findings.length) % audit.findings.length;
-    selectFinding(audit.findings[nextIndex]!);
   }
 
   function selectMetric(label: string) {
@@ -532,6 +543,14 @@ export function OverviewPage() {
           ? audit.findings.find((item) => item.status !== "resolved")
           : audit.findings[0];
     if (next) selectFinding(next);
+  }
+
+  // 카드로는 3건까지만 노출되므로, 그 뒤 항목은 이 화살표로만 닿을 수 있다.
+  function stepFinding(delta: number) {
+    if (audit.findings.length < 2) return;
+    const total = audit.findings.length;
+    const next = audit.findings[(findingPosition + delta + total) % total]!;
+    selectFinding(next);
   }
 
   return (
@@ -592,10 +611,9 @@ export function OverviewPage() {
         <FindingDetails
           finding={finding}
           key={finding?.id ?? "no-finding"}
+          onStep={stepFinding}
           position={findingPosition}
           total={audit.findings.length}
-          onNext={() => moveFinding(1)}
-          onPrevious={() => moveFinding(-1)}
         />
       </div>
       <div className="mt-4">

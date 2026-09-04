@@ -231,38 +231,41 @@ def da13_motion(screen: Screen, rb: RuleBase) -> list[Detection]:
 # ---------------------------------------------------------------- DA-15
 
 
-def _amounts(screen: Screen) -> list[float]:
-    vals = []
+def _amount_elements(screen: Screen) -> list[tuple[Element, float]]:
+    values = []
     for e in screen.of_type("price"):
         if not e.text:
             continue
         for m in _MONEY.finditer(e.text):
-            vals.append(float(m.group(1).replace(",", "")))
+            values.append((e, float(m.group(1).replace(",", ""))))
         for m in _RATE.finditer(e.text):
-            vals.append(float(m.group(1)))
-    return vals
+            values.append((e, float(m.group(1))))
+    return values
 
 
 @flow_check("DA-15", "price_increase_across_screens")
 def da15_price(flow: Flow, rb: RuleBase) -> list[Detection]:
     """최초 표시 금액 대비 최종 금액이 증가한 경우."""
-    series = [(s.screen_index, _amounts(s)) for s in flow.screens]
+    series = [(s.screen_index, _amount_elements(s)) for s in flow.screens]
     series = [(i, v) for i, v in series if v]
     if len(series) < 2:
         return []
 
     first_idx, first = series[0]
     last_idx, last = series[-1]
+    first_element, first_amount = max(first, key=lambda item: item[1])
+    last_element, last_amount = max(last, key=lambda item: item[1])
     # 금액(원)만 대상. 이율은 아래 별도 체크에서 다룬다.
-    if max(first) < 100 or max(last) < 100:
+    if first_amount < 100 or last_amount < 100:
         return []
-    if max(last) <= max(first):
+    if last_amount <= first_amount:
         return []
 
     return [Detection(
-        "", "", screen_indices=[first_idx, last_idx],
-        measurements={"initial": max(first), "final": max(last),
-                      "delta": max(last) - max(first)},
+        "", "", primary=last_element, related=[first_element],
+        screen_indices=[first_idx, last_idx],
+        measurements={"initial": first_amount, "final": last_amount,
+                      "delta": last_amount - first_amount},
     )]
 
 
@@ -272,20 +275,26 @@ def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     최초 표시 이율 대비 최종 적용 이율이 소비자에게 불리하게 변경된 경우.
     예적금 Flow 를 위해 필요하다. 보험(금액 상승)과 방향이 반대다.
     """
-    series = [(s.screen_index, [v for v in _amounts(s) if v < 100]) for s in flow.screens]
+    series = [
+        (s.screen_index, [(element, value) for element, value in _amount_elements(s) if value < 100])
+        for s in flow.screens
+    ]
     series = [(i, v) for i, v in series if v]
     if len(series) < 2:
         return []
 
     first_idx, first = series[0]
     last_idx, last = series[-1]
-    if max(last) >= max(first):
+    first_element, first_rate = max(first, key=lambda item: item[1])
+    last_element, last_rate = max(last, key=lambda item: item[1])
+    if last_rate >= first_rate:
         return []
 
     return [Detection(
-        "", "", screen_indices=[first_idx, last_idx],
-        measurements={"initial_rate": max(first), "final_rate": max(last),
-                      "drop": round(max(first) - max(last), 2)},
+        "", "", primary=last_element, related=[first_element],
+        screen_indices=[first_idx, last_idx],
+        measurements={"initial_rate": first_rate, "final_rate": last_rate,
+                      "drop": round(first_rate - last_rate, 2)},
     )]
 
 
@@ -303,6 +312,6 @@ def da15_single_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
             continue
         if "~" in e.text or "-" in e.text:
             return []                      # 범위로 표시됨 → 해당 없음
-        return [Detection("", "", screen_indices=[first.screen_index],
+        return [Detection("", "", primary=e, screen_indices=[first.screen_index],
                           measurements={"displayed": e.text})]
     return []

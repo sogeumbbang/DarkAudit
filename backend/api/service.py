@@ -408,22 +408,23 @@ def _store_output(
         label_unit = matched.label_unit
 
         primary = element_lookup.get(matched.primary_id) if matched.primary_id else None
-        if label_unit == "element":
-            if primary is None and detection is not None:
-                x, y, width, height = detection.bbox
-                primary = Element(
-                    screen=referenced[0],
-                    element_type="vision",
-                    text=detection.where.element,
-                    bbox_x=x,
-                    bbox_y=y,
-                    bbox_w=width,
-                    bbox_h=height,
-                    source="vision",
-                    confidence=detection.confidence,
-                )
-                session.add(primary)
-                session.flush()
+        if primary is None and detection is not None:
+            x, y, width, height = detection.bbox
+            primary = Element(
+                # Semantic bbox is an evidence anchor even for flow-level rules.
+                # Multi-screen contracts (DA-15) place it on the final screen.
+                screen=referenced[-1],
+                element_type="vision",
+                text=detection.where.element,
+                bbox_x=x,
+                bbox_y=y,
+                bbox_w=width,
+                bbox_h=height,
+                source="vision",
+                confidence=detection.confidence,
+            )
+            session.add(primary)
+            session.flush()
 
         rule = rules[matched.rule_id]
         element_text = (

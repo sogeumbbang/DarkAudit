@@ -136,11 +136,11 @@ def to_finding_dto(
         ))
 
     screen_ids = []
-    if primary:
-        screen_ids = [p_screen]
-    elif f.screen_indices:
+    if f.screen_indices:
         screen_ids = [screen_ext_id[s.id] for s in screens_by_id.values()
                       if s.screen_index in f.screen_indices]
+    elif primary:
+        screen_ids = [p_screen]
 
     return FindingDto(
         id=f"finding-{f.id}",
