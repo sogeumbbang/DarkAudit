@@ -73,6 +73,7 @@ SEMANTIC_ONLY_CHECKS_BY_RULE = {
     }),
 }
 SEMANTIC_ONLY_RULE_IDS = frozenset(SEMANTIC_ONLY_CHECKS_BY_RULE)
+VISUAL_FALLBACK_RULE_IDS = frozenset(RULE_BASE_SEVERITY)
 
 INTERACTION_REQUIRED_CHECKS = frozenset({"DA-07.skippable_without_confirm"})
 INTERACTION_EVIDENCE_KEY = "interaction_evidence"
@@ -383,6 +384,9 @@ class HybridAuditOutput:
     candidate_decisions: tuple[CandidateDecision, ...]
     semantic_findings: tuple[Detection, ...]
     candidates: tuple[RuleCandidate, ...] = field(repr=False, compare=False)
+    allowed_semantic_rule_ids: frozenset[str] = field(
+        default=SEMANTIC_ONLY_RULE_IDS, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         if not self.audit_id.strip() or self.schema_version != SCHEMA_VERSION:
@@ -423,8 +427,11 @@ class HybridAuditOutput:
                 raise ValueError(
                     "DA-07.skippable_without_confirm requires interaction_evidence=true to KEEP"
                 )
-        if any(finding.rule_id not in SEMANTIC_ONLY_RULE_IDS for finding in self.semantic_findings):
-            raise ValueError("semantic_findings may only contain semantic-only rules")
+        if any(finding.rule_id not in self.allowed_semantic_rule_ids for finding in self.semantic_findings):
+            raise ValueError(
+                "semantic_findings may only contain semantic-only rules or visual rules "
+                "enabled for this audit source"
+            )
         # Reuse the established detection-level screen, profile, and duplicate
         # validation for semantic-only findings.
         LLMAuditOutput(
@@ -433,7 +440,10 @@ class HybridAuditOutput:
 
     @classmethod
     def from_dict(
-        cls, value: dict[str, Any], candidates: list[RuleCandidate] | tuple[RuleCandidate, ...]
+        cls,
+        value: dict[str, Any],
+        candidates: list[RuleCandidate] | tuple[RuleCandidate, ...],
+        allowed_semantic_rule_ids: frozenset[str] = SEMANTIC_ONLY_RULE_IDS,
     ) -> "HybridAuditOutput":
         fields = {"audit_id", "schema_version", "screens", "candidate_decisions", "semantic_findings"}
         if not isinstance(value, dict) or set(value) != fields:
@@ -447,6 +457,7 @@ class HybridAuditOutput:
             candidate_decisions=tuple(CandidateDecision.from_dict(item) for item in value["candidate_decisions"]),
             semantic_findings=tuple(Detection.from_dict(item) for item in value["semantic_findings"]),
             candidates=tuple(candidates),
+            allowed_semantic_rule_ids=allowed_semantic_rule_ids,
         )
 
     def to_dict(self) -> dict[str, Any]:

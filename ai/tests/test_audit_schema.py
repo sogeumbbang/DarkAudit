@@ -87,8 +87,10 @@ def da07():
 class FakeProvider:
     def __init__(self, result):
         self.result, self.rules, self.candidates, self.output_schema = result, None, None, None
+        self.audit_prompt = None
 
     def analyze(self, request, system_prompt, audit_prompt, rules, output_schema, candidates=None):
+        self.audit_prompt = audit_prompt
         self.rules = rules
         self.candidates = candidates
         self.output_schema = output_schema
@@ -99,9 +101,11 @@ class RetryProvider(FakeProvider):
     def __init__(self, result):
         super().__init__(result)
         self.calls = 0
+        self.audit_prompts = []
 
     def analyze(self, *args, **kwargs):
         self.calls += 1
+        self.audit_prompts.append(kwargs.get("audit_prompt", args[2] if len(args) > 2 else ""))
         if self.calls == 1:
             return {"invalid": True}
         return super().analyze(*args, **kwargs)
@@ -235,6 +239,31 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertEqual(len(result.semantic_findings), 1)
             self.assertEqual(result.semantic_findings[0].confidence, 0.91)
 
+    def test_screenshot_visual_fallback_allows_preselected_option(self):
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1", (AuditScreen("screen_01", "유료 옵션 선택", image),)
+            )
+            finding = detection(
+                risk_type="PRESELECTED_OPTION",
+                risk_name="특정옵션의 사전선택",
+                rule_id="DA-04",
+                severity="HIGH",
+            )
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[finding],
+                    screens=[{"screen_id": "screen_01", "flow_step": "유료 옵션 선택"}],
+                )
+            )
+            result = BaselineAuditPipeline(
+                provider, allow_visual_fallback=True
+            ).analyze(request)
+            self.assertEqual(result.semantic_findings[0].rule_id, "DA-04")
+            self.assertIn("스크린샷 전용 시각 판정", provider.audit_prompt)
+
     def test_records_schema_retry_and_latency_telemetry(self):
         with tempfile.TemporaryDirectory() as directory:
             image = Path(directory) / "screen.png"
@@ -246,6 +275,21 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertEqual(pipeline.last_run_telemetry["schema_attempts"], 2)
             self.assertEqual(pipeline.last_run_telemetry["schema_retries"], 1)
             self.assertGreaterEqual(pipeline.last_run_telemetry["response_time_seconds"], 0)
+            self.assertIn("invalid HybridAuditOutput fields", provider.audit_prompts[1])
+
+    def test_final_validation_error_includes_root_cause(self):
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1", (AuditScreen("screen_01", "desktop: offer", image),)
+            )
+            provider = FakeProvider({"invalid": True})
+            with self.assertRaisesRegex(
+                ValueError,
+                "Model output failed validation after 2 attempts: invalid HybridAuditOutput fields",
+            ):
+                BaselineAuditPipeline(provider).analyze(request)
 
 
 if __name__ == "__main__":

@@ -132,7 +132,9 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
                 for screen, path in zip(run.screens, local_paths, strict=True)
             ),
         )
-        output = BaselineAuditPipeline(create_provider()).analyze(request)
+        output = BaselineAuditPipeline(
+            create_provider(), allow_visual_fallback=True
+        ).analyze(request)
         _update_job(job_id, progress=80)
         _store_output(session, run, output)
         _apply_regression(session, run)
@@ -181,6 +183,10 @@ def capture_and_analyze_url(
 
             # URL 캡처만 DOM 을 갖고 있으므로 Rule Engine 은 이 경로에서만 돈다.
             element_lookup = _persist_dom_elements(session, screens, selected)
+            # Capture is useful on its own and must survive an optional AI failure.
+            # Without this commit, a missing/invalid model setting rolled the screenshots
+            # back together with the analysis transaction, leaving the UI with no evidence.
+            session.commit()
             rule_findings = _run_rule_engine(run.audit_id, screens, selected)
 
             request = LLMAuditRequest(
@@ -494,4 +500,3 @@ def _apply_regression(session, run: AuditRun) -> None:
     )
     if previous is not None:
         compare(session, run.audit_id, previous.version, run.version)
-
