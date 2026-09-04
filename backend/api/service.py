@@ -132,7 +132,9 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
                 for screen, path in zip(run.screens, local_paths, strict=True)
             ),
         )
-        output = BaselineAuditPipeline(create_provider()).analyze(request)
+        output = BaselineAuditPipeline(
+            create_provider(), allow_visual_fallback=True
+        ).analyze(request)
         _update_job(job_id, progress=80)
         _store_output(session, run, output)
         _apply_regression(session, run)
@@ -498,4 +500,3 @@ def _apply_regression(session, run: AuditRun) -> None:
     )
     if previous is not None:
         compare(session, run.audit_id, previous.version, run.version)
-
