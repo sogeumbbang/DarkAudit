@@ -7,6 +7,13 @@ test("root redirects to the dashboard", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "보험 가입 흐름 v1" })).toBeVisible();
 });
 
+test("overview logo opens the landing page", async ({ page }) => {
+  await page.goto("/app/overview");
+  await page.locator('a[href="/landing"]:visible').first().click();
+  await expect(page).toHaveURL(/\/landing$/);
+  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
+});
+
 test("landing page opens the audit dashboard", async ({ page }) => {
   await page.goto("/landing");
   await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
