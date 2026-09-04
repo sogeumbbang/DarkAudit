@@ -8,7 +8,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DARKAUDIT_PROVIDER
-        value: openai
+        value: fake
       - key: DARKAUDIT_MODEL
         sync: false
       - key: OPENAI_API_KEY
