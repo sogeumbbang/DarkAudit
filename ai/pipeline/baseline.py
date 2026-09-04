@@ -12,7 +12,7 @@ from ai.schemas.audit_schema import (
     LLMAuditRequest,
     RuleCandidate,
 )
-from .response_parser import parse_hybrid_response
+from .response_parser import drop_disallowed_semantic_findings, parse_hybrid_response
 
 MVP_RULE_IDS = frozenset({"DA-03", "DA-04", "DA-07", "DA-12", "DA-15"})
 
@@ -80,6 +80,9 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
             try:
                 raw = self.provider.analyze(**arguments)
                 self._deduplicate_raw(raw)
+                # 정제 결과를 남긴다. 조용히 버리기만 하면 모델이 계속 규칙을
+                # 어겨도 알 수 없다.
+                dropped = drop_disallowed_semantic_findings(raw, self.allowed_semantic_rule_ids)
                 output = parse_hybrid_response(
                     raw, request, parsed_candidates, self.allowed_semantic_rule_ids
                 )
@@ -89,6 +92,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                     "screen_count": len(request.screens),
                     "schema_attempts": attempt,
                     "schema_retries": attempt - 1,
+                    "dropped_semantic_rule_ids": sorted(set(dropped)),
                     "usage": getattr(self.provider, "last_usage", None),
                 }
                 return result
