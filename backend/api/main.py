@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
@@ -28,7 +29,9 @@ from .schemas import (
     RegressionDto,
 )
 from .service import (
+    CAPTURE_DIR,
     DATA_DIR,
+    FIGMA_DIR,
     UPLOAD_DIR,
     analyze_uploaded_screens,
     capture_and_analyze_url,
@@ -83,6 +86,31 @@ def dashboard_summary() -> DashboardSummaryDto:
     with SessionLocal() as session:
         audits = [to_audit_dto(session, audit, rules_by_id()) for audit in list_audits(session)]
         return DashboardSummaryDto(activeAuditId=audits[0].id if audits else None, audits=audits)
+
+
+@app.delete("/api/v1/audits/{audit_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_audit(audit_id: str) -> None:
+    """
+    진단 하나를 회차·화면·탐지까지 통째로 지운다.
+
+    DB 는 relationship cascade(all, delete-orphan)가 정리하고, 화면 이미지는
+    별도 파일이라 여기서 함께 지운다. 파일이 남으면 /artifacts 로 계속 노출되고
+    디스크만 차지한다.
+
+    경로는 URL 이 아니라 DB 에서 확인한 audit.id 로 만든다. 사용자가 넘긴
+    문자열을 그대로 경로에 붙이면 상위 디렉터리로 빠져나갈 수 있다.
+    """
+    with SessionLocal() as session:
+        try:
+            audit = get_audit(session, audit_id)
+        except KeyError:
+            raise HTTPException(404, "Audit not found")
+        directory_name = f"audit-{audit.id}"
+        session.delete(audit)
+        session.commit()
+
+    for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR):
+        shutil.rmtree(base / directory_name, ignore_errors=True)
 
 
 @app.get("/api/v1/audits/{audit_id}/regression", response_model=RegressionDto)

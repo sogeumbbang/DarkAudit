@@ -424,6 +424,34 @@ class ApiIntegrationTest(unittest.TestCase):
         response = self.client.get("/api/v1/audits/audit-999999/regression")
         self.assertEqual(response.status_code, 404, response.text)
 
+    def test_delete_audit_removes_record_and_uploaded_files(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={"name": "삭제 대상", "platform": "mobile-web"},
+        ).json()["id"]
+        image = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        )
+        self.client.post(
+            f"/api/v1/audits/{audit_id}/screens",
+            files={"files": ("option.png", image, "image/png")},
+            data={"screen_ids": "option", "flow_steps": "추가 보장 선택"},
+        )
+        upload_dir = service.UPLOAD_DIR / audit_id
+        self.assertTrue(upload_dir.exists())
+
+        deleted = self.client.delete(f"/api/v1/audits/{audit_id}")
+        self.assertEqual(deleted.status_code, 204, deleted.text)
+
+        # 목록과 파일에서 함께 사라져야 한다. 파일이 남으면 /artifacts 로 계속 열린다.
+        listed = [a["id"] for a in self.client.get("/api/v1/dashboard/summary").json()["audits"]]
+        self.assertNotIn(audit_id, listed)
+        self.assertFalse(upload_dir.exists())
+
+    def test_delete_missing_audit_returns_404(self) -> None:
+        response = self.client.delete("/api/v1/audits/audit-999999")
+        self.assertEqual(response.status_code, 404, response.text)
+
     def test_da15_primary_bbox_is_kept_on_final_evidence_screen(self) -> None:
         with service.SessionLocal() as session:
             audit = Audit(name="Sequential pricing", product_name="mobile-web")
