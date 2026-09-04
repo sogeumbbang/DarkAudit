@@ -43,7 +43,9 @@ export const handlers = [
       id: screen.id,
       order: index + 1,
       flowStep: screen.flowStep,
-      imageUrl: `/mock/${screen.fileName}`,
+      imageUrl: screen.fileName.match(/^0[1-5]-/)
+        ? `/sample-audit/${screen.fileName}`
+        : `/mock/${screen.fileName}`,
       findingCount: 0,
     }));
     return HttpResponse.json(audit);

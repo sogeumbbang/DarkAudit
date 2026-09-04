@@ -1,11 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-for (const route of ["/", "/app/overview", "/app/audits/new"]) {
+for (const route of ["/landing", "/app/overview", "/app/audits/new"]) {
   test(`has no serious accessibility violations: ${route}`, async ({ page }) => {
     await page.goto(route);
     const expectedHeading =
-      route === "/"
+      route === "/landing"
         ? /금융상품 UX를/
         : route === "/app/overview"
           ? "보험 가입 흐름 v1"

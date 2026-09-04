@@ -182,6 +182,57 @@ class ApiIntegrationTest(unittest.TestCase):
         self.assertEqual(audit["screens"][0]["flowStep"], "mobile: initial viewport")
         self.assertEqual(audit["screens"][0]["width"], 393)
 
+    def test_url_capture_survives_analysis_failure(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={"name": "Capture-only fallback", "platform": "desktop-web"},
+        ).json()["id"]
+        image_path = service.CAPTURE_DIR / "capture-before-analysis-failure.png"
+        image_path.parent.mkdir(parents=True, exist_ok=True)
+        image_path.write_bytes(b"capture")
+        artifact = CaptureArtifact(
+            screen_id="desktop-initial",
+            flow_step="desktop: initial viewport",
+            profile="desktop",
+            url="https://example.com",
+            title="Example",
+            image_path=image_path,
+            viewport_width=1440,
+            viewport_height=900,
+        )
+        capture = URLCaptureResult(
+            audit_id=audit_id,
+            url="https://example.com",
+            mode=ScanMode.QUICK,
+            profiles=(CaptureResult(
+                audit_id=audit_id,
+                profile="desktop",
+                mode=ScanMode.QUICK,
+                artifacts=(artifact,),
+                stop_reason="quick capture completed",
+            ),),
+        )
+
+        with (
+            patch("backend.api.main.UrlSafetyPolicy.validate", return_value="https://example.com"),
+            patch("backend.api.service.URLCapturePipeline.run", return_value=capture),
+            patch(
+                "backend.api.service.BaselineAuditPipeline.analyze",
+                side_effect=ValueError("DARKAUDIT_MODEL is required"),
+            ),
+        ):
+            queued = self.client.post(
+                f"/api/v1/audits/{audit_id}/capture",
+                json={"url": "https://example.com", "mode": "quick", "profiles": ["desktop"]},
+            )
+
+        job = self.client.get(f"/api/v1/analysis-jobs/{queued.json()['jobId']}").json()
+        self.assertEqual(job["status"], "failed")
+        dashboard = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
+        self.assertEqual(dashboard["status"], "failed")
+        self.assertEqual(len(dashboard["screens"]), 1)
+        self.assertEqual(dashboard["screens"][0]["flowStep"], "desktop: initial viewport")
+
     def test_hybrid_output_merges_by_candidate_id_and_recalculates_severity(self) -> None:
         audit_id = self.client.post(
             "/api/v1/audits",
