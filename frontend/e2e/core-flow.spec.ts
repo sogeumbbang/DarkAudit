@@ -43,6 +43,53 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("heading", { name: "금융 다크패턴 4개 범주" })).toBeVisible();
 });
 
+test("zoomed preview can scroll to every image edge", async ({ page }) => {
+  await page.goto("/app/overview");
+  await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
+
+  const viewport = page.getByTestId("screen-preview-viewport");
+  await expect(viewport).toHaveCSS("overflow", "hidden");
+
+  // 서버의 이미지 좌표가 실제 렌더링된 이미지 박스에 같은 비율로 매핑되는지
+  // 확인한다. 바깥 카드나 스크롤 영역을 기준으로 잡으면 이 값이 어긋난다.
+  const imageBox = await page.getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" }).boundingBox();
+  const highlightBox = await viewport.getByText("DA-04", { exact: true }).locator("..").boundingBox();
+  expect(imageBox).not.toBeNull();
+  expect(highlightBox).not.toBeNull();
+  expect(highlightBox!.x).toBeCloseTo(imageBox!.x + imageBox!.width * (24 / 390), 0);
+  expect(highlightBox!.y).toBeCloseTo(imageBox!.y + imageBox!.height * (520 / 844), 0);
+  expect(highlightBox!.width).toBeCloseTo(imageBox!.width * (342 / 390), 0);
+  expect(highlightBox!.height).toBeCloseTo(imageBox!.height * (48 / 844), 0);
+
+  await page.getByRole("button", { name: "확대" }).click();
+  await page.getByRole("button", { name: "확대" }).click();
+  await expect(viewport).toHaveCSS("overflow", "auto");
+
+  await expect
+    .poll(() =>
+      viewport.evaluate(
+        (element) =>
+          element.scrollWidth > element.clientWidth && element.scrollHeight > element.clientHeight,
+      ),
+    )
+    .toBe(true);
+  const scrollRange = await viewport.evaluate((element) => ({
+    x: element.scrollWidth - element.clientWidth,
+    y: element.scrollHeight - element.clientHeight,
+  }));
+  expect(scrollRange.x).toBeGreaterThan(0);
+  expect(scrollRange.y).toBeGreaterThan(0);
+
+  const reachedEnd = await viewport.evaluate((element) => {
+    element.scrollTo({ left: element.scrollWidth, top: element.scrollHeight });
+    return {
+      x: element.scrollLeft === element.scrollWidth - element.clientWidth,
+      y: element.scrollTop === element.scrollHeight - element.clientHeight,
+    };
+  });
+  expect(reachedEnd).toEqual({ x: true, y: true });
+});
+
 test("user creates an audit and completes analysis", async ({ page }) => {
   await page.goto("/app/audits/new");
   await page.getByLabel("진단 이름").fill("Playwright 가입 흐름");
