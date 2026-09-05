@@ -16,10 +16,12 @@ from __future__ import annotations
 import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from ai.vision.bbox_refinement import refine_selected_control_bbox
 from backend.app.models import (
     Audit, AuditRun, Base, Element, Evidence, Finding,
     FindingRelatedElement, RunStatus, Screen, Severity,
@@ -33,6 +35,7 @@ from .schemas import (
 )
 
 DB_URL = os.getenv("DARKAUDIT_DB_URL", "sqlite:///data/darkaudit.db")
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 _engine = create_engine(DB_URL, future=True, connect_args=(
     {"check_same_thread": False} if DB_URL.startswith("sqlite") else {}
@@ -98,6 +101,52 @@ def _bbox(el: Element | None, screen_ext: str, screens: dict[int, Screen]) -> BB
     )
 
 
+def _primary_bbox(
+    finding: Finding,
+    screen_ext: str,
+    screens: dict[int, Screen],
+) -> BBox | None:
+    """Return a tighter visual anchor for screenshot-only DA-04 findings.
+
+    DOM captures already contain exact browser geometry. Uploaded screenshots do
+    not, so the model's coarse DA-04 box is snapped to a nearby selected control.
+    This happens while reading as well as while creating results, which also fixes
+    previously stored audits without requiring another analysis run.
+    """
+
+    element = finding.primary_element
+    if element is None or finding.rule_id != "DA-04" or element.source != "vision":
+        return _bbox(element, screen_ext, screens)
+    screen = screens.get(element.screen_id)
+    if screen is None or not screen.image_path or not screen.image_path.startswith("/artifacts/"):
+        return _bbox(element, screen_ext, screens)
+
+    original = (element.bbox_x, element.bbox_y, element.bbox_w, element.bbox_h)
+    image_path = DATA_DIR / screen.image_path.removeprefix("/artifacts/")
+    refined = refine_selected_control_bbox(str(image_path), original)
+    if refined == original:
+        return _bbox(element, screen_ext, screens)
+
+    x, y, width, height = refined
+    if screen.viewport_w and screen.viewport_h:
+        return BBox(
+            screenId=screen_ext,
+            x=round(x * screen.viewport_w, 1),
+            y=round(y * screen.viewport_h, 1),
+            width=round(width * screen.viewport_w, 1),
+            height=round(height * screen.viewport_h, 1),
+            coordinateSystem="image",
+        )
+    return BBox(
+        screenId=screen_ext,
+        x=x,
+        y=y,
+        width=width,
+        height=height,
+        coordinateSystem="normalized",
+    )
+
+
 RISK_TYPE_OF = {
     "DA-02": "DECEPTIVE_QUESTION",
     "DA-03": "VISUAL_HIERARCHY_DISTORTION",
@@ -156,7 +205,7 @@ def to_finding_dto(
         recommendation=(ev.fix_text if ev else None) or rule.get("fix_template", ""),
         guideline=rule.get("official_definition", ""),
         observation=(ev.observation if ev else None),
-        bbox=_bbox(primary, p_screen, screens_by_id),
+        bbox=_primary_bbox(f, p_screen, screens_by_id),
         relatedElements=related,
         mitigated=f.mitigated,
         combinationRules=list(f.combination_with or []),
