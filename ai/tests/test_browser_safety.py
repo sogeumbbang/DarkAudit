@@ -113,8 +113,22 @@ class RenderQualityTest(unittest.TestCase):
             )
         )
 
-    def test_accepts_document_with_loaded_stylesheet(self):
+    def test_accepts_visually_styled_document(self):
         self.assertFalse(
+            _looks_like_unstyled_document(
+                {
+                    "stylesheet_count": 1,
+                    "linked_stylesheet_count": 1,
+                    "style_element_count": 0,
+                    "visible_link_count": 28,
+                    "default_link_count": 0,
+                    "body_font_family": "Arial, sans-serif",
+                }
+            )
+        )
+
+    def test_rejects_default_render_even_when_stylesheet_link_exists(self):
+        self.assertTrue(
             _looks_like_unstyled_document(
                 {
                     "stylesheet_count": 1,

@@ -163,15 +163,10 @@ class UnrenderedPageError(RuntimeError):
 
 def _looks_like_unstyled_document(metrics: dict[str, Any]) -> bool:
     """Detect high-confidence browser-default HTML without rejecting small plain pages."""
-    stylesheet_count = int(metrics.get("stylesheet_count") or 0)
-    linked_stylesheet_count = int(metrics.get("linked_stylesheet_count") or 0)
-    style_element_count = int(metrics.get("style_element_count") or 0)
     link_count = int(metrics.get("visible_link_count") or 0)
     default_link_count = int(metrics.get("default_link_count") or 0)
     font_family = str(metrics.get("body_font_family") or "").lower()
 
-    if stylesheet_count or linked_stylesheet_count or style_element_count:
-        return False
     if link_count < 10 or default_link_count / link_count < 0.8:
         return False
     return "times new roman" in font_family or font_family.strip() in {"serif", "times"}
@@ -434,7 +429,16 @@ class PlaywrightBrowserSession:
         except Exception:
             pass
         try:
-            self._page.evaluate("() => document.fonts ? document.fonts.ready : Promise.resolve()")
+            self._page.evaluate(
+                """
+                () => document.fonts
+                  ? Promise.race([
+                      document.fonts.ready,
+                      new Promise((resolve) => setTimeout(resolve, 2000)),
+                    ])
+                  : Promise.resolve()
+                """
+            )
         except Exception:
             pass
         self._page.wait_for_timeout(self.settle_time_ms)
