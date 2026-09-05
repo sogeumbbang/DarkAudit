@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 // 데모에서 첫 화면이 바로 결과가 되도록 "/" 는 대시보드로 보낸다.
-test("root redirects to the dashboard", async ({ page }) => {
+test("root shows the landing page", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/app\/overview$/);
-  await expect(page.getByRole("heading", { name: "보험 가입 흐름 v1" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
+});
+
+// 로고 링크와 이미 공유된 링크가 /landing 을 쓴다. 같은 화면이어야 한다.
+test("landing alias serves the same page", async ({ page }) => {
+  await page.goto("/landing");
+  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
 });
 
 test("overview logo opens the landing page", async ({ page }) => {

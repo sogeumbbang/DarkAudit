@@ -16,7 +16,14 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     hydrateFallbackElement: routeFallback,
     children: [
-      { path: "/", element: <Navigate to="/app/overview" replace /> },
+      // 첫 진입은 랜딩이다. /landing 은 로고 링크와 기존 공유 링크가 쓰고 있어
+      // 같은 화면을 가리키는 별칭으로 남긴다.
+      {
+        path: "/",
+        lazy: async () => ({
+          Component: (await import("@/pages/landing/LandingPage")).LandingPage,
+        }),
+      },
       {
         path: "/landing",
         lazy: async () => ({
