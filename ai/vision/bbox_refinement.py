@@ -8,6 +8,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from .candidate_grounding import generate_control_candidates
+
 NormalizedBBox = tuple[float, float, float, float]
 
 
@@ -132,3 +134,28 @@ def refine_selected_control_bbox(image_path: str, bbox: NormalizedBBox) -> Norma
         round((right - left) / image_width, 6),
         round((bottom - top) / image_height, 6),
     )
+
+
+@lru_cache(maxsize=256)
+def refine_prominent_cta_bbox(image_path: str, bbox: NormalizedBBox) -> NormalizedBBox:
+    """Snap a legacy DA-03 model box to a multi-channel filled CTA proposal."""
+
+    path = Path(image_path)
+    if not path.is_file():
+        return bbox
+    try:
+        with Image.open(path) as source:
+            candidates, _ = generate_control_candidates(
+                source,
+                bbox,
+                kind="prominent_cta",
+                limit=5,
+            )
+    except (OSError, ValueError):
+        return bbox
+    if not candidates:
+        return bbox
+    selected = candidates[0]
+    if len(selected.sources) < 2 or selected.score > 1.5:
+        return bbox
+    return selected.bbox

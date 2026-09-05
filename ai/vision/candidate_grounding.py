@@ -12,8 +12,9 @@ import math
 import re
 import tempfile
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Literal
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
@@ -21,6 +22,7 @@ from .ocr import OCRProvider, OCRResult, create_ocr_provider
 
 NormalizedBBox = tuple[float, float, float, float]
 CandidateSelector = Callable[[Path, str, list[dict[str, object]]], dict[str, object] | None]
+CandidateKind = Literal["compact_control", "prominent_cta"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,15 +105,20 @@ def _text_similarity(needle: str, haystack: str) -> float:
     candidate = _normalize_text(haystack)
     if not target or not candidate:
         return 0.0
+    character_score = SequenceMatcher(None, target, candidate).ratio()
     if candidate in target or target in candidate:
-        return min(len(candidate), len(target)) / max(len(candidate), len(target))
+        return max(
+            character_score,
+            min(len(candidate), len(target)) / max(len(candidate), len(target)),
+        )
     target_tokens = {_normalize_text(token) for token in needle.split() if len(_normalize_text(token)) >= 2}
     candidate_tokens = {
         _normalize_text(token) for token in haystack.split() if len(_normalize_text(token)) >= 2
     }
     if not target_tokens or not candidate_tokens:
-        return 0.0
-    return len(target_tokens & candidate_tokens) / len(candidate_tokens | target_tokens)
+        return character_score
+    token_score = len(target_tokens & candidate_tokens) / len(candidate_tokens | target_tokens)
+    return max(character_score, token_score)
 
 
 def _best_anchor(element_text: str, anchors: Iterable[OCRAnchor]) -> OCRAnchor | None:
@@ -223,8 +230,9 @@ def generate_control_candidates(
     anchor: OCRAnchor | None = None,
     *,
     limit: int = 12,
+    kind: CandidateKind = "compact_control",
 ) -> tuple[list[GroundingCandidate], tuple[int, int, int, int]]:
-    """Generate square/radio/toggle proposals from independent visual signals."""
+    """Generate compact-control or CTA proposals from independent visual signals."""
 
     image = image.convert("RGB")
     image_width, image_height = image.size
@@ -247,7 +255,11 @@ def generate_control_candidates(
         approximate_x + approximate_width / 2,
         approximate_y + approximate_height / 2,
     )
-    target_size = min(48.0, max(16.0, image_width * 0.065))
+    target_size = (
+        min(80.0, max(36.0, image_height * 0.075))
+        if kind == "prominent_cta"
+        else min(48.0, max(16.0, image_width * 0.065))
+    )
     coarse_region = (
         approximate_width >= target_size * 3
         or approximate_height >= target_size * 3
@@ -258,13 +270,21 @@ def generate_control_candidates(
         for left, top, right, bottom, count in _connected_boxes(mask):
             box_width = (right - left) / scale
             box_height = (bottom - top) / scale
-            if not (8 <= box_width <= min(140, image_width * 0.3)):
-                continue
-            if not (8 <= box_height <= min(100, image_height * 0.16)):
-                continue
             aspect = box_width / box_height
-            if not 0.5 <= aspect <= 3.8:
-                continue
+            if kind == "prominent_cta":
+                if not (image_width * 0.2 <= box_width <= image_width * 0.98):
+                    continue
+                if not (20 <= box_height <= min(150, image_height * 0.22)):
+                    continue
+                if not 1.5 <= aspect <= 20:
+                    continue
+            else:
+                if not (8 <= box_width <= min(140, image_width * 0.3)):
+                    continue
+                if not (8 <= box_height <= min(100, image_height * 0.16)):
+                    continue
+                if not 0.5 <= aspect <= 3.8:
+                    continue
             density = count / max(1, (right - left) * (bottom - top))
             if source != "edge" and density < 0.08:
                 continue
@@ -273,7 +293,7 @@ def generate_control_candidates(
             absolute_top = roi[1] + top / scale
             center_x = absolute_left + box_width / 2
             center_y = absolute_top + box_height / 2
-            if coarse_region:
+            if coarse_region and kind == "compact_control":
                 # A model may return an option-card box rather than its control.
                 # Every proposal inside that card is equally local; shape and OCR
                 # alignment must decide instead of distance from the card center.
@@ -292,11 +312,17 @@ def generate_control_candidates(
                 distance = math.hypot(
                     center_x - approximate_center[0], center_y - approximate_center[1]
                 ) / max(target_size, 1)
-            shape_penalty = min(abs(math.log(aspect)), abs(math.log(aspect / 2.0)))
-            proposal_size = math.sqrt(box_width * box_height)
+            shape_penalty = (
+                abs(math.log(aspect / 5.0)) * 0.45
+                if kind == "prominent_cta"
+                else min(abs(math.log(aspect)), abs(math.log(aspect / 2.0)))
+            )
+            proposal_size = (
+                box_height if kind == "prominent_cta" else math.sqrt(box_width * box_height)
+            )
             size_penalty = abs(math.log(max(proposal_size, 1) / target_size))
             score = distance + shape_penalty * 1.1 + size_penalty * 0.85
-            if min(box_width, box_height) < 14:
+            if kind == "compact_control" and min(box_width, box_height) < 14:
                 score += 1.2
             if source == "color":
                 score -= 0.35
@@ -399,8 +425,10 @@ def ground_selected_control_bbox(
     selector: CandidateSelector | None = None,
     ocr_anchors: Iterable[OCRAnchor] | None = None,
     ocr_provider: OCRProvider | None = None,
+    rule_id: str = "DA-04",
+    candidate_kind: CandidateKind = "compact_control",
 ) -> GroundingResult:
-    """Resolve an approximate DA-04 box to a deterministic control proposal."""
+    """Resolve an approximate model box to a deterministic UI proposal."""
 
     path = Path(image_path)
     try:
@@ -415,7 +443,12 @@ def ground_selected_control_bbox(
         else extract_ocr_anchors(path, ocr_provider)
     )
     anchor = _best_anchor(element_text, anchors)
-    candidates, roi = generate_control_candidates(image, approximate_bbox, anchor)
+    candidates, roi = generate_control_candidates(
+        image,
+        approximate_bbox,
+        anchor,
+        kind=candidate_kind,
+    )
     if not candidates:
         return GroundingResult(approximate_bbox, 0.0, "model")
 
@@ -435,6 +468,8 @@ def ground_selected_control_bbox(
             payload = [
                 {
                     "candidate_id": candidate.candidate_id,
+                    "rule_id": rule_id,
+                    "kind": candidate_kind,
                     "sources": list(candidate.sources),
                 }
                 for candidate in candidates
@@ -466,3 +501,20 @@ def ground_selected_control_bbox(
                 source = "set-of-mark+" + source
 
     return GroundingResult(selected.bbox, confidence, source, selected.candidate_id)
+
+
+def ground_text_bbox(
+    approximate_bbox: NormalizedBBox,
+    element_text: str,
+    ocr_anchors: Iterable[OCRAnchor],
+) -> GroundingResult:
+    """Use a semantically matching OCR line as a related-element bbox."""
+
+    anchor = _best_anchor(element_text, ocr_anchors)
+    if anchor is None:
+        return GroundingResult(approximate_bbox, 0.0, "model")
+    return GroundingResult(
+        anchor.bbox,
+        min(0.95, max(0.55, anchor.confidence)),
+        "ocr-text",
+    )

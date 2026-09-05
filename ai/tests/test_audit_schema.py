@@ -6,6 +6,7 @@ from pathlib import Path
 from ai.evaluation import Evaluator
 from ai.pipeline.baseline import BaselineAuditPipeline
 from ai.schemas.audit_schema import AuditScreen, LLMAuditOutput, LLMAuditRequest, SCHEMA_VERSION
+from ai.vision.ocr import NullOCR
 
 
 GOLDEN_PATH = Path(__file__).with_name("golden_cases.jsonl")
@@ -263,6 +264,41 @@ class AuditSchemaTest(unittest.TestCase):
             ).analyze(request)
             self.assertEqual(result.semantic_findings[0].rule_id, "DA-04")
             self.assertIn("스크린샷 전용 시각 판정", provider.audit_prompt)
+
+    def test_screenshot_da03_bbox_snaps_to_prominent_cta(self):
+        image = Path(__file__).resolve().parents[2] / "frontend/public/sample-audit/03-consent-pressure.png"
+        request = LLMAuditRequest(
+            "audit_1", (AuditScreen("screen_01", "약관 동의", image),)
+        )
+        finding = detection(
+            risk_type="VISUAL_HIERARCHY_DISTORTION",
+            risk_name="잘못된 계층구조",
+            rule_id="DA-03",
+            severity="HIGH",
+            bbox=[0.05, 0.84, 0.9, 0.08],
+            related_elements=[{
+                "screen_id": "screen_01",
+                "element": "혜택을 포기하고 가입하기",
+                "bbox": [0.36, 0.93, 0.28, 0.03],
+            }],
+        )
+        finding["where"]["element"] = "동의하고 혜택 지키기 버튼"
+        provider = FakeProvider(hybrid_output(
+            semantic_findings=[finding],
+            screens=[{"screen_id": "screen_01", "flow_step": "약관 동의"}],
+        ))
+
+        result = BaselineAuditPipeline(
+            provider,
+            allow_visual_fallback=True,
+            ocr_provider=NullOCR(),
+        ).analyze(request)
+
+        left, top, width, height = result.semantic_findings[0].bbox
+        self.assertAlmostEqual(left, 24 / 390, delta=0.01)
+        self.assertAlmostEqual(top, 688 / 844, delta=0.01)
+        self.assertAlmostEqual(width, 342 / 390, delta=0.01)
+        self.assertAlmostEqual(height, 64 / 844, delta=0.01)
 
     def test_wrong_severity_is_corrected_instead_of_failing_the_run(self):
         """

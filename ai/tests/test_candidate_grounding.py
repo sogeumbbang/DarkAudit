@@ -51,6 +51,22 @@ class CandidateGroundingTests(unittest.TestCase):
         self.assertAlmostEqual(height, 28 / 844, delta=0.01)
         self.assertGreaterEqual(len(candidates[0].sources), 2)
 
+    def test_coarse_da03_box_snaps_to_full_cta(self) -> None:
+        sample = SAMPLE.with_name("03-consent-pressure.png")
+        with Image.open(sample) as image:
+            candidates, _ = generate_control_candidates(
+                image,
+                (0.05, 0.84, 0.9, 0.08),
+                kind="prominent_cta",
+            )
+
+        left, top, width, height = candidates[0].bbox
+        self.assertAlmostEqual(left, 24 / 390, delta=0.01)
+        self.assertAlmostEqual(top, 688 / 844, delta=0.01)
+        self.assertAlmostEqual(width, 342 / 390, delta=0.01)
+        self.assertAlmostEqual(height, 64 / 844, delta=0.01)
+        self.assertGreaterEqual(len(candidates[0].sources), 2)
+
     def test_set_of_mark_selection_uses_candidate_bbox_and_hides_coordinates(self) -> None:
         seen_payload = []
 

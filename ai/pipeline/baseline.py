@@ -13,7 +13,11 @@ from ai.schemas.audit_schema import (
     LLMAuditRequest,
     RuleCandidate,
 )
-from ai.vision.candidate_grounding import extract_ocr_anchors, ground_selected_control_bbox
+from ai.vision.candidate_grounding import (
+    extract_ocr_anchors,
+    ground_selected_control_bbox,
+    ground_text_bbox,
+)
 from ai.vision.ocr import OCRProvider, create_ocr_provider
 from .response_parser import drop_disallowed_semantic_findings, parse_hybrid_response
 
@@ -131,7 +135,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
         output: HybridAuditOutput,
         request: LLMAuditRequest,
     ) -> tuple[HybridAuditOutput, list[dict[str, Any]]]:
-        """Replace model-generated DA-04 coordinates with selected pixel proposals."""
+        """Replace model-generated compact-control/CTA boxes with pixel proposals."""
 
         screens = {screen.screen_id: screen for screen in request.screens}
         provider_selector = getattr(self.provider, "select_bbox_candidate", None)
@@ -140,7 +144,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
         telemetry: list[dict[str, Any]] = []
         anchor_cache: dict[Path, list] = {}
         for finding in output.semantic_findings:
-            if finding.rule_id != "DA-04":
+            if finding.rule_id not in {"DA-03", "DA-04"}:
                 findings.append(finding)
                 continue
             screen = screens.get(finding.where.screen_ids[-1])
@@ -168,21 +172,55 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                 grounding_text,
                 selector=selector,
                 ocr_anchors=anchors,
+                rule_id=finding.rule_id,
+                candidate_kind=(
+                    "prominent_cta" if finding.rule_id == "DA-03" else "compact_control"
+                ),
             )
             # A weak automatic proposal is less trustworthy than the model's own
             # evidence anchor.  Set-of-Mark selections and OCR-backed proposals
             # clear this threshold; CV-only guesses remain telemetry/fallback.
             applied = grounded.confidence >= 0.5 and grounded.bbox != finding.bbox
-            findings.append(replace(finding, bbox=grounded.bbox) if applied else finding)
+            updated = replace(finding, bbox=grounded.bbox) if applied else finding
             telemetry.append({
                 "rule_id": finding.rule_id,
                 "screen_id": screen.screen_id,
+                "role": "primary",
                 "candidate_id": grounded.candidate_id,
                 "source": grounded.source,
                 "confidence": grounded.confidence,
                 "ocr_anchor_count": len(anchors),
                 "applied": applied,
             })
+            if finding.rule_id == "DA-03":
+                related_elements = []
+                for related in updated.related_elements:
+                    related_grounding = ground_text_bbox(
+                        related.bbox,
+                        related.element,
+                        anchors,
+                    )
+                    related_applied = (
+                        related_grounding.confidence >= 0.5
+                        and related_grounding.bbox != related.bbox
+                    )
+                    related_elements.append(
+                        replace(related, bbox=related_grounding.bbox)
+                        if related_applied
+                        else related
+                    )
+                    telemetry.append({
+                        "rule_id": finding.rule_id,
+                        "screen_id": related.screen_id,
+                        "role": "related",
+                        "candidate_id": related_grounding.candidate_id,
+                        "source": related_grounding.source,
+                        "confidence": related_grounding.confidence,
+                        "ocr_anchor_count": len(anchors),
+                        "applied": related_applied,
+                    })
+                updated = replace(updated, related_elements=tuple(related_elements))
+            findings.append(updated)
         if tuple(findings) == output.semantic_findings:
             return output, telemetry
         return HybridAuditOutput(

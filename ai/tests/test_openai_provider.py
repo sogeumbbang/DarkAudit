@@ -118,6 +118,20 @@ class OpenAIProviderTest(unittest.TestCase):
             prompt = responses.kwargs["input"][0]["content"][0]["text"]
             self.assertNotIn('"bbox"', prompt)
 
+            provider.select_bbox_candidate(
+                image,
+                "동의하고 혜택 지키기 버튼",
+                [{
+                    "candidate_id": "C1",
+                    "rule_id": "DA-03",
+                    "kind": "prominent_cta",
+                    "sources": ["color", "edge"],
+                }],
+            )
+            cta_schema = responses.kwargs["text"]["format"]["schema"]
+            self.assertEqual(cta_schema["properties"]["rule_id"]["const"], "DA-03")
+            self.assertIn("prominent filled CTA", responses.kwargs["instructions"])
+
     def test_other_errors_are_not_swallowed(self):
         """인증 실패 같은 오류까지 temperature 문제로 오인해 재시도하면 안 된다."""
         with tempfile.TemporaryDirectory() as directory:

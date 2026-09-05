@@ -34,6 +34,20 @@ const finding: FindingDto = {
     height: 28,
     coordinateSystem: "image",
   },
+  relatedElements: [
+    {
+      screenId: "screen-01",
+      description: "대립 선택지",
+      bbox: {
+        screenId: "screen-01",
+        x: 140,
+        y: 785,
+        width: 109,
+        height: 25,
+        coordinateSystem: "image",
+      },
+    },
+  ],
 };
 
 describe("ScreenCanvas", () => {
@@ -46,5 +60,6 @@ describe("ScreenCanvas", () => {
     expect(mark).toHaveClass("outline-2", "outline-solid", "outline-offset-2", "outline-danger");
     expect(mark).not.toHaveClass("border-2", "bg-danger/10");
     expect(label).toHaveClass("bottom-full", "mb-1");
+    expect(screen.getByText("관련")).toHaveClass("top-full", "mt-1");
   });
 });

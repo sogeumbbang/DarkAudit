@@ -186,11 +186,13 @@ export function ScreenCanvas({
               >
                 {/*
                 라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
-                커져 실제 근거를 가린다. 항상 박스 위쪽 바깥에 간격을 두고 붙인다.
+                커져 실제 근거를 가린다. 주 근거는 위쪽, 관련 근거는 아래쪽 바깥에
+                붙여 가까운 두 박스의 라벨도 서로 겹치지 않게 한다.
               */}
                 <span
                   className={cn(
-                    "absolute bottom-full left-0 z-10 mb-1 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
+                    "absolute left-0 z-10 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
+                    box.tone === "related" ? "top-full mt-1" : "bottom-full mb-1",
                     BADGE[box.severity],
                     box.tone === "related" && "opacity-80",
                   )}

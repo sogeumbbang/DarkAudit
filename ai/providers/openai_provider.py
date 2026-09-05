@@ -149,6 +149,16 @@ class OpenAIResponsesProvider:
         candidate_ids = [str(item["candidate_id"]) for item in candidates]
         if not candidate_ids:
             return None
+        rule_id = str(candidates[0].get("rule_id") or "DA-04")
+        candidate_kind = str(candidates[0].get("kind") or "compact_control")
+        target_instruction = (
+            "Select the one marked candidate that tightly bounds the prominent filled CTA button. "
+            "Do not select its text alone, a surrounding card, or the weaker counterpart link."
+            if candidate_kind == "prominent_cta"
+            else "Select the one marked candidate that tightly bounds the actual checkbox, radio, "
+            "or toggle showing the selected state. Do not select an option card, text, price, "
+            "badge, or decorative icon."
+        )
         schema = {
             "type": "object",
             "additionalProperties": False,
@@ -159,7 +169,7 @@ class OpenAIResponsesProvider:
                 "reason",
             ],
             "properties": {
-                "rule_id": {"const": "DA-04"},
+                "rule_id": {"const": rule_id},
                 "selected_candidate_id": {"enum": [*candidate_ids, "NONE"]},
                 "semantic_confidence": {"type": "number", "minimum": 0, "maximum": 1},
                 "reason": {"type": "string"},
@@ -168,9 +178,9 @@ class OpenAIResponsesProvider:
         response = self._create(
             model=self.model,
             instructions=(
-                "You are a GUI grounding verifier. Select the one marked candidate that tightly "
-                "bounds the actual checkbox, radio, or toggle showing the selected state. "
-                "Do not select an option card, text, price, badge, or decorative icon. "
+                "You are a GUI grounding verifier. "
+                + target_instruction
+                + " "
                 "Return NONE when no candidate is the control itself. Never calculate coordinates."
             ),
             input=[{

@@ -21,7 +21,10 @@ from pathlib import Path
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from ai.vision.bbox_refinement import refine_selected_control_bbox
+from ai.vision.bbox_refinement import (
+    refine_prominent_cta_bbox,
+    refine_selected_control_bbox,
+)
 from backend.app.models import (
     Audit, AuditRun, Base, Element, Evidence, Finding,
     FindingRelatedElement, RunStatus, Screen, Severity,
@@ -106,7 +109,7 @@ def _primary_bbox(
     screen_ext: str,
     screens: dict[int, Screen],
 ) -> BBox | None:
-    """Return a tighter visual anchor for screenshot-only DA-04 findings.
+    """Return a tighter visual anchor for legacy screenshot-only findings.
 
     DOM captures already contain exact browser geometry. Uploaded screenshots do
     not, so the model's coarse DA-04 box is snapped to a nearby selected control.
@@ -115,7 +118,7 @@ def _primary_bbox(
     """
 
     element = finding.primary_element
-    if element is None or finding.rule_id != "DA-04" or element.source != "vision":
+    if element is None or element.source != "vision" or finding.rule_id not in {"DA-03", "DA-04"}:
         return _bbox(element, screen_ext, screens)
     screen = screens.get(element.screen_id)
     if screen is None or not screen.image_path or not screen.image_path.startswith("/artifacts/"):
@@ -123,7 +126,11 @@ def _primary_bbox(
 
     original = (element.bbox_x, element.bbox_y, element.bbox_w, element.bbox_h)
     image_path = DATA_DIR / screen.image_path.removeprefix("/artifacts/")
-    refined = refine_selected_control_bbox(str(image_path), original)
+    refined = (
+        refine_prominent_cta_bbox(str(image_path), original)
+        if finding.rule_id == "DA-03"
+        else refine_selected_control_bbox(str(image_path), original)
+    )
     if refined == original:
         return _bbox(element, screen_ext, screens)
 

@@ -64,6 +64,17 @@ class PrimaryBBoxTests(unittest.TestCase):
         )
         refine.assert_not_called()
 
+    @patch("backend.api.store.refine_prominent_cta_bbox")
+    def test_legacy_visual_da03_uses_cta_refinement(self, refine) -> None:
+        self.finding.rule_id = "DA-03"
+        refine.return_value = (0.061538, 0.815166, 0.876923, 0.075829)
+
+        result = _primary_bbox(self.finding, "screen-02", {7: self.screen})
+
+        self.assertIsNotNone(result)
+        self.assertEqual((result.x, result.y, result.width, result.height), refine.return_value)
+        refine.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
