@@ -8,18 +8,16 @@ one stable candidate id.
 
 from __future__ import annotations
 
-import csv
-import io
 import math
-import os
 import re
-import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+
+from .ocr import OCRProvider, OCRResult, create_ocr_provider
 
 NormalizedBBox = tuple[float, float, float, float]
 CandidateSelector = Callable[[Path, str, list[dict[str, object]]], dict[str, object] | None]
@@ -52,79 +50,52 @@ def _normalize_text(value: str) -> str:
     return "".join(re.findall(r"[0-9A-Za-z가-힣]+", value.casefold()))
 
 
-def _parse_tesseract_tsv(payload: str, width: int, height: int) -> list[OCRAnchor]:
-    """Collapse Tesseract words into line anchors with normalized coordinates."""
-
-    groups: dict[tuple[str, str, str, str], list[dict[str, str]]] = {}
-    reader = csv.DictReader(io.StringIO(payload), delimiter="\t")
-    for row in reader:
-        text = (row.get("text") or "").strip()
-        try:
-            confidence = float(row.get("conf") or -1)
-            left = int(row.get("left") or 0)
-            top = int(row.get("top") or 0)
-            box_width = int(row.get("width") or 0)
-            box_height = int(row.get("height") or 0)
-        except ValueError:
-            continue
-        if not text or confidence < 0 or box_width <= 0 or box_height <= 0:
-            continue
-        key = tuple(row.get(name) or "0" for name in ("page_num", "block_num", "par_num", "line_num"))
-        groups.setdefault(key, []).append({
-            "text": text,
-            "conf": str(confidence),
-            "left": str(left),
-            "top": str(top),
-            "width": str(box_width),
-            "height": str(box_height),
-        })
+def ocr_result_to_anchors(
+    result: OCRResult,
+    width: int,
+    height: int,
+) -> list[OCRAnchor]:
+    """Normalize OCR provider output once, at the CV pipeline boundary."""
 
     anchors: list[OCRAnchor] = []
-    for words in groups.values():
-        left = min(int(word["left"]) for word in words)
-        top = min(int(word["top"]) for word in words)
-        right = max(int(word["left"]) + int(word["width"]) for word in words)
-        bottom = max(int(word["top"]) + int(word["height"]) for word in words)
+    if width <= 0 or height <= 0:
+        return anchors
+    for block in result.blocks:
+        if block.bbox is None or not block.text.strip():
+            continue
+        left, top, box_width, box_height = block.bbox
+        if box_width <= 0 or box_height <= 0:
+            continue
+        normalized_left = min(1.0, max(0.0, left / width))
+        normalized_top = min(1.0, max(0.0, top / height))
         anchors.append(OCRAnchor(
-            " ".join(word["text"] for word in words),
-            (left / width, top / height, (right - left) / width, (bottom - top) / height),
-            sum(float(word["conf"]) for word in words) / (100 * len(words)),
+            block.text,
+            (
+                normalized_left,
+                normalized_top,
+                min(1.0 - normalized_left, box_width / width),
+                min(1.0 - normalized_top, box_height / height),
+            ),
+            min(1.0, max(0.0, block.confidence)),
         ))
     return anchors
 
 
-def extract_ocr_anchors(image_path: str | Path) -> list[OCRAnchor]:
-    """Read Korean/English OCR boxes when Tesseract is available.
-
-    OCR is an accuracy signal, not an availability dependency.  Local developer
-    machines may omit Tesseract; the production Docker image installs it.
-    """
+def extract_ocr_anchors(
+    image_path: str | Path,
+    provider: OCRProvider | None = None,
+) -> list[OCRAnchor]:
+    """Extract OCR geometry through the shared provider interface."""
 
     path = Path(image_path)
     try:
         with Image.open(path) as image:
             width, height = image.size
-        completed = subprocess.run(
-            [
-                os.getenv("DARKAUDIT_TESSERACT_COMMAND", "tesseract"),
-                str(path),
-                "stdout",
-                "-l",
-                os.getenv("DARKAUDIT_TESSERACT_LANG", "kor+eng"),
-                "--psm",
-                "11",
-                "tsv",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
-    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        result = (provider or create_ocr_provider()).extract(path)
+    except Exception:
+        # OCR enriches localization but must not make the main visual audit fail.
         return []
-    if completed.returncode != 0:
-        return []
-    return _parse_tesseract_tsv(completed.stdout, width, height)
+    return ocr_result_to_anchors(result, width, height)
 
 
 def _text_similarity(needle: str, haystack: str) -> float:
@@ -230,7 +201,7 @@ def _proposal_masks(image: Image.Image) -> list[tuple[str, Image.Image]]:
     contrast = Image.new("L", gray.size)
     contrast.putdata([
         255 if abs(pixel - background) >= 24 else 0
-        for pixel, background in zip(gray.getdata(), local.getdata(), strict=True)
+        for pixel, background in zip(gray.tobytes(), local.tobytes(), strict=True)
     ])
     contrast = contrast.filter(ImageFilter.MaxFilter(3))
     return [("color", chromatic), ("edge", edges), ("contrast", contrast)]
@@ -259,8 +230,11 @@ def generate_control_candidates(
     image_width, image_height = image.size
     roi = _roi_for(approximate_bbox, anchor, image_width, image_height)
     crop = image.crop(roi)
-    scale = min(1.0, 1000 / max(crop.size))
-    working = crop if scale == 1 else crop.resize(
+    # Small controls receive real pixels before feature extraction.  Most mobile
+    # crops end up near 1000 px on their longest side; very small crops are capped
+    # at 4x to avoid inventing excessive interpolation detail.
+    scale = min(4.0, 1000 / max(crop.size))
+    working = crop if abs(scale - 1.0) < 0.01 else crop.resize(
         (max(1, round(crop.width * scale)), max(1, round(crop.height * scale))),
         Image.Resampling.LANCZOS,
     )
@@ -273,7 +247,11 @@ def generate_control_candidates(
         approximate_x + approximate_width / 2,
         approximate_y + approximate_height / 2,
     )
-    target_size = min(64.0, max(16.0, image_width * 0.065))
+    target_size = min(48.0, max(16.0, image_width * 0.065))
+    coarse_region = (
+        approximate_width >= target_size * 3
+        or approximate_height >= target_size * 3
+    )
 
     anchor_pixels = _pixel_box(anchor.bbox, image_width, image_height) if anchor is not None else None
     for source, mask in _proposal_masks(working):
@@ -295,12 +273,31 @@ def generate_control_candidates(
             absolute_top = roi[1] + top / scale
             center_x = absolute_left + box_width / 2
             center_y = absolute_top + box_height / 2
-            distance = math.hypot(
-                center_x - approximate_center[0], center_y - approximate_center[1]
-            ) / max(target_size, 1)
+            if coarse_region:
+                # A model may return an option-card box rather than its control.
+                # Every proposal inside that card is equally local; shape and OCR
+                # alignment must decide instead of distance from the card center.
+                dx = max(
+                    approximate_x - center_x,
+                    0,
+                    center_x - (approximate_x + approximate_width),
+                )
+                dy = max(
+                    approximate_y - center_y,
+                    0,
+                    center_y - (approximate_y + approximate_height),
+                )
+                distance = math.hypot(dx, dy) / max(target_size, 1)
+            else:
+                distance = math.hypot(
+                    center_x - approximate_center[0], center_y - approximate_center[1]
+                ) / max(target_size, 1)
             shape_penalty = min(abs(math.log(aspect)), abs(math.log(aspect / 2.0)))
-            size_penalty = abs(math.log(max(box_height, 1) / target_size))
-            score = distance + shape_penalty * 0.7 + size_penalty * 0.55
+            proposal_size = math.sqrt(box_width * box_height)
+            size_penalty = abs(math.log(max(proposal_size, 1) / target_size))
+            score = distance + shape_penalty * 1.1 + size_penalty * 0.85
+            if min(box_width, box_height) < 14:
+                score += 1.2
             if source == "color":
                 score -= 0.35
             if anchor_pixels is not None:
@@ -326,16 +323,23 @@ def generate_control_candidates(
     proposals.sort(key=lambda item: item[1])
     merged: list[tuple[NormalizedBBox, float, set[str]]] = []
     for bbox, score, source in proposals:
-        duplicate = next(
-            (item for item in merged if _intersection_over_union(bbox, item[0]) >= 0.62),
+        duplicate_index = next(
+            (
+                index
+                for index, item in enumerate(merged)
+                if _intersection_over_union(bbox, item[0]) >= 0.62
+            ),
             None,
         )
-        if duplicate is not None:
-            duplicate[2].add(source)
+        if duplicate_index is not None:
+            previous_bbox, previous_score, sources = merged[duplicate_index]
+            sources.add(source)
+            merged[duplicate_index] = (previous_bbox, min(previous_score, score), sources)
             continue
         merged.append((bbox, score, {source}))
-        if len(merged) >= limit:
-            break
+
+    merged.sort(key=lambda item: item[1] - 0.3 * (len(item[2]) - 1))
+    merged = merged[:limit]
 
     candidates = [
         GroundingCandidate(
@@ -368,8 +372,20 @@ def _draw_marked_crop(
         top = round((y - roi[1]) * scale)
         right = round((x + width - roi[0]) * scale)
         bottom = round((y + height - roi[1]) * scale)
-        draw.rectangle((left, top, right, bottom), outline=(220, 38, 38), width=3)
-        badge = (left, max(0, top - 20), left + 28, max(18, top))
+        # Keep the mark outside the proposal so the verifier can still see a
+        # checkbox border/check glyph only a few pixels wide.
+        gap = 4
+        mark = (
+            max(0, left - gap),
+            max(0, top - gap),
+            min(marked.width - 1, right + gap),
+            min(marked.height - 1, bottom + gap),
+        )
+        draw.rectangle(mark, outline=(220, 38, 38), width=3)
+        if mark[1] >= 22:
+            badge = (mark[0], mark[1] - 20, mark[0] + 28, mark[1] - 2)
+        else:
+            badge = (mark[0], mark[3] + 2, mark[0] + 28, mark[3] + 20)
         draw.rounded_rectangle(badge, radius=4, fill=(185, 28, 28))
         draw.text((badge[0] + 4, badge[1] + 2), candidate.candidate_id, fill="white", font=font)
     marked.save(output_path, format="PNG")
@@ -382,6 +398,7 @@ def ground_selected_control_bbox(
     *,
     selector: CandidateSelector | None = None,
     ocr_anchors: Iterable[OCRAnchor] | None = None,
+    ocr_provider: OCRProvider | None = None,
 ) -> GroundingResult:
     """Resolve an approximate DA-04 box to a deterministic control proposal."""
 
@@ -392,14 +409,24 @@ def ground_selected_control_bbox(
     except (OSError, ValueError):
         return GroundingResult(approximate_bbox, 0.0, "model")
 
-    anchors = list(ocr_anchors) if ocr_anchors is not None else extract_ocr_anchors(path)
+    anchors = (
+        list(ocr_anchors)
+        if ocr_anchors is not None
+        else extract_ocr_anchors(path, ocr_provider)
+    )
     anchor = _best_anchor(element_text, anchors)
     candidates, roi = generate_control_candidates(image, approximate_bbox, anchor)
     if not candidates:
         return GroundingResult(approximate_bbox, 0.0, "model")
 
     selected = candidates[0]
-    confidence = 0.58 if anchor is not None else 0.45
+    agreement = min(3, len(selected.sources))
+    confidence = 0.4 + agreement * 0.1
+    if selected.score <= 1.0:
+        confidence += 0.08
+    if anchor is not None:
+        confidence += 0.12
+    confidence = min(0.82, confidence)
     source = "cv-ocr" if anchor is not None else "cv"
     if selector is not None:
         with tempfile.TemporaryDirectory(prefix="darkaudit-grounding-") as directory:
@@ -408,7 +435,6 @@ def ground_selected_control_bbox(
             payload = [
                 {
                     "candidate_id": candidate.candidate_id,
-                    "bbox": list(candidate.bbox),
                     "sources": list(candidate.sources),
                 }
                 for candidate in candidates
@@ -418,11 +444,23 @@ def ground_selected_control_bbox(
             except Exception:
                 decision = None
         if decision is not None:
-            requested = str(decision.get("candidate_id") or "")
+            requested = str(
+                decision.get("selected_candidate_id")
+                or decision.get("candidate_id")
+                or ""
+            )
+            if requested == "NONE":
+                return GroundingResult(
+                    approximate_bbox,
+                    0.0,
+                    "set-of-mark-rejected",
+                )
             matched = next((item for item in candidates if item.candidate_id == requested), None)
             if matched is not None:
                 selected = matched
-                raw_confidence = decision.get("confidence", 0.0)
+                raw_confidence = decision.get(
+                    "semantic_confidence", decision.get("confidence", 0.0)
+                )
                 if isinstance(raw_confidence, (int, float)) and not isinstance(raw_confidence, bool):
                     confidence = min(1.0, max(0.0, float(raw_confidence)))
                 source = "set-of-mark+" + source

@@ -152,10 +152,16 @@ class OpenAIResponsesProvider:
         schema = {
             "type": "object",
             "additionalProperties": False,
-            "required": ["candidate_id", "confidence", "reason"],
+            "required": [
+                "rule_id",
+                "selected_candidate_id",
+                "semantic_confidence",
+                "reason",
+            ],
             "properties": {
-                "candidate_id": {"enum": [*candidate_ids, "NONE"]},
-                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "rule_id": {"const": "DA-04"},
+                "selected_candidate_id": {"enum": [*candidate_ids, "NONE"]},
+                "semantic_confidence": {"type": "number", "minimum": 0, "maximum": 1},
                 "reason": {"type": "string"},
             },
         }
@@ -203,7 +209,4 @@ class OpenAIResponsesProvider:
         }
         if not getattr(response, "output_text", None):
             return None
-        result = json.loads(response.output_text)
-        if result.get("candidate_id") == "NONE":
-            return None
-        return result
+        return json.loads(response.output_text)

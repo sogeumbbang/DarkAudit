@@ -17,6 +17,12 @@ const BORDER: Record<FindingSeverity, string> = {
   LOW: "border-brand-500",
 };
 
+const OUTLINE: Record<FindingSeverity, string> = {
+  HIGH: "outline-danger",
+  REVIEW: "outline-warning",
+  LOW: "outline-brand-500",
+};
+
 const FILL: Record<FindingSeverity, string> = {
   HIGH: "bg-danger/10",
   REVIEW: "bg-warning/10",
@@ -65,6 +71,13 @@ function toPercentBox(bbox: BBoxDto, natural: { width: number; height: number })
     width: `${pct(bbox.width, natural.width)}%`,
     height: `${pct(bbox.height, natural.height)}%`,
   };
+}
+
+function isCompactControl(bbox: BBoxDto, natural: { width: number; height: number }) {
+  const width = bbox.coordinateSystem === "normalized" ? bbox.width * natural.width : bbox.width;
+  const height =
+    bbox.coordinateSystem === "normalized" ? bbox.height * natural.height : bbox.height;
+  return width <= 64 && height <= 64;
 }
 
 /**
@@ -156,35 +169,37 @@ export function ScreenCanvas({
           className="pointer-events-none absolute"
           style={{ height: rect.height, left: rect.left, top: rect.top, width: rect.width }}
         >
-          {highlights.map((box) => (
-            <div
-              className={cn(
-                "absolute rounded-[3px] border-2",
-                BORDER[box.severity],
-                box.tone === "primary" ? FILL[box.severity] : "border-dashed",
-              )}
-              key={box.key}
-              style={toPercentBox(box.bbox, natural)}
-            >
-              {/*
-                라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
-                커져 삐져나온다. 박스 위쪽 바깥에 붙이되, 위 여백이 없는 경우
-                (화면 최상단 요소)에는 안쪽으로 되돌린다.
-              */}
-              <span
+          {highlights.map((box) => {
+            const compact = isCompactControl(box.bbox, natural);
+            return (
+              <div
                 className={cn(
-                  "absolute left-0 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
-                  parseFloat(String(toPercentBox(box.bbox, natural).top)) > 4
-                    ? "bottom-full mb-0.5"
-                    : "top-0",
-                  BADGE[box.severity],
-                  box.tone === "related" && "opacity-80",
+                  "absolute rounded-[3px]",
+                  compact
+                    ? ["outline-2 outline-solid outline-offset-2", OUTLINE[box.severity]]
+                    : ["border-2", BORDER[box.severity]],
+                  !compact && box.tone === "primary" && FILL[box.severity],
+                  box.tone === "related" && !compact && "border-dashed",
                 )}
+                key={box.key}
+                style={toPercentBox(box.bbox, natural)}
               >
-                {box.label}
-              </span>
-            </div>
-          ))}
+                {/*
+                라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
+                커져 실제 근거를 가린다. 항상 박스 위쪽 바깥에 간격을 두고 붙인다.
+              */}
+                <span
+                  className={cn(
+                    "absolute bottom-full left-0 z-10 mb-1 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
+                    BADGE[box.severity],
+                    box.tone === "related" && "opacity-80",
+                  )}
+                >
+                  {box.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </>

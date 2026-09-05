@@ -25,11 +25,18 @@
 | 입력 | 화면 확보 | Rule Engine | LLM이 새로 만들 수 있는 Finding |
 | --- | --- | --- | --- |
 | URL 캡처 | Playwright 캡처 + DOM 추출 | 후보 생성 | 의미 판단이 필요한 `DA-03`, `DA-12`만 |
-| 스크린샷 업로드 · Figma | 이미지만 | 후보 없음 | 전체 (DOM이 없어 시각 판단에 의존) |
+| 스크린샷 업로드 · Figma | 이미지 + OCR/CV UI 후보 | 후보 우선 bbox grounding | 전체 (DOM이 없어 의미 판정은 시각 정보에 의존) |
 
 URL 경로는 deterministic 규칙을 Rule Engine 후보로만 다룹니다. 모델이 이 정책을 벗어난
 Finding을 내면 해당 항목만 버리고 나머지 판정으로 진행하며, 버린 규칙은 경고 로그와
 `last_run_telemetry["dropped_semantic_rule_ids"]`에 남습니다.
+
+이미지 경로의 작은 컨트롤은 모델이 만든 좌표를 그대로 쓰지 않습니다. 한국어/영어 OCR
+라벨을 앵커로 삼고 색상·명암·edge·shape 채널에서 후보를 만든 뒤, 확대 crop에 C1, C2…
+표식을 붙여 모델이 후보 ID만 고르게 합니다. 최종 bbox는 선택된 CV 후보의 원본 픽셀
+좌표를 사용합니다. OCR은 기본적으로 Tesseract(`kor+eng`)를 사용하며 Docker 이미지에는
+필요 패키지가 포함되어 있습니다. 로컬에 Tesseract가 없어도 OCR 없는 다중 CV 후보로
+계속 분석하고, 명시적으로 끄려면 `DARKAUDIT_OCR_PROVIDER=none`을 설정합니다.
 
 백엔드와 AI 분석기는 Audit 하나당 순서가 있는 이미지 **1~5개**를 처리합니다.
 데이터는 SQLite(`data/darkaudit.db`, `DARKAUDIT_DB_URL`로 변경 가능)에 저장되고
