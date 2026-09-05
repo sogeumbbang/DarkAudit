@@ -4,6 +4,10 @@ const API_BASE_URL = (
   configuredApiBaseUrl || (import.meta.env.PROD ? DEPLOYED_API_BASE_URL : "")
 ).replace(/\/$/, "");
 const DEFAULT_TIMEOUT_MS = 30_000;
+const API_WARMUP_TIMEOUT_MS = 120_000;
+const API_WARMUP_FRESH_MS = 10 * 60_000;
+let warmupPromise: Promise<void> | undefined;
+let lastReadyAt = 0;
 
 export type ApiErrorBody = {
   message?: string;
@@ -23,6 +27,47 @@ export class ApiError extends Error {
 
 export function resolveApiUrl(value: string) {
   return value.startsWith("/") && API_BASE_URL ? `${API_BASE_URL}${value}` : value;
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function probeApiUntilReady() {
+  const deadline = Date.now() + API_WARMUP_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const controller = new AbortController();
+    const remaining = deadline - Date.now();
+    const timeoutId = window.setTimeout(() => controller.abort(), Math.min(45_000, remaining));
+    try {
+      const response = await fetch(resolveApiUrl("/health"), {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (response.ok) {
+        lastReadyAt = Date.now();
+        return;
+      }
+    } catch {
+      // Render가 슬립 또는 재배포 중이면 연결 실패/502/timeout이 번갈아 날 수 있다.
+      // 전체 준비 제한 안에서 health를 다시 호출해 실제 생성 POST는 중복하지 않는다.
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+    if (Date.now() < deadline) await wait(Math.min(2_000, deadline - Date.now()));
+  }
+  throw new ApiError("서버를 시작하는 데 시간이 걸리고 있습니다. 잠시 후 다시 시도해주세요.", 503);
+}
+
+export function warmUpApi() {
+  if (!API_BASE_URL || import.meta.env.VITE_USE_MOCKS === "true") return Promise.resolve();
+  if (Date.now() - lastReadyAt < API_WARMUP_FRESH_MS) return Promise.resolve();
+  if (!warmupPromise) {
+    warmupPromise = probeApiUntilReady().finally(() => {
+      warmupPromise = undefined;
+    });
+  }
+  return warmupPromise;
 }
 
 function errorMessage(body?: ApiErrorBody) {

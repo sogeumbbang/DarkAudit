@@ -8,13 +8,14 @@ import {
   LoaderCircle,
   Play,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { warmUpApi } from "@/api/client";
 import type { AuditDto } from "@/entities/audit/types";
 import {
   useAnalysisStatus,
@@ -65,6 +66,10 @@ export function AuditCreatePage() {
   const [auditId, setAuditId] = useState<string>();
   const screenInputRef = useRef<HTMLInputElement>(null);
   const appInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    void warmUpApi().catch(() => undefined);
+  }, []);
 
   const createAudit = useCreateAudit();
   const captureUrl = useCaptureAuditUrl();
@@ -268,7 +273,11 @@ export function AuditCreatePage() {
           variant="outline"
           onClick={loadSampleScreens}
         >
-          {loadingSamples ? <LoaderCircle className="animate-spin" size={16} /> : <Play size={16} />}
+          {loadingSamples ? (
+            <LoaderCircle className="animate-spin" size={16} />
+          ) : (
+            <Play size={16} />
+          )}
           샘플 5장 불러오기
         </Button>
       </Card>
@@ -344,7 +353,8 @@ export function AuditCreatePage() {
           </Card>
           {requestFailed && (
             <p className="mt-4 rounded-control bg-danger/10 p-4 text-sm text-danger">
-              진단 요청을 처리하지 못했습니다: {requestError instanceof Error
+              진단 요청을 처리하지 못했습니다:{" "}
+              {requestError instanceof Error
                 ? requestError.message
                 : "입력값과 연동 설정을 확인해주세요."}
             </p>

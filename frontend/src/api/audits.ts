@@ -1,4 +1,4 @@
-import { apiRequest } from "@/api/client";
+import { apiRequest, warmUpApi } from "@/api/client";
 import { analysisJobSchema, auditSchema } from "@/api/schemas";
 import type {
   AnalyzeAndroidAppDto,
@@ -11,6 +11,7 @@ import type {
 } from "@/entities/audit/types";
 
 export async function createAudit(input: CreateAuditDto) {
+  await warmUpApi();
   return auditSchema.parse(
     await apiRequest<unknown>("/api/v1/audits", { method: "POST", body: JSON.stringify(input) }),
   );
