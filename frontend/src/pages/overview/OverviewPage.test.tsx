@@ -49,7 +49,19 @@ describe("OverviewPage", () => {
     const previewImage = screen.getByRole("img", { name: /캡처 화면 미리보기/ });
     const previewViewport = screen.getByTestId("screen-preview-viewport");
     const previewScrollArea = screen.getByTestId("screen-preview-scroll-area");
-    expect(previewViewport).toHaveClass("overflow-hidden");
+    expect(previewViewport).toHaveClass("overflow-auto", "scrollbar-hidden", "cursor-grab");
+    fireEvent.pointerDown(previewViewport, { button: 0, clientX: 100, clientY: 100, pointerId: 1 });
+    expect(previewViewport).toHaveClass("cursor-grabbing");
+    fireEvent.pointerUp(previewViewport, { pointerId: 1 });
+    fireEvent.pointerDown(previewViewport, {
+      button: -1,
+      clientX: 100,
+      clientY: 100,
+      pointerId: 2,
+      pointerType: "touch",
+    });
+    expect(previewViewport).toHaveClass("cursor-grabbing");
+    fireEvent.pointerUp(previewViewport, { pointerId: 2, pointerType: "touch" });
     await user.click(screen.getByRole("button", { name: "확대" }));
     expect(previewViewport).toHaveClass("overflow-auto");
     expect(previewViewport).toHaveClass("cursor-grab");
@@ -63,7 +75,7 @@ describe("OverviewPage", () => {
     fireEvent.pointerUp(previewViewport, { pointerId: 1 });
     expect(previewViewport).toHaveClass("cursor-grab");
     await user.click(screen.getByRole("button", { name: "배율 초기화" }));
-    expect(previewViewport).toHaveClass("overflow-hidden");
+    expect(previewViewport).toHaveClass("overflow-auto", "scrollbar-hidden");
     expect(previewScrollArea).toHaveStyle({ height: "100%", width: "100%" });
 
     await user.click(screen.getByRole("button", { name: /전체 흐름 보기/ }));
