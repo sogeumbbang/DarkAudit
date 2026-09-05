@@ -96,7 +96,15 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
     <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
       <h2 className="text-sm font-bold">화면 미리보기</h2>
       <div className="absolute inset-x-0 bottom-0 top-14 flex items-center justify-center overflow-auto bg-gradient-to-b from-white to-brand-50/60 p-5">
-        <div className="transition-transform" style={{ transform: `scale(${scale})` }}>
+        {/*
+          h-full 이 필요하다. 퍼센트 높이는 부모 높이가 확정돼야 계산되는데, 이
+          래퍼가 height:auto 면 안쪽 이미지의 max-h-full 이 무시돼 원본 크기로
+          렌더링되고 미리보기 영역을 넘쳐 잘린다.
+        */}
+        <div
+          className="flex h-full w-full items-center justify-center transition-transform"
+          style={{ transform: `scale(${scale})` }}
+        >
           <ScreenCanvas
             alt={`${screen.flowStep} 캡처 화면 미리보기`}
             className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
@@ -409,7 +417,7 @@ function DashboardLoading() {
 }
 
 export function OverviewPage() {
-  const { data, isPending, isError, refetch } = useDashboardSummary();
+  const { data, isPending, isError, error, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFlow, setShowFlow] = useState(false);
 
@@ -422,7 +430,9 @@ export function OverviewPage() {
       <Card className="mx-auto mt-20 max-w-lg p-10 text-center">
         <CircleAlert className="mx-auto text-danger" size={36} />
         <h1 className="mt-5 text-xl font-bold">대시보드를 불러오지 못했습니다</h1>
-        <p className="mt-2 text-sm text-muted">잠시 후 다시 시도해주세요.</p>
+        <p className="mt-2 text-sm text-muted">
+          {error instanceof Error ? error.message : "잠시 후 다시 시도해주세요."}
+        </p>
         <button
           className="mx-auto mt-6 flex items-center gap-2 rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
           onClick={() => refetch()}

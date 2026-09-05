@@ -264,6 +264,72 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertEqual(result.semantic_findings[0].rule_id, "DA-04")
             self.assertIn("스크린샷 전용 시각 판정", provider.audit_prompt)
 
+    def test_wrong_severity_is_corrected_instead_of_failing_the_run(self):
+        """
+        severity 와 risk_name 은 risk_type 만으로 결정되는 조회표 값이라 모델
+        답변에 정보가 없다. 상수 하나가 틀렸다고 진단 전체를 버리면 안 된다.
+        실제 배포에서 이 이유로 분석이 실패했다.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1", (AuditScreen("screen_01", "약관 동의", image),)
+            )
+            wrong = detection(screen_ids=["screen_01"])
+            wrong["severity"] = "HIGH"  # DA-12 의 Rule Base 값은 REVIEW 다
+            wrong["risk_name"] = "감정 자극"  # 조회표 값과 다른 이름
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[wrong],
+                    screens=[{"screen_id": "screen_01", "flow_step": "약관 동의"}],
+                )
+            )
+
+            result = BaselineAuditPipeline(provider).analyze(request)
+
+            finding = result.semantic_findings[0]
+            self.assertEqual(finding.rule_id, "DA-12")
+            self.assertEqual(finding.severity.value, "REVIEW")
+            self.assertEqual(finding.risk_name, "감정적 언어")
+
+    def test_url_source_drops_disallowed_semantic_finding_instead_of_failing(self):
+        """
+        URL 캡처 경로에서는 deterministic 규칙(DA-04)을 semantic_findings 에 직접
+        넣을 수 없다. 모델이 이를 어겨도 실행 전체가 실패하면 안 된다 — 실제
+        배포에서 내용이 있는 페이지가 이 이유로 통째로 실패했다.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1", (AuditScreen("screen_01", "유료 옵션 선택", image),)
+            )
+            disallowed = detection(
+                risk_type="PRESELECTED_OPTION",
+                risk_name="특정옵션의 사전선택",
+                rule_id="DA-04",
+                severity="HIGH",
+            )
+            allowed = detection(screen_ids=["screen_01"])
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[disallowed, allowed],
+                    screens=[{"screen_id": "screen_01", "flow_step": "유료 옵션 선택"}],
+                )
+            )
+            pipeline = BaselineAuditPipeline(provider)  # allow_visual_fallback=False
+
+            result = pipeline.analyze(request)
+
+            # 허용된 것만 남고, 버린 사실은 텔레메트리로 확인할 수 있어야 한다.
+            self.assertEqual([f.rule_id for f in result.semantic_findings], ["DA-12"])
+            self.assertEqual(
+                pipeline.last_run_telemetry["dropped_semantic_rule_ids"], ["DA-04"]
+            )
+            # 재시도 없이 첫 응답으로 끝나야 한다.
+            self.assertEqual(pipeline.last_run_telemetry["schema_retries"], 0)
+
     def test_records_schema_retry_and_latency_telemetry(self):
         with tempfile.TemporaryDirectory() as directory:
             image = Path(directory) / "screen.png"

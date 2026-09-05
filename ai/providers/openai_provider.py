@@ -34,6 +34,20 @@ def _responses_schema(schema: dict[str, Any]) -> dict[str, Any]:
         )
     return normalized
 
+def _rejects_temperature(exc: Exception) -> bool:
+    """모델이 temperature 를 지원하지 않아 생긴 오류인지 본다.
+
+    SDK 예외 타입은 버전마다 다르므로 메시지로 판단한다. 인증 실패나 정원 초과
+    같은 다른 오류까지 무시하고 재시도하면 안 되므로 temperature 를 직접 언급한
+    경우만 참으로 본다.
+    """
+    message = str(exc).lower()
+    return "temperature" in message and any(
+        hint in message
+        for hint in ("unsupported", "not supported", "unknown", "does not support", "invalid")
+    )
+
+
 class OpenAIResponsesProvider:
     def __init__(self, model: str, client: Any | None = None) -> None:
         if not model.strip(): raise ValueError("model is required")
@@ -46,6 +60,32 @@ class OpenAIResponsesProvider:
         self.client = client
         self.model = model
         self.last_usage: dict[str, int] | None = None
+        # 모델이 temperature 를 받는지는 호출해 봐야 안다. reasoning 계열은 거부한다.
+        # None=아직 모름, True/False=한 번 확인한 결과.
+        self._accepts_temperature: bool | None = None
+
+    def _create(self, **kwargs: Any) -> Any:
+        """
+        temperature=0 으로 호출하되, 모델이 거부하면 빼고 다시 부른다.
+
+        같은 화면을 두 번 분석했을 때 결과가 크게 달라지면 Before/After 비교에서
+        "고쳐서 사라진 것"과 "이번엔 못 찾은 것"을 구분할 수 없다. 기본 temperature
+        는 변동이 커서 재현성을 위해 0 으로 내린다.
+
+        다만 reasoning 계열 모델은 이 파라미터 자체를 거부한다. 어떤 모델이 설정될지
+        런타임에만 알 수 있으므로, 한 번 거부당하면 기억해 두고 이후로는 보내지 않는다.
+        """
+        if self._accepts_temperature is False:
+            return self.client.responses.create(**kwargs)
+        try:
+            response = self.client.responses.create(temperature=0, **kwargs)
+        except Exception as exc:
+            if self._accepts_temperature is True or not _rejects_temperature(exc):
+                raise
+            self._accepts_temperature = False
+            return self.client.responses.create(**kwargs)
+        self._accepts_temperature = True
+        return response
 
     @staticmethod
     def _data_url(path: Any) -> str:
@@ -81,7 +121,7 @@ class OpenAIResponsesProvider:
                   "Do not calculate final severity; preserve Rule Base severity."
             ),
         })
-        response = self.client.responses.create(
+        response = self._create(
             model=self.model,
             instructions=system_prompt,
             input=[{"role": "user", "content": content}],

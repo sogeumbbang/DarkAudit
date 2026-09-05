@@ -1,4 +1,8 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const DEPLOYED_API_BASE_URL = "https://darkaudit-backend.onrender.com";
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const API_BASE_URL = (
+  configuredApiBaseUrl || (import.meta.env.PROD ? DEPLOYED_API_BASE_URL : "")
+).replace(/\/$/, "");
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 export type ApiErrorBody = {

@@ -158,9 +158,17 @@ export function ScreenCanvas({
               key={box.key}
               style={toPercentBox(box.bbox, natural)}
             >
+              {/*
+                라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
+                커져 삐져나온다. 박스 위쪽 바깥에 붙이되, 위 여백이 없는 경우
+                (화면 최상단 요소)에는 안쪽으로 되돌린다.
+              */}
               <span
                 className={cn(
-                  "absolute left-0.5 top-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold text-white",
+                  "absolute left-0 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
+                  parseFloat(String(toPercentBox(box.bbox, natural).top)) > 4
+                    ? "bottom-full mb-0.5"
+                    : "top-0",
                   BADGE[box.severity],
                   box.tone === "related" && "opacity-80",
                 )}
