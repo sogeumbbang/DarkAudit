@@ -33,7 +33,7 @@ describe("AuditCreatePage", () => {
     expect(screen.getByRole("button", { name: "모바일 앱" })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /Android 앱/ }));
     expect(screen.queryByText(/테스트 기기|화면 유형|Pixel|Galaxy/)).not.toBeInTheDocument();
-    expect(screen.getByText(/iOS 자동화에는 별도 macOS/)).toBeInTheDocument();
+    expect(screen.getByText(/iOS 자동화에는.*별도의 기기 runner/)).toBeInTheDocument();
   });
 
   it("captures a website for desktop and mobile", async () => {

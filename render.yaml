@@ -15,5 +15,13 @@ services:
         sync: false
       - key: FIGMA_ACCESS_TOKEN
         sync: false
+      - key: BROWSERSTACK_USERNAME
+        sync: false
+      - key: BROWSERSTACK_ACCESS_KEY
+        sync: false
+      - key: BROWSERSTACK_ANDROID_DEVICE
+        value: Google Pixel 8
+      - key: BROWSERSTACK_ANDROID_VERSION
+        value: "14.0"
       - key: DARKAUDIT_CORS_ORIGINS
         sync: false

@@ -45,7 +45,11 @@ from backend.api.figma_client import (  # noqa: E402
     InvalidFigmaUrlError,
     parse_figma_url,
 )
-from backend.api.figma_frames import collect_candidate_frames, select_frames  # noqa: E402
+from backend.api.figma_frames import (  # noqa: E402
+    collect_candidate_frames,
+    select_frames,
+    select_prototype_flow,
+)
 from backend.api.main import app  # noqa: E402
 
 # 1x1 흰색 PNG. 실제 다운로드 없이 magic bytes/Pillow 검증을 통과시키는 용도.
@@ -79,6 +83,42 @@ _TWO_FRAME_DOCUMENT = {
                     "name": "helper-group",
                     "visible": True,
                     "absoluteBoundingBox": {"x": 0, "y": 0, "width": 100, "height": 100},
+                },
+            ],
+        }
+    ]
+}
+
+_PROTOTYPE_DOCUMENT = {
+    "children": [
+        {
+            "id": "0:1",
+            "type": "CANVAS",
+            "flowStartingPoints": [
+                {"nodeId": "3:2", "name": "가입 Flow"},
+                {"nodeId": "4:1", "name": "결제 Flow"},
+            ],
+            "children": [
+                {
+                    "id": "3:2", "type": "FRAME", "name": "가입 시작", "visible": True,
+                    "absoluteBoundingBox": {"x": 0, "y": 0, "width": 393, "height": 852},
+                    "children": [{
+                        "id": "3:3", "type": "TEXT", "name": "다음",
+                        "reactions": [{"action": {"type": "NODE", "destinationId": "3:5"}}],
+                    }],
+                },
+                {
+                    "id": "3:5", "type": "FRAME", "name": "가입 확인", "visible": True,
+                    "absoluteBoundingBox": {"x": 0, "y": 900, "width": 393, "height": 852},
+                    "reactions": [{"action": {"type": "NODE", "destinationId": "3:8"}}],
+                },
+                {
+                    "id": "3:8", "type": "FRAME", "name": "가입 완료", "visible": True,
+                    "absoluteBoundingBox": {"x": 0, "y": 1800, "width": 393, "height": 852},
+                },
+                {
+                    "id": "4:1", "type": "FRAME", "name": "결제 시작", "visible": True,
+                    "absoluteBoundingBox": {"x": 500, "y": 0, "width": 393, "height": 852},
                 },
             ],
         }
@@ -201,6 +241,20 @@ class FrameSelectionTest(unittest.TestCase):
         }
         ordered = select_frames(collect_candidate_frames(document), target="mobile-web", max_frames=5)
         self.assertEqual([f.node_id for f in ordered], ["mobile"])
+
+    def test_prototype_flow_follows_nested_reaction_destinations(self) -> None:
+        frames = select_prototype_flow(
+            _PROTOTYPE_DOCUMENT, flow_name="가입 Flow", max_frames=5
+        )
+        self.assertEqual([frame.node_id for frame in frames], ["3:2", "3:5", "3:8"])
+
+    def test_prototype_flow_uses_first_start_when_name_is_blank(self) -> None:
+        frames = select_prototype_flow(_PROTOTYPE_DOCUMENT, flow_name=None, max_frames=2)
+        self.assertEqual([frame.node_id for frame in frames], ["3:2", "3:5"])
+
+    def test_prototype_flow_reports_available_names(self) -> None:
+        with self.assertRaisesRegex(ValueError, "가입 Flow"):
+            select_prototype_flow(_PROTOTYPE_DOCUMENT, flow_name="없는 Flow", max_frames=5)
 
 
 class FigmaClientTest(unittest.TestCase):
@@ -396,18 +450,27 @@ class FigmaApiIntegrationTest(unittest.TestCase):
         job = self.client.get(f"/api/v1/analysis-jobs/{queued.json()['jobId']}").json()
         self.assertEqual(job["status"], "failed", job)
 
-    def test_prototype_flow_rejected_with_422(self) -> None:
+    def test_prototype_flow_imports_transition_order(self) -> None:
         audit_id = self._create_audit("Figma 프로토타입")
-        response = self.client.post(
-            f"/api/v1/audits/{audit_id}/figma",
-            json={
-                "fileUrl": "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/Mockup",
-                "target": "mobile-web",
-                "selectionMode": "prototype-flow",
-                "flowName": "가입 흐름",
-            },
+        StubFigmaClient.document = _PROTOTYPE_DOCUMENT
+        with patch("backend.api.figma_import.FigmaClient", StubFigmaClient):
+            response = self.client.post(
+                f"/api/v1/audits/{audit_id}/figma",
+                json={
+                    "fileUrl": "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/Mockup",
+                    "target": "mobile-web",
+                    "selectionMode": "prototype-flow",
+                    "flowName": "가입 Flow",
+                },
+            )
+        self.assertEqual(response.status_code, 202, response.text)
+        job = self.client.get(f"/api/v1/analysis-jobs/{response.json()['jobId']}").json()
+        self.assertEqual(job["status"], "completed", job)
+        audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
+        self.assertEqual(
+            [screen["flowStep"] for screen in audit["screens"]],
+            ["가입 시작", "가입 확인", "가입 완료"],
         )
-        self.assertEqual(response.status_code, 422, response.text)
 
     def test_invalid_url_rejected_with_400(self) -> None:
         audit_id = self._create_audit("Figma 잘못된 URL")

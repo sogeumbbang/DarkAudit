@@ -19,7 +19,13 @@ from backend.app.models import AuditRun, FlowType, Screen
 
 from . import service
 from .figma_client import FigmaClient, FigmaError, FigmaFrame, FigmaSettings, parse_figma_url
-from .figma_frames import collect_candidate_frames, find_node, frame_from_node, select_frames
+from .figma_frames import (
+    collect_candidate_frames,
+    find_node,
+    frame_from_node,
+    select_frames,
+    select_prototype_flow,
+)
 from .schemas import ImportFigmaRequest
 from .store import SessionLocal
 
@@ -57,6 +63,14 @@ def _resolve_frames(
         node, page_index = found
         frame = frame_from_node(node, page_index)
         return [frame] if frame is not None else []
+
+    if request.selectionMode == "prototype-flow":
+        try:
+            return select_prototype_flow(
+                document, flow_name=request.flowName, max_frames=settings.max_frames
+            )
+        except ValueError as exc:
+            raise FigmaError(str(exc), status=422) from exc
 
     candidates = collect_candidate_frames(document)
     return select_frames(candidates, target=request.target, max_frames=settings.max_frames)

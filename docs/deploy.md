@@ -29,6 +29,10 @@
    | `OPENAI_API_KEY` | 필수 | |
    | `DARKAUDIT_COMPUTER_MODEL` | 선택 | URL `스마트 탐색` 모드에만 필요. 없으면 그 요청은 400으로 거절된다 |
    | `FIGMA_ACCESS_TOKEN` | 선택 | Figma 임포트용. `file_content:read` 권한만 있으면 된다 |
+   | `BROWSERSTACK_USERNAME` | APK 사용 시 필수 | BrowserStack App Automate 사용자명 |
+   | `BROWSERSTACK_ACCESS_KEY` | APK 사용 시 필수 | BrowserStack App Automate access key |
+   | `BROWSERSTACK_ANDROID_DEVICE` | 선택 | 기본값 `Google Pixel 8` |
+   | `BROWSERSTACK_ANDROID_VERSION` | 선택 | 기본값 `14.0` |
    | `DARKAUDIT_CORS_ORIGINS` | 선택 | 커스텀 도메인을 쓸 때만. 비워도 `*.vercel.app`은 허용된다 |
    | `DARKAUDIT_FRONTEND_CONTRACT` | 선택 | 기본값 `v2`(전체 개방). 프런트가 모르는 값을 막아야 할 때만 `v1`로 내린다 |
 

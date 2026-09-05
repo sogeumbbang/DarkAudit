@@ -86,3 +86,71 @@ def select_frames(frames: list[FigmaFrame], *, target: str, max_frames: int) -> 
         ordered = sorted(candidates, key=lambda frame: (frame.page_index, frame.y, frame.x))
 
     return ordered[:max_frames]
+
+
+def _prototype_destinations(node: dict[str, Any]) -> list[str]:
+    """노드와 자식의 prototype reaction에서 목적지 ID를 선언 순서대로 모은다."""
+    destinations: list[str] = []
+    stack = [node]
+    while stack:
+        current = stack.pop()
+        for reaction in current.get("reactions") or []:
+            action = reaction.get("action") or {}
+            destination_id = action.get("destinationId")
+            if destination_id and destination_id not in destinations:
+                destinations.append(destination_id)
+        # Figma 응답 순서를 유지하기 위해 DFS stack에는 역순으로 넣는다.
+        stack.extend(reversed(current.get("children") or []))
+    return destinations
+
+
+def select_prototype_flow(
+    document: dict[str, Any], *, flow_name: str | None, max_frames: int
+) -> list[FigmaFrame]:
+    """Canvas의 flowStartingPoints에서 시작해 prototype 전환 그래프를 순회한다.
+
+    Figma REST 응답은 Flow 자체를 별도 객체로 주지 않고 각 Canvas의
+    ``flowStartingPoints``와 노드 ``reactions[].action.destinationId``로 표현한다.
+    이름이 주어지면 대소문자를 무시한 완전 일치, 부분 일치 순으로 시작점을 고른다.
+    """
+    starts: list[tuple[str, str]] = []
+    for page in document.get("children") or []:
+        for point in page.get("flowStartingPoints") or []:
+            node_id = point.get("nodeId")
+            if node_id:
+                starts.append((node_id, (point.get("name") or "").strip()))
+
+    if not starts:
+        return []
+
+    selected_start = starts[0]
+    query = (flow_name or "").strip().casefold()
+    if query:
+        exact = [item for item in starts if item[1].casefold() == query]
+        partial = [item for item in starts if query in item[1].casefold()]
+        matches = exact or partial
+        if not matches:
+            available = ", ".join(name or node_id for node_id, name in starts[:5])
+            raise ValueError(f"Flow를 찾을 수 없습니다. 사용 가능한 Flow: {available}")
+        selected_start = matches[0]
+
+    pending = [selected_start[0]]
+    visited: set[str] = set()
+    frames: list[FigmaFrame] = []
+    while pending and len(frames) < max_frames:
+        node_id = pending.pop(0)
+        if node_id in visited:
+            continue
+        visited.add(node_id)
+        found = find_node(document, node_id)
+        if found is None:
+            continue
+        node, page_index = found
+        frame = frame_from_node(node, page_index)
+        if frame is not None:
+            frames.append(frame)
+        for destination_id in _prototype_destinations(node):
+            if destination_id not in visited and destination_id not in pending:
+                pending.append(destination_id)
+
+    return frames

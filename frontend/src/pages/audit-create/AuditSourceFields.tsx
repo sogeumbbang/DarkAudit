@@ -21,7 +21,7 @@ export type UploadScreen = { id: string; file: File; previewUrl: string; flowSte
 const sources = [
   { id: "website", label: "웹사이트", description: "URL 자동 탐색", icon: Globe2 },
   { id: "figma", label: "Figma", description: "디자인 사전 진단", icon: PenTool },
-  { id: "android", label: "Android 앱", description: "APK 자동 탐색", icon: AppWindow },
+  { id: "android", label: "Android 앱", description: "실제 기기 APK 탐색", icon: AppWindow },
   { id: "screenshots", label: "스크린샷", description: "이미지 직접 등록", icon: UploadCloud },
 ] satisfies Array<{ id: AuditSource; label: string; description: string; icon: typeof Globe2 }>;
 
@@ -257,7 +257,7 @@ export function AndroidFields({
         Android 앱 자동 진단
       </h2>
       <p className="mt-1 text-xs text-muted">
-        APK를 에뮬레이터에 설치하고 안전한 범위에서 UI 흐름을 자동 탐색합니다.
+        APK를 원격 Android 기기에 설치하고 안전한 범위에서 UI 흐름을 자동 탐색합니다.
       </p>
       <input
         ref={inputRef}
@@ -294,8 +294,8 @@ export function AndroidFields({
         onChange={setGoal}
       />
       <InfoBox>
-        현재 Windows 실행 환경에서는 Android를 우선 지원합니다. iOS 자동화에는 별도 macOS Simulator
-        runner가 필요합니다.
+        결제·가입·제출·로그인 동작은 누르지 않으며 최대 5개 화면까지만 수집합니다. iOS 자동화에는
+        별도의 기기 runner가 필요합니다. APK는 자동 탐색을 위해 BrowserStack으로 전송됩니다.
       </InfoBox>
     </section>
   );

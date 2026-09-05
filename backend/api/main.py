@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import tempfile
+import zipfile
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
@@ -16,6 +18,8 @@ from ai.browser.safety import UnsafeUrlError, UrlSafetyPolicy
 from backend.app.models import Audit, Finding, FindingStatus, FlowType, RunStatus, Screen
 from backend.app.regression import compare
 
+from .android_import import capture_and_analyze_android
+from .android_runner import AndroidRunnerError, AndroidRunnerSettings
 from .figma_client import InvalidFigmaUrlError, parse_figma_url
 from .figma_import import import_and_analyze_figma
 from .schemas import (
@@ -29,6 +33,7 @@ from .schemas import (
     RegressionDto,
 )
 from .service import (
+    ANDROID_DIR,
     CAPTURE_DIR,
     DATA_DIR,
     FIGMA_DIR,
@@ -109,7 +114,7 @@ def delete_audit(audit_id: str) -> None:
         session.delete(audit)
         session.commit()
 
-    for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR):
+    for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR, ANDROID_DIR):
         shutil.rmtree(base / directory_name, ignore_errors=True)
 
 
@@ -244,10 +249,6 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
 
 @app.post("/api/v1/audits/{audit_id}/figma", response_model=JobDto, status_code=202)
 def import_figma(audit_id: str, payload: ImportFigmaRequest, background: BackgroundTasks) -> JobDto:
-    # MVP 범위: prototype-flow 해석은 아직 구현하지 않는다(docs 14절).
-    # 조용히 all-frames 로 대체하면 사용자가 다른 화면 집합을 진단하게 되므로 명시적으로 거부한다.
-    if payload.selectionMode == "prototype-flow":
-        raise HTTPException(422, "prototype-flow는 아직 지원하지 않습니다. all-frames를 사용해주세요.")
     try:
         parse_figma_url(str(payload.fileUrl))
     except InvalidFigmaUrlError:
@@ -265,6 +266,75 @@ def import_figma(audit_id: str, payload: ImportFigmaRequest, background: Backgro
             import_and_analyze_figma, job.jobId, run.id, audit_id=audit_id, request=payload
         )
         return job
+
+
+@app.post("/api/v1/audits/{audit_id}/mobile-app", response_model=JobDto, status_code=202)
+async def analyze_mobile_app(
+    audit_id: str,
+    background: BackgroundTasks,
+    app_file: UploadFile = File(..., alias="app"),
+    goal: str | None = Form(default=None),
+) -> JobDto:
+    try:
+        AndroidRunnerSettings.from_env()
+    except AndroidRunnerError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    if goal and len(goal) > 1000:
+        raise HTTPException(422, "탐색 목표는 1000자까지 입력할 수 있습니다.")
+    if Path(app_file.filename or "").suffix.lower() != ".apk":
+        raise HTTPException(415, "APK 파일만 지원합니다.")
+
+    ANDROID_DIR.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    total_bytes = 0
+    first_chunk = True
+    try:
+        with tempfile.NamedTemporaryFile(dir=ANDROID_DIR, suffix=".apk", delete=False) as handle:
+            temporary_path = Path(handle.name)
+            while chunk := await app_file.read(1024 * 1024):
+                total_bytes += len(chunk)
+                if total_bytes > 100 * 1024 * 1024:
+                    raise HTTPException(413, "APK는 100MB까지 업로드할 수 있습니다.")
+                if first_chunk:
+                    if not chunk.startswith(b"PK"):
+                        raise HTTPException(415, "올바른 APK 파일이 아닙니다.")
+                    first_chunk = False
+                handle.write(chunk)
+        if not total_bytes:
+            raise HTTPException(400, "APK 파일이 비어 있습니다.")
+        assert temporary_path is not None
+        try:
+            with zipfile.ZipFile(temporary_path) as archive:
+                if "AndroidManifest.xml" not in archive.namelist():
+                    raise HTTPException(415, "AndroidManifest.xml이 없는 APK입니다.")
+        except zipfile.BadZipFile as exc:
+            raise HTTPException(415, "올바른 APK 파일이 아닙니다.") from exc
+
+        with SessionLocal() as session:
+            try:
+                audit = get_audit(session, audit_id)
+            except KeyError:
+                raise HTTPException(404, "Audit not found")
+            run = next_run(session, audit.id, f"Android APK: {app_file.filename}")
+            target_dir = ANDROID_DIR / audit_id / f"run-{run.version}"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            apk_path = target_dir / "app.apk"
+            temporary_path.replace(apk_path)
+            temporary_path = None
+            session.commit()
+            job = create_job(audit_id, run.id)
+            background.add_task(
+                capture_and_analyze_android,
+                job.jobId,
+                run.id,
+                audit_id=audit_id,
+                apk_path=apk_path,
+                goal=goal.strip() if goal else None,
+            )
+            return job
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 @app.get("/api/v1/analysis-jobs/{job_id}", response_model=JobDto)

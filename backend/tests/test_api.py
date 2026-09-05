@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import base64
+import io
 import os
 import shutil
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -30,6 +32,7 @@ from backend.app.rule_engine.severity import ScoredFinding
 service.DATA_DIR = _temp_root
 service.UPLOAD_DIR = _temp_root / "uploads"
 service.CAPTURE_DIR = _temp_root / "captures"
+service.ANDROID_DIR = _temp_root / "android"
 
 from backend.api.main import app
 
@@ -549,6 +552,51 @@ class ApiIntegrationTest(unittest.TestCase):
         ).json()["id"]
         response = self.client.post(f"/api/v1/audits/{audit_id}/analyze")
         self.assertEqual(response.status_code, 409)
+
+    def test_android_apk_is_persisted_and_job_is_queued(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={"name": "Android 진단", "platform": "app"},
+        ).json()["id"]
+        credentials = {
+            "BROWSERSTACK_USERNAME": "test-user",
+            "BROWSERSTACK_ACCESS_KEY": "test-key",
+        }
+        apk = io.BytesIO()
+        with zipfile.ZipFile(apk, "w") as archive:
+            archive.writestr("AndroidManifest.xml", b"manifest")
+        with patch.dict(os.environ, credentials), patch(
+            "backend.api.main.capture_and_analyze_android"
+        ) as background_task:
+            response = self.client.post(
+                f"/api/v1/audits/{audit_id}/mobile-app",
+                files={
+                    "app": (
+                        "sample.apk",
+                        apk.getvalue(),
+                        "application/vnd.android.package-archive",
+                    )
+                },
+                data={"goal": "상품 선택 화면까지"},
+            )
+        self.assertEqual(response.status_code, 202, response.text)
+        self.assertTrue((service.ANDROID_DIR / audit_id / "run-1" / "app.apk").exists())
+        background_task.assert_called_once()
+
+    def test_android_requires_runner_credentials(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={"name": "Android 설정 확인", "platform": "app"},
+        ).json()["id"]
+        with patch.dict(
+            os.environ,
+            {"BROWSERSTACK_USERNAME": "", "BROWSERSTACK_ACCESS_KEY": ""},
+        ):
+            response = self.client.post(
+                f"/api/v1/audits/{audit_id}/mobile-app",
+                files={"app": ("sample.apk", b"PK\x03\x04fake", "application/octet-stream")},
+            )
+        self.assertEqual(response.status_code, 503, response.text)
 
 
 if __name__ == "__main__":

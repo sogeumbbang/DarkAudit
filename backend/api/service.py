@@ -54,6 +54,7 @@ DATA_DIR = ROOT / "data"
 UPLOAD_DIR = DATA_DIR / "uploads"
 CAPTURE_DIR = DATA_DIR / "captures"
 FIGMA_DIR = DATA_DIR / "figma"
+ANDROID_DIR = DATA_DIR / "android"
 
 _jobs: dict[str, JobDto] = {}
 _jobs_lock = threading.Lock()
