@@ -264,6 +264,35 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertEqual(result.semantic_findings[0].rule_id, "DA-04")
             self.assertIn("스크린샷 전용 시각 판정", provider.audit_prompt)
 
+    def test_wrong_severity_is_corrected_instead_of_failing_the_run(self):
+        """
+        severity 와 risk_name 은 risk_type 만으로 결정되는 조회표 값이라 모델
+        답변에 정보가 없다. 상수 하나가 틀렸다고 진단 전체를 버리면 안 된다.
+        실제 배포에서 이 이유로 분석이 실패했다.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1", (AuditScreen("screen_01", "약관 동의", image),)
+            )
+            wrong = detection(screen_ids=["screen_01"])
+            wrong["severity"] = "HIGH"  # DA-12 의 Rule Base 값은 REVIEW 다
+            wrong["risk_name"] = "감정 자극"  # 조회표 값과 다른 이름
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[wrong],
+                    screens=[{"screen_id": "screen_01", "flow_step": "약관 동의"}],
+                )
+            )
+
+            result = BaselineAuditPipeline(provider).analyze(request)
+
+            finding = result.semantic_findings[0]
+            self.assertEqual(finding.rule_id, "DA-12")
+            self.assertEqual(finding.severity.value, "REVIEW")
+            self.assertEqual(finding.risk_name, "감정적 언어")
+
     def test_url_source_drops_disallowed_semantic_finding_instead_of_failing(self):
         """
         URL 캡처 경로에서는 deterministic 규칙(DA-04)을 semantic_findings 에 직접
