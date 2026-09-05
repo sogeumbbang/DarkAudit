@@ -46,6 +46,14 @@ describe("OverviewPage", () => {
     renderPage();
     await screen.findByRole("heading", { name: "보험 가입 흐름 v1" });
 
+    const previewImage = screen.getByRole("img", { name: /캡처 화면 미리보기/ });
+    const previewViewport = previewImage.parentElement?.parentElement;
+    expect(previewViewport).toHaveClass("overflow-hidden");
+    await user.click(screen.getByRole("button", { name: "확대" }));
+    expect(previewViewport).toHaveClass("overflow-auto");
+    await user.click(screen.getByRole("button", { name: "배율 초기화" }));
+    expect(previewViewport).toHaveClass("overflow-hidden");
+
     await user.click(screen.getByRole("button", { name: /전체 흐름 보기/ }));
     expect(screen.getByRole("dialog", { name: "전체 가입 흐름" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "닫기" }));

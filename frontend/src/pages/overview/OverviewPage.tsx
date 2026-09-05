@@ -95,7 +95,12 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
     <div ref={previewRef}>
     <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
       <h2 className="text-sm font-bold">화면 미리보기</h2>
-      <div className="absolute inset-x-0 bottom-0 top-14 flex items-center justify-center overflow-auto bg-gradient-to-b from-white to-brand-50/60 p-5">
+      <div
+        className={cn(
+          "absolute inset-x-0 bottom-0 top-14 flex items-center justify-center bg-gradient-to-b from-white to-brand-50/60 p-5",
+          scale > 1 ? "overflow-auto" : "overflow-hidden",
+        )}
+      >
         {/*
           h-full 이 필요하다. 퍼센트 높이는 부모 높이가 확정돼야 계산되는데, 이
           래퍼가 height:auto 면 안쪽 이미지의 max-h-full 이 무시돼 원본 크기로
