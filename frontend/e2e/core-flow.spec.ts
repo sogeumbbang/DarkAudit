@@ -43,7 +43,7 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("heading", { name: "금융 다크패턴 4개 범주" })).toBeVisible();
 });
 
-test("zoomed preview can scroll to every image edge", async ({ page }) => {
+test("zoomed preview can be dragged and scrolled to every image edge", async ({ page }) => {
   await page.goto("/app/overview");
   await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
 
@@ -52,8 +52,13 @@ test("zoomed preview can scroll to every image edge", async ({ page }) => {
 
   // 서버의 이미지 좌표가 실제 렌더링된 이미지 박스에 같은 비율로 매핑되는지
   // 확인한다. 바깥 카드나 스크롤 영역을 기준으로 잡으면 이 값이 어긋난다.
-  const imageBox = await page.getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" }).boundingBox();
-  const highlightBox = await viewport.getByText("DA-04", { exact: true }).locator("..").boundingBox();
+  const imageBox = await page
+    .getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" })
+    .boundingBox();
+  const highlightBox = await viewport
+    .getByText("DA-04", { exact: true })
+    .locator("..")
+    .boundingBox();
   expect(imageBox).not.toBeNull();
   expect(highlightBox).not.toBeNull();
   expect(highlightBox!.x).toBeCloseTo(imageBox!.x + imageBox!.width * (24 / 390), 0);
@@ -79,6 +84,28 @@ test("zoomed preview can scroll to every image edge", async ({ page }) => {
   }));
   expect(scrollRange.x).toBeGreaterThan(0);
   expect(scrollRange.y).toBeGreaterThan(0);
+
+  const viewportBox = await viewport.boundingBox();
+  expect(viewportBox).not.toBeNull();
+  await page.mouse.move(
+    viewportBox!.x + viewportBox!.width / 2,
+    viewportBox!.y + viewportBox!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    viewportBox!.x + viewportBox!.width / 2 - 60,
+    viewportBox!.y + viewportBox!.height / 2 - 60,
+  );
+  await page.mouse.up();
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft > 0 && element.scrollTop > 0))
+    .toBe(true);
+  const draggedPosition = await viewport.evaluate((element) => ({
+    left: element.scrollLeft,
+    top: element.scrollTop,
+  }));
+  expect(draggedPosition.left).toBeGreaterThan(0);
+  expect(draggedPosition.top).toBeGreaterThan(0);
 
   const reachedEnd = await viewport.evaluate((element) => {
     element.scrollTo({ left: element.scrollWidth, top: element.scrollHeight });

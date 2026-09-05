@@ -142,7 +142,15 @@ export function ScreenCanvas({
 
   return (
     <>
-      <img alt={alt} className={className} loading="lazy" onLoad={handleLoad} ref={imgRef} src={screen.imageUrl} />
+      <img
+        alt={alt}
+        className={className}
+        draggable={false}
+        loading="lazy"
+        onLoad={handleLoad}
+        ref={imgRef}
+        src={screen.imageUrl}
+      />
       {rect && natural && highlights.length > 0 && (
         <div
           className="pointer-events-none absolute"

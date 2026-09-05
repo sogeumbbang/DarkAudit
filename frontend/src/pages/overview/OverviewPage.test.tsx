@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -52,8 +52,16 @@ describe("OverviewPage", () => {
     expect(previewViewport).toHaveClass("overflow-hidden");
     await user.click(screen.getByRole("button", { name: "확대" }));
     expect(previewViewport).toHaveClass("overflow-auto");
+    expect(previewViewport).toHaveClass("cursor-grab");
     expect(previewScrollArea).toHaveStyle({ height: "120%", width: "120%" });
     expect(previewImage.parentElement).not.toHaveStyle({ transform: "scale(1.2)" });
+    fireEvent.pointerDown(previewViewport, { button: 0, clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(previewViewport, { clientX: 70, clientY: 60, pointerId: 1 });
+    expect(previewViewport.scrollLeft).toBe(30);
+    expect(previewViewport.scrollTop).toBe(40);
+    expect(previewViewport).toHaveClass("cursor-grabbing");
+    fireEvent.pointerUp(previewViewport, { pointerId: 1 });
+    expect(previewViewport).toHaveClass("cursor-grab");
     await user.click(screen.getByRole("button", { name: "배율 초기화" }));
     expect(previewViewport).toHaveClass("overflow-hidden");
     expect(previewScrollArea).toHaveStyle({ height: "100%", width: "100%" });
