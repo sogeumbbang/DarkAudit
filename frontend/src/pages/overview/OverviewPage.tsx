@@ -100,7 +100,7 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
   } | null>(null);
 
   function startPanning(event: ReactPointerEvent<HTMLDivElement>) {
-    if (scale <= 1 || event.button !== 0) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     panOriginRef.current = {
       pointerId: event.pointerId,
       x: event.clientX,
@@ -138,10 +138,8 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
           aria-label="화면 미리보기 이동 영역"
           data-testid="screen-preview-viewport"
           className={cn(
-            "absolute inset-x-0 bottom-0 top-14 bg-gradient-to-b from-white to-brand-50/60 p-5",
-            scale > 1 ? "overflow-auto" : "overflow-hidden",
-            scale > 1 && "touch-none select-none",
-            scale > 1 && (isPanning ? "cursor-grabbing" : "cursor-grab"),
+            "scrollbar-hidden absolute inset-x-0 bottom-0 top-14 touch-none select-none overflow-auto bg-gradient-to-b from-white to-brand-50/60 p-5",
+            isPanning ? "cursor-grabbing" : "cursor-grab",
           )}
           onPointerCancel={stopPanning}
           onPointerDown={startPanning}

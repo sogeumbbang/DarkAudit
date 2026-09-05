@@ -69,4 +69,13 @@
       linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px);
     background-size: 72px 72px;
   }
+
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
 }

@@ -43,12 +43,26 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("heading", { name: "금융 다크패턴 4개 범주" })).toBeVisible();
 });
 
-test("zoomed preview can be dragged and scrolled to every image edge", async ({ page }) => {
+test("zoomed preview can be dragged and scrolled to every image edge", async ({ page, isMobile }) => {
   await page.goto("/app/overview");
   await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
 
   const viewport = page.getByTestId("screen-preview-viewport");
-  await expect(viewport).toHaveCSS("overflow", "hidden");
+  await expect(viewport).toHaveCSS("overflow", "auto");
+  await expect(viewport).toHaveCSS("scrollbar-width", "none");
+  await expect(viewport).toHaveCSS("cursor", "grab");
+  const baseViewportBox = await viewport.boundingBox();
+  expect(baseViewportBox).not.toBeNull();
+  if (!isMobile) {
+    await page.mouse.move(
+      baseViewportBox!.x + baseViewportBox!.width / 2,
+      baseViewportBox!.y + baseViewportBox!.height / 2,
+    );
+    await page.mouse.down();
+    await expect(viewport).toHaveCSS("cursor", "grabbing");
+    await page.mouse.up();
+    await expect(viewport).toHaveCSS("cursor", "grab");
+  }
 
   // 서버의 이미지 좌표가 실제 렌더링된 이미지 박스에 같은 비율로 매핑되는지
   // 확인한다. 바깥 카드나 스크롤 영역을 기준으로 잡으면 이 값이 어긋난다.
@@ -69,6 +83,7 @@ test("zoomed preview can be dragged and scrolled to every image edge", async ({ 
   await page.getByRole("button", { name: "확대" }).click();
   await page.getByRole("button", { name: "확대" }).click();
   await expect(viewport).toHaveCSS("overflow", "auto");
+  await expect(viewport).toHaveCSS("scrollbar-width", "none");
 
   await expect
     .poll(() =>
