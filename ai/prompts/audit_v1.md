@@ -38,6 +38,7 @@
 - `semantic_findings`는 기존 Detection 구조를 사용한다.
 - `observation`에는 화면에서 직접 관찰한 사실을, `why`에는 그 사실이 Rule을 충족하는 이유를 쓴다.
 - `bbox`는 주 근거 요소의 화면 기준 정규화 좌표 `[x, y, width, height]`로 기록한다.
+- DA-04의 `bbox`는 옵션 카드나 주변 문구 전체가 아니라 실제 선택 상태를 나타내는 checkbox/radio/toggle의 바깥 경계에 타이트하게 맞춘다.
 - `where.screen_ids`에는 근거가 실제로 존재하는 화면만 입력 순서대로 기록한다.
 - DA-03은 대립 선택지 관계가 필요하므로 상대 요소를 `related_elements`에 최소 한 개 기록한다.
 - 같은 Rule과 같은 요소의 결과를 중복 생성하지 않는다.
