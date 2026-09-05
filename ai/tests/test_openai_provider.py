@@ -94,6 +94,30 @@ class OpenAIProviderTest(unittest.TestCase):
             provider.analyze(request, "system", "audit", [], {"type": "object"})
             self.assertEqual(responses.attempts, 3)  # 재시도 없이 한 번에 성공
 
+    def test_bbox_grounding_schema_requests_only_a_candidate_id(self):
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "marked.png"
+            image.write_bytes(b"png")
+            responses = FakeResponses()
+            provider = OpenAIResponsesProvider(
+                "test-model", SimpleNamespace(responses=responses)
+            )
+
+            provider.select_bbox_candidate(
+                image,
+                "안심케어 플러스",
+                [{"candidate_id": "C1", "sources": ["edge", "contrast"]}],
+            )
+
+            schema = responses.kwargs["text"]["format"]["schema"]
+            self.assertEqual(schema["properties"]["rule_id"]["const"], "DA-04")
+            self.assertEqual(
+                schema["properties"]["selected_candidate_id"]["enum"],
+                ["C1", "NONE"],
+            )
+            prompt = responses.kwargs["input"][0]["content"][0]["text"]
+            self.assertNotIn('"bbox"', prompt)
+
     def test_other_errors_are_not_swallowed(self):
         """인증 실패 같은 오류까지 temperature 문제로 오인해 재시도하면 안 된다."""
         with tempfile.TemporaryDirectory() as directory:

@@ -132,11 +132,15 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
                 for screen, path in zip(run.screens, local_paths, strict=True)
             ),
         )
-        output = BaselineAuditPipeline(
-            create_provider(), allow_visual_fallback=True
-        ).analyze(request)
+        pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=True)
+        output = pipeline.analyze(request)
+        grounded_visuals = {
+            (item["rule_id"], item["screen_id"])
+            for item in pipeline.last_run_telemetry.get("bbox_localizations", [])
+            if item.get("applied") is True
+        }
         _update_job(job_id, progress=80)
-        _store_output(session, run, output)
+        _store_output(session, run, output, grounded_visuals=grounded_visuals)
         _apply_regression(session, run)
         session.commit()
     _update_job(job_id, status="completed", progress=100)
@@ -337,6 +341,7 @@ def _store_output(
     rule_findings: list[ScoredFinding] | None = None,
     element_lookup: dict[str, Element] | None = None,
     candidates: list[dict] | None = None,
+    grounded_visuals: set[tuple[str, str]] | None = None,
 ) -> None:
     ordered_screens = sorted(run.screens, key=lambda screen: screen.screen_index)
     if len(ordered_screens) != len(output.screens):
@@ -347,6 +352,7 @@ def _store_output(
     }
     rules = rules_by_id()
     element_lookup = element_lookup or {}
+    grounded_visuals = grounded_visuals or set()
     # Candidate IDs are the only join key; Rule/screen inference is forbidden.
     rule_findings = rule_findings or []
     candidates = candidates or []
@@ -410,6 +416,7 @@ def _store_output(
         primary = element_lookup.get(matched.primary_id) if matched.primary_id else None
         if primary is None and detection is not None:
             x, y, width, height = detection.bbox
+            evidence_screen_id = detection.where.screen_ids[-1]
             primary = Element(
                 # Semantic bbox is an evidence anchor even for flow-level rules.
                 # Multi-screen contracts (DA-15) place it on the final screen.
@@ -420,7 +427,11 @@ def _store_output(
                 bbox_y=y,
                 bbox_w=width,
                 bbox_h=height,
-                source="vision",
+                source=(
+                    "vision-grounded"
+                    if (detection.rule_id, evidence_screen_id) in grounded_visuals
+                    else "vision"
+                ),
                 confidence=detection.confidence,
             )
             session.add(primary)

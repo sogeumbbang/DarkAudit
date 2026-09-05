@@ -51,6 +51,19 @@ class PrimaryBBoxTests(unittest.TestCase):
         self.assertEqual((result.x, result.y, result.width, result.height), (0.08, 0.36, 0.08, 0.06))
         refine.assert_not_called()
 
+    @patch("backend.api.store.refine_selected_control_bbox")
+    def test_candidate_grounded_da04_is_not_refined_twice(self, refine) -> None:
+        self.element.source = "vision-grounded"
+
+        result = _primary_bbox(self.finding, "screen-02", {7: self.screen})
+
+        self.assertIsNotNone(result)
+        self.assertEqual(
+            (result.x, result.y, result.width, result.height),
+            (0.08, 0.36, 0.08, 0.06),
+        )
+        refine.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

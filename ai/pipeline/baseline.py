@@ -1,6 +1,7 @@
 """Screenshot-to-structured-JSON MVP baseline."""
 import json
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from ai.providers.base import MultimodalProvider
@@ -12,6 +13,8 @@ from ai.schemas.audit_schema import (
     LLMAuditRequest,
     RuleCandidate,
 )
+from ai.vision.candidate_grounding import extract_ocr_anchors, ground_selected_control_bbox
+from ai.vision.ocr import OCRProvider, create_ocr_provider
 from .response_parser import drop_disallowed_semantic_findings, parse_hybrid_response
 
 MVP_RULE_IDS = frozenset({"DA-03", "DA-04", "DA-07", "DA-12", "DA-15"})
@@ -19,7 +22,8 @@ MVP_RULE_IDS = frozenset({"DA-03", "DA-04", "DA-07", "DA-12", "DA-15"})
 class BaselineAuditPipeline:
     def __init__(self, provider: MultimodalProvider, rule_loader: RuleLoader | None = None,
                  prompts_dir: Path | None = None, schema_path: Path | None = None,
-                 max_attempts: int = 2, allow_visual_fallback: bool = False) -> None:
+                 max_attempts: int = 2, allow_visual_fallback: bool = False,
+                 ocr_provider: OCRProvider | None = None) -> None:
         root = Path(__file__).parents[1]
         self.provider = provider
         self.rule_loader = rule_loader or RuleLoader()
@@ -31,6 +35,7 @@ class BaselineAuditPipeline:
         self.allowed_semantic_rule_ids = (
             VISUAL_FALLBACK_RULE_IDS if allow_visual_fallback else SEMANTIC_ONLY_RULE_IDS
         )
+        self.ocr_provider = ocr_provider or create_ocr_provider()
         self.last_run_telemetry: dict[str, Any] = {}
 
     def analyze(
@@ -87,6 +92,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                     raw, request, parsed_candidates, self.allowed_semantic_rule_ids
                 )
                 result = self._filter_and_deduplicate(output)
+                result, localizations = self._ground_visual_bboxes(result, request)
                 self.last_run_telemetry = {
                     "response_time_seconds": time.perf_counter() - started,
                     "screen_count": len(request.screens),
@@ -94,6 +100,8 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                     "schema_retries": attempt - 1,
                     "dropped_semantic_rule_ids": sorted(set(dropped)),
                     "usage": getattr(self.provider, "last_usage", None),
+                    "grounding_usage": getattr(self.provider, "last_grounding_usage", None),
+                    "bbox_localizations": localizations,
                 }
                 return result
             except ValueError as exc:
@@ -117,6 +125,75 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
         raise ValueError(
             f"Model output failed validation after {self.max_attempts} attempts: {detail}"
         ) from last_error
+
+    def _ground_visual_bboxes(
+        self,
+        output: HybridAuditOutput,
+        request: LLMAuditRequest,
+    ) -> tuple[HybridAuditOutput, list[dict[str, Any]]]:
+        """Replace model-generated DA-04 coordinates with selected pixel proposals."""
+
+        screens = {screen.screen_id: screen for screen in request.screens}
+        provider_selector = getattr(self.provider, "select_bbox_candidate", None)
+        selector = provider_selector if callable(provider_selector) else None
+        findings = []
+        telemetry: list[dict[str, Any]] = []
+        anchor_cache: dict[Path, list] = {}
+        for finding in output.semantic_findings:
+            if finding.rule_id != "DA-04":
+                findings.append(finding)
+                continue
+            screen = screens.get(finding.where.screen_ids[-1])
+            if screen is None:
+                findings.append(finding)
+                continue
+            if screen.image_path not in anchor_cache:
+                anchor_cache[screen.image_path] = extract_ocr_anchors(
+                    screen.image_path,
+                    self.ocr_provider,
+                )
+            anchors = anchor_cache[screen.image_path]
+            grounding_text = " | ".join(
+                value.strip()
+                for value in (
+                    finding.where.element,
+                    finding.what,
+                    finding.observation,
+                )
+                if value.strip()
+            )
+            grounded = ground_selected_control_bbox(
+                screen.image_path,
+                finding.bbox,
+                grounding_text,
+                selector=selector,
+                ocr_anchors=anchors,
+            )
+            # A weak automatic proposal is less trustworthy than the model's own
+            # evidence anchor.  Set-of-Mark selections and OCR-backed proposals
+            # clear this threshold; CV-only guesses remain telemetry/fallback.
+            applied = grounded.confidence >= 0.5 and grounded.bbox != finding.bbox
+            findings.append(replace(finding, bbox=grounded.bbox) if applied else finding)
+            telemetry.append({
+                "rule_id": finding.rule_id,
+                "screen_id": screen.screen_id,
+                "candidate_id": grounded.candidate_id,
+                "source": grounded.source,
+                "confidence": grounded.confidence,
+                "ocr_anchor_count": len(anchors),
+                "applied": applied,
+            })
+        if tuple(findings) == output.semantic_findings:
+            return output, telemetry
+        return HybridAuditOutput(
+            output.audit_id,
+            output.schema_version,
+            output.screens,
+            output.candidate_decisions,
+            tuple(findings),
+            output.candidates,
+            output.allowed_semantic_rule_ids,
+        ), telemetry
 
     @staticmethod
     def _deduplicate_raw(raw: dict[str, Any]) -> None:

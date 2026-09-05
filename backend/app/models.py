@@ -182,7 +182,7 @@ class Element(Base):
     # 계산된 스타일. {"font_size": 14, "contrast_ratio": 3.2, "area_ratio": 0.08}
     computed_style: Mapped[dict | None] = mapped_column(JSON)
 
-    source: Mapped[str] = mapped_column(String(20), default="dom")  # dom / ocr / vision
+    source: Mapped[str] = mapped_column(String(20), default="dom")  # dom / ocr / vision[-grounded]
     confidence: Mapped[float | None] = mapped_column(Float)
 
     screen: Mapped[Screen] = relationship(back_populates="elements")

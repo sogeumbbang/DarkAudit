@@ -60,6 +60,7 @@ class OpenAIResponsesProvider:
         self.client = client
         self.model = model
         self.last_usage: dict[str, int] | None = None
+        self.last_grounding_usage: dict[str, int] | None = None
         # 모델이 temperature 를 받는지는 호출해 봐야 안다. reasoning 계열은 거부한다.
         # None=아직 모름, True/False=한 번 확인한 결과.
         self._accepts_temperature: bool | None = None
@@ -135,4 +136,77 @@ class OpenAIResponsesProvider:
         }
         if not getattr(response, "output_text", None):
             raise RuntimeError("Model returned no output_text")
+        return json.loads(response.output_text)
+
+    def select_bbox_candidate(
+        self,
+        marked_image_path: Any,
+        element_text: str,
+        candidates: list[dict[str, object]],
+    ) -> dict[str, object] | None:
+        """Select a marked proposal without asking the model to generate coordinates."""
+
+        candidate_ids = [str(item["candidate_id"]) for item in candidates]
+        if not candidate_ids:
+            return None
+        schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "rule_id",
+                "selected_candidate_id",
+                "semantic_confidence",
+                "reason",
+            ],
+            "properties": {
+                "rule_id": {"const": "DA-04"},
+                "selected_candidate_id": {"enum": [*candidate_ids, "NONE"]},
+                "semantic_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "reason": {"type": "string"},
+            },
+        }
+        response = self._create(
+            model=self.model,
+            instructions=(
+                "You are a GUI grounding verifier. Select the one marked candidate that tightly "
+                "bounds the actual checkbox, radio, or toggle showing the selected state. "
+                "Do not select an option card, text, price, badge, or decorative icon. "
+                "Return NONE when no candidate is the control itself. Never calculate coordinates."
+            ),
+            input=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            f"Target evidence: {element_text}\n"
+                            "The image is an enlarged crop; red boxes and C labels are candidate regions. "
+                            "Choose only the exact selected-state control.\n"
+                            f"Candidates: {json.dumps(candidates, ensure_ascii=False)}"
+                        ),
+                    },
+                    {
+                        "type": "input_image",
+                        "image_url": self._data_url(marked_image_path),
+                        "detail": "high",
+                    },
+                ],
+            }],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "bbox_candidate_selection",
+                    "schema": schema,
+                    "strict": True,
+                }
+            },
+        )
+        usage = getattr(response, "usage", None)
+        self.last_grounding_usage = None if usage is None else {
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+            "total_tokens": int(getattr(usage, "total_tokens", 0) or 0),
+        }
+        if not getattr(response, "output_text", None):
+            return None
         return json.loads(response.output_text)
