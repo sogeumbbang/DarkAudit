@@ -96,8 +96,9 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
     <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
       <h2 className="text-sm font-bold">화면 미리보기</h2>
       <div
+        data-testid="screen-preview-viewport"
         className={cn(
-          "absolute inset-x-0 bottom-0 top-14 flex items-center justify-center bg-gradient-to-b from-white to-brand-50/60 p-5",
+          "absolute inset-x-0 bottom-0 top-14 bg-gradient-to-b from-white to-brand-50/60 p-5",
           scale > 1 ? "overflow-auto" : "overflow-hidden",
         )}
       >
@@ -107,15 +108,25 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
           렌더링되고 미리보기 영역을 넘쳐 잘린다.
         */}
         <div
-          className="flex h-full w-full items-center justify-center transition-transform"
-          style={{ transform: `scale(${scale})` }}
+          className="flex min-h-full min-w-full items-center justify-center transition-[width,height]"
+          data-testid="screen-preview-scroll-area"
+          style={
+            scale > 1
+              ? { height: `${scale * 100}%`, width: `${scale * 100}%` }
+              : { height: "100%", width: "100%" }
+          }
         >
-          <ScreenCanvas
-            alt={`${screen.flowStep} 캡처 화면 미리보기`}
-            className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
-            finding={finding}
-            screen={screen}
-          />
+          <div
+            className="relative flex h-full w-full items-center justify-center transition-transform"
+            style={scale < 1 ? { transform: `scale(${scale})` } : undefined}
+          >
+            <ScreenCanvas
+              alt={`${screen.flowStep} 캡처 화면 미리보기`}
+              className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
+              finding={finding}
+              screen={screen}
+            />
+          </div>
         </div>
       </div>
       <div className="absolute right-4 top-20 overflow-hidden rounded-control border border-border bg-white shadow-sm">

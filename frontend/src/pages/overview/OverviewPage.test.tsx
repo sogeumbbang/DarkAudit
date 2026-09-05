@@ -47,12 +47,16 @@ describe("OverviewPage", () => {
     await screen.findByRole("heading", { name: "보험 가입 흐름 v1" });
 
     const previewImage = screen.getByRole("img", { name: /캡처 화면 미리보기/ });
-    const previewViewport = previewImage.parentElement?.parentElement;
+    const previewViewport = screen.getByTestId("screen-preview-viewport");
+    const previewScrollArea = screen.getByTestId("screen-preview-scroll-area");
     expect(previewViewport).toHaveClass("overflow-hidden");
     await user.click(screen.getByRole("button", { name: "확대" }));
     expect(previewViewport).toHaveClass("overflow-auto");
+    expect(previewScrollArea).toHaveStyle({ height: "120%", width: "120%" });
+    expect(previewImage.parentElement).not.toHaveStyle({ transform: "scale(1.2)" });
     await user.click(screen.getByRole("button", { name: "배율 초기화" }));
     expect(previewViewport).toHaveClass("overflow-hidden");
+    expect(previewScrollArea).toHaveStyle({ height: "100%", width: "100%" });
 
     await user.click(screen.getByRole("button", { name: /전체 흐름 보기/ }));
     expect(screen.getByRole("dialog", { name: "전체 가입 흐름" })).toBeInTheDocument();
