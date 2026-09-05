@@ -221,6 +221,7 @@ export function AuditCreatePage() {
   ];
   const pending = mutations.some((mutation) => mutation.isPending);
   const requestFailed = mutations.some((mutation) => mutation.isError);
+  const requestError = mutations.find((mutation) => mutation.isError)?.error;
 
   if (jobId)
     return (
@@ -343,7 +344,9 @@ export function AuditCreatePage() {
           </Card>
           {requestFailed && (
             <p className="mt-4 rounded-control bg-danger/10 p-4 text-sm text-danger">
-              진단 요청을 처리하지 못했습니다. 입력값과 연동 설정을 확인해주세요.
+              진단 요청을 처리하지 못했습니다: {requestError instanceof Error
+                ? requestError.message
+                : "입력값과 연동 설정을 확인해주세요."}
             </p>
           )}
           <div className="mt-5 flex justify-end">

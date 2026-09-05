@@ -417,7 +417,7 @@ function DashboardLoading() {
 }
 
 export function OverviewPage() {
-  const { data, isPending, isError, refetch } = useDashboardSummary();
+  const { data, isPending, isError, error, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFlow, setShowFlow] = useState(false);
 
@@ -430,7 +430,9 @@ export function OverviewPage() {
       <Card className="mx-auto mt-20 max-w-lg p-10 text-center">
         <CircleAlert className="mx-auto text-danger" size={36} />
         <h1 className="mt-5 text-xl font-bold">대시보드를 불러오지 못했습니다</h1>
-        <p className="mt-2 text-sm text-muted">잠시 후 다시 시도해주세요.</p>
+        <p className="mt-2 text-sm text-muted">
+          {error instanceof Error ? error.message : "잠시 후 다시 시도해주세요."}
+        </p>
         <button
           className="mx-auto mt-6 flex items-center gap-2 rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
           onClick={() => refetch()}
