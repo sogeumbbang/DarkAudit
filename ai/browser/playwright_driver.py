@@ -130,6 +130,53 @@ _RULE_ENGINE_EXTRACT_JS = r"""
 """
 
 
+_RENDER_QUALITY_JS = r"""
+() => {
+  const visible = (element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return rect.width > 0 && rect.height > 0
+      && style.visibility !== 'hidden' && style.display !== 'none';
+  };
+  const links = Array.from(document.querySelectorAll('a')).filter(visible);
+  const defaultLinks = links.filter((element) => {
+    const style = getComputedStyle(element);
+    return (style.color === 'rgb(0, 0, 238)' || style.color === 'rgb(85, 26, 139)')
+      && style.textDecorationLine.includes('underline');
+  });
+  const bodyStyle = document.body ? getComputedStyle(document.body) : null;
+  return {
+    stylesheet_count: document.styleSheets.length,
+    linked_stylesheet_count: document.querySelectorAll('link[rel~="stylesheet"]').length,
+    style_element_count: document.querySelectorAll('style').length,
+    visible_link_count: links.length,
+    default_link_count: defaultLinks.length,
+    body_font_family: bodyStyle ? bodyStyle.fontFamily : '',
+  };
+}
+"""
+
+
+class UnrenderedPageError(RuntimeError):
+    """Raised when a URL produced an obviously unstyled document."""
+
+
+def _looks_like_unstyled_document(metrics: dict[str, Any]) -> bool:
+    """Detect high-confidence browser-default HTML without rejecting small plain pages."""
+    stylesheet_count = int(metrics.get("stylesheet_count") or 0)
+    linked_stylesheet_count = int(metrics.get("linked_stylesheet_count") or 0)
+    style_element_count = int(metrics.get("style_element_count") or 0)
+    link_count = int(metrics.get("visible_link_count") or 0)
+    default_link_count = int(metrics.get("default_link_count") or 0)
+    font_family = str(metrics.get("body_font_family") or "").lower()
+
+    if stylesheet_count or linked_stylesheet_count or style_element_count:
+        return False
+    if link_count < 10 or default_link_count / link_count < 0.8:
+        return False
+    return "times new roman" in font_family or font_family.strip() in {"serif", "times"}
+
+
 def _safe_segment(value: str) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip(".-")
     if not cleaned:
@@ -267,6 +314,7 @@ class PlaywrightBrowserSession:
         action: BrowserAction | None = None,
     ) -> CaptureArtifact:
         self._validate_current_url()
+        self._assert_render_quality()
         index = self._artifact_index
         self._artifact_index += 1
         slug = _safe_segment(flow_step.lower().replace(" ", "-"))
@@ -382,10 +430,25 @@ class PlaywrightBrowserSession:
 
     def _settle(self) -> None:
         try:
-            self._page.wait_for_load_state("domcontentloaded", timeout=5_000)
+            self._page.wait_for_load_state("load", timeout=8_000)
+        except Exception:
+            pass
+        try:
+            self._page.evaluate("() => document.fonts ? document.fonts.ready : Promise.resolve()")
         except Exception:
             pass
         self._page.wait_for_timeout(self.settle_time_ms)
+
+    def _assert_render_quality(self) -> None:
+        try:
+            metrics = self._page.evaluate(_RENDER_QUALITY_JS)
+        except Exception:
+            return
+        if _looks_like_unstyled_document(metrics):
+            raise UnrenderedPageError(
+                "페이지가 스타일시트 없이 기본 HTML로 열렸습니다. "
+                "사이트 내부 템플릿 주소가 아닌 실제 홈 또는 상품 페이지 URL을 입력해 주세요."
+            )
 
     def _visible_text(self) -> str:
         try:

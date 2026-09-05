@@ -3,7 +3,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from ai.browser.models import BrowserAction, BrowserActionType
-from ai.browser.playwright_driver import PlaywrightBrowserSession
+from ai.browser.playwright_driver import (
+    PlaywrightBrowserSession,
+    _looks_like_unstyled_document,
+)
 from ai.browser.safety import (
     ActionSafetyPolicy,
     UnsafeActionError,
@@ -94,6 +97,49 @@ class ActionSafetyPolicyTest(unittest.TestCase):
                 target={"tag": "button", "text": "결제하기"},
             )
 
+
+class RenderQualityTest(unittest.TestCase):
+    def test_rejects_large_document_using_browser_default_styles(self):
+        self.assertTrue(
+            _looks_like_unstyled_document(
+                {
+                    "stylesheet_count": 0,
+                    "linked_stylesheet_count": 0,
+                    "style_element_count": 0,
+                    "visible_link_count": 28,
+                    "default_link_count": 26,
+                    "body_font_family": '"Times New Roman"',
+                }
+            )
+        )
+
+    def test_accepts_document_with_loaded_stylesheet(self):
+        self.assertFalse(
+            _looks_like_unstyled_document(
+                {
+                    "stylesheet_count": 1,
+                    "linked_stylesheet_count": 1,
+                    "style_element_count": 0,
+                    "visible_link_count": 28,
+                    "default_link_count": 26,
+                    "body_font_family": '"Times New Roman"',
+                }
+            )
+        )
+
+    def test_accepts_small_intentionally_plain_document(self):
+        self.assertFalse(
+            _looks_like_unstyled_document(
+                {
+                    "stylesheet_count": 0,
+                    "linked_stylesheet_count": 0,
+                    "style_element_count": 0,
+                    "visible_link_count": 3,
+                    "default_link_count": 3,
+                    "body_font_family": '"Times New Roman"',
+                }
+            )
+        )
 
 if __name__ == "__main__":
     unittest.main()
