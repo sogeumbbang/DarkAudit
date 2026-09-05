@@ -14,6 +14,21 @@ class FakeResponses:
         return SimpleNamespace(output_text='{"ok": true}')
 
 
+class RejectsTemperature:
+    """temperature 를 받으면 실패하는 모델을 흉내낸다."""
+
+    def __init__(self):
+        self.kwargs = None
+        self.attempts = 0
+
+    def create(self, **kwargs):
+        self.attempts += 1
+        if "temperature" in kwargs:
+            raise RuntimeError("Unsupported parameter: 'temperature' is not supported with this model.")
+        self.kwargs = kwargs
+        return SimpleNamespace(output_text='{"ok": true}')
+
+
 class OpenAIProviderTest(unittest.TestCase):
     def test_removes_unsupported_conditional_schema_keywords(self):
         schema = {
@@ -57,6 +72,42 @@ class OpenAIProviderTest(unittest.TestCase):
             self.assertIn("semantic-only checks", candidate_text)
             self.assertIn("Do not calculate final severity", candidate_text)
             self.assertTrue(responses.kwargs["text"]["format"]["strict"])
+            # 회차 간 결과가 흔들리면 Before/After 비교를 신뢰할 수 없다.
+            self.assertEqual(responses.kwargs["temperature"], 0)
+
+    def test_retries_without_temperature_when_model_rejects_it(self):
+        """reasoning 계열 모델은 temperature 를 거부한다. 그 때문에 분석이
+        실패하면 안 되고, 한 번 확인한 뒤로는 다시 보내지도 않아야 한다."""
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            responses = RejectsTemperature()
+            provider = OpenAIResponsesProvider("reasoning-model", SimpleNamespace(responses=responses))
+            request = LLMAuditRequest("audit", (AuditScreen("screen_01", "가입", image),))
+
+            result = provider.analyze(request, "system", "audit", [], {"type": "object"})
+
+            self.assertEqual(result, {"ok": True})
+            self.assertEqual(responses.attempts, 2)
+            self.assertNotIn("temperature", responses.kwargs)
+
+            provider.analyze(request, "system", "audit", [], {"type": "object"})
+            self.assertEqual(responses.attempts, 3)  # 재시도 없이 한 번에 성공
+
+    def test_other_errors_are_not_swallowed(self):
+        """인증 실패 같은 오류까지 temperature 문제로 오인해 재시도하면 안 된다."""
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+
+            class Failing:
+                def create(self, **kwargs):
+                    raise RuntimeError("invalid api key")
+
+            provider = OpenAIResponsesProvider("m", SimpleNamespace(responses=Failing()))
+            request = LLMAuditRequest("audit", (AuditScreen("screen_01", "가입", image),))
+            with self.assertRaises(RuntimeError):
+                provider.analyze(request, "system", "audit", [], {"type": "object"})
 
 
 if __name__ == "__main__": unittest.main()
