@@ -16,7 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/Badge";
@@ -54,8 +54,7 @@ function FlowOverview({
           <button
             className={cn(
               "relative min-w-20 rounded-control p-1 text-center",
-              selectedScreenId === screen.id &&
-                "bg-brand-50 ring-2 ring-inset ring-brand-500",
+              selectedScreenId === screen.id && "bg-brand-50 ring-2 ring-inset ring-brand-500",
             )}
             key={screen.id}
             onClick={() => onSelect(screen.id)}
@@ -89,60 +88,133 @@ function FlowOverview({
 
 function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: FindingDto }) {
   const [scale, setScale] = useState(1);
+  const [isPanning, setIsPanning] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const panOriginRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
+
+  function startPanning(event: ReactPointerEvent<HTMLDivElement>) {
+    if (scale <= 1 || event.button !== 0) return;
+    panOriginRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      scrollLeft: event.currentTarget.scrollLeft,
+      scrollTop: event.currentTarget.scrollTop,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    setIsPanning(true);
+  }
+
+  function panPreview(event: ReactPointerEvent<HTMLDivElement>) {
+    const origin = panOriginRef.current;
+    if (!origin || origin.pointerId !== event.pointerId) return;
+    event.currentTarget.scrollLeft = origin.scrollLeft - (event.clientX - origin.x);
+    event.currentTarget.scrollTop = origin.scrollTop - (event.clientY - origin.y);
+  }
+
+  function stopPanning(event: ReactPointerEvent<HTMLDivElement>) {
+    const origin = panOriginRef.current;
+    if (!origin || origin.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    panOriginRef.current = null;
+    setIsPanning(false);
+  }
 
   return (
     <div ref={previewRef}>
-    <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
-      <h2 className="text-sm font-bold">화면 미리보기</h2>
-      <div
-        data-testid="screen-preview-viewport"
-        className={cn(
-          "absolute inset-x-0 bottom-0 top-14 bg-gradient-to-b from-white to-brand-50/60 p-5",
-          scale > 1 ? "overflow-auto" : "overflow-hidden",
-        )}
-      >
-        {/*
+      <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
+        <h2 className="text-sm font-bold">화면 미리보기</h2>
+        <div
+          aria-label="화면 미리보기 이동 영역"
+          data-testid="screen-preview-viewport"
+          className={cn(
+            "absolute inset-x-0 bottom-0 top-14 bg-gradient-to-b from-white to-brand-50/60 p-5",
+            scale > 1 ? "overflow-auto" : "overflow-hidden",
+            scale > 1 && "touch-none select-none",
+            scale > 1 && (isPanning ? "cursor-grabbing" : "cursor-grab"),
+          )}
+          onPointerCancel={stopPanning}
+          onPointerDown={startPanning}
+          onPointerMove={panPreview}
+          onPointerUp={stopPanning}
+          ref={viewportRef}
+          role="region"
+          tabIndex={0}
+        >
+          {/*
           h-full 이 필요하다. 퍼센트 높이는 부모 높이가 확정돼야 계산되는데, 이
           래퍼가 height:auto 면 안쪽 이미지의 max-h-full 이 무시돼 원본 크기로
           렌더링되고 미리보기 영역을 넘쳐 잘린다.
         */}
-        <div
-          className="flex min-h-full min-w-full items-center justify-center transition-[width,height]"
-          data-testid="screen-preview-scroll-area"
-          style={
-            scale > 1
-              ? { height: `${scale * 100}%`, width: `${scale * 100}%` }
-              : { height: "100%", width: "100%" }
-          }
-        >
           <div
-            className="relative flex h-full w-full items-center justify-center transition-transform"
-            style={scale < 1 ? { transform: `scale(${scale})` } : undefined}
+            className="flex min-h-full min-w-full items-center justify-center transition-[width,height]"
+            data-testid="screen-preview-scroll-area"
+            style={
+              scale > 1
+                ? { height: `${scale * 100}%`, width: `${scale * 100}%` }
+                : { height: "100%", width: "100%" }
+            }
           >
-            <ScreenCanvas
-              alt={`${screen.flowStep} 캡처 화면 미리보기`}
-              className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
-              finding={finding}
-              screen={screen}
-            />
+            <div
+              className="relative flex h-full w-full items-center justify-center transition-transform"
+              style={scale < 1 ? { transform: `scale(${scale})` } : undefined}
+            >
+              <ScreenCanvas
+                alt={`${screen.flowStep} 캡처 화면 미리보기`}
+                className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
+                finding={finding}
+                screen={screen}
+              />
+            </div>
           </div>
         </div>
-      </div>
-      <div className="absolute right-4 top-20 overflow-hidden rounded-control border border-border bg-white shadow-sm">
-        <button aria-label="확대" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale((value) => Math.min(2, value + 0.2))}><ZoomIn size={15} /></button>
-        <button aria-label="축소" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale((value) => Math.max(0.5, value - 0.2))}><ZoomOut size={15} /></button>
-        <button aria-label="배율 초기화" className="flex h-10 w-9 items-center justify-center border-b border-border" onClick={() => setScale(1)}><RotateCcw size={15} /></button>
-        <button
-          aria-label="전체 화면"
-          className="flex h-10 w-9 items-center justify-center"
-          onClick={async () => {
-            if (document.fullscreenElement) await document.exitFullscreen();
-            else await previewRef.current?.requestFullscreen();
-          }}
-        ><Expand size={15} /></button>
-      </div>
-    </Card>
+        <div className="absolute right-4 top-20 overflow-hidden rounded-control border border-border bg-white shadow-sm">
+          <button
+            aria-label="확대"
+            className="flex h-10 w-9 items-center justify-center border-b border-border"
+            onClick={() => setScale((value) => Math.min(2, value + 0.2))}
+          >
+            <ZoomIn size={15} />
+          </button>
+          <button
+            aria-label="축소"
+            className="flex h-10 w-9 items-center justify-center border-b border-border"
+            onClick={() => setScale((value) => Math.max(0.5, value - 0.2))}
+          >
+            <ZoomOut size={15} />
+          </button>
+          <button
+            aria-label="배율 초기화"
+            className="flex h-10 w-9 items-center justify-center border-b border-border"
+            onClick={() => {
+              setScale(1);
+              viewportRef.current?.scrollTo?.({ left: 0, top: 0 });
+            }}
+          >
+            <RotateCcw size={15} />
+          </button>
+          <button
+            aria-label="전체 화면"
+            className="flex h-10 w-9 items-center justify-center"
+            onClick={async () => {
+              if (document.fullscreenElement) await document.exitFullscreen();
+              else await previewRef.current?.requestFullscreen();
+            }}
+          >
+            <Expand size={15} />
+          </button>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -349,7 +421,10 @@ function RecentAudits({
     <Card className="mt-4 overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <h2 className="text-sm font-bold">최근 진단</h2>
-        <Link className="flex items-center gap-2 text-xs font-semibold text-brand-700" to="/app/audits">
+        <Link
+          className="flex items-center gap-2 text-xs font-semibold text-brand-700"
+          to="/app/audits"
+        >
           전체 진단 보기 <ArrowRight size={13} />
         </Link>
       </div>
@@ -652,17 +727,40 @@ export function OverviewPage() {
       </div>
       <RecentAudits audits={data.audits} onSelect={selectAudit} />
       {showFlow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="전체 가입 흐름">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="전체 가입 흐름"
+        >
           <Card className="max-h-[90vh] w-full max-w-5xl overflow-auto p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">전체 가입 흐름</h2>
-              <button className="rounded-control border border-border px-4 py-2 text-sm" onClick={() => setShowFlow(false)}>닫기</button>
+              <button
+                className="rounded-control border border-border px-4 py-2 text-sm"
+                onClick={() => setShowFlow(false)}
+              >
+                닫기
+              </button>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {audit.screens.map((item) => (
-                <button className="rounded-card border border-border p-4 text-left hover:border-brand-500" key={item.id} onClick={() => { selectScreen(item.id); setShowFlow(false); }}>
-                  <img alt={`${item.flowStep} 전체 흐름 화면`} className="mx-auto h-64 max-w-full object-contain" src={item.imageUrl} />
-                  <p className="mt-3 text-sm font-bold">{item.order}. {item.flowStep}</p>
+                <button
+                  className="rounded-card border border-border p-4 text-left hover:border-brand-500"
+                  key={item.id}
+                  onClick={() => {
+                    selectScreen(item.id);
+                    setShowFlow(false);
+                  }}
+                >
+                  <img
+                    alt={`${item.flowStep} 전체 흐름 화면`}
+                    className="mx-auto h-64 max-w-full object-contain"
+                    src={item.imageUrl}
+                  />
+                  <p className="mt-3 text-sm font-bold">
+                    {item.order}. {item.flowStep}
+                  </p>
                 </button>
               ))}
             </div>
