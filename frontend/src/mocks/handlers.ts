@@ -11,6 +11,7 @@ import type {
 const jobs = new Map<string, AnalysisJobDto>();
 
 export const handlers = [
+  http.get("*/health", () => HttpResponse.json({ status: "ok" })),
   http.get("*/api/v1/dashboard/summary", async () => {
     await delay(350);
     return HttpResponse.json(dashboardFixture);
