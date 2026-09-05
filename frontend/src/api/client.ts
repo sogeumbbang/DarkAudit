@@ -1,4 +1,7 @@
-const DEPLOYED_API_BASE_URL = "https://darkaudit-backend.onrender.com";
+// Render 서비스명이 그대로 호스트가 된다. 오타가 나도 빌드는 통과하고, 배포된
+// 앱만 죽은 주소를 향한 채 warmUpApi 가 120초를 헛돌다 실패한다.
+// 값을 바꿀 때는 실제 /health 응답을 확인할 것.
+const DEPLOYED_API_BASE_URL = "https://darkaudit.onrender.com";
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 const API_BASE_URL = (
   configuredApiBaseUrl || (import.meta.env.PROD ? DEPLOYED_API_BASE_URL : "")
