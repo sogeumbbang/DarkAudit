@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T08:18:16+00:00",
+  "generated_at": "2026-09-06T11:20:25+00:00",
   "scope": "deterministic rule engine only (LLM semantic verification not included)",
   "dataset": {
     "flows": 22,
@@ -43,14 +43,6 @@
       "recall": 1.0,
       "f1": 1.0
     },
-    "DA-13": {
-      "tp": 3,
-      "fp": 0,
-      "fn": 0,
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0
-    },
     "DA-15": {
       "tp": 3,
       "fp": 3,
@@ -61,14 +53,14 @@
     }
   },
   "micro": {
-    "tp": 23,
+    "tp": 20,
     "fp": 21,
     "fn": 0,
-    "precision": 0.5227,
+    "precision": 0.4878,
     "recall": 1.0,
-    "f1": 0.6866
+    "f1": 0.6557
   },
-  "macro_f1": 0.8291,
+  "macro_f1": 0.7949,
   "per_flow": [
     {
       "flow": "dep-001-clean",
@@ -80,9 +72,9 @@
     },
     {
       "flow": "dep-001-risky",
-      "gold": 8,
-      "predicted": 8,
-      "tp": 8,
+      "gold": 7,
+      "predicted": 7,
+      "tp": 7,
       "fp": 0,
       "fn": 0
     },
@@ -112,9 +104,9 @@
     },
     {
       "flow": "ins-001-risky",
-      "gold": 7,
-      "predicted": 8,
-      "tp": 7,
+      "gold": 6,
+      "predicted": 7,
+      "tp": 6,
       "fp": 1,
       "fn": 0
     },
@@ -192,9 +184,9 @@
     },
     {
       "flow": "ins-006-risky",
-      "gold": 1,
-      "predicted": 2,
-      "tp": 1,
+      "gold": 0,
+      "predicted": 1,
+      "tp": 0,
       "fp": 1,
       "fn": 0
     },

@@ -30,7 +30,9 @@ LABELS = ROOT / "labels"
 REPORT_PATH = Path(__file__).resolve().parents[1] / "docs" / "eval" / "rule_engine_report.json"
 
 # 현재 구현한 유형만 평가 대상으로 삼는다.
-TARGET = {"DA-03", "DA-04", "DA-07", "DA-12", "DA-13", "DA-15"}
+# MVP 자동 분석 범위와 같아야 한다. 여기에만 DA-13 을 넣으면 하이브리드 평가와
+# 집계 기준이 어긋나고, DA-13 은 오탐이 없어 Rule Engine 수치만 유리해 보인다.
+TARGET = {"DA-03", "DA-04", "DA-07", "DA-12", "DA-15"}
 
 
 def gold_of(doc: dict) -> set[tuple[str, int | None]]:
