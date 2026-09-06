@@ -281,7 +281,10 @@ class BrowserStackAndroidRunner:
         if not isinstance(encoded, str):
             raise AndroidRunnerError("Android 스크린샷을 가져오지 못했습니다.")
         try:
-            return base64.b64decode(encoded, validate=True)
+            # Android/Appium may wrap Base64 output with ASCII whitespace.
+            # Normalize only transport whitespace; keep rejecting invalid data.
+            normalized = encoded.translate(str.maketrans("", "", " \t\r\n"))
+            return base64.b64decode(normalized, validate=True)
         except ValueError as exc:
             raise AndroidRunnerError("Android 스크린샷 응답이 손상되었습니다.") from exc
 

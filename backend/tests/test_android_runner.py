@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 
 from backend.api.android_runner import (
+    AndroidRunnerError,
     AndroidRunnerSettings,
     BrowserStackAndroidRunner,
     _tap_candidates,
@@ -19,6 +20,28 @@ _TINY_PNG = base64.b64decode(
 
 
 class AndroidTapCandidateTest(unittest.TestCase):
+    def test_screenshot_accepts_wrapped_base64_without_changing_image(self) -> None:
+        encoded = base64.b64encode(_TINY_PNG).decode("ascii")
+        wrapped = base64.encodebytes(_TINY_PNG).decode("ascii")
+        for value in (encoded, wrapped, " \t" + wrapped.replace("\n", "\r\n") + "\t "):
+            with self.subTest(value=value):
+                with httpx.Client(transport=httpx.MockTransport(
+                    lambda request: httpx.Response(200, json={"value": value})
+                )) as client:
+                    runner = BrowserStackAndroidRunner(AndroidRunnerSettings("user", "key"), client=client)
+                    self.assertEqual(runner._screenshot("session"), _TINY_PNG)
+
+    def test_screenshot_still_rejects_invalid_base64(self) -> None:
+        encoded = base64.b64encode(_TINY_PNG).decode("ascii")
+        for value in (encoded[:20] + "!" + encoded[20:], encoded[:-2], encoded + "가", encoded + "\u00a0"):
+            with self.subTest(value=value):
+                with httpx.Client(transport=httpx.MockTransport(
+                    lambda request: httpx.Response(200, json={"value": value})
+                )) as client:
+                    runner = BrowserStackAndroidRunner(AndroidRunnerSettings("user", "key"), client=client)
+                    with self.assertRaisesRegex(AndroidRunnerError, "응답이 손상"):
+                        runner._screenshot("session")
+
     def test_prefers_safe_navigation_and_blocks_terminal_actions(self) -> None:
         source = """<hierarchy>
           <node clickable="true" enabled="true" text="결제하기" bounds="[0,700][390,780]" />
