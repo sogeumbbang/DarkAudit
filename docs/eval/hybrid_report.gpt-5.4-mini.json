@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-09-06T07:30:45+00:00",
+  "generated_at": "2026-09-06T06:48:07+00:00",
   "scope": "hybrid pipeline (rule engine candidates + multimodal LLM verification)",
-  "model": "gpt-5.6-luna",
+  "model": "gpt-5.4-mini",
   "runs": 3,
   "flows": 22,
   "variation": {
     "precision": {
-      "mean": 0.4571,
-      "min": 0.4571,
-      "max": 0.4571
+      "mean": 0.3975,
+      "min": 0.3721,
+      "max": 0.4103
     },
     "recall": {
       "mean": 1.0,
@@ -16,9 +16,9 @@
       "max": 1.0
     },
     "f1": {
-      "mean": 0.6275,
-      "min": 0.6275,
-      "max": 0.6275
+      "mean": 0.5687,
+      "min": 0.5424,
+      "max": 0.5818
     }
   },
   "per_run": [
@@ -37,19 +37,19 @@
         },
         "DA-04": {
           "tp": 4,
-          "fp": 0,
+          "fp": 15,
           "fn": 0,
-          "precision": 1.0,
+          "precision": 0.21052631578947367,
           "recall": 1.0,
-          "f1": 1.0
+          "f1": 0.34782608695652173
         },
         "DA-07": {
           "tp": 3,
-          "fp": 19,
+          "fp": 8,
           "fn": 0,
-          "precision": 0.13636363636363635,
+          "precision": 0.2727272727272727,
           "recall": 1.0,
-          "f1": 0.24000000000000002
+          "f1": 0.42857142857142855
         },
         "DA-12": {
           "tp": 3,
@@ -70,182 +70,20 @@
       },
       "micro": {
         "tp": 16,
-        "fp": 19,
+        "fp": 23,
         "fn": 0,
-        "precision": 0.45714285714285713,
+        "precision": 0.41025641025641024,
         "recall": 1.0,
-        "f1": 0.6274509803921569
+        "f1": 0.5818181818181819
       },
       "macro": {
-        "precision": 0.8272727272727274,
+        "precision": 0.6966507177033493,
         "recall": 1.0,
-        "f1": 0.8480000000000001
+        "f1": 0.7552795031055901
       },
       "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
-        "comparisons": 55,
-        "pairs": 11
-      },
-      "localization": {
-        "iou_threshold": 0.5,
-        "mean_iou": 0.9411764705882347,
-        "success_rate": 0.9411764705882353,
-        "evaluated_instances": 17
-      },
-      "operations": {
-        "url_exploration_success_rate": null,
-        "average_response_time_seconds": 13.705971977272384,
-        "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
-        "schema_attempts": 22,
-        "schema_retries": 0
-      }
-    },
-    {
-      "dataset_cases": 22,
-      "evaluated_cases": 22,
-      "missing_predictions": [],
-      "per_rule": {
-        "DA-03": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-04": {
-          "tp": 4,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-07": {
-          "tp": 3,
-          "fp": 19,
-          "fn": 0,
-          "precision": 0.13636363636363635,
-          "recall": 1.0,
-          "f1": 0.24000000000000002
-        },
-        "DA-12": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-15": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        }
-      },
-      "micro": {
-        "tp": 16,
-        "fp": 19,
-        "fn": 0,
-        "precision": 0.45714285714285713,
-        "recall": 1.0,
-        "f1": 0.6274509803921569
-      },
-      "macro": {
-        "precision": 0.8272727272727274,
-        "recall": 1.0,
-        "f1": 0.8480000000000001
-      },
-      "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
-        "comparisons": 55,
-        "pairs": 11
-      },
-      "localization": {
-        "iou_threshold": 0.5,
-        "mean_iou": 0.9411764705882347,
-        "success_rate": 0.9411764705882353,
-        "evaluated_instances": 17
-      },
-      "operations": {
-        "url_exploration_success_rate": null,
-        "average_response_time_seconds": 11.95493456818167,
-        "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
-        "schema_attempts": 22,
-        "schema_retries": 0
-      }
-    },
-    {
-      "dataset_cases": 22,
-      "evaluated_cases": 22,
-      "missing_predictions": [],
-      "per_rule": {
-        "DA-03": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-04": {
-          "tp": 4,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-07": {
-          "tp": 3,
-          "fp": 19,
-          "fn": 0,
-          "precision": 0.13636363636363635,
-          "recall": 1.0,
-          "f1": 0.24000000000000002
-        },
-        "DA-12": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        },
-        "DA-15": {
-          "tp": 3,
-          "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
-        }
-      },
-      "micro": {
-        "tp": 16,
-        "fp": 19,
-        "fn": 0,
-        "precision": 0.45714285714285713,
-        "recall": 1.0,
-        "f1": 0.6274509803921569
-      },
-      "macro": {
-        "precision": 0.8272727272727274,
-        "recall": 1.0,
-        "f1": 0.8480000000000001
-      },
-      "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
+        "score": 0.7090909090909091,
+        "correct": 39,
         "comparisons": 55,
         "pairs": 11
       },
@@ -257,12 +95,176 @@
       },
       "operations": {
         "url_exploration_success_rate": null,
-        "average_response_time_seconds": 11.84110289999998,
+        "average_response_time_seconds": 5.871688527272661,
         "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
+        "schema_retry_rate": 0.08333333333333333,
+        "schema_retry_run_rate": 0.09090909090909091,
+        "schema_attempts": 24,
+        "schema_retries": 2
+      }
+    },
+    {
+      "dataset_cases": 22,
+      "evaluated_cases": 21,
+      "missing_predictions": [
+        "dep-001-clean"
+      ],
+      "per_rule": {
+        "DA-03": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-04": {
+          "tp": 4,
+          "fp": 15,
+          "fn": 0,
+          "precision": 0.21052631578947367,
+          "recall": 1.0,
+          "f1": 0.34782608695652173
+        },
+        "DA-07": {
+          "tp": 3,
+          "fp": 8,
+          "fn": 0,
+          "precision": 0.2727272727272727,
+          "recall": 1.0,
+          "f1": 0.42857142857142855
+        },
+        "DA-12": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-15": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "micro": {
+        "tp": 16,
+        "fp": 23,
+        "fn": 0,
+        "precision": 0.41025641025641024,
+        "recall": 1.0,
+        "f1": 0.5818181818181819
+      },
+      "macro": {
+        "precision": 0.6966507177033493,
+        "recall": 1.0,
+        "f1": 0.7552795031055901
+      },
+      "counterfactual_consistency": {
+        "score": 0.7,
+        "correct": 35,
+        "comparisons": 50,
+        "pairs": 10
+      },
+      "localization": {
+        "iou_threshold": 0.5,
+        "mean_iou": 0.9999999999999996,
+        "success_rate": 1.0,
+        "evaluated_instances": 17
+      },
+      "operations": {
+        "url_exploration_success_rate": null,
+        "average_response_time_seconds": 5.691751000000035,
+        "model_cost_usd_per_screen": null,
+        "schema_retry_rate": 0.045454545454545456,
+        "schema_retry_run_rate": 0.047619047619047616,
         "schema_attempts": 22,
-        "schema_retries": 0
+        "schema_retries": 1
+      }
+    },
+    {
+      "dataset_cases": 22,
+      "evaluated_cases": 22,
+      "missing_predictions": [],
+      "per_rule": {
+        "DA-03": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-04": {
+          "tp": 4,
+          "fp": 15,
+          "fn": 0,
+          "precision": 0.21052631578947367,
+          "recall": 1.0,
+          "f1": 0.34782608695652173
+        },
+        "DA-07": {
+          "tp": 3,
+          "fp": 12,
+          "fn": 0,
+          "precision": 0.2,
+          "recall": 1.0,
+          "f1": 0.33333333333333337
+        },
+        "DA-12": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-15": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "micro": {
+        "tp": 16,
+        "fp": 27,
+        "fn": 0,
+        "precision": 0.37209302325581395,
+        "recall": 1.0,
+        "f1": 0.5423728813559322
+      },
+      "macro": {
+        "precision": 0.6821052631578948,
+        "recall": 1.0,
+        "f1": 0.736231884057971
+      },
+      "counterfactual_consistency": {
+        "score": 0.6727272727272727,
+        "correct": 37,
+        "comparisons": 55,
+        "pairs": 11
+      },
+      "localization": {
+        "iou_threshold": 0.5,
+        "mean_iou": 0.941176470588235,
+        "success_rate": 0.9411764705882353,
+        "evaluated_instances": 17
+      },
+      "operations": {
+        "url_exploration_success_rate": null,
+        "average_response_time_seconds": 5.832549204545433,
+        "model_cost_usd_per_screen": null,
+        "schema_retry_rate": 0.08333333333333333,
+        "schema_retry_run_rate": 0.09090909090909091,
+        "schema_attempts": 24,
+        "schema_retries": 2
       }
     }
   ]

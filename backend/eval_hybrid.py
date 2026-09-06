@@ -221,8 +221,13 @@ def main() -> None:
         "per_run": reports,
     }
     OUT.mkdir(parents=True, exist_ok=True)
+    body = json.dumps(summary, ensure_ascii=False, indent=2)
     path = OUT / "hybrid_report.json"
-    path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(body, encoding="utf-8")
+    # 모델을 바꿔 다시 재면 이전 값이 덮여 비교할 수 없다. 모델명을 붙인 사본을
+    # 함께 남겨 두고, 문서가 인용하는 경로(hybrid_report.json)는 최신을 가리킨다.
+    model_slug = (summary["model"] or "unknown").replace("/", "-")
+    (OUT / f"hybrid_report.{model_slug}.json").write_text(body, encoding="utf-8")
 
     print("=" * 46)
     for metric, stats in summary["variation"].items():
