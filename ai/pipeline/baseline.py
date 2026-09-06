@@ -51,6 +51,7 @@ class BaselineAuditPipeline:
     ) -> HybridAuditOutput:
         evidence_warnings: list[str] = []
         analysis_usage = []
+        rejected_evidence = []
         self._grounding_usage = []
         enriched_screens = []
         for screen in request.screens:
@@ -113,19 +114,11 @@ class BaselineAuditPipeline:
                     except EvidenceContractError as exc:
                         if attempt < self.max_attempts:
                             raise
-                        # Preserve other rules after an unsuccessful correction,
-                        # but explicitly mark this rule's evidence incomplete.
-                        rule = exc.rule_id
-                        evidence_warnings.append(f"evidence_contract:{rule}")
-                        raw["semantic_findings"] = [f for f in raw["semantic_findings"] if f["rule_id"] != rule]
-                        ids = {c.candidate_id for c in parsed_candidates if c.rule_id == rule}
-                        for decision in raw["candidate_decisions"]:
-                            if decision["candidate_id"] in ids:
-                                decision.update(decision="REJECT", reason=str(exc))
-                        for assessment in raw.get("rule_assessments", []):
-                            if assessment["rule_id"] == rule:
-                                assessment.update(status="insufficient_evidence", reason=str(exc),
-                                                  choice_pairs=[], price_comparisons=[])
+                        from .evidence_recovery import recover_rule
+                        evidence_warnings.append(f"evidence_contract:{exc.rule_id}")
+                        rejected_evidence.extend(recover_rule(
+                            raw, exc.rule_id, request, parsed_candidates, self.allowed_semantic_rule_ids
+                        ))
 
                 result = self._filter_and_deduplicate(output)
                 result, localizations = self._ground_visual_bboxes(result, request)
@@ -140,6 +133,7 @@ class BaselineAuditPipeline:
                     "grounding_usage": _sum_usage(self._grounding_usage),
                     "bbox_localizations": localizations,
                     "rule_assessments": list(result.rule_assessments),
+                    "rejected_evidence": rejected_evidence,
                     "provider": type(self.provider).__name__,
                     "model": getattr(self.provider, "model", None),
                     "warnings": evidence_warnings + (["mock_analysis"] if type(self.provider).__name__ == "FakeMultimodalProvider" else [])

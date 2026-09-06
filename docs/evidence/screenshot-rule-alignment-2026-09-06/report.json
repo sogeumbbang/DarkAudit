@@ -1,0 +1,456 @@
+{
+  "scope": "Authored screenshot-only rule regression probes; one stochastic run per case, not representative accuracy",
+  "model": "gpt-5.4-mini",
+  "current_schema_version": "1.3",
+  "baseline_commit": "57ec857",
+  "before_after_images_identical": {
+    "consent-risky": true,
+    "consent-clean": true,
+    "hierarchy-risky": true,
+    "hierarchy-clean": true,
+    "information-risky": true,
+    "information-clean": true
+  },
+  "comparison_before": {
+    "dataset_cases": 6,
+    "evaluated_cases": 6,
+    "missing_predictions": [],
+    "per_rule": {
+      "DA-03": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-04": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-07": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-12": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "DA-15": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "micro": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "macro": {
+      "precision": 0.6,
+      "recall": 0.6,
+      "f1": 0.6
+    },
+    "instance_detection": {
+      "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+      "iou_threshold": 0.5,
+      "per_rule": {
+        "DA-03": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-04": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-07": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-12": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "DA-15": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "micro": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "prediction_coverage": 1.0
+    },
+    "counterfactual_consistency": {
+      "score": 1.0,
+      "correct": 15,
+      "comparisons": 15,
+      "pairs": 3
+    },
+    "localization": {
+      "iou_threshold": 0.5,
+      "mean_iou": 0.893864409685213,
+      "success_rate": 1.0,
+      "evaluated_instances": 5
+    },
+    "operations": {
+      "url_exploration_success_rate": null,
+      "average_response_time_seconds": 18.503383155334934,
+      "model_cost_usd_per_screen": null,
+      "schema_retry_rate": 0.0,
+      "schema_retry_run_rate": 0.0,
+      "schema_attempts": 6,
+      "schema_retries": 0
+    }
+  },
+  "comparison_after": {
+    "dataset_cases": 6,
+    "evaluated_cases": 6,
+    "missing_predictions": [],
+    "per_rule": {
+      "DA-03": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-04": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-07": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-12": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "DA-15": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "micro": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "macro": {
+      "precision": 0.6,
+      "recall": 0.6,
+      "f1": 0.6
+    },
+    "instance_detection": {
+      "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+      "iou_threshold": 0.5,
+      "per_rule": {
+        "DA-03": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-04": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-07": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-12": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "DA-15": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "micro": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "prediction_coverage": 1.0
+    },
+    "counterfactual_consistency": {
+      "score": 1.0,
+      "correct": 15,
+      "comparisons": 15,
+      "pairs": 3
+    },
+    "localization": {
+      "iou_threshold": 0.5,
+      "mean_iou": 0.8991448660034351,
+      "success_rate": 1.0,
+      "evaluated_instances": 5
+    },
+    "operations": {
+      "url_exploration_success_rate": null,
+      "average_response_time_seconds": 14.9508310843327,
+      "model_cost_usd_per_screen": null,
+      "schema_retry_rate": 0.0,
+      "schema_retry_run_rate": 0.0,
+      "schema_attempts": 6,
+      "schema_retries": 0
+    }
+  },
+  "all_after": {
+    "dataset_cases": 10,
+    "evaluated_cases": 10,
+    "missing_predictions": [],
+    "per_rule": {
+      "DA-03": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-04": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-07": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-12": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "DA-15": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "micro": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "macro": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "instance_detection": {
+      "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+      "iou_threshold": 0.5,
+      "per_rule": {
+        "DA-03": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-04": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-07": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-12": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "DA-15": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "micro": {
+        "tp": 6,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.8571428571428571,
+        "recall": 0.8571428571428571,
+        "f1": 0.8571428571428571
+      },
+      "prediction_coverage": 1.0
+    },
+    "counterfactual_consistency": {
+      "score": 1.0,
+      "correct": 25,
+      "comparisons": 25,
+      "pairs": 5
+    },
+    "localization": {
+      "iou_threshold": 0.5,
+      "mean_iou": 0.8153908403285061,
+      "success_rate": 0.8571428571428571,
+      "evaluated_instances": 7
+    },
+    "operations": {
+      "url_exploration_success_rate": null,
+      "average_response_time_seconds": 13.563048342298135,
+      "model_cost_usd_per_screen": null,
+      "schema_retry_rate": 0.0,
+      "schema_retry_run_rate": 0.0,
+      "schema_attempts": 10,
+      "schema_retries": 0
+    }
+  },
+  "findings_by_case": {
+    "consent-risky": [
+      "DA-04",
+      "DA-04",
+      "DA-04"
+    ],
+    "consent-clean": [],
+    "hierarchy-risky": [
+      "DA-03"
+    ],
+    "hierarchy-clean": [],
+    "information-risky": [
+      "DA-07"
+    ],
+    "information-clean": [],
+    "emotion-risky": [
+      "DA-12"
+    ],
+    "emotion-clean": [],
+    "pricing-risky": [
+      "DA-15"
+    ],
+    "pricing-clean": []
+  },
+  "notes": [
+    "Six compared cases passed both versions; no measured recall improvement established by that comparison.",
+    "Pricing-risky returned the correct DA-15 claim, but its tight text bbox did not reach IoU 0.5 against the labelled paragraph region.",
+    "An initial fixture draft retained unequal clean button fill and unequal clean risk/benefit typography. Clean counterparts were corrected before the frozen before/after comparison.",
+    "Live DA-03 optional-as-required and cost-rate increases are covered by contract tests, not by the image smoke set."
+  ],
+  "tests": {
+    "ai": 90,
+    "backend": 74
+  }
+}

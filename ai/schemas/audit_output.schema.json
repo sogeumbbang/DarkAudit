@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DarkAudit Hybrid Audit Output v1.2",
+  "title": "DarkAudit Hybrid Audit Output v1.3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "1.2"
+      "const": "1.3"
     },
     "screens": {
       "type": "array",
@@ -565,6 +565,10 @@
           "items": {
             "type": "string",
             "enum": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
               "selected_paid_option"
             ]
           },
@@ -614,6 +618,10 @@
           "items": {
             "type": "string",
             "enum": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
               "selected_paid_option"
             ]
           }
@@ -937,7 +945,8 @@
           "screen_id",
           "accept_text",
           "decline_text",
-          "decline_is_action"
+          "decline_is_action",
+          "pair_kind"
         ],
         "properties": {
           "screen_id": {
@@ -951,6 +960,13 @@
           },
           "decline_is_action": {
             "type": "boolean"
+          },
+          "pair_kind": {
+            "type": "string",
+            "enum": [
+              "opposing_choices",
+              "optional_as_required"
+            ]
           }
         }
       }
@@ -985,7 +1001,9 @@
             "type": "string",
             "enum": [
               "KRW",
-              "percent"
+              "percent",
+              "percent_return",
+              "percent_cost"
             ]
           },
           "initial_amount": {
@@ -1017,7 +1035,8 @@
           "screen_id",
           "accept_text",
           "decline_text",
-          "decline_is_action"
+          "decline_is_action",
+          "pair_kind"
         ],
         "properties": {
           "screen_id": {
@@ -1031,6 +1050,13 @@
           },
           "decline_is_action": {
             "type": "boolean"
+          },
+          "pair_kind": {
+            "type": "string",
+            "enum": [
+              "opposing_choices",
+              "optional_as_required"
+            ]
           }
         }
       },
@@ -1066,7 +1092,9 @@
             "type": "string",
             "enum": [
               "KRW",
-              "percent"
+              "percent",
+              "percent_return",
+              "percent_cost"
             ]
           },
           "initial_amount": {

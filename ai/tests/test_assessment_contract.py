@@ -35,7 +35,7 @@ def assessments(ids):
 
 
 class AssessmentContractTest(unittest.TestCase):
-    def test_v12_golden_empty_result_has_complete_rule_coverage(self):
+    def test_current_golden_empty_result_has_complete_rule_coverage(self):
         from dataclasses import replace
 
         case = json.loads(
@@ -130,6 +130,127 @@ class AssessmentContractTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "five MVP"):
             self.parse()
 
+    def test_price_free_preselection_uses_existing_yaml_checks(self):
+        from ai.rules.rule_loader import RuleLoader
+
+        rule = RuleLoader().rules(rule_ids={"DA-04"})[0]
+        item = detection(
+            risk_type="PRESELECTED_OPTION",
+            risk_name="특정옵션의 사전선택",
+            rule_id="DA-04",
+            severity="HIGH",
+        )
+        item["where"]["element"] = "[선택] 마케팅 정보 수신"
+        item["observation"] = (
+            "첫 설정 화면의 선택 마케팅 동의 체크박스가 체크되어 있다."
+        )
+        self.raw["semantic_findings"] = [item]
+        for check in rule["deterministic_checks"]:
+            self.raw["rule_assessments"][1].update(
+                status="detected", checks=[check["id"]]
+            )
+            with self.subTest(check=check["id"]):
+                self.assertEqual(self.parse().semantic_findings[0].rule_id, "DA-04")
+
+    def test_optional_consent_mandatory_presentation_does_not_need_fake_decline_button(
+        self,
+    ):
+        item = detection(
+            risk_type="VISUAL_HIERARCHY_DISTORTION",
+            risk_name="잘못된 계층구조",
+            rule_id="DA-03",
+            severity="HIGH",
+            related_elements=[
+                {
+                    "screen_id": "screen_01",
+                    "element": "모두 필수 동의",
+                    "bbox": [0.1, 0.1, 0.6, 0.1],
+                }
+            ],
+        )
+        item["where"]["element"] = "[선택] 마케팅 동의"
+        self.raw["semantic_findings"] = [item]
+        self.raw["rule_assessments"][0].update(
+            status="detected",
+            checks=["optional_looks_mandatory"],
+            choice_pairs=[
+                {
+                    "screen_id": "screen_01",
+                    "accept_text": "[선택] 마케팅 동의",
+                    "decline_text": "모두 필수 동의",
+                    "decline_is_action": False,
+                    "pair_kind": "optional_as_required",
+                }
+            ],
+        )
+        self.parse()
+        self.raw["rule_assessments"][0]["choice_pairs"][0]["pair_kind"] = (
+            "opposing_choices"
+        )
+        with self.assertRaises(EvidenceContractError):
+            self.parse()
+
+    def test_cost_rate_increase_and_return_rate_decrease_are_both_adverse(self):
+        price = self.add_price()
+        price.update(unit="percent_cost", initial_amount=4, final_amount=8)
+        self.parse()
+        price.update(unit="percent_return")
+        with self.assertRaises(EvidenceContractError):
+            self.parse()
+        price.update(initial_amount=8, final_amount=4)
+        self.parse()
+
+    def test_invalid_choice_does_not_remove_valid_finding_of_the_same_rule(self):
+        items, pairs = [], []
+        for index in (1, 2):
+            screen_id = f"screen_0{index}"
+            item = detection(
+                risk_type="VISUAL_HIERARCHY_DISTORTION",
+                risk_name="잘못된 계층구조",
+                rule_id="DA-03",
+                severity="HIGH",
+                screen_ids=[screen_id],
+                related_elements=[
+                    {
+                        "screen_id": screen_id,
+                        "element": "나중에",
+                        "bbox": [0.1, 0.1, 0.3, 0.05],
+                    }
+                ],
+            )
+            item["where"]["element"] = "신청하기"
+            items.append(item)
+            pairs.append(
+                {
+                    "screen_id": screen_id,
+                    "accept_text": "신청하기",
+                    "decline_text": "나중에",
+                    "decline_is_action": index == 1,
+                    "pair_kind": "opposing_choices",
+                }
+            )
+        self.raw["semantic_findings"] = items
+        self.raw["rule_assessments"][0].update(
+            status="detected", checks=["visual_hierarchy"], choice_pairs=pairs
+        )
+        raw = self.raw
+
+        class Provider:
+            requires_rule_assessments = True
+
+            def analyze(self, **kwargs):
+                return copy.deepcopy(raw)
+
+        pipeline = BaselineAuditPipeline(Provider(), allow_visual_fallback=True)
+        result = pipeline.analyze(self.request)
+        self.assertEqual(len(result.semantic_findings), 1)
+        self.assertEqual(result.semantic_findings[0].where.screen_ids, ("screen_01",))
+        self.assertEqual(result.rule_assessments[0]["status"], "detected")
+        self.assertEqual(len(pipeline.last_run_telemetry["rejected_evidence"]), 1)
+        self.assertIn(
+            "evidence_contract:DA-03", pipeline.last_run_telemetry["warnings"]
+        )
+
     def test_rejects_cross_product_and_explained_price_changes(self):
         price = self.add_price()
         self.parse()
@@ -157,19 +278,53 @@ class AssessmentContractTest(unittest.TestCase):
 
     def test_da03_keep_requires_opposing_actions_in_original_candidate_evidence(self):
         from ai.schemas.audit_schema import RuleCandidate
-        candidate = RuleCandidate("choice", "DA-03", "screen_01", 1, "accept",
-            ("DA-03.primary_vs_secondary_area_ratio",), {"evidence": [
-                {"element_id": "accept", "screen_id": "screen_01", "text": "동의"},
-                {"element_id": "decline", "screen_id": "screen_01", "text": "거절"},
-            ]}, ("decline",))
-        self.raw["candidate_decisions"] = [{"candidate_id": "choice", "decision": "KEEP",
-            "reason": "실제 대립 선택지 확인", "base_severity": "HIGH", "confidence": 0.9}]
-        self.raw["rule_assessments"][0].update(status="detected", checks=["visual_hierarchy"],
-            choice_pairs=[{"screen_id": "screen_01", "accept_text": "동의", "decline_text": "거절", "decline_is_action": True}])
-        parse_hybrid_response(self.raw, self.request, [candidate], VISUAL_FALLBACK_RULE_IDS)
-        self.raw["rule_assessments"][0]["choice_pairs"][0]["decline_text"] = "혜택이 사라집니다"
+
+        candidate = RuleCandidate(
+            "choice",
+            "DA-03",
+            "screen_01",
+            1,
+            "accept",
+            ("DA-03.primary_vs_secondary_area_ratio",),
+            {
+                "evidence": [
+                    {"element_id": "accept", "screen_id": "screen_01", "text": "동의"},
+                    {"element_id": "decline", "screen_id": "screen_01", "text": "거절"},
+                ]
+            },
+            ("decline",),
+        )
+        self.raw["candidate_decisions"] = [
+            {
+                "candidate_id": "choice",
+                "decision": "KEEP",
+                "reason": "실제 대립 선택지 확인",
+                "base_severity": "HIGH",
+                "confidence": 0.9,
+            }
+        ]
+        self.raw["rule_assessments"][0].update(
+            status="detected",
+            checks=["visual_hierarchy"],
+            choice_pairs=[
+                {
+                    "screen_id": "screen_01",
+                    "accept_text": "동의",
+                    "decline_text": "거절",
+                    "decline_is_action": True,
+                }
+            ],
+        )
+        parse_hybrid_response(
+            self.raw, self.request, [candidate], VISUAL_FALLBACK_RULE_IDS
+        )
+        self.raw["rule_assessments"][0]["choice_pairs"][0]["decline_text"] = (
+            "혜택이 사라집니다"
+        )
         with self.assertRaisesRegex(EvidenceContractError, "opposing actions"):
-            parse_hybrid_response(self.raw, self.request, [candidate], VISUAL_FALLBACK_RULE_IDS)
+            parse_hybrid_response(
+                self.raw, self.request, [candidate], VISUAL_FALLBACK_RULE_IDS
+            )
 
     def test_failed_evidence_rule_is_marked_incomplete_without_losing_other_rules(self):
         price = self.add_price()

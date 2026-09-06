@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
 DEVICE_PROFILES = frozenset({"desktop", "mobile", "iphone"})
 
 

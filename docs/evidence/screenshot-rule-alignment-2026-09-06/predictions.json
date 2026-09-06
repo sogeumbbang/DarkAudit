@@ -1,0 +1,2675 @@
+{
+  "before": {
+    "consent-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 광고성 마케팅 정보 수신",
+              "location": "화면 중앙의 첫 번째 선택 항목"
+            },
+            "bbox": [
+              0.115,
+              0.293421,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택형 광고성 마케팅 정보 수신 항목의 체크박스가 초기 화면에서 선택된 상태로 표시된다.",
+            "observation": "체크 표시가 있는 선택형 체크박스와 '[선택]' 라벨이 함께 보인다. 사용자의 사전 클릭이나 과거 선택 이력은 정지 이미지에서 확인할 수 없다.",
+            "rule_id": "DA-04",
+            "why": "선택 동의 항목이 초기 상태에서 선택되어 있어 소비자가 이를 지나치거나 그대로 수용할 가능성이 관찰된다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "선택형 동의 항목을 초기 미선택 상태로 표시하고, 사용자의 명시적인 클릭·터치 후에만 선택되도록 한다."
+          },
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 제휴사 개인정보 제공",
+              "location": "화면 중앙의 두 번째 선택 항목"
+            },
+            "bbox": [
+              0.115,
+              0.386842,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택형 제휴사 개인정보 제공 항목의 체크박스가 초기 화면에서 선택된 상태로 표시된다.",
+            "observation": "체크 표시가 있는 선택형 체크박스와 '[선택]' 라벨이 함께 보인다. 해당 항목의 선택이 사용자 행동에 따른 것인지 여부는 확인할 수 없다.",
+            "rule_id": "DA-04",
+            "why": "선택형 개인정보 제공 동의가 사전 선택되어 있어 소비자가 선택 상태를 그대로 수용할 가능성이 관찰된다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "제휴사 개인정보 제공 항목을 초기 미선택 상태로 제공하고 사용자의 명시적 동의를 요구한다."
+          },
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 펀드 만기 시 자동 재투자",
+              "location": "화면 중앙의 세 번째 선택 항목"
+            },
+            "bbox": [
+              0.115,
+              0.480263,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택형 펀드 만기 시 자동 재투자 항목의 체크박스가 초기 화면에서 선택된 상태로 표시된다.",
+            "observation": "체크 표시가 있는 선택형 체크박스와 '[선택]' 라벨이 함께 보인다. 실제 펀드 조건이나 사용자의 과거 선택 이력은 화면에서 확인할 수 없다.",
+            "rule_id": "DA-04",
+            "why": "자동 재투자라는 선택형 금융 관련 옵션이 사전 선택되어 있어 소비자가 이를 인식하지 못하고 유지할 가능성이 관찰된다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "자동 재투자 항목을 초기 미선택 상태로 변경하고 사용자의 명시적 선택 후에만 적용한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 37.39293561200611,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 10966,
+          "output_tokens": 2893,
+          "total_tokens": 13859
+        },
+        "analysis_usage": {
+          "input_tokens": 7545,
+          "output_tokens": 2065,
+          "total_tokens": 9610
+        },
+        "grounding_usage": {
+          "input_tokens": 3421,
+          "output_tokens": 828,
+          "total_tokens": 4249
+        },
+        "bbox_localizations": [
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.98,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.98,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 세 개의 선택형 항목이 동일한 형태로 표시되고 '[선택]' 라벨도 확인된다. 수락 동작과 거절·보류 동작이 대립하는 선택 쌍으로 표시된 별도 UI는 관찰되지 않아 시각적 위계 왜곡이나 선택 사항을 필수처럼 보이게 하는 근거는 확인되지 않았다. 다만 실제 클릭 가능 여부와 후속 화면의 선택 구조는 정지 이미지에서 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "detected",
+            "reason": "화면의 세 항목 모두 '[선택]'으로 표시된 선택형 옵션이며 체크박스가 선택 상태로 보인다. 선택형 광고성 마케팅 정보 수신, 제휴사 개인정보 제공, 펀드 만기 시 자동 재투자 항목의 초기 선택 표시를 근거로 탐지했다. 가격 정보와 실제 사용자 선택 이력은 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "insufficient_evidence",
+            "reason": "제공된 단일 정지 화면에서는 세 선택 항목과 기본 서비스 이용 가능 안내가 보이며, 접힌 상세 영역이나 별도 숨김 정보는 관찰되지 않는다. 그러나 수집된 computed style, 전체 계약 조건, 위험·비용·권리 안내, 후속 단계 및 다음 버튼 상태가 없어 중요 정보의 작은 글씨·저대비·접힘 여부를 충분히 검증할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "화면에 보이는 문구는 '선택사항을 확인해 주세요', 각 선택 항목의 중립적인 라벨, '선택 동의 없이도 기본 서비스를 이용할 수 있습니다'이며 포기·손해·후회·놓치다와 같은 손실 프레이밍이나 비용·위험을 축소하는 표현은 관찰되지 않았다. 후속 화면의 문구는 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 상품 가격·이율·수수료의 초기와 후반 수치, 화면 간 시간 순서, 후반부 신규 비용 항목이 제공되지 않았다. 따라서 동일 상품의 가격 상승이나 이율 악화, 늦은 필수 비용 공개를 비교할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "consent-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 13.55423688198789,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 7544,
+          "output_tokens": 973,
+          "total_tokens": 8517
+        },
+        "analysis_usage": {
+          "input_tokens": 7544,
+          "output_tokens": 973,
+          "total_tokens": 8517
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 광고성 마케팅 정보 수신, 제휴사 개인정보 제공, 펀드 만기 시 자동 재투자라는 세 개의 선택 항목이 보이며 모두 '[선택]'으로 표시되어 있다. 수락 동작과 거절·보류 동작이 대립하는 선택 쌍이나, 특정 선택지를 필수처럼 보이게 하는 시각적 위계는 관찰되지 않았다. 다만 클릭 가능성 및 실제 다음 단계의 동작은 정지 화면만으로 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "세 개의 체크박스가 모두 빈 상태로 표시되어 있어 선택 옵션의 사전 선택은 관찰되지 않는다. 화면상 초기 상태는 미선택으로 보이지만, 정지 이미지이므로 과거 사용자 선택이나 이후 상태는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "insufficient_evidence",
+            "reason": "화면에는 선택 동의 없이 기본 서비스를 이용할 수 있다는 안내가 보이고, 중요 비용·위험·조건·권리 정보가 작거나 저대비 또는 접힘 상태로 표시된 요소는 관찰되지 않았다. 그러나 computed style, 접힘·스크롤 상태, 다음 단계 진행 조건 및 전체 계약 맥락이 수집되지 않아 숨겨진 중요 정보가 없다고 확정할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "화면의 문구는 '선택사항을 확인해 주세요', 각 선택 항목의 '[선택]' 표시, 그리고 '선택 동의 없이도 기본 서비스를 이용할 수 있습니다'라는 중립적 안내로 구성되어 있다. 거절 시 혜택 상실을 암시하거나 비용·위험·의무를 축소하는 감정적 표현은 관찰되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 상품 가격, 이율, 수수료 또는 후반 단계의 최종 금액이 표시되지 않는다. 따라서 동일 상품의 초기·최종 가격이나 이율 변화, 후반부 비용 최초 공개 여부를 비교할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "hierarchy-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "VISUAL_HIERARCHY_DISTORTION",
+            "risk_name": "잘못된 계층구조",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "제휴카드 신청하기",
+              "location": "화면 중앙 카드 영역의 주요 CTA"
+            },
+            "bbox": [
+              0.115,
+              0.276316,
+              0.77,
+              0.084474
+            ],
+            "related_elements": [
+              {
+                "screen_id": "screen-01",
+                "element": "신청하지 않고 계속하기",
+                "bbox": [
+                  0.403,
+                  0.4,
+                  0.2,
+                  0.025
+                ]
+              }
+            ],
+            "what": "제휴카드 신청과 신청하지 않고 계속하기라는 대립 선택지가 함께 표시되어 있다.",
+            "observation": "제휴카드 신청하기는 넓은 짙은 녹색 실선 버튼으로 크게 표시된 반면, 신청하지 않고 계속하기는 버튼 배경 없이 작고 연한 회색 텍스트 링크 형태로 표시되어 시각적 위계가 크게 다르다. 연회비 10,000원이라는 비용이 있는 카드 신청 쪽이 강조되어 사업자에게 유리한 선택을 두드러지게 보이게 한다.",
+            "rule_id": "DA-03",
+            "why": "수락 선택지와 거절·보류 선택지가 모두 관찰되며, 수락 CTA의 면적·색상·형태가 거절 선택지보다 현저히 강조되어 자유로운 선택의 시각적 균형을 왜곡할 수 있다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "제휴카드 신청하기와 신청하지 않고 계속하기를 동일한 수준의 버튼 또는 링크 형태와 충분한 가독성으로 제공해 중립적인 선택 구조로 구성한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 21.707583515002625,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8266,
+          "output_tokens": 1553,
+          "total_tokens": 9819
+        },
+        "analysis_usage": {
+          "input_tokens": 7545,
+          "output_tokens": 1475,
+          "total_tokens": 9020
+        },
+        "grounding_usage": {
+          "input_tokens": 721,
+          "output_tokens": 78,
+          "total_tokens": 799
+        },
+        "bbox_localizations": [
+          {
+            "rule_id": "DA-03",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-03",
+            "screen_id": "screen-01",
+            "role": "related",
+            "candidate_id": null,
+            "source": "model",
+            "confidence": 0.0,
+            "ocr_anchor_count": 0,
+            "applied": false
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "detected",
+            "reason": "화면 1에서 실제 수락 동작인 '제휴카드 신청하기'와 실제 거절·보류 동작인 '신청하지 않고 계속하기'가 함께 관찰된다. 전자는 큰 녹색 버튼이고 후자는 작고 연한 텍스트 링크여서 시각적 위계 차이가 명확하다. 단일 화면만 제공되어 이후 단계의 동작은 확인할 수 없지만, 이 규칙은 단일 화면의 선택지 위계를 검사하므로 탐지 근거가 충분하다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy"
+            ],
+            "choice_pairs": [
+              {
+                "screen_id": "screen-01",
+                "accept_text": "제휴카드 신청하기",
+                "decline_text": "신청하지 않고 계속하기",
+                "decline_is_action": true
+              }
+            ],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면 1에는 체크박스, 라디오, 토글 또는 선택된 유료 옵션 표시가 관찰되지 않는다. 제휴카드 신청 버튼은 선택 동작을 실행하는 CTA로 보이며 사전 선택된 옵션의 상태는 확인되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "연회비 10,000원과 카드 신청의 선택사항이라는 문구가 화면에 직접 표시되어 있다. 제공된 정지 화면에서는 중요한 비용·위험·조건이 작은 글씨, 저대비, 접힌 상세 영역에 숨겨진 정황이 관찰되지 않는다. 다만 화면 밖의 약관이나 후속 설명 단계는 제공되지 않아 검토할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "화면의 문구는 '제휴카드 신청하기', '신청하지 않고 계속하기', '연회비 10,000원'으로 확인되며 손실·혜택 포기·후회·부담을 강조하거나 유료 서비스를 축소해 표현하는 감정적 문구는 관찰되지 않는다. 버튼의 시각적 강조는 DA-03에서 별도로 평가했으며 DA-12의 언어적 근거로 중복 판단하지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "동일 상품의 초기와 후반 상태를 비교할 수 있는 화면은 screen-01 한 장뿐이다. 화면에는 연회비 10,000원이 표시되지만 후속 화면의 가격·수수료·이율 또는 늦게 등장한 비용 항목이 제공되지 않아 순차적 가격 상승이나 후반 비용 공개를 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "hierarchy-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 12.230413604003843,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 7544,
+          "output_tokens": 894,
+          "total_tokens": 8438
+        },
+        "analysis_usage": {
+          "input_tokens": 7544,
+          "output_tokens": 894,
+          "total_tokens": 8438
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 ‘제휴카드 신청하기’와 ‘신청하지 않고 계속하기’라는 대립 선택지가 모두 짙은 녹색의 동일한 형태와 유사한 크기로 표시되어 있다. 거절 선택지가 클릭 가능한 UI 선택지로 보이지만, 관찰 가능한 시각적 위계 차이로 특정 선택을 두드러지게 한다는 근거는 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에서 checkbox, radio, toggle 또는 사전 선택된 플랜·부가서비스 표시를 확인할 수 없다. 두 버튼 중 어느 하나가 초기 선택 상태로 표시되는 정지 화면 근거도 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "연회비 10,000원과 카드 신청이 선택사항이라는 문구가 화면에 일반적인 크기와 대비로 표시되어 있다. 접힌 상세, 저대비 중요정보, 별도 비용·위험·권리 안내의 은폐는 관찰되지 않았다. 다만 이 단일 정지 화면만으로 후속 단계의 정보 표시 여부나 숨겨진 상세까지 확인할 수는 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "수락 문구 ‘제휴카드 신청하기’와 거절·보류 문구 ‘신청하지 않고 계속하기’는 관찰되지만, 거절 시 손실이나 혜택 포기를 강조하는 표현 및 비용·위험을 축소하는 표현은 확인되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 동일 상품의 초기·후반 상태를 비교할 수 있는 화면이 하나만 있고, 가격·이율의 시간별 변화나 후반부 추가 비용 항목도 제공되지 않았다. 화면의 ‘연회비 10,000원’은 현재 화면에 명시되어 있으나 순차 공개 여부와 최종 가격 변화를 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "information-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "HIDDEN_INFORMATION",
+            "risk_name": "숨겨진 정보",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "원금 손실 및 예금자보호 제외 안내문",
+              "location": "상품 카드 하단"
+            },
+            "bbox": [
+              0.115,
+              0.397,
+              0.45,
+              0.02
+            ],
+            "related_elements": [],
+            "what": "원금 손실 가능성과 예금자보호 비대상이라는 중요한 위험·조건 정보가 상품의 주요 혜택·조건 문구보다 훨씬 작은 크기와 옅은 색상으로 표시되어 있다.",
+            "observation": "화면에서 해당 안내문은 카드 하단에 작은 연회색 글씨로 보이며, 주요 상품명과 혜택 문구는 더 크고 진하게 표시되어 있다.",
+            "rule_id": "DA-07",
+            "why": "금융상품의 원금 손실 가능성 및 예금자보호 제외는 의사결정에 중요한 위험 정보인데 시각적 강조가 현저히 약해 알기 어렵게 표시된 것으로 관찰된다.",
+            "severity": "HIGH",
+            "confidence": 0.94,
+            "fix": "원금 손실 가능성과 예금자보호 제외를 충분한 글자 크기와 대비로 상품의 주요 정보와 균형 있게 표시하고, 필요한 경우 별도 위험 안내 영역으로 명확히 제공한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 15.370302499999525,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 7544,
+          "output_tokens": 1214,
+          "total_tokens": 8758
+        },
+        "analysis_usage": {
+          "input_tokens": 7544,
+          "output_tokens": 1214,
+          "total_tokens": 8758
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "screen-01을 검토했으나 수락과 거절·보류에 해당하는 대립 선택지, 버튼 또는 링크가 관찰되지 않았다. 따라서 시각적 위계나 선택 사항을 필수처럼 보이게 하는 표현을 확인할 근거가 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "screen-01에는 checkbox, radio, toggle 또는 기본 선택 상태를 나타내는 선택 컨트롤이 관찰되지 않았다. 유료 옵션이나 기타 선택 항목의 사전 선택 여부를 확인할 근거가 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "detected",
+            "reason": "screen-01 하단의 '원금 손실이 최대 100%까지 발생할 수 있으며 예금자보호 대상이 아닙니다'라는 중요한 위험·조건 정보가 주요 상품 문구보다 훨씬 작고 옅은 색으로 표시되어 있다. 해당 화면에서 접힘이나 후속 단계의 표시 여부는 확인할 수 없지만, 작은 글씨와 낮은 시각적 대비는 관찰된다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "screen-01의 관찰 가능한 문구에는 거절 시 혜택 상실을 암시하는 표현이나 비용·위험·의무를 축소하는 감정적 표현이 없다. 상품 설명과 위험 고지는 감정적 압박 문구로 보이지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "screen-01에는 상품 기간과 최소 가입 금액은 보이지만, 동일 상품의 초기·후반 상태를 비교할 두 화면, 이율 또는 최종 가격의 시간순 변화, 후반부 수수료 항목이 수집되지 않았다. 따라서 가격 상승이나 이율 악화, 늦은 비용 공개 여부를 판정할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "information-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 10.764826819009613,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 7543,
+          "output_tokens": 874,
+          "total_tokens": 8417
+        },
+        "analysis_usage": {
+          "input_tokens": 7543,
+          "output_tokens": 874,
+          "total_tokens": 8417
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 상품 안내와 위험 고지 문구만 보이며, 수락과 거절 또는 보류에 해당하는 대립 선택지나 버튼이 관찰되지 않는다. 따라서 시각적 위계 또는 선택 사항을 필수처럼 보이게 하는 근거가 없다. 화면 밖의 후속 선택지는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에는 checkbox, radio, toggle 또는 선택된 유료 옵션이 관찰되지 않는다. 따라서 사전 선택된 선택사항의 근거가 없다. 정지 화면만으로 이후 단계의 초기 선택 상태는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 투자 기간, 최소 가입 금액, 원금 손실 가능성 및 예금자보호 제외 문구가 카드 안에 직접 표시되어 있으며, 특히 위험 문구가 작거나 흐리게 숨겨진 것으로 관찰되지 않는다. 다만 접힘 상태, 추가 상세 정보, 후속 화면의 중요 정보 및 진행 가능 여부는 이 정지 이미지에서 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "‘원금 손실이 최대 100%까지 발생할 수 있으며 예금자보호 대상이 아니다’라는 문구는 상품 위험을 설명하는 사실적 경고로 보이며, 거절 시 혜택 상실을 강조하거나 비용·위험을 축소하는 표현은 관찰되지 않는다. 다른 화면의 감정적 CTA나 선택지 문구는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 화면 1개만 있어 동일 상품의 초기·후반 가격 또는 이율을 시간 순서로 비교할 수 없다. 화면에 투자 기간과 최소 가입 금액은 보이지만, 후속 단계의 가격·수수료·이율 및 최초 고지 여부를 확인할 수 없어 순차공개 가격책정을 판정하지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    }
+  },
+  "after": {
+    "consent-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 광고성 마케팅 정보 수신",
+              "location": "화면 중앙 카드의 첫 번째 선택 컨트롤"
+            },
+            "bbox": [
+              0.115,
+              0.293421,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택 가능한 광고성 마케팅 정보 수신 항목의 체크박스가 선택된 상태로 표시되어 있다.",
+            "observation": "체크 표시가 있는 녹색 체크박스와 '[선택] 광고성 마케팅 정보 수신' 문구가 함께 관찰된다. 화면은 정지 상태이므로 최초 선택 이력은 확인할 수 없지만 현재 선택 상태와 선택 항목이라는 점은 확인된다.",
+            "rule_id": "DA-04",
+            "why": "선택적 마케팅 동의를 사업자에게 유리한 방향으로 미리 선택해 둔 상태는 DA-04의 optional_consent_prechecked에 해당한다.",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "fix": "초기 상태를 미선택으로 변경하고 사용자의 명시적 선택 후에만 동의가 적용되도록 한다."
+          },
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 제휴사 개인정보 제공",
+              "location": "화면 중앙 카드의 두 번째 선택 컨트롤"
+            },
+            "bbox": [
+              0.115,
+              0.386842,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택 가능한 제휴사 개인정보 제공 항목의 체크박스가 선택된 상태로 표시되어 있다.",
+            "observation": "체크 표시가 있는 녹색 체크박스와 '[선택] 제휴사 개인정보 제공' 문구가 관찰된다. 현재 화면에서는 사용자의 직접 선택 여부나 이전 상태는 확인할 수 없다.",
+            "rule_id": "DA-04",
+            "why": "선택적 개인정보 제공 동의가 현재 선택된 상태로 표시되어 있어 optional_consent_prechecked에 해당한다.",
+            "severity": "HIGH",
+            "confidence": 0.99,
+            "fix": "초기 상태를 미선택으로 변경하고 제휴사 개인정보 제공은 사용자의 별도 명시 동의가 있을 때만 선택되도록 한다."
+          },
+          {
+            "risk_type": "PRESELECTED_OPTION",
+            "risk_name": "특정옵션의 사전선택",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "[선택] 펀드 만기 시 자동 재투자",
+              "location": "화면 중앙 카드의 세 번째 선택 컨트롤"
+            },
+            "bbox": [
+              0.115,
+              0.480263,
+              0.04,
+              0.031579
+            ],
+            "related_elements": [],
+            "what": "선택 가능한 펀드 만기 시 자동 재투자 항목의 체크박스가 선택된 상태로 표시되어 있다.",
+            "observation": "체크 표시가 있는 녹색 체크박스와 '[선택] 펀드 만기 시 자동 재투자' 문구가 관찰된다. 자동 재투자는 선택 가능한 사업자 유리 옵션일 수 있으나, 이 정지 화면만으로 실제 최초 기본값 여부는 확인할 수 없다.",
+            "rule_id": "DA-04",
+            "why": "현재 화면에서 선택 가능한 자동 재투자 옵션이 선택된 상태로 표시되어 있어 default_checked에 해당한다.",
+            "severity": "HIGH",
+            "confidence": 0.95,
+            "fix": "초기 상태를 미선택으로 변경하고 사용자의 명시적 선택이 있을 때만 만기 후 자동 재투자가 적용되도록 한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 28.36475077198702,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 11467,
+          "output_tokens": 2503,
+          "total_tokens": 13970
+        },
+        "analysis_usage": {
+          "input_tokens": 8103,
+          "output_tokens": 1826,
+          "total_tokens": 9929
+        },
+        "grounding_usage": {
+          "input_tokens": 3364,
+          "output_tokens": 677,
+          "total_tokens": 4041
+        },
+        "bbox_localizations": [
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-04",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면의 세 선택 항목은 모두 '[선택]'으로 표시되고, 하단에 '선택 동의 없이도 기본 서비스를 이용할 수 있습니다.'라는 문구가 있다. 선택 항목을 필수처럼 표시하거나 수락·거절 대안 중 한쪽만 시각적으로 강조한 근거는 관찰되지 않는다. 다만 실제 클릭 가능한 거절·보류 컨트롤의 존재와 계산된 스타일 정보는 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "detected",
+            "reason": "세 선택 항목의 체크박스가 모두 체크된 현재 상태로 보인다. 첫 번째는 광고성 마케팅 정보 수신, 두 번째는 제휴사 개인정보 제공, 세 번째는 펀드 만기 시 자동 재투자로 모두 선택 가능한 항목이다. 화면은 정지 이미지이므로 최초 렌더 상태인지와 사용자의 직접 선택 이력은 확인할 수 없지만, 현재 선택 상태와 선택 항목이라는 시각적 근거는 확인된다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "optional_consent_prechecked"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 선택 항목과 기본 서비스 이용 가능 여부를 확인할 수 있으며, 비용·위험·해지·청약철회 등 중요 정보가 작거나 저대비 또는 접힌 상태로 제시된 근거는 관찰되지 않는다. 제공된 이미지와 evidence에는 computed style, 확대 상태, 다음 단계 진행 조건이 없어 미세한 대비 수치나 후속 화면은 검사할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "관찰된 문구는 '[선택] 광고성 마케팅 정보 수신', '[선택] 제휴사 개인정보 제공', '[선택] 펀드 만기 시 자동 재투자' 및 '선택 동의 없이도 기본 서비스를 이용할 수 있습니다.'이다. 거절 시 손실을 강조하거나 비용·위험·의무를 가볍게 표현하는 감정적 문구는 확인되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 가격·이율·수수료의 초기 및 후반 수치, 동일 상품의 시간 순서, 후반 필수 비용 항목이 제공되지 않았다. 따라서 순차적인 가격 상승이나 이율 악화를 정상으로 판정할 수 없으며 비교 자체가 불가능하다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "consent-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 10.542997134994948,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8102,
+          "output_tokens": 971,
+          "total_tokens": 9073
+        },
+        "analysis_usage": {
+          "input_tokens": 8102,
+          "output_tokens": 971,
+          "total_tokens": 9073
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "세 개의 선택 항목이 모두 동일한 형태의 체크박스와 유사한 텍스트 스타일로 표시되어 특정 선택지만 시각적으로 강조된 근거가 없다. 각 항목에는 '[선택]'이 명시되어 있고, 하단에 선택 동의 없이도 기본 서비스를 이용할 수 있다고 표시되어 선택 사항을 필수처럼 보이게 하는 근거도 관찰되지 않는다. 다만 실제 클릭 동작이나 이후 단계의 대안은 이 정지 화면만으로 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "광고성 마케팅 정보 수신, 제휴사 개인정보 제공, 펀드 만기 시 자동 재투자 항목의 체크박스가 모두 빈 상태로 보인다. 선택 동의 항목이 사전 선택되었거나 유료·상위 옵션이 기본 선택된 시각적 근거는 없다. 정지 화면이므로 과거 선택 이력이나 실제 초기 렌더링 상태 외의 동작은 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "optional_consent_prechecked",
+              "premium_option_default"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에 표시된 선택 항목과 기본 서비스 이용 가능 안내는 읽을 수 있는 크기와 대비로 제공되며, 접힌 상세 영역이나 클릭해야만 확인되는 비용·위험·권리 정보는 관찰되지 않는다. 이 화면에는 상품의 비용·위험·청약철회·해지 조건 자체가 제시되지 않아 해당 정보가 다른 화면에서 숨겨졌는지는 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "거절 시 혜택을 잃는다는 표현, 손실을 강조하는 문구, 비용이나 위험을 축소하는 표현은 화면에서 관찰되지 않는다. 선택 항목은 중립적인 설명으로 표시되어 있다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 가격·이율·수수료의 초기 및 후반 수치, 동일 상품의 시간순 비교, 후반부 필수 비용 항목이 제공되지 않았다. 따라서 순차적인 가격 증가나 이율 악화를 검사할 수 없으며, 화면에 가격 정보가 없다는 사실만으로 위반을 판단하지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "hierarchy-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "VISUAL_HIERARCHY_DISTORTION",
+            "risk_name": "잘못된 계층구조",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "제휴카드 신청하기 버튼",
+              "location": "카드 선택 안내 영역의 중앙 CTA"
+            },
+            "bbox": [
+              0.115,
+              0.276316,
+              0.77,
+              0.084474
+            ],
+            "related_elements": [
+              {
+                "screen_id": "screen-01",
+                "element": "신청하지 않고 계속하기",
+                "bbox": [
+                  0.4,
+                  0.4,
+                  0.2,
+                  0.03
+                ]
+              }
+            ],
+            "what": "제휴카드 신청하기가 짙은 녹색의 큰 실선 버튼으로 강조되고, 대안인 신청하지 않고 계속하기는 작고 연한 회색 텍스트로 표시되어 있다.",
+            "observation": "신청 CTA는 넓은 버튼 영역과 강한 색 대비를 사용하며, 거절·보류 대안은 배경과 유사한 색상의 작은 텍스트 링크로 배치되어 있다. 두 요소는 카드 신청과 신청하지 않고 진행하기라는 실제 대립 선택지로 보인다.",
+            "rule_id": "DA-03",
+            "why": "사업자에게 유리할 수 있는 제휴카드 신청 선택지를 시각적으로 두드러지게 하고, 신청하지 않는 대안을 상대적으로 식별하기 어렵게 구성해 선택의 중립성을 왜곡할 수 있다.",
+            "severity": "HIGH",
+            "confidence": 0.97,
+            "fix": "제휴카드 신청하기와 신청하지 않고 계속하기를 유사한 크기·색상·형태로 제공하고, 두 선택지를 동등하게 식별 가능하게 표시한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 16.8889988620067,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8816,
+          "output_tokens": 1601,
+          "total_tokens": 10417
+        },
+        "analysis_usage": {
+          "input_tokens": 8103,
+          "output_tokens": 1545,
+          "total_tokens": 9648
+        },
+        "grounding_usage": {
+          "input_tokens": 713,
+          "output_tokens": 56,
+          "total_tokens": 769
+        },
+        "bbox_localizations": [
+          {
+            "rule_id": "DA-03",
+            "screen_id": "screen-01",
+            "role": "primary",
+            "candidate_id": "C1",
+            "source": "set-of-mark+cv",
+            "confidence": 0.99,
+            "ocr_anchor_count": 0,
+            "applied": true,
+            "warning": null
+          },
+          {
+            "rule_id": "DA-03",
+            "screen_id": "screen-01",
+            "role": "related",
+            "candidate_id": null,
+            "source": "model",
+            "confidence": 0.0,
+            "ocr_anchor_count": 0,
+            "applied": false
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "detected",
+            "reason": "screen-01에서 제휴카드 신청하기는 큰 녹색 버튼으로 표시되고 신청하지 않고 계속하기는 작고 연한 회색 텍스트로 표시된다. 실제 대립 선택지와 시각적 강조 차이가 관찰되므로 탐지한다. 정지 화면만으로 실제 사업자 수익 구조나 클릭 이력은 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy"
+            ],
+            "choice_pairs": [
+              {
+                "screen_id": "screen-01",
+                "accept_text": "제휴카드 신청하기",
+                "decline_text": "신청하지 않고 계속하기",
+                "decline_is_action": true,
+                "pair_kind": "opposing_choices"
+              }
+            ],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에서 체크박스·토글·라디오·플랜 선택 등 사전 선택 상태는 관찰되지 않는다. 제휴카드 신청하기 버튼은 선택 컨트롤의 기본 선택 상태가 아니라 행동 CTA이며, 정지 화면에서 사용자의 사전 선택 이력은 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "연회비 10,000원과 카드 신청의 선택 사항이라는 안내가 화면 본문에 표시되어 있다. 작은 글씨로 숨겨진 위험·권리·조건, 접힌 상세 정보, 저대비 중요 비용 정보는 관찰되지 않는다. 다만 이 화면만으로 전체 계약의 해지·청약철회 안내 존재 여부는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "신청하지 않는 대안은 작고 연하게 표시되어 DA-03의 계층 차이는 있으나, 거절 시 혜택을 잃는다는 표현이나 비용·위험을 축소하는 감정적·사소화 표현은 화면 텍스트에서 관찰되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "screen-01에는 제휴카드 연회비 10,000원이 표시되지만 동일 상품의 초기·후반 가격 비교를 위한 복수 화면이나 시간 순서가 없다. 후속 단계에서 필수 비용이 추가되는지, 해당 비용이 최초에 명확히 공개되었는지, 사용자의 선택으로 발생한 금액인지 확인할 수 없어 순차공개 가격책정 여부를 판정할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "hierarchy-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 10.639924471004633,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8102,
+          "output_tokens": 891,
+          "total_tokens": 8993
+        },
+        "analysis_usage": {
+          "input_tokens": 8102,
+          "output_tokens": 891,
+          "total_tokens": 8993
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 '제휴카드 신청하기'와 '신청하지 않고 계속하기'라는 실제 대립 선택지가 보인다. 두 버튼은 동일한 짙은 녹색 배경, 동일한 크기와 유사한 글자 스타일로 표시되어 한쪽만 시각적으로 두드러진다는 근거가 없다. 다만 computed style 등 수치 자료는 수집되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy"
+            ],
+            "choice_pairs": [
+              {
+                "screen_id": "screen-01",
+                "accept_text": "제휴카드 신청하기",
+                "decline_text": "신청하지 않고 계속하기",
+                "decline_is_action": true,
+                "pair_kind": "opposing_choices"
+              }
+            ],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에 체크박스·토글·라디오·플랜 선택 등 사전 선택 상태를 나타내는 컨트롤이 보이지 않는다. 제휴카드 신청 여부는 두 개의 버튼 선택지로 제시되며, 어느 한 항목이 사전 선택되었다는 정지 화면상의 근거가 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "연회비 10,000원과 카드 신청의 선택 사항이라는 문구가 화면 본문에 표시되어 있다. 관찰 가능한 범위에서 중요 비용·위험·권리 정보가 작은 글씨, 저대비, 접힌 상세 영역으로 숨겨진 근거는 없다. 단, 실제 확대 비율·computed style 및 후속 설명 화면은 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "거절 선택지는 '신청하지 않고 계속하기'라는 중립적인 행동 설명으로 표시되어 있으며, 혜택 포기·손실·후회 등을 암시하는 감정적 표현이나 유료·위험 서비스를 축소하는 표현이 보이지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "단일 화면만 제공되어 동일 상품의 초기와 후반 가격·이율을 비교할 수 없다. 화면에는 연회비 10,000원이 보이지만 후속 단계에서 가격이 증가했는지, 해당 비용이 후반에 최초 공개되었는지, 다른 필수 비용이 추가되는지는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "information-risky": {
+      "output": {
+        "detections": [
+          {
+            "risk_type": "HIDDEN_INFORMATION",
+            "risk_name": "숨겨진 정보",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "원금 손실 및 예금자보호 제외 안내 문구",
+              "location": "상품 카드 하단의 작은 연한 회색 텍스트"
+            },
+            "bbox": [
+              0.115,
+              0.401,
+              0.55,
+              0.02
+            ],
+            "related_elements": [
+              {
+                "screen_id": "screen-01",
+                "element": "다양한 자산에 분산 투자",
+                "bbox": [
+                  0.115,
+                  0.217,
+                  0.4,
+                  0.04
+                ]
+              }
+            ],
+            "what": "원금 손실 가능성과 예금자보호 제외라는 중요한 위험·권리 관련 정보가 상품명과 혜택성 설명보다 작고 연한 색상으로 표시되어 있다.",
+            "observation": "화면 하단에 '이 상품은 원금 손실이 최대 100%까지 발생할 수 있으며 예금자보호 대상이 아닙니다.'라는 문구가 보이지만, 카드의 주요 제목과 설명보다 글자 크기와 대비가 현저히 낮다. 화면에는 상세정보 접힘 상태나 다음 단계 버튼은 보이지 않는다.",
+            "rule_id": "DA-07",
+            "why": "원금 손실 및 예금자보호 여부는 금융상품 가입 판단에 중요한 위험·권리 정보이며, 이를 혜택성 문구보다 작고 흐리게 표시한 것은 중요한 정보의 시각적 축소에 해당할 수 있다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "원금 손실 가능성과 예금자보호 제외 여부를 상품의 주요 혜택 문구와 동등하게 읽을 수 있는 크기·대비로 표시하고, 핵심 위험 정보를 카드 하단의 작은 연한 글씨에만 두지 않는다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 12.894695811002748,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8102,
+          "output_tokens": 1368,
+          "total_tokens": 9470
+        },
+        "analysis_usage": {
+          "input_tokens": 8102,
+          "output_tokens": 1368,
+          "total_tokens": 9470
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "insufficient_evidence",
+            "reason": "screen-01을 검토했으나 수락·거절, 가입유형·플랜 또는 선택 동의와 같은 실제 대립 선택 쌍과 선택 컨트롤이 화면에 보이지 않는다. 따라서 시각적 강조에 따른 잘못된 계층구조 여부를 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "insufficient_evidence",
+            "reason": "screen-01에는 체크박스·토글·라디오·플랜 선택 등 현재 선택 상태를 확인할 수 있는 선택 컨트롤이 보이지 않는다. 따라서 사전 선택, 기본 긍정 답변, 선택 동의 사전 체크 또는 프리미엄 옵션 기본 선택 여부를 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "detected",
+            "reason": "screen-01의 상품 카드 하단에 원금 손실 가능성과 예금자보호 제외를 알리는 중요 위험 정보가 있으나, 상품명·혜택성 문구보다 작고 연한 회색으로 표시되어 있다. 접힌 상세나 진행 가능 여부는 이 화면에서 확인되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "screen-01에서 거절 선택지를 손실로 프레이밍하거나 비용·위험·의무를 축소하는 감정적 표현은 관찰되지 않았다. 다만 화면에는 선택지나 가입 유도 CTA가 없어 선택지 간 표현 비대칭은 평가할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "screen-01은 단일 화면이며 투자 기간과 최소 가입 금액은 표시하지만 초기·후반 가격 또는 수익률의 비교 가능한 수치, 수수료 항목, 이율 변화가 없다. 따라서 순차적 필수 비용 공개나 이율 악화를 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "information-clean": {
+      "output": {
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 10.373619455000153,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8101,
+          "output_tokens": 952,
+          "total_tokens": 9053
+        },
+        "analysis_usage": {
+          "input_tokens": 8101,
+          "output_tokens": 952,
+          "total_tokens": 9053
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 상품명, 투자기간, 최소 가입금액 및 원금 손실·예금자보호 제외 안내만 보이며, 수락·거절 또는 가입유형·플랜 등 대립 선택지와 강조된 선택 컨트롤이 관찰되지 않는다. 선택 동의가 필수처럼 표시된 근거도 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에 체크박스, 토글, 라디오, 긍정·부정 답변, 자동이체·재투자·부가서비스 또는 플랜 선택 컨트롤이 관찰되지 않아 사전 선택 상태를 확인할 수 없다. 정지 화면에서 사용자 선택 이력은 추정하지 않았다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "원금 손실이 최대 100%까지 발생할 수 있고 예금자보호 대상이 아니라는 주요 위험 정보가 카드 중앙에 비교적 큰 진한 녹색 글씨로 표시되어 있다. 작은 글씨, 저대비, 접힌 상세 또는 별도 클릭 뒤에만 제공되는 중요 위험·권리 정보는 이 화면에서 관찰되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "‘원금 손실이 최대 100%까지 발생할 수 있으며 예금자보호 대상이 아니다’라는 문구는 상품 위험을 설명하는 사실적 표현으로 보이며, 거절을 손실로 프레이밍하거나 비용·위험을 축소하는 표현은 관찰되지 않는다. 대립 선택지나 CTA 문구는 제공된 화면에 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "제공된 화면은 단일 화면이며 투자기간과 최소 가입금액만 표시한다. 동일 상품의 초기·후반 가격 또는 수익률, 후반부 필수 비용, 수수료 항목의 시간상 변화가 수집되지 않아 순차적 가격 공개나 이율 악화를 비교할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "emotion-risky": {
+      "flow_id": "emotion-risky",
+      "output": {
+        "audit_id": "emotion-risky",
+        "schema_version": "1.3",
+        "screens": [
+          {
+            "screen_id": "screen-01",
+            "flow_step": "화면 1"
+          }
+        ],
+        "candidate_decisions": [],
+        "semantic_findings": [
+          {
+            "risk_type": "EMOTIONAL_LANGUAGE",
+            "risk_name": "감정적 언어",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "혜택 알림 서비스 안내 문구",
+              "location": "카드 중앙 본문 영역"
+            },
+            "bbox": [
+              0.115,
+              0.268,
+              0.76,
+              0.064
+            ],
+            "related_elements": [],
+            "what": "서비스에 동의하지 않으면 혜택이 모두 사라지고 나중에 후회할 수 있다는 식으로 거절을 손실과 후회로 표현했다.",
+            "observation": "화면에는 '지금 동의하지 않으면 준비된 혜택이 모두 사라집니다. 놓치고 후회하시겠어요?'라는 문구가 보인다. 하단에는 '선택하지 않아도 기본 서비스는 이용할 수 있습니다.'라고 표시되어 있어 해당 선택이 필수라는 근거는 확인되지 않는다.",
+            "rule_id": "DA-12",
+            "why": "동의하지 않는 선택을 혜택 상실과 후회로 연결해 소비자의 감정을 자극하는 loss_framed_decline에 해당한다.",
+            "severity": "REVIEW",
+            "confidence": 0.98,
+            "fix": "거절 또는 비동의 선택을 혜택 상실·후회로 표현하지 말고, 선택 여부와 기본 서비스 이용 가능 여부를 중립적으로 안내한다."
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면을 검토했으나 수락·거절 버튼, 닫기 컨트롤, 가입유형 또는 플랜 등 실제 대립 선택지와 그 시각적 스타일을 확인할 수 없다. 본문 문구만으로 특정 선택지가 시각적으로 우대되었다고 판단하지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "insufficient_evidence",
+            "reason": "선택 동의 안내 문구는 보이지만 체크박스·토글·라디오의 현재 선택 상태나 기본값은 화면에서 확인되지 않는다. 사용자가 직접 선택했는지, 사업자에게 유리한 옵션이 사전 선택되었는지도 관찰할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 확인되는 혜택 상실 관련 문구는 본문에 표시되어 있으며, 별도의 작은 글씨, 저대비 중요 위험·비용·권리 정보 또는 접힌 상세 영역은 관찰되지 않는다. 다만 제공된 단일 정지 화면만으로 화면 밖 정보나 후속 단계의 표시 상태는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "detected",
+            "reason": "본문에 '지금 동의하지 않으면 준비된 혜택이 모두 사라집니다. 놓치고 후회하시겠어요?'라는 문구가 있어 비동의 선택을 혜택 상실과 후회로 프레이밍한다. 동시에 '선택하지 않아도 기본 서비스는 이용할 수 있습니다.'라는 문구가 있으나, 감정적 압박 표현 자체는 화면에 명확히 관찰된다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 상품 가격·수수료·이율의 초기와 후반 수치, 후반에 새로 등장한 비용 항목, 동일 상품 여부를 비교할 수 있는 가격 타임라인이 없다. 따라서 순차적인 가격 상승이나 이율 악화를 검사할 근거가 부족하다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "detections": [
+          {
+            "risk_type": "EMOTIONAL_LANGUAGE",
+            "risk_name": "감정적 언어",
+            "where": {
+              "screen_ids": [
+                "screen-01"
+              ],
+              "element": "혜택 알림 서비스 안내 문구",
+              "location": "카드 중앙 본문 영역"
+            },
+            "bbox": [
+              0.115,
+              0.268,
+              0.76,
+              0.064
+            ],
+            "related_elements": [],
+            "what": "서비스에 동의하지 않으면 혜택이 모두 사라지고 나중에 후회할 수 있다는 식으로 거절을 손실과 후회로 표현했다.",
+            "observation": "화면에는 '지금 동의하지 않으면 준비된 혜택이 모두 사라집니다. 놓치고 후회하시겠어요?'라는 문구가 보인다. 하단에는 '선택하지 않아도 기본 서비스는 이용할 수 있습니다.'라고 표시되어 있어 해당 선택이 필수라는 근거는 확인되지 않는다.",
+            "rule_id": "DA-12",
+            "why": "동의하지 않는 선택을 혜택 상실과 후회로 연결해 소비자의 감정을 자극하는 loss_framed_decline에 해당한다.",
+            "severity": "REVIEW",
+            "confidence": 0.98,
+            "fix": "거절 또는 비동의 선택을 혜택 상실·후회로 표현하지 말고, 선택 여부와 기본 서비스 이용 가능 여부를 중립적으로 안내한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 12.564463476999663,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8102,
+          "output_tokens": 1329,
+          "total_tokens": 9431
+        },
+        "analysis_usage": {
+          "input_tokens": 8102,
+          "output_tokens": 1329,
+          "total_tokens": 9431
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면을 검토했으나 수락·거절 버튼, 닫기 컨트롤, 가입유형 또는 플랜 등 실제 대립 선택지와 그 시각적 스타일을 확인할 수 없다. 본문 문구만으로 특정 선택지가 시각적으로 우대되었다고 판단하지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "insufficient_evidence",
+            "reason": "선택 동의 안내 문구는 보이지만 체크박스·토글·라디오의 현재 선택 상태나 기본값은 화면에서 확인되지 않는다. 사용자가 직접 선택했는지, 사업자에게 유리한 옵션이 사전 선택되었는지도 관찰할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 확인되는 혜택 상실 관련 문구는 본문에 표시되어 있으며, 별도의 작은 글씨, 저대비 중요 위험·비용·권리 정보 또는 접힌 상세 영역은 관찰되지 않는다. 다만 제공된 단일 정지 화면만으로 화면 밖 정보나 후속 단계의 표시 상태는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "detected",
+            "reason": "본문에 '지금 동의하지 않으면 준비된 혜택이 모두 사라집니다. 놓치고 후회하시겠어요?'라는 문구가 있어 비동의 선택을 혜택 상실과 후회로 프레이밍한다. 동시에 '선택하지 않아도 기본 서비스는 이용할 수 있습니다.'라는 문구가 있으나, 감정적 압박 표현 자체는 화면에 명확히 관찰된다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 상품 가격·수수료·이율의 초기와 후반 수치, 후반에 새로 등장한 비용 항목, 동일 상품 여부를 비교할 수 있는 가격 타임라인이 없다. 따라서 순차적인 가격 상승이나 이율 악화를 검사할 근거가 부족하다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "emotion-clean": {
+      "flow_id": "emotion-clean",
+      "output": {
+        "audit_id": "emotion-clean",
+        "schema_version": "1.3",
+        "screens": [
+          {
+            "screen_id": "screen-01",
+            "flow_step": "화면 1"
+          }
+        ],
+        "candidate_decisions": [],
+        "semantic_findings": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 ‘혜택 알림 서비스’에 대한 설명만 보이며 수락·거절 또는 가입유형·플랜 간 대립 선택지와 이를 시각적으로 강조한 선택 컨트롤이 관찰되지 않는다. 따라서 잘못된 계층구조를 뒷받침하는 근거가 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에는 체크박스·토글·라디오 등 선택 컨트롤이나 기본 선택 상태가 관찰되지 않는다. ‘동의하거나 동의하지 않을 수 있습니다’, ‘선택하지 않아도 기본 서비스 이용 가능’이라는 문구는 선택 가능성을 설명하지만 사전선택 상태를 보여주지는 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 혜택 알림 서비스의 무료 여부와 선택하지 않아도 기본 서비스를 이용할 수 있다는 조건이 읽을 수 있는 본문으로 표시되어 있다. 관찰 범위에는 중요한 비용·위험·권리 정보의 작은 글씨, 저대비 표시, 접힌 상세 영역이 없다. 다만 추가 화면이나 클릭 후 정보는 제공되지 않아 그 부분은 검사할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "화면의 문구는 ‘무료 선택 서비스입니다’, ‘동의하거나 동의하지 않을 수 있습니다’, ‘선택하지 않아도 기본 서비스는 이용할 수 있습니다’로 중립적으로 선택권을 설명한다. 거절 시 혜택을 잃는다는 표현이나 비용·위험을 축소하는 감정적 표현은 관찰되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 가격·이율·수수료의 초기 및 후반 수치, 동일 상품의 시간순 가격 변화, 후반부 필수 비용 항목이 제공되지 않았다. 따라서 순차공개 가격책정 여부를 비교·판정할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 9.487994002993219,
+        "screen_count": 1,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8101,
+          "output_tokens": 933,
+          "total_tokens": 9034
+        },
+        "analysis_usage": {
+          "input_tokens": 8101,
+          "output_tokens": 933,
+          "total_tokens": 9034
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "화면에는 ‘혜택 알림 서비스’에 대한 설명만 보이며 수락·거절 또는 가입유형·플랜 간 대립 선택지와 이를 시각적으로 강조한 선택 컨트롤이 관찰되지 않는다. 따라서 잘못된 계층구조를 뒷받침하는 근거가 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에는 체크박스·토글·라디오 등 선택 컨트롤이나 기본 선택 상태가 관찰되지 않는다. ‘동의하거나 동의하지 않을 수 있습니다’, ‘선택하지 않아도 기본 서비스 이용 가능’이라는 문구는 선택 가능성을 설명하지만 사전선택 상태를 보여주지는 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에서 혜택 알림 서비스의 무료 여부와 선택하지 않아도 기본 서비스를 이용할 수 있다는 조건이 읽을 수 있는 본문으로 표시되어 있다. 관찰 범위에는 중요한 비용·위험·권리 정보의 작은 글씨, 저대비 표시, 접힌 상세 영역이 없다. 다만 추가 화면이나 클릭 후 정보는 제공되지 않아 그 부분은 검사할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "화면의 문구는 ‘무료 선택 서비스입니다’, ‘동의하거나 동의하지 않을 수 있습니다’, ‘선택하지 않아도 기본 서비스는 이용할 수 있습니다’로 중립적으로 선택권을 설명한다. 거절 시 혜택을 잃는다는 표현이나 비용·위험을 축소하는 감정적 표현은 관찰되지 않는다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "insufficient_evidence",
+            "reason": "입력에는 단일 화면만 있고 가격·이율·수수료의 초기 및 후반 수치, 동일 상품의 시간순 가격 변화, 후반부 필수 비용 항목이 제공되지 않았다. 따라서 순차공개 가격책정 여부를 비교·판정할 수 없다.",
+            "screen_ids": [
+              "screen-01"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "pricing-risky": {
+      "flow_id": "pricing-risky",
+      "output": {
+        "audit_id": "pricing-risky",
+        "schema_version": "1.3",
+        "screens": [
+          {
+            "screen_id": "screen-01",
+            "flow_step": "화면 1"
+          },
+          {
+            "screen_id": "screen-02",
+            "flow_step": "화면 2"
+          }
+        ],
+        "candidate_decisions": [],
+        "semantic_findings": [
+          {
+            "risk_type": "SEQUENTIAL_PRICE_DISCLOSURE",
+            "risk_name": "순차공개 가격책정",
+            "where": {
+              "screen_ids": [
+                "screen-01",
+                "screen-02"
+              ],
+              "element": "월 납입금 및 필수 계약관리수수료",
+              "location": "화면 1의 월 납입금 총액에서 화면 2의 필수 계약관리수수료 및 증가한 월 납입금으로 이어지는 가격 표시"
+            },
+            "bbox": [
+              0.115,
+              0.316,
+              0.443,
+              0.036
+            ],
+            "related_elements": [
+              {
+                "screen_id": "screen-01",
+                "element": "월 납입금 총액 9,900원",
+                "bbox": [
+                  0.115,
+                  0.279,
+                  0.423,
+                  0.036
+                ]
+              },
+              {
+                "screen_id": "screen-02",
+                "element": "필수 계약관리수수료 1,500원",
+                "bbox": [
+                  0.115,
+                  0.243,
+                  0.373,
+                  0.029
+                ]
+              }
+            ],
+            "what": "동일한 안심보험의 월 납입금이 화면 1에서는 9,900원으로 표시되었으나, 화면 2에서 별도 고지 없이 필수 계약관리수수료 1,500원이 추가되고 월 납입금 총액이 11,400원으로 표시된다.",
+            "observation": "화면 1에는 '월 납입금 총액 9,900원'과 '추가 보장 옵션 없음'이 표시된다. 화면 2에는 동일 상품명과 '기본 보험료 9,900원', '필수 계약관리수수료 1,500원', '월 납입금 총액 11,400원'이 표시된다. 화면 1에는 계약관리수수료 금액이나 총액 증가 가능성에 대한 명시적 안내가 보이지 않는다. 다만 실제 사용자의 선택 이력이나 화면 1 이전 단계의 고지는 제공되지 않았다.",
+            "rule_id": "DA-15",
+            "why": "동일 상품의 최초 표시 금액보다 후반 단계의 필수 비용 포함 총액이 1,500원 증가했고, 해당 필수 비용이 후반 화면에서 처음 나타난다. 이는 사용자의 명시적 추가 선택으로 설명되는 옵션 비용이 아니라 필수 계약관리수수료로 표시되어 있다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "첫 화면부터 필수 계약관리수수료와 이를 포함한 예상 총액을 함께 표시하고, 단계 진행에 따라 필수 비용이 추가될 수 있다면 그 사실과 금액을 사전에 명확히 고지한다."
+          }
+        ],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "두 화면에서 수락·거절 또는 가입유형·플랜 등 실제 대립 선택지의 시각적 강조를 확인할 수 없다. '기본 보장 플랜'과 '추가 보장 옵션 없음' 문구는 보이지만 비교 가능한 대안 선택 컨트롤이나 버튼, computed style, 선택 쌍이 제공되지 않았다. 따라서 잘못된 계층구조 또는 선택사항의 필수 표시를 판단할 근거가 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에는 체크박스·라디오·토글·긍정 답변·플랜 선택 등 현재 선택 상태를 보여주는 컨트롤이 관찰되지 않는다. 화면 2의 필수 계약관리수수료는 선택 사전설정이 아니라 필수 비용으로 표시되어 DA-04의 사전선택 근거가 아니다. 최초 선택 이력이나 숨겨진 선택 상태는 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "관찰 가능한 화면에서 비용 정보는 화면 2에 일반 본문 크기와 대비로 표시되어 있으며, 접힌 상세·자세히 보기·좌우 스크롤·다운로드만으로 진행 가능한 설명·작거나 흐린 위험 및 권리 문구는 확인되지 않는다. 청약철회·해지·원금 손실 안내의 존재 여부와 다음 버튼 상태는 입력 화면에 포함되지 않아 별도로 검증할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "두 화면의 관찰 가능한 문구에는 '포기', '손해', '후회', '놓치다'와 같은 거절 손실 프레이밍이나 비용·위험·의무를 가볍게 표현하는 문구가 없다. 감정적 CTA와 거절 선택지의 원문은 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "detected",
+            "reason": "동일한 안심보험에서 화면 1의 월 납입금 총액 9,900원이 화면 2에서 기본 보험료 9,900원과 후반 최초 표시된 필수 계약관리수수료 1,500원을 합산한 월 납입금 총액 11,400원으로 증가한다. 추가 옵션 선택에 따른 비용으로 설명되지 않으며, 화면 1에는 필수 수수료 금액이나 증가한 총액이 보이지 않는다. 화면 1 이전 단계의 고지 여부는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "late_mandatory_cost"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": [
+              {
+                "product": "안심보험 월 납입금",
+                "initial_screen_id": "screen-01",
+                "final_screen_id": "screen-02",
+                "unit": "KRW",
+                "initial_amount": 9900,
+                "final_amount": 11400,
+                "same_product": true,
+                "explained_by_user_choice": false,
+                "initially_disclosed": false
+              }
+            ]
+          }
+        ],
+        "detections": [
+          {
+            "risk_type": "SEQUENTIAL_PRICE_DISCLOSURE",
+            "risk_name": "순차공개 가격책정",
+            "where": {
+              "screen_ids": [
+                "screen-01",
+                "screen-02"
+              ],
+              "element": "월 납입금 및 필수 계약관리수수료",
+              "location": "화면 1의 월 납입금 총액에서 화면 2의 필수 계약관리수수료 및 증가한 월 납입금으로 이어지는 가격 표시"
+            },
+            "bbox": [
+              0.115,
+              0.316,
+              0.443,
+              0.036
+            ],
+            "related_elements": [
+              {
+                "screen_id": "screen-01",
+                "element": "월 납입금 총액 9,900원",
+                "bbox": [
+                  0.115,
+                  0.279,
+                  0.423,
+                  0.036
+                ]
+              },
+              {
+                "screen_id": "screen-02",
+                "element": "필수 계약관리수수료 1,500원",
+                "bbox": [
+                  0.115,
+                  0.243,
+                  0.373,
+                  0.029
+                ]
+              }
+            ],
+            "what": "동일한 안심보험의 월 납입금이 화면 1에서는 9,900원으로 표시되었으나, 화면 2에서 별도 고지 없이 필수 계약관리수수료 1,500원이 추가되고 월 납입금 총액이 11,400원으로 표시된다.",
+            "observation": "화면 1에는 '월 납입금 총액 9,900원'과 '추가 보장 옵션 없음'이 표시된다. 화면 2에는 동일 상품명과 '기본 보험료 9,900원', '필수 계약관리수수료 1,500원', '월 납입금 총액 11,400원'이 표시된다. 화면 1에는 계약관리수수료 금액이나 총액 증가 가능성에 대한 명시적 안내가 보이지 않는다. 다만 실제 사용자의 선택 이력이나 화면 1 이전 단계의 고지는 제공되지 않았다.",
+            "rule_id": "DA-15",
+            "why": "동일 상품의 최초 표시 금액보다 후반 단계의 필수 비용 포함 총액이 1,500원 증가했고, 해당 필수 비용이 후반 화면에서 처음 나타난다. 이는 사용자의 명시적 추가 선택으로 설명되는 옵션 비용이 아니라 필수 계약관리수수료로 표시되어 있다.",
+            "severity": "HIGH",
+            "confidence": 0.98,
+            "fix": "첫 화면부터 필수 계약관리수수료와 이를 포함한 예상 총액을 함께 표시하고, 단계 진행에 따라 필수 비용이 추가될 수 있다면 그 사실과 금액을 사전에 명확히 고지한다."
+          }
+        ]
+      },
+      "telemetry": {
+        "response_time_seconds": 14.516793916991446,
+        "screen_count": 2,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8681,
+          "output_tokens": 1769,
+          "total_tokens": 10450
+        },
+        "analysis_usage": {
+          "input_tokens": 8681,
+          "output_tokens": 1769,
+          "total_tokens": 10450
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "두 화면에서 수락·거절 또는 가입유형·플랜 등 실제 대립 선택지의 시각적 강조를 확인할 수 없다. '기본 보장 플랜'과 '추가 보장 옵션 없음' 문구는 보이지만 비교 가능한 대안 선택 컨트롤이나 버튼, computed style, 선택 쌍이 제공되지 않았다. 따라서 잘못된 계층구조 또는 선택사항의 필수 표시를 판단할 근거가 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "화면에는 체크박스·라디오·토글·긍정 답변·플랜 선택 등 현재 선택 상태를 보여주는 컨트롤이 관찰되지 않는다. 화면 2의 필수 계약관리수수료는 선택 사전설정이 아니라 필수 비용으로 표시되어 DA-04의 사전선택 근거가 아니다. 최초 선택 이력이나 숨겨진 선택 상태는 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "관찰 가능한 화면에서 비용 정보는 화면 2에 일반 본문 크기와 대비로 표시되어 있으며, 접힌 상세·자세히 보기·좌우 스크롤·다운로드만으로 진행 가능한 설명·작거나 흐린 위험 및 권리 문구는 확인되지 않는다. 청약철회·해지·원금 손실 안내의 존재 여부와 다음 버튼 상태는 입력 화면에 포함되지 않아 별도로 검증할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "두 화면의 관찰 가능한 문구에는 '포기', '손해', '후회', '놓치다'와 같은 거절 손실 프레이밍이나 비용·위험·의무를 가볍게 표현하는 문구가 없다. 감정적 CTA와 거절 선택지의 원문은 제공되지 않았다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "detected",
+            "reason": "동일한 안심보험에서 화면 1의 월 납입금 총액 9,900원이 화면 2에서 기본 보험료 9,900원과 후반 최초 표시된 필수 계약관리수수료 1,500원을 합산한 월 납입금 총액 11,400원으로 증가한다. 추가 옵션 선택에 따른 비용으로 설명되지 않으며, 화면 1에는 필수 수수료 금액이나 증가한 총액이 보이지 않는다. 화면 1 이전 단계의 고지 여부는 확인할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "late_mandatory_cost"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": [
+              {
+                "product": "안심보험 월 납입금",
+                "initial_screen_id": "screen-01",
+                "final_screen_id": "screen-02",
+                "unit": "KRW",
+                "initial_amount": 9900,
+                "final_amount": 11400,
+                "same_product": true,
+                "explained_by_user_choice": false,
+                "initially_disclosed": false
+              }
+            ]
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    },
+    "pricing-clean": {
+      "flow_id": "pricing-clean",
+      "output": {
+        "audit_id": "pricing-clean",
+        "schema_version": "1.3",
+        "screens": [
+          {
+            "screen_id": "screen-01",
+            "flow_step": "화면 1"
+          },
+          {
+            "screen_id": "screen-02",
+            "flow_step": "화면 2"
+          }
+        ],
+        "candidate_decisions": [],
+        "semantic_findings": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "두 화면 모두 보험 상품명, 플랜 및 월 납입금 정보만 표시되며 수락·거절 또는 가입유형·플랜 간 대립 선택지와 선택 컨트롤이 관찰되지 않는다. 따라서 특정 선택지를 시각적으로 강조했는지 확인할 근거가 없다. 화면에 표시되지 않은 후속 선택지는 검사할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "두 화면에서 체크박스, 토글, 라디오, 기본 긍정 응답, 선택 동의 또는 프리미엄 플랜의 현재 선택 상태가 관찰되지 않는다. 따라서 사업자에게 유리한 선택 항목이 사전선택되었다는 근거가 없다. 정지 화면이므로 클릭 이력이나 미표시된 초기 상태는 판단하지 않는다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에는 기본 보험료 9,900원, 필수 계약관리수수료 1,500원, 월 납입금 총액 11,400원이 모두 읽을 수 있는 텍스트로 표시되어 있다. 위험·권리·해지·청약철회 정보가 작거나 저대비이거나 접힌 상태라는 근거는 관찰되지 않지만, 화면에 해당 정보 자체가 제공되지 않아 그 누락 여부까지는 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "두 화면에서 거절 시 혜택을 잃는다는 표현, 손실 프레이밍, 비용·위험·의무를 가볍게 표현하는 문구가 관찰되지 않는다. 표시된 문구는 상품명, 플랜, 보험료, 필수 수수료 및 추가 보장 옵션 없음에 관한 중립적 정보다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "not_detected",
+            "reason": "동일 상품인 안심보험의 월 납입금 총액이 화면 1과 화면 2에서 모두 11,400원으로 동일하다. 필수 계약관리수수료 1,500원도 화면 1에서 이미 공개되어 후반부에 새로 등장한 비용이 아니며, 이율 변화도 표시되지 않았다. 따라서 가격 상승이나 후반 필수 비용 공개의 근거가 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": [
+              {
+                "product": "안심보험 기본 보장 플랜",
+                "initial_screen_id": "screen-01",
+                "final_screen_id": "screen-02",
+                "unit": "KRW",
+                "initial_amount": 11400,
+                "final_amount": 11400,
+                "same_product": true,
+                "explained_by_user_choice": false,
+                "initially_disclosed": true
+              }
+            ]
+          }
+        ],
+        "detections": []
+      },
+      "telemetry": {
+        "response_time_seconds": 9.356245520000812,
+        "screen_count": 2,
+        "schema_attempts": 1,
+        "schema_retries": 0,
+        "dropped_semantic_rule_ids": [],
+        "usage": {
+          "input_tokens": 8680,
+          "output_tokens": 1076,
+          "total_tokens": 9756
+        },
+        "analysis_usage": {
+          "input_tokens": 8680,
+          "output_tokens": 1076,
+          "total_tokens": 9756
+        },
+        "grounding_usage": null,
+        "bbox_localizations": [],
+        "rule_assessments": [
+          {
+            "rule_id": "DA-03",
+            "status": "not_detected",
+            "reason": "두 화면 모두 보험 상품명, 플랜 및 월 납입금 정보만 표시되며 수락·거절 또는 가입유형·플랜 간 대립 선택지와 선택 컨트롤이 관찰되지 않는다. 따라서 특정 선택지를 시각적으로 강조했는지 확인할 근거가 없다. 화면에 표시되지 않은 후속 선택지는 검사할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-04",
+            "status": "not_detected",
+            "reason": "두 화면에서 체크박스, 토글, 라디오, 기본 긍정 응답, 선택 동의 또는 프리미엄 플랜의 현재 선택 상태가 관찰되지 않는다. 따라서 사업자에게 유리한 선택 항목이 사전선택되었다는 근거가 없다. 정지 화면이므로 클릭 이력이나 미표시된 초기 상태는 판단하지 않는다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "default_checked",
+              "default_affirmative_answer",
+              "optional_consent_prechecked",
+              "premium_option_default",
+              "selected_paid_option"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-07",
+            "status": "not_detected",
+            "reason": "화면에는 기본 보험료 9,900원, 필수 계약관리수수료 1,500원, 월 납입금 총액 11,400원이 모두 읽을 수 있는 텍스트로 표시되어 있다. 위험·권리·해지·청약철회 정보가 작거나 저대비이거나 접힌 상태라는 근거는 관찰되지 않지만, 화면에 해당 정보 자체가 제공되지 않아 그 누락 여부까지는 판단할 수 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-12",
+            "status": "not_detected",
+            "reason": "두 화면에서 거절 시 혜택을 잃는다는 표현, 손실 프레이밍, 비용·위험·의무를 가볍게 표현하는 문구가 관찰되지 않는다. 표시된 문구는 상품명, 플랜, 보험료, 필수 수수료 및 추가 보장 옵션 없음에 관한 중립적 정보다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": []
+          },
+          {
+            "rule_id": "DA-15",
+            "status": "not_detected",
+            "reason": "동일 상품인 안심보험의 월 납입금 총액이 화면 1과 화면 2에서 모두 11,400원으로 동일하다. 필수 계약관리수수료 1,500원도 화면 1에서 이미 공개되어 후반부에 새로 등장한 비용이 아니며, 이율 변화도 표시되지 않았다. 따라서 가격 상승이나 후반 필수 비용 공개의 근거가 없다.",
+            "screen_ids": [
+              "screen-01",
+              "screen-02"
+            ],
+            "checks": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ],
+            "choice_pairs": [],
+            "price_comparisons": [
+              {
+                "product": "안심보험 기본 보장 플랜",
+                "initial_screen_id": "screen-01",
+                "final_screen_id": "screen-02",
+                "unit": "KRW",
+                "initial_amount": 11400,
+                "final_amount": 11400,
+                "same_product": true,
+                "explained_by_user_choice": false,
+                "initially_disclosed": true
+              }
+            ]
+          }
+        ],
+        "rejected_evidence": [],
+        "provider": "OpenAIResponsesProvider",
+        "model": "gpt-5.6-luna",
+        "warnings": [
+          "ocr_evidence_unavailable",
+          "ocr_evidence_unavailable"
+        ]
+      }
+    }
+  }
+}

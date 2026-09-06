@@ -139,7 +139,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
             ),
             HybridAuditOutput(
                 audit_id=audit_id,
-                schema_version="1.2",
+                schema_version="1.3",
                 screens=(ScreenReference("mobile-initial", "mobile: initial viewport"),),
                 candidate_decisions=(),
                 semantic_findings=(),
@@ -204,7 +204,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         def analysis_for(request, _candidates):
             return HybridAuditOutput(
                 audit_id=audit_id,
-                schema_version="1.2",
+                schema_version="1.3",
                 screens=tuple(
                     ScreenReference(screen.screen_id, screen.flow_step)
                     for screen in request.screens
@@ -378,7 +378,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
             }
             raw = {
                 "audit_id": audit_id,
-                "schema_version": "1.2",
+                "schema_version": "1.3",
                 "screens": [{"screen_id": "mobile-hybrid", "flow_step": "mobile: offer"}],
                 "candidate_decisions": decisions,
                 "semantic_findings": [semantic],
@@ -538,7 +538,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
                 output = HybridAuditOutput.from_dict(
                     {
                         "audit_id": f"audit-{audit.id}",
-                        "schema_version": "1.2",
+                        "schema_version": "1.3",
                         "screens": [{"screen_id": "screen-01", "flow_step": "mobile: 옵션 선택"}],
                         "candidate_decisions": [],
                         "semantic_findings": [{
@@ -623,7 +623,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
             output = HybridAuditOutput.from_dict(
                 {
                     "audit_id": audit_id,
-                    "schema_version": "1.2",
+                    "schema_version": "1.3",
                     "screens": [
                         {"screen_id": "initial", "flow_step": "mobile: initial price"},
                         {"screen_id": "final", "flow_step": "mobile: final price"},

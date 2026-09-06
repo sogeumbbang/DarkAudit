@@ -1,0 +1,232 @@
+{
+  "fixture_sha256": "04937e9fbbd435ae655429d02f799a43f6371ea157352fd338b98c5a0858e379",
+  "cases": [
+    {
+      "flow_id": "consent-risky",
+      "pair_id": "consent",
+      "variant": "risky",
+      "screens": [],
+      "labels": [
+        {
+          "rule_id": "DA-04",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.29315378289473687,
+              0.04,
+              0.031578947368421054
+            ]
+          }
+        },
+        {
+          "rule_id": "DA-04",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.3865748355263158,
+              0.04,
+              0.031578947368421054
+            ]
+          }
+        },
+        {
+          "rule_id": "DA-04",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.47999588815789473,
+              0.04,
+              0.031578947368421054
+            ]
+          }
+        }
+      ],
+      "images": [
+        {
+          "file": "consent-risky-1.png",
+          "sha256": "cd994f227442ce4fc93687b1ea5a8778b3f5772f6a1b06ac38ec45f62f70b3d6"
+        }
+      ]
+    },
+    {
+      "flow_id": "consent-clean",
+      "pair_id": "consent",
+      "variant": "clean",
+      "screens": [],
+      "labels": [],
+      "images": [
+        {
+          "file": "consent-clean-1.png",
+          "sha256": "f02f8fa245e289257ee876b1b6307c1849fbf8a0b351496dc16ee009a6afa095"
+        }
+      ]
+    },
+    {
+      "flow_id": "hierarchy-risky",
+      "pair_id": "hierarchy",
+      "variant": "risky",
+      "screens": [],
+      "labels": [
+        {
+          "rule_id": "DA-03",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.2760485197368421,
+              0.77,
+              0.08421052631578947
+            ]
+          }
+        }
+      ],
+      "images": [
+        {
+          "file": "hierarchy-risky-1.png",
+          "sha256": "f01ec67c440b5938c42586d2bf5536468f2f6f0cf61577c82419da7bb4f64bc6"
+        }
+      ]
+    },
+    {
+      "flow_id": "hierarchy-clean",
+      "pair_id": "hierarchy",
+      "variant": "clean",
+      "screens": [],
+      "labels": [],
+      "images": [
+        {
+          "file": "hierarchy-clean-1.png",
+          "sha256": "dc929c65c57bd40bf2965c82ec281697081daddafdcc76f68d58b95e0d2c2bbe"
+        }
+      ]
+    },
+    {
+      "flow_id": "information-risky",
+      "pair_id": "information",
+      "variant": "risky",
+      "screens": [],
+      "labels": [
+        {
+          "rule_id": "DA-07",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.39761513157894735,
+              0.77,
+              0.021052631578947368
+            ]
+          }
+        }
+      ],
+      "images": [
+        {
+          "file": "information-risky-1.png",
+          "sha256": "9844f9b1fb34281740ff869ca983576667883ae916ba326191aa84a6e3c8542a"
+        }
+      ]
+    },
+    {
+      "flow_id": "information-clean",
+      "pair_id": "information",
+      "variant": "clean",
+      "screens": [],
+      "labels": [],
+      "images": [
+        {
+          "file": "information-clean-1.png",
+          "sha256": "5104e12c1d18c56c1c580e63a572fd6b5357fb5c72fb91e8cf7c1f014b0af033"
+        }
+      ]
+    },
+    {
+      "flow_id": "emotion-risky",
+      "pair_id": "emotion",
+      "variant": "risky",
+      "screens": [],
+      "labels": [
+        {
+          "rule_id": "DA-12",
+          "primary": {
+            "screen_index": 1,
+            "bbox": [
+              0.115,
+              0.262890625,
+              0.77,
+              0.07578125
+            ]
+          }
+        }
+      ],
+      "images": [
+        {
+          "file": "emotion-risky-1.png",
+          "sha256": "7ab9642ad5c284f6eb9e4f5052dc6a47da9c1fcc7b77fea6945ab55a01dfafee"
+        }
+      ]
+    },
+    {
+      "flow_id": "emotion-clean",
+      "pair_id": "emotion",
+      "variant": "clean",
+      "screens": [],
+      "labels": [],
+      "images": [
+        {
+          "file": "emotion-clean-1.png",
+          "sha256": "d40b9446067c692c46bd2ec1ff38bd21044e02a6a24bd2d67cee3e24c3b3dffb"
+        }
+      ]
+    },
+    {
+      "flow_id": "pricing-risky",
+      "pair_id": "pricing",
+      "variant": "risky",
+      "screens": [],
+      "labels": [
+        {
+          "rule_id": "DA-15",
+          "primary": {
+            "screen_index": 2,
+            "bbox": [
+              0.115,
+              0.31130756578947366,
+              0.77,
+              0.05472861842105263
+            ]
+          }
+        }
+      ],
+      "images": [
+        {
+          "file": "pricing-risky-1.png",
+          "sha256": "b211a31b388e0052f4b7af8625c9a1857d7be5c9255cd5d1cb589457b3b5c42a"
+        },
+        {
+          "file": "pricing-risky-2.png",
+          "sha256": "ee870d4a58f90513681edbc9e2990d76ef1959e1cf13583a58ab29c8888dea40"
+        }
+      ]
+    },
+    {
+      "flow_id": "pricing-clean",
+      "pair_id": "pricing",
+      "variant": "clean",
+      "screens": [],
+      "labels": [],
+      "images": [
+        {
+          "file": "pricing-clean-1.png",
+          "sha256": "b3e069c56fa7beeeada5c6e24661696bb0efe92ce69f7233916812967c9df561"
+        },
+        {
+          "file": "pricing-clean-2.png",
+          "sha256": "ee870d4a58f90513681edbc9e2990d76ef1959e1cf13583a58ab29c8888dea40"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DarkAudit Audit Input v1.2",
+  "title": "DarkAudit Audit Input v1.3",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "1.2"
+      "const": "1.3"
     },
     "screens": {
       "type": "array",

@@ -7,7 +7,13 @@ from ai.schemas.audit_schema import RULE_BASE_SEVERITY
 
 CHECKS = {
     "DA-03": {"visual_hierarchy", "optional_looks_mandatory"},
-    "DA-04": {"selected_paid_option"},
+    "DA-04": {
+        "selected_paid_option",
+        "default_checked",
+        "default_affirmative_answer",
+        "optional_consent_prechecked",
+        "premium_option_default",
+    },
     "DA-07": {
         "small_important_text",
         "low_contrast_important_text",
@@ -28,7 +34,14 @@ class EvidenceContractError(ValueError):
 def _label_matches(label: str, description: str) -> bool:
     # The UI label may be embedded in a description such as “X 버튼”.
     normalized = lambda value: re.sub(r"[^\w]", "", value.casefold())
-    return bool(label.strip()) and normalized(label) in normalized(description)
+    return bool(normalized(label)) and normalized(label) in normalized(description)
+
+
+def _valid_pair_role(pair, checks):
+    kind = pair.get("pair_kind", "opposing_choices")
+    return (kind == "opposing_choices" and pair.get("decline_is_action") is True) or (
+        kind == "optional_as_required" and "optional_looks_mandatory" in checks
+    )
 
 
 def validate_assessments(assessments, output, request):
@@ -95,17 +108,28 @@ def validate_assessments(assessments, output, request):
                 evidence = candidate.measurements.get("evidence", [])
                 if not any(
                     p.get("screen_id") == candidate.screen_id
-                    and p.get("decline_is_action") is True
-                    and any(e.get("element_id") == candidate.primary_element_id
-                            and _label_matches(p.get("accept_text", ""), e.get("text") or "")
-                            for e in evidence)
-                    and any(e.get("element_id") in candidate.related_element_ids
-                            and e.get("screen_id") == candidate.screen_id
-                            and _label_matches(p.get("decline_text", ""), e.get("text") or "")
-                            for e in evidence)
+                    and _valid_pair_role(p, assessment["checks"])
+                    and any(
+                        e.get("element_id") == candidate.primary_element_id
+                        and _label_matches(
+                            p.get("accept_text", ""), e.get("text") or ""
+                        )
+                        for e in evidence
+                    )
+                    and any(
+                        e.get("element_id") in candidate.related_element_ids
+                        and e.get("screen_id") == candidate.screen_id
+                        and _label_matches(
+                            p.get("decline_text", ""), e.get("text") or ""
+                        )
+                        for e in evidence
+                    )
                     for p in pairs
                 ):
-                    raise EvidenceContractError(rule, "DA-03 KEEP must verify the candidate's actual opposing actions")
+                    raise EvidenceContractError(
+                        rule,
+                        "DA-03 KEEP must verify the candidate's actual opposing actions",
+                    )
             for finding in (f for f in output.semantic_findings if f.rule_id == rule):
                 if not any(
                     p.get("screen_id") == finding.where.screen_ids[0]
@@ -114,7 +138,7 @@ def validate_assessments(assessments, output, request):
                         _label_matches(p.get("decline_text", ""), r.element)
                         for r in finding.related_elements
                     )
-                    and p.get("decline_is_action") is True
+                    and _valid_pair_role(p, assessment["checks"])
                     for p in pairs
                 ):
                     raise EvidenceContractError(
@@ -183,7 +207,8 @@ def validate_assessments(assessments, output, request):
                 unit = comparison.get("unit")
                 if not (
                     (unit == "KRW" and final > initial)
-                    or (unit == "percent" and final < initial)
+                    or (unit in {"percent", "percent_return"} and final < initial)
+                    or (unit == "percent_cost" and final > initial)
                 ):
                     raise EvidenceContractError(
                         rule,

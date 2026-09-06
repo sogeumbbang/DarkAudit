@@ -143,7 +143,7 @@ VITE_USE_MOCKS=false
 
 웹 애플리케이션을 거치지 않고 이미지 1~5개를 순서대로 분석할 수도 있습니다.
 CLI는 OpenAI provider를 사용하며 `{ "output": ..., "telemetry": ... }` JSON을 출력합니다.
-판정 계약은 [v1.2 인터페이스](ai/specs/rule_ai_contract.md)를 따릅니다.
+판정 계약은 [v1.3 인터페이스](ai/specs/rule_ai_contract.md)를 따릅니다.
 
 ```bash
 python -m ai.cli audit \

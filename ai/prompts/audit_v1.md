@@ -15,19 +15,18 @@
 
 ## 규칙의 구분
 
-- DA-03: 수락/거절 대립 선택지의 시각적 위계 또는 선택 사항을 필수처럼 보이게 하는 표현. checks에는 visual_hierarchy 또는 optional_looks_mandatory를 쓴다. 실제 수락 동작 텍스트를 where.element에, 실제 거절/보류 동작 텍스트를 related_elements[].element에 기록한다. 설명 문단이나 경고문은 거절 동작이 아니다. choice_pairs에 screen_id, accept_text, decline_text를 동일한 문자열로 기록하고 decline_is_action은 해당 요소가 UI에서 거절/보류 선택지로 표현돼 있는지를 의미하며 실제 클릭 이력의 존재 여부가 아니다. 텍스트 링크도 선택지에 포함된다. 클릭 가능성조차 판단할 수 없어 false라면 DA-03 finding을 만들지 말고 insufficient_evidence로 기록한다.
-- DA-04: 유료 선택 옵션의 선택 표시와 추가 비용이 함께 관찰될 때 selected_paid_option. 정지 화면만으로 사용자가 과거에 선택한 적이 없다고 단정하지 않는다. 불명확한 초기 상태는 reason에 한계를 기록한다. bbox는 카드 전체가 아닌 checkbox/radio/toggle 경계다.
-- DA-07: 의사결정에 중요한 비용·위험·조건·권리 정보가 작은 글씨(small_important_text), 저대비(low_contrast_important_text), 접힌 상세(hidden_important_details)로 숨겨졌는지 검사한다. 청약철회·해지 안내도 검토한다. 일반 footer 문구는 중요정보가 아니면 제외한다. 나중에 가격이 올라간 사실만으로 DA-07을 만들지 않는다.
+- DA-03: Rule Base의 잘못된 계층구조를 검사한다. 수락/거절뿐 아니라 가입유형·플랜 등 실제 대안 사이에서 사업자에게 유리한 쪽만 강조된 경우도 포함한다. 선택 동의를 필수처럼 표시하는 경우도 optional_looks_mandatory로 검사한다. choice_pairs의 pair_kind는 opposing_choices 또는 optional_as_required다. opposing_choices에서 accept_text는 강조된 선택지, decline_text는 실제 대안(거절·보류·다른 플랜)의 원문이며 decline_is_action=true여야 한다. optional_as_required에서는 accept_text에 해당 선택 항목, decline_text에 선택 사항임을 입증하거나 필수처럼 표시한 관련 라벨 원문을 기록하고 두 위치를 where/related_elements로 연결한다. 경고 문단을 거절 버튼으로 추측하지 않는다.
+- DA-04: 추가 비용은 필수 조건이 아니다. default_checked(사업자에게 유리한 선택 옵션의 기본 선택), optional_consent_prechecked(선택 개인정보·광고·마케팅 동의), default_affirmative_answer(이해 확인·재투자 등의 '예/찬성'), premium_option_default(상위·고가 플랜)를 각각 확인한다. 자동이체·재투자·부가서비스도 포함한다. 가격이 없는 동의를 제외하지 않는다. selected_paid_option은 유료 옵션에만 쓰는 호환 별칭이다. 필수 동의, 사용자가 직접 선택한 사실이 입력에 명확히 표시된 항목, 사업자 유리성이 확인되지 않는 일반 설정은 제외한다. 정지 화면에서는 현재 선택 상태·선택 항목·사업자 유리성이라는 관찰 근거를 판정하고 최초 선택 이력을 단정하지 않는다. bbox는 전체 카드가 아닌 실제 선택 컨트롤이다.
+- DA-07: 의사결정에 중요한 비용·위험·조건·권리 정보가 작은 글씨(small_important_text), 저대비(low_contrast_important_text), 접힌 상세(hidden_important_details)로 숨겨졌는지 검사한다. 청약철회·해지 안내도 검토한다. 작아도 확대해서 읽을 수 있다는 이유만으로 제외하지 않는다. 주변 혜택·본문 대비 크기와 대비의 비대칭을 평가한다. 청약철회·해지·원금 손실 문구는 footer에 있어도 주요 권리·위험 정보일 수 있다. 단순 저작권·사업자 주소 등 일반 footer는 제외한다. 나중에 가격이 올라간 사실만으로 DA-07을 만들지 않는다.
 - DA-12: loss_framed_decline(거절하면 혜택이 사라진다는 압박, 혜택 포기 표현) 또는 trivializing_expression(비용·위험·의무의 축소). 큰 CTA가 DA-03에 해당해도 주변 문구의 DA-12 검사를 별도로 한다. 독립 발견은 REVIEW이며 다른 규칙과의 결합 판정은 Backend가 한다.
 - DA-15: late_mandatory_cost 또는 rate_deterioration. 같은 상품·단위·기기·실제 사용자 경로의 서로 다른 상태에서 초기와 후반 가격/이율을 비교한다. 같은 페이지의 crop이나 데스크톱/모바일 차이는 시간상 변화가 아니다. 다른 상품, 사용자 선택으로 설명되는 추가금, 초기에 이미 명확하게 공개된 조건은 제외한다. 초기 화면의 '별도 비용' 문구만 있고 추가 항목/총액이 불명확한지와, 실제 수치까지 공개됐는지를 구분한다.
 
 ## 가격 근거
 
 DA-15를 KEEP하거나 semantic finding으로 반환할 때 price_comparisons에 product, initial_screen_id,
-final_screen_id, initial_amount, final_amount, unit(KRW/percent), same_product,
+final_screen_id, initial_amount, final_amount, unit(KRW/percent_return/percent_cost; 기존 percent는 예적금 수익률과 동일), same_product,
 explained_by_user_choice, initially_disclosed를 기록한다. 같은 상품인지, 비용 증가가 사용자 선택으로 설명되는지,
-초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 가격 상승 전체와 별도 항목의
-뒤늦은 공개를 혼동하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
+초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 사용자 선택으로 설명되는 옵션 금액과 그 외 후반 필수 수수료를 구분한다. 비교하는 필수 비용 항목 자체의 초기/최종 금액과 고지 여부를 확인한다. 예적금 수익률 하락(percent_return), 대출 등 비용 이율 상승(percent_cost)은 모두 불리한 변화다. 방향을 상품 역할 없이 추측하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
 related_elements에는 초기 가격 근거를 포함한다.
 
 ## 출력 불변식

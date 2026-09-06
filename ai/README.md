@@ -99,10 +99,29 @@ manifests include text, control state and normalized geometry used by the shared
 All captured states and readable page crops are analyzed in batches of at most five, separately
 for each device and path. Initial context, adjacent transitions and native first/final price
 evidence are retained; exhaustive comparison of every distant pair is not guaranteed and is
-reported as a limitation. `analysisBatches` preserves each v1.2 model response and rule assessment;
+reported as a limitation. `analysisBatches` preserves each v1.3 model response and rule assessment;
 `analysis` is the merged finding view. Batch telemetry preserves evidence/grounding failures.
 
-The supported scope is DA-03, DA-04, DA-07, DA-12 and DA-15. The [v1.2 contract](specs/rule_ai_contract.md)
+The supported scope is DA-03, DA-04, DA-07, DA-12 and DA-15. The [v1.3 contract](specs/rule_ai_contract.md)
 defines required per-rule coverage and structured choice/price evidence. `telemetry.usage`
 sums analysis retries and all successful grounding responses; `analysis_usage` and
 `grounding_usage` expose the split. Navigation model usage is separate.
+
+## Screenshot rule regression probes
+
+Render authored examples for each supported rule and their neutral counterparts:
+
+```bash
+python -m ai.evaluation.screenshot_smoke --output /tmp/darkaudit-smoke
+# Explicit opt-in: calls the configured real model and incurs API usage.
+python -m ai.evaluation.screenshot_smoke --output /tmp/darkaudit-smoke --live
+```
+
+The fixture is `ai/tests/fixtures/screenshot_rule_cases.html`. Generated screenshots stay outside
+Git. `manifest.json` records image hashes and expected element boxes; `report.json` reports
+failures and detections. These small authored probes are not a representative accuracy benchmark.
+
+Use `instance_detection` for element-level recall: predictions must match the rule, screen and
+bbox with one-to-one matching. It counts missing predictions as misses and reports prediction
+coverage. Existing `micro`/`per_rule` metrics describe rule presence per flow; they do not establish
+that every affected element was found. Unchanged legacy reports were produced with the old metric.

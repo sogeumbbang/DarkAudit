@@ -15,6 +15,34 @@ def detection(rule_id="DA-04", bbox=None):
 
 
 class DatasetEvaluationTest(unittest.TestCase):
+    def test_instance_metrics_count_wrong_screen_and_missing_prediction_as_misses(self):
+        case = DatasetCase("case", "pair", "risky", (), tuple(
+            {"rule_id":"DA-07", "primary":{"screen_index":i,"bbox":[0.1,0.1,0.2,0.1]}}
+            for i in (1,2)
+        ))
+        predictions = {"case":{"output":{"detections":[{
+            "rule_id":"DA-07", "bbox":[0.7,0.7,0.1,0.1], "where":{"screen_ids":["screen-03"]}
+        }]}}}
+        report = Evaluator().evaluate_dataset([case],predictions,rule_ids={"DA-07"})
+        self.assertEqual(report["micro"]["recall"],1)
+        self.assertEqual(report["instance_detection"]["micro"]["recall"],0)
+        self.assertEqual(report["instance_detection"]["micro"]["fn"],2)
+        self.assertEqual(report["instance_detection"]["micro"]["fp"],1)
+        missing = Evaluator().evaluate_dataset([case],{},rule_ids={"DA-07"})
+        self.assertEqual(missing["instance_detection"]["micro"]["fn"],2)
+        self.assertEqual(missing["instance_detection"]["prediction_coverage"],0)
+
+    def test_instance_matching_finds_alternative_assignment_in_overlapping_boxes(self):
+        case = DatasetCase("case", "pair", "risky", (), (
+            {"rule_id":"DA-04","primary":{"screen_index":1,"bbox":[0.1,0.1,0.2,0.1]}},
+            {"rule_id":"DA-04","primary":{"screen_index":1,"bbox":[0.2,0.1,0.2,0.1]}},
+        ))
+        predictions={"case":{"output":{"detections":[
+            detection(bbox=[0.15,0.1,0.2,0.1]), detection(bbox=[0.05,0.1,0.2,0.1])
+        ]}}}
+        result=Evaluator().evaluate_dataset([case],predictions,rule_ids={"DA-04"})
+        self.assertEqual(result["instance_detection"]["micro"]["tp"],2)
+
     def test_loads_real_label_dataset(self):
         cases = Evaluator.load_dataset(Path("data/synthetic/labels"))
         self.assertEqual(len(cases), 22)

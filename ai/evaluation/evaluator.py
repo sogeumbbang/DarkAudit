@@ -109,6 +109,7 @@ class Evaluator:
         return {
             "dataset_cases": len(cases), "evaluated_cases": len(cases) - len(missing), "missing_predictions": missing,
             "per_rule": per_rule, "micro": micro, "macro": macro,
+            "instance_detection": self._instance_detection(cases, predictions, rules, iou_threshold),
             "counterfactual_consistency": self._counterfactual(cases, predictions, rules),
             "localization": {"iou_threshold": iou_threshold, "mean_iou": sum(ious) / len(ious) if ious else None,
                              "success_rate": location_hits / location_total if location_total else None,
@@ -119,6 +120,46 @@ class Evaluator:
                            "schema_retry_rate": retries / attempts if attempts else None,
                            "schema_retry_run_rate": retry_runs / measured_runs if measured_runs else None,
                            "schema_attempts": attempts, "schema_retries": retries},
+        }
+
+    @staticmethod
+    def _instance_detection(cases, predictions, rules, threshold):
+        """One-to-one rule/screen/box matching, including missing-case misses."""
+        counts = {rule: [0, 0, 0] for rule in rules}
+        for case in cases:
+            detections = predictions.get(case.flow_id, {}).get("output", {}).get("detections", [])
+            for rule in rules:
+                labels = [label for label in case.labels if label["rule_id"] == rule
+                          and label.get("primary", {}).get("bbox")]
+                found = [d for d in detections if d.get("rule_id") == rule]
+                edges = []
+                for label in labels:
+                    matches = [(i, bbox_iou(label["primary"]["bbox"], d["bbox"]))
+                               for i, d in enumerate(found) if d.get("bbox")
+                               and label["primary"]["screen_index"] in Evaluator._screen_indices(d)]
+                    edges.append([i for i, overlap in sorted(matches, key=lambda x: -x[1])
+                                  if overlap >= threshold and overlap > 0])
+                assigned = {}
+                def assign(label_index, visited):
+                    for i in edges[label_index]:
+                        if i in visited:
+                            continue
+                        visited.add(i)
+                        if i not in assigned or assign(assigned[i], visited):
+                            assigned[i] = label_index
+                            return True
+                    return False
+                for i in range(len(labels)):
+                    assign(i, set())
+                tp = len(assigned)
+                for i, value in enumerate((tp, len(found) - tp, len(labels) - tp)):
+                    counts[rule][i] += value
+        return {
+            "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+            "iou_threshold": threshold,
+            "per_rule": {rule: prf(*counts[rule]) for rule in rules},
+            "micro": prf(*(sum(counts[r][i] for r in rules) for i in range(3))),
+            "prediction_coverage": sum(c.flow_id in predictions for c in cases) / len(cases) if cases else None,
         }
 
     @staticmethod
