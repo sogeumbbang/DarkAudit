@@ -1,7 +1,13 @@
 .git
 .env
 .env.local
-frontend/
+frontend/*
+!frontend/public/
+frontend/public/*
+!frontend/public/dark-pattern-demo/
+frontend/public/dark-pattern-demo/*.apk
+demo/android/build/
+*.keystore
 data/synthetic/
 data/generator/
 data/uploads/

@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
 COPY ai/ ai/
 COPY backend/ backend/
 COPY rules/ rules/
+COPY frontend/public/dark-pattern-demo/ frontend/public/dark-pattern-demo/
+COPY demo/assets/ demo/assets/
 
 EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

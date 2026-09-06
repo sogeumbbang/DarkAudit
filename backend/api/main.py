@@ -23,6 +23,7 @@ from backend.app.regression import compare
 
 from .android_import import capture_and_analyze_android
 from .android_runner import AndroidRunnerError, AndroidRunnerSettings
+from .demo_inputs import router as demo_router
 from .figma_client import InvalidFigmaUrlError, parse_figma_url
 from .figma_import import import_and_analyze_figma
 from .schemas import (
@@ -54,6 +55,7 @@ from .service import (
 from .store import SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto
 
 app = FastAPI(title="DarkAudit API", version="1.1.0")
+app.include_router(demo_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.getenv(

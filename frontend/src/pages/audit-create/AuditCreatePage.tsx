@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,6 +17,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { warmUpApi } from "@/api/client";
+import { getDemoApk, getDemoInputs } from "@/api/demo";
 import type { AuditDto } from "@/entities/audit/types";
 import {
   useAnalysisStatus,
@@ -62,6 +64,9 @@ export function AuditCreatePage() {
   const [dragOver, setDragOver] = useState(false);
   const [loadingSamples, setLoadingSamples] = useState(false);
   const [sampleError, setSampleError] = useState<string>();
+  const [loadingDemo, setLoadingDemo] = useState<AuditSource>();
+  const [demoNotice, setDemoNotice] = useState<string>();
+  const demoInputs = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
   const [jobId, setJobId] = useState<string>();
   const [auditId, setAuditId] = useState<string>();
   const screenInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +104,7 @@ export function AuditCreatePage() {
 
     setLoadingSamples(true);
     setSampleError(undefined);
+    setDemoNotice(undefined);
     try {
       const loaded = await Promise.all(
         samples.map(async ([fileName, flowStep]) => {
@@ -125,6 +131,42 @@ export function AuditCreatePage() {
       setSampleError(error instanceof Error ? error.message : "샘플 화면을 불러오지 못했습니다.");
     } finally {
       setLoadingSamples(false);
+    }
+  }
+
+  async function loadDemo(kind: "website" | "figma" | "android") {
+    const config = demoInputs.data;
+    if (!config?.[kind].available) return;
+    setLoadingDemo(kind);
+    setSampleError(undefined);
+    setDemoNotice(undefined);
+    try {
+      if (kind === "website") {
+        setUrl(config.website.url);
+        setScanMode("quick");
+        setProfiles(["mobile"]);
+        setWebsiteGoal("");
+        setValue("name", "URL 데모 · 감정적 언어 검사", { shouldValidate: true });
+      } else if (kind === "figma") {
+        setFigmaUrl(config.figma.fileUrl);
+        setFigmaTarget("mobile-web");
+        setFigmaSelection("all-frames");
+        setFigmaFlow("");
+        setValue("name", "Figma 데모 · 금융상품 화면 검사", { shouldValidate: true });
+      } else {
+        const file = await getDemoApk(config.android.downloadUrl);
+        setAppFile(file);
+        setAndroidGoal("다음 버튼으로 5단계 최종 이용료까지 확인");
+        setValue("name", "APK 데모 · 모아 투자관리 검사", { shouldValidate: true });
+      }
+      setSource(kind);
+      setDemoNotice(
+        "데모 입력을 준비했습니다. 아래 ‘분석 시작하기’를 눌러 실제 진단을 실행하세요.",
+      );
+    } catch (error) {
+      setSampleError(error instanceof Error ? error.message : "데모를 불러오지 못했습니다.");
+    } finally {
+      setLoadingDemo(undefined);
     }
   }
 
@@ -224,7 +266,8 @@ export function AuditCreatePage() {
     uploadScreens,
     startAnalysis,
   ];
-  const pending = mutations.some((mutation) => mutation.isPending);
+  const pending =
+    mutations.some((mutation) => mutation.isPending) || Boolean(loadingDemo) || loadingSamples;
   const requestFailed = mutations.some((mutation) => mutation.isError);
   const requestError = mutations.find((mutation) => mutation.isError)?.error;
 
@@ -256,30 +299,89 @@ export function AuditCreatePage() {
           구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다.
         </p>
       </div>
-      <Card className="mt-7 flex flex-col gap-4 border-brand-400 bg-brand-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="flex items-center gap-2 font-bold text-brand-900">
-            <Images size={19} /> 파일 없이 MVP 검사해보기
-          </p>
-          <p className="mt-1 text-xs leading-5 text-muted">
-            보험 가입 샘플 스크린샷 5장을 불러와 업로드부터 분석 결과까지 확인합니다.
-          </p>
-          {sampleError && <p className="mt-2 text-xs text-danger">{sampleError}</p>}
+      <Card className="mt-7 border-brand-400 bg-brand-50 p-5">
+        <p className="flex items-center gap-2 font-bold text-brand-900">
+          <Images size={19} /> 입력 유형별 데모 체험
+        </p>
+        <p className="mt-1 text-xs leading-5 text-muted">
+          자료 없이도 체험할 수 있습니다. 데모를 불러온 뒤 ‘분석 시작하기’를 눌러주세요.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {(
+            [
+              ["website", "URL", "감정적 압박 문구가 있는 웹페이지"],
+              ["figma", "Figma", "금융상품 디자인의 최상위 프레임"],
+              ["android", "APK", "다크패턴 5종이 포함된 앱 흐름"],
+            ] as const
+          ).map(([kind, label, description]) => (
+            <div className="rounded-control border border-border bg-white p-4" key={kind}>
+              <p className="text-sm font-bold">{label}</p>
+              <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{description}</p>
+              <Button
+                className="mt-3 w-full"
+                type="button"
+                variant="outline"
+                disabled={pending || !demoInputs.data?.[kind].available}
+                onClick={() => void loadDemo(kind)}
+              >
+                {loadingDemo === kind ? (
+                  <LoaderCircle className="animate-spin" size={16} />
+                ) : (
+                  <Play size={16} />
+                )}
+                {label} 데모 불러오기
+              </Button>
+              {kind !== "website" && demoInputs.data?.[kind].reason && (
+                <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
+              )}
+            </div>
+          ))}
+          <div className="rounded-control border border-border bg-white p-4">
+            <p className="text-sm font-bold">스크린샷</p>
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
+              보험 가입 과정의 샘플 화면 5장
+            </p>
+            <Button
+              className="mt-3 w-full"
+              disabled={pending}
+              type="button"
+              variant="outline"
+              onClick={loadSampleScreens}
+            >
+              {loadingSamples ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : (
+                <Play size={16} />
+              )}
+              샘플 5장 불러오기
+            </Button>
+          </div>
         </div>
-        <Button
-          className="shrink-0"
-          disabled={loadingSamples || pending}
-          type="button"
-          variant="outline"
-          onClick={loadSampleScreens}
-        >
-          {loadingSamples ? (
-            <LoaderCircle className="animate-spin" size={16} />
-          ) : (
-            <Play size={16} />
-          )}
-          샘플 5장 불러오기
-        </Button>
+        {demoInputs.isPending && (
+          <p className="mt-3 text-xs text-muted">데모 연결을 확인하고 있습니다.</p>
+        )}
+        {demoInputs.isError && (
+          <p className="mt-3 text-xs text-danger">
+            데모 연결을 확인하지 못했습니다.
+            <button
+              className="ml-2 underline"
+              type="button"
+              onClick={() => void demoInputs.refetch()}
+            >
+              다시 확인
+            </button>
+          </p>
+        )}
+        {sampleError && (
+          <p role="alert" className="mt-3 text-xs text-danger">
+            {sampleError}
+          </p>
+        )}
+        {demoNotice && (
+          <p role="status" className="mt-3 text-xs text-brand-900">
+            {demoNotice}
+          </p>
+        )}
       </Card>
       <form
         className="mt-8 grid gap-6 lg:grid-cols-[0.68fr_1.32fr]"

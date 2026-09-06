@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { http, HttpResponse } from "msw";
 
 import { AuditCreatePage } from "@/pages/audit-create/AuditCreatePage";
+import { server } from "@/mocks/server";
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -23,6 +25,75 @@ async function expectCompleted() {
 }
 
 describe("AuditCreatePage", () => {
+  it("loads URL demo settings and submits the real capture flow", async () => {
+    const user = userEvent.setup();
+    let capture: Record<string, unknown> | undefined;
+    server.use(
+      http.post("*/api/v1/audits/:id/capture", async ({ request }) => {
+        capture = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          jobId: "demo-job",
+          auditId: "demo-audit",
+          status: "queued",
+          progress: 0,
+        });
+      }),
+    );
+    renderPage();
+    const button = await screen.findByRole("button", { name: "URL 데모 불러오기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(screen.getByLabelText("진단 이름")).toHaveValue("URL 데모 · 감정적 언어 검사");
+    expect((screen.getByLabelText("검사할 웹사이트 주소") as HTMLInputElement).value).toContain(
+      "/demo/web/index.html?step=4",
+    );
+    await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
+    await waitFor(() => expect(capture).toMatchObject({ mode: "quick", profiles: ["mobile"] }));
+  });
+
+  it("loads the configured Figma file and selects all frames", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByRole("button", { name: "Figma 데모 불러오기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(screen.getByLabelText("Figma 파일 링크")).toHaveValue(
+      "https://www.figma.com/design/demo-file/Banking-Demo",
+    );
+    expect(screen.queryByLabelText(/Flow 이름 또는 설명/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("진단 이름")).toHaveValue("Figma 데모 · 금융상품 화면 검사");
+    await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
+    await expectCompleted();
+  }, 10_000);
+
+  it("downloads a demo APK and submits it without a manual upload", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByRole("button", { name: "APK 데모 불러오기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByText("darkaudit-demo.apk")).toBeInTheDocument();
+    expect(screen.getByLabelText("진단 이름")).toHaveValue("APK 데모 · 모아 투자관리 검사");
+    await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
+    await expectCompleted();
+  }, 10_000);
+
+  it("keeps the form intact when the APK download is an HTML error page", async () => {
+    server.use(
+      http.get("*/demo/darkaudit-demo.apk", () => HttpResponse.html("<html>Error</html>")),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByRole("button", { name: "APK 데모 불러오기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "데모 APK 파일을 확인할 수 없습니다",
+    );
+    expect(screen.queryByText("darkaudit-demo.apk")).not.toBeInTheDocument();
+    expect(button).toBeEnabled();
+  });
+
   it("derives platform options from the selected source", async () => {
     const user = userEvent.setup();
     renderPage();

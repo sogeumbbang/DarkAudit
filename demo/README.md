@@ -72,8 +72,19 @@ ANDROID_SDK_ROOT=/path/to/android-sdk bash demo/android/build.sh
 - APK 탐색: 실제 `android_runner._tap_candidates`로 화면별 XML에서 버튼을 선택해 최종 화면까지 도달 확인.
 - BrowserStack 원격 세션과 실제 AI 검출 결과는 이번 제작 검증에 포함하지 않았다.
 
-APK를 임시 웹 서버에서도 내려받게 하려면 빌드 후 아래 명령을 실행한다. APK는 Git에서 제외된다.
+APK를 임시 웹 서버에서도 내려받게 하려면 빌드 후 아래 명령을 실행한다. 이 임시 복사본은 Git에서 제외된다.
 
 ```bash
 cp demo/android/build/darkaudit-demo.apk frontend/public/dark-pattern-demo/darkaudit-demo.apk
 ```
+
+## 심사위원용 데모 버튼
+
+새 진단 화면의 **입력 유형별 데모 체험**에서 URL·Figma·APK·스크린샷을 선택하면 진단 이름과 입력값이 채워진다. **분석 시작하기**는 기존의 실제 캡처·임포트·분석 API를 실행한다.
+
+- URL: 백엔드의 `/demo/web/index.html?step=4`를 모바일 빠른 캡처로 검사한다. 임시 터널과 Vercel 로그인 보호에 의존하지 않는다.
+- Figma: 기본 샘플 파일을 최상위 프레임 모드로 가져온다. `DARKAUDIT_DEMO_FIGMA_URL`로 다른 파일을 지정할 수 있으며, 빈 값이면 비활성화된다. 서버 토큰 계정에 파일 읽기 권한이 필요하다. 이 샘플의 전체 프레임 모드는 DA-15 화면 순서 검증용이 아니다.
+- APK: `/demo/darkaudit-demo.apk`에서 파일을 자동으로 불러와 기존 업로드에 전달한다. `demo/assets/darkaudit-demo.apk`는 심사용으로 버전 관리하는 디버그 APK다. 재빌드 후 이 파일도 갱신한다. 서명 키는 계속 `build/`에만 보관한다.
+- 외부 연동 설정이 없으면 해당 데모 버튼에 준비 상태를 표시한다. 심사 환경에는 `FIGMA_ACCESS_TOKEN`, `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `ANDROID_MAX_SCREENS=5`가 필요하다.
+
+Docker 이미지에 웹 데모와 APK가 포함된다. 프론트엔드보다 백엔드를 먼저 배포하고 `/api/v1/demo-inputs`의 준비 상태를 확인한다. `VITE_USE_MOCKS=false` 및 실제 AI 제공자 설정을 사용한다. 로컬 API 주소는 URL 분석의 사설 네트워크 차단 대상이므로 URL 데모는 공개 배포된 API에서 실행한다.

@@ -12,6 +12,25 @@ const jobs = new Map<string, AnalysisJobDto>();
 
 export const handlers = [
   http.get("*/health", () => HttpResponse.json({ status: "ok" })),
+  http.get("*/api/v1/demo-inputs", ({ request }) => {
+    const origin = new URL(request.url).origin;
+    return HttpResponse.json({
+      website: { url: `${origin}/demo/web/index.html?step=4`, available: true },
+      figma: {
+        fileUrl: "https://www.figma.com/design/demo-file/Banking-Demo",
+        available: true,
+        reason: null,
+      },
+      android: { downloadUrl: `${origin}/demo/darkaudit-demo.apk`, available: true, reason: null },
+    });
+  }),
+  http.get(
+    "*/demo/darkaudit-demo.apk",
+    () =>
+      new HttpResponse(new Uint8Array([0x50, 0x4b, 3, 4]).buffer, {
+        headers: { "Content-Type": "application/vnd.android.package-archive" },
+      }),
+  ),
   http.get("*/api/v1/dashboard/summary", async () => {
     await delay(350);
     return HttpResponse.json(dashboardFixture);
