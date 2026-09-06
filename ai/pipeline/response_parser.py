@@ -98,6 +98,36 @@ def normalize_derived_labels(raw: dict[str, Any], candidates: list[RuleCandidate
     return fixed
 
 
+def trim_single_screen_findings(raw: dict[str, Any]) -> list[str]:
+    """
+    단일 화면 규칙에 화면이 여러 개 달려 오면 근거 화면 하나로 줄인다.
+
+    DA-15 를 뺀 나머지는 정의상 한 화면에서 판정한다. 그런데 모델이 여러 화면을
+    나열하면 스키마가 "requires exactly one screen"으로 거부하고, 재시도 뒤 진단
+    전체가 실패한다. 실제 배포에서 DA-07 이 이 이유로 죽었다.
+
+    bbox 는 어차피 한 화면의 좌표이므로 화면 목록이 여러 개인 것은 모델의 서술
+    실수에 가깝다. 코드베이스가 근거 화면을 screen_ids[-1] 로 다루므로 같은 관례를
+    따라 마지막 화면만 남긴다. 줄인 항목은 호출부가 기록한다.
+    """
+    trimmed: list[str] = []
+    for finding in raw.get("semantic_findings") or []:
+        if not isinstance(finding, dict):
+            continue
+        try:
+            risk_type = RiskType(finding.get("risk_type"))
+        except ValueError:
+            continue  # 알 수 없는 risk_type 은 스키마 검증이 판단한다.
+        if risk_type is RiskType.SEQUENTIAL_PRICE_DISCLOSURE:
+            continue  # DA-15 만 여러 화면을 근거로 쓴다.
+        where = finding.get("where")
+        screen_ids = where.get("screen_ids") if isinstance(where, dict) else None
+        if isinstance(screen_ids, list) and len(screen_ids) > 1:
+            where["screen_ids"] = [screen_ids[-1]]
+            trimmed.append(str(finding.get("rule_id")))
+    return trimmed
+
+
 def parse_hybrid_response(
     raw: dict[str, Any],
     request: LLMAuditRequest,
@@ -113,6 +143,12 @@ def parse_hybrid_response(
     corrected = normalize_derived_labels(raw, candidates)
     if corrected:
         LOGGER.warning("corrected Rule Base derived fields: %s", ", ".join(sorted(set(corrected))))
+    trimmed = trim_single_screen_findings(raw)
+    if trimmed:
+        LOGGER.warning(
+            "trimmed multi-screen evidence on single-screen rules: %s",
+            ", ".join(sorted(set(trimmed))),
+        )
     output = HybridAuditOutput.from_dict(raw, candidates, allowed_semantic_rule_ids)
     if output.audit_id != request.audit_id or output.schema_version != request.schema_version:
         raise ValueError("Response audit identity does not match request")

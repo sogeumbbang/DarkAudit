@@ -329,6 +329,39 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertEqual(finding.severity.value, "REVIEW")
             self.assertEqual(finding.risk_name, "감정적 언어")
 
+    def test_multi_screen_evidence_on_single_screen_rule_is_trimmed(self):
+        """
+        DA-15 를 뺀 규칙은 정의상 한 화면에서 판정한다. 모델이 화면을 여러 개
+        나열하면 스키마가 거부하고 진단 전체가 실패했다. 실제 배포에서 DA-07 이
+        "requires exactly one screen" 으로 죽었다.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1",
+                (
+                    AuditScreen("screen_01", "약관 동의", image),
+                    AuditScreen("screen_02", "최종 확인", image),
+                ),
+            )
+            finding = da07()
+            finding["where"]["screen_ids"] = ["screen_01", "screen_02"]
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[finding],
+                    screens=[
+                        {"screen_id": "screen_01", "flow_step": "약관 동의"},
+                        {"screen_id": "screen_02", "flow_step": "최종 확인"},
+                    ],
+                )
+            )
+
+            result = BaselineAuditPipeline(provider, allow_visual_fallback=True).analyze(request)
+
+            # 근거 화면은 코드베이스 관례대로 마지막 화면을 남긴다.
+            self.assertEqual(result.semantic_findings[0].where.screen_ids, ("screen_02",))
+
     def test_url_source_drops_disallowed_semantic_finding_instead_of_failing(self):
         """
         URL 캡처 경로에서는 deterministic 규칙(DA-04)을 semantic_findings 에 직접
