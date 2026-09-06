@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-09-06T07:30:45+00:00",
+  "generated_at": "2026-09-06T08:42:58+00:00",
   "scope": "hybrid pipeline (rule engine candidates + multimodal LLM verification)",
   "model": "gpt-5.6-luna",
   "runs": 3,
   "flows": 22,
   "variation": {
     "precision": {
-      "mean": 0.4571,
-      "min": 0.4571,
-      "max": 0.4571
-    },
-    "recall": {
       "mean": 1.0,
       "min": 1.0,
       "max": 1.0
     },
+    "recall": {
+      "mean": 0.625,
+      "min": 0.625,
+      "max": 0.625
+    },
     "f1": {
-      "mean": 0.6275,
-      "min": 0.6275,
-      "max": 0.6275
+      "mean": 0.7692,
+      "min": 0.7692,
+      "max": 0.7692
     }
   },
   "per_run": [
@@ -28,12 +28,12 @@
       "missing_predictions": [],
       "per_rule": {
         "DA-03": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         },
         "DA-04": {
           "tp": 4,
@@ -45,11 +45,11 @@
         },
         "DA-07": {
           "tp": 3,
-          "fp": 19,
+          "fp": 0,
           "fn": 0,
-          "precision": 0.13636363636363635,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.24000000000000002
+          "f1": 1.0
         },
         "DA-12": {
           "tp": 3,
@@ -60,47 +60,102 @@
           "f1": 1.0
         },
         "DA-15": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         }
       },
       "micro": {
-        "tp": 16,
-        "fp": 19,
-        "fn": 0,
-        "precision": 0.45714285714285713,
-        "recall": 1.0,
-        "f1": 0.6274509803921569
+        "tp": 10,
+        "fp": 0,
+        "fn": 6,
+        "precision": 1.0,
+        "recall": 0.625,
+        "f1": 0.7692307692307693
       },
       "macro": {
-        "precision": 0.8272727272727274,
-        "recall": 1.0,
-        "f1": 0.8480000000000001
+        "precision": 0.6,
+        "recall": 0.6,
+        "f1": 0.6
+      },
+      "instance_detection": {
+        "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+        "iou_threshold": 0.5,
+        "per_rule": {
+          "DA-03": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "DA-04": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-07": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-12": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-15": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "micro": {
+          "tp": 14,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.8235294117647058,
+          "f1": 0.9032258064516129
+        },
+        "prediction_coverage": 1.0
       },
       "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
+        "score": 0.8909090909090909,
+        "correct": 49,
         "comparisons": 55,
         "pairs": 11
       },
       "localization": {
         "iou_threshold": 0.5,
-        "mean_iou": 0.9411764705882347,
-        "success_rate": 0.9411764705882353,
+        "mean_iou": 0.8235294117647054,
+        "success_rate": 0.8235294117647058,
         "evaluated_instances": 17
       },
       "operations": {
         "url_exploration_success_rate": null,
-        "average_response_time_seconds": 13.705971977272384,
+        "average_response_time_seconds": 22.373385131818395,
         "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
-        "schema_attempts": 22,
-        "schema_retries": 0
+        "schema_retry_rate": 0.15384615384615385,
+        "schema_retry_run_rate": 0.18181818181818182,
+        "schema_attempts": 26,
+        "schema_retries": 4
       }
     },
     {
@@ -109,12 +164,12 @@
       "missing_predictions": [],
       "per_rule": {
         "DA-03": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         },
         "DA-04": {
           "tp": 4,
@@ -126,11 +181,11 @@
         },
         "DA-07": {
           "tp": 3,
-          "fp": 19,
+          "fp": 0,
           "fn": 0,
-          "precision": 0.13636363636363635,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.24000000000000002
+          "f1": 1.0
         },
         "DA-12": {
           "tp": 3,
@@ -141,47 +196,102 @@
           "f1": 1.0
         },
         "DA-15": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         }
       },
       "micro": {
-        "tp": 16,
-        "fp": 19,
-        "fn": 0,
-        "precision": 0.45714285714285713,
-        "recall": 1.0,
-        "f1": 0.6274509803921569
+        "tp": 10,
+        "fp": 0,
+        "fn": 6,
+        "precision": 1.0,
+        "recall": 0.625,
+        "f1": 0.7692307692307693
       },
       "macro": {
-        "precision": 0.8272727272727274,
-        "recall": 1.0,
-        "f1": 0.8480000000000001
+        "precision": 0.6,
+        "recall": 0.6,
+        "f1": 0.6
+      },
+      "instance_detection": {
+        "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+        "iou_threshold": 0.5,
+        "per_rule": {
+          "DA-03": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "DA-04": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-07": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-12": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-15": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "micro": {
+          "tp": 14,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.8235294117647058,
+          "f1": 0.9032258064516129
+        },
+        "prediction_coverage": 1.0
       },
       "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
+        "score": 0.8909090909090909,
+        "correct": 49,
         "comparisons": 55,
         "pairs": 11
       },
       "localization": {
         "iou_threshold": 0.5,
-        "mean_iou": 0.9411764705882347,
-        "success_rate": 0.9411764705882353,
+        "mean_iou": 0.8235294117647054,
+        "success_rate": 0.8235294117647058,
         "evaluated_instances": 17
       },
       "operations": {
         "url_exploration_success_rate": null,
-        "average_response_time_seconds": 11.95493456818167,
+        "average_response_time_seconds": 20.20865767727297,
         "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
-        "schema_attempts": 22,
-        "schema_retries": 0
+        "schema_retry_rate": 0.12,
+        "schema_retry_run_rate": 0.13636363636363635,
+        "schema_attempts": 25,
+        "schema_retries": 3
       }
     },
     {
@@ -190,12 +300,12 @@
       "missing_predictions": [],
       "per_rule": {
         "DA-03": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         },
         "DA-04": {
           "tp": 4,
@@ -207,11 +317,11 @@
         },
         "DA-07": {
           "tp": 3,
-          "fp": 19,
+          "fp": 0,
           "fn": 0,
-          "precision": 0.13636363636363635,
+          "precision": 1.0,
           "recall": 1.0,
-          "f1": 0.24000000000000002
+          "f1": 1.0
         },
         "DA-12": {
           "tp": 3,
@@ -222,47 +332,102 @@
           "f1": 1.0
         },
         "DA-15": {
-          "tp": 3,
+          "tp": 0,
           "fp": 0,
-          "fn": 0,
-          "precision": 1.0,
-          "recall": 1.0,
-          "f1": 1.0
+          "fn": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
         }
       },
       "micro": {
-        "tp": 16,
-        "fp": 19,
-        "fn": 0,
-        "precision": 0.45714285714285713,
-        "recall": 1.0,
-        "f1": 0.6274509803921569
+        "tp": 10,
+        "fp": 0,
+        "fn": 6,
+        "precision": 1.0,
+        "recall": 0.625,
+        "f1": 0.7692307692307693
       },
       "macro": {
-        "precision": 0.8272727272727274,
-        "recall": 1.0,
-        "f1": 0.8480000000000001
+        "precision": 0.6,
+        "recall": 0.6,
+        "f1": 0.6
+      },
+      "instance_detection": {
+        "scope": "labelled element: same rule, screen and bbox IoU; missing predictions count as misses",
+        "iou_threshold": 0.5,
+        "per_rule": {
+          "DA-03": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "DA-04": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-07": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-12": {
+            "tp": 3,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DA-15": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "micro": {
+          "tp": 14,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.8235294117647058,
+          "f1": 0.9032258064516129
+        },
+        "prediction_coverage": 1.0
       },
       "counterfactual_consistency": {
-        "score": 0.8,
-        "correct": 44,
+        "score": 0.8909090909090909,
+        "correct": 49,
         "comparisons": 55,
         "pairs": 11
       },
       "localization": {
         "iou_threshold": 0.5,
-        "mean_iou": 0.9999999999999996,
-        "success_rate": 1.0,
+        "mean_iou": 0.8235294117647054,
+        "success_rate": 0.8235294117647058,
         "evaluated_instances": 17
       },
       "operations": {
         "url_exploration_success_rate": null,
-        "average_response_time_seconds": 11.84110289999998,
+        "average_response_time_seconds": 21.006671145454508,
         "model_cost_usd_per_screen": null,
-        "schema_retry_rate": 0.0,
-        "schema_retry_run_rate": 0.0,
-        "schema_attempts": 22,
-        "schema_retries": 0
+        "schema_retry_rate": 0.15384615384615385,
+        "schema_retry_run_rate": 0.18181818181818182,
+        "schema_attempts": 26,
+        "schema_retries": 4
       }
     }
   ]
