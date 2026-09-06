@@ -123,13 +123,18 @@ export function ScreenCanvas({
     const img = imgRef.current;
     if (!img) return undefined;
 
-    const measure = () =>
+    // 이미지가 실리기 전에는 크기가 0이라, 그대로 재면 오버레이가 엉뚱한 자리에
+    // 한 번 그려졌다가 로드 후 제자리를 찾는다. 화면에서는 박스가 번쩍이고
+    // 스크린샷 테스트에서는 간헐적 실패로 나타난다. 유효한 크기가 나올 때만 쓴다.
+    const measure = () => {
+      if (!img.offsetWidth || !img.offsetHeight) return;
       setRect({
         left: img.offsetLeft,
         top: img.offsetTop,
         width: img.offsetWidth,
         height: img.offsetHeight,
       });
+    };
 
     measure();
     if (typeof ResizeObserver === "undefined") return undefined;
@@ -143,6 +148,7 @@ export function ScreenCanvas({
     if (!screen.width && !screen.height && img.naturalWidth && img.naturalHeight) {
       setMeasured({ screenId: screen.id, width: img.naturalWidth, height: img.naturalHeight });
     }
+    if (!img.offsetWidth || !img.offsetHeight) return;
     setRect({
       left: img.offsetLeft,
       top: img.offsetTop,

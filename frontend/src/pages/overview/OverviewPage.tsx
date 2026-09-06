@@ -671,9 +671,13 @@ export function OverviewPage() {
       <section className="subtle-grid mt-6 overflow-hidden rounded-card bg-brand-900 p-6 text-white lg:p-8">
         <div className="grid items-center gap-8 xl:grid-cols-[1fr_1.15fr]">
           <div>
-            <Badge className="text-white" variant={auditStatus.variant}>
-              ●&nbsp; {auditStatus.label}
-            </Badge>
+            {/*
+              variant 색은 밝은 표면 기준이라 어두운 히어로 위에서는 대비가 깨진다.
+              text-white 로 덮으면 bg-brand-100 위 흰 글씨가 되어 대비 1.17 까지
+              떨어졌다. 여기서는 히어로에 맞는 색을 직접 준다. 상태는 색이 아니라
+              라벨 문구가 전달하므로 정보가 사라지지도 않는다.
+            */}
+            <Badge className="bg-white/15 text-white">●&nbsp; {auditStatus.label}</Badge>
             <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
             <div className="mt-5 flex flex-wrap gap-6 text-xs text-white/70">
               <span className="flex items-center gap-2">
