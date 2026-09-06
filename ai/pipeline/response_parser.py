@@ -107,8 +107,12 @@ def trim_single_screen_findings(raw: dict[str, Any]) -> list[str]:
     전체가 실패한다. 실제 배포에서 DA-07 이 이 이유로 죽었다.
 
     bbox 는 어차피 한 화면의 좌표이므로 화면 목록이 여러 개인 것은 모델의 서술
-    실수에 가깝다. 코드베이스가 근거 화면을 screen_ids[-1] 로 다루므로 같은 관례를
-    따라 마지막 화면만 남긴다. 줄인 항목은 호출부가 기록한다.
+    실수에 가깝다.
+
+    남길 화면은 related_elements 가 가장 많이 가리키는 쪽으로 고른다. DA-03 처럼
+    대립 선택지 쌍이 근거인 규칙은 관련 요소가 살아남아야 판정이 성립하기 때문이다.
+    관련 요소가 없으면 코드베이스 관례대로 마지막 화면을 쓴다. 그래도 다른 화면을
+    가리키는 관련 요소는 참조가 끊기므로 함께 버린다.
     """
     trimmed: list[str] = []
     for finding in raw.get("semantic_findings") or []:
@@ -122,9 +126,17 @@ def trim_single_screen_findings(raw: dict[str, Any]) -> list[str]:
             continue  # DA-15 만 여러 화면을 근거로 쓴다.
         where = finding.get("where")
         screen_ids = where.get("screen_ids") if isinstance(where, dict) else None
-        if isinstance(screen_ids, list) and len(screen_ids) > 1:
-            where["screen_ids"] = [screen_ids[-1]]
-            trimmed.append(str(finding.get("rule_id")))
+        if not isinstance(screen_ids, list) or len(screen_ids) <= 1:
+            continue
+
+        related = [r for r in (finding.get("related_elements") or []) if isinstance(r, dict)]
+        counts = {sid: sum(r.get("screen_id") == sid for r in related) for sid in screen_ids}
+        keep = max(screen_ids, key=lambda sid: (counts[sid], screen_ids.index(sid)))
+
+        where["screen_ids"] = [keep]
+        if related:
+            finding["related_elements"] = [r for r in related if r.get("screen_id") == keep]
+        trimmed.append(str(finding.get("rule_id")))
     return trimmed
 
 

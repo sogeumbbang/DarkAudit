@@ -362,6 +362,51 @@ class AuditSchemaTest(unittest.TestCase):
             # 근거 화면은 코드베이스 관례대로 마지막 화면을 남긴다.
             self.assertEqual(result.semantic_findings[0].where.screen_ids, ("screen_02",))
 
+    def test_trimming_keeps_the_screen_its_related_elements_live_on(self):
+        """
+        화면을 줄일 때 관련 요소가 가리키던 화면을 버리면 참조가 끊겨
+        "related elements must reference evidence screens" 로 다시 실패한다.
+        대립 선택지 쌍이 근거인 규칙은 관련 요소가 살아남아야 판정이 성립한다.
+        """
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "screen.png"
+            image.write_bytes(b"png")
+            request = LLMAuditRequest(
+                "audit_1",
+                (
+                    AuditScreen("screen_01", "약관 동의", image),
+                    AuditScreen("screen_02", "최종 확인", image),
+                ),
+            )
+            finding = detection(
+                risk_type="VISUAL_HIERARCHY_DISTORTION",
+                risk_name="잘못된 계층구조",
+                rule_id="DA-03",
+                severity="HIGH",
+                screen_ids=["screen_01", "screen_02"],
+                related_elements=[{
+                    "screen_id": "screen_01",
+                    "element": "다음에 하기 버튼",
+                    "bbox": [0.08, 0.86, 0.84, 0.06],
+                }],
+            )
+            provider = FakeProvider(
+                hybrid_output(
+                    semantic_findings=[finding],
+                    screens=[
+                        {"screen_id": "screen_01", "flow_step": "약관 동의"},
+                        {"screen_id": "screen_02", "flow_step": "최종 확인"},
+                    ],
+                )
+            )
+
+            result = BaselineAuditPipeline(provider, allow_visual_fallback=True).analyze(request)
+
+            kept = result.semantic_findings[0]
+            # 마지막 화면이 아니라 관련 요소가 있는 화면을 남긴다.
+            self.assertEqual(kept.where.screen_ids, ("screen_01",))
+            self.assertEqual(len(kept.related_elements), 1)
+
     def test_url_source_drops_disallowed_semantic_finding_instead_of_failing(self):
         """
         URL 캡처 경로에서는 deterministic 규칙(DA-04)을 semantic_findings 에 직접
