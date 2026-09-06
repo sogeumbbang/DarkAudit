@@ -64,7 +64,12 @@ describe("ScreenCanvas", () => {
 
     const label = screen.getByText("DA-04");
     const mark = label.parentElement;
-    expect(mark).toHaveClass("outline-2", "outline-solid", "outline-offset-2", "outline-danger");
+    expect(mark).toHaveClass(
+      "outline-[1.5px]",
+      "outline-solid",
+      "outline-offset-2",
+      "outline-danger",
+    );
     expect(mark).not.toHaveClass("border-2", "bg-danger/10");
     expect(label).toHaveClass("bottom-full", "mb-1");
     expect(screen.getByText("관련")).toHaveClass("top-full", "mt-1");

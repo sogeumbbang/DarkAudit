@@ -61,15 +61,15 @@ function collectHighlights(screenId: string, finding?: FindingDto): HighlightBox
   return boxes;
 }
 
-function toPercentBox(bbox: BBoxDto, natural: { width: number; height: number }) {
+function toPercentBox(bbox: BBoxDto, natural: { width: number; height: number }, padding = 0) {
   const normalized = bbox.coordinateSystem === "normalized";
   const pct = (value: number, size: number) =>
     normalized ? value * 100 : size > 0 ? (value / size) * 100 : 0;
   return {
-    left: `${pct(bbox.x, natural.width)}%`,
-    top: `${pct(bbox.y, natural.height)}%`,
-    width: `${pct(bbox.width, natural.width)}%`,
-    height: `${pct(bbox.height, natural.height)}%`,
+    left: `calc(${pct(bbox.x, natural.width)}% - ${padding}px)`,
+    top: `calc(${pct(bbox.y, natural.height)}% - ${padding}px)`,
+    width: `calc(${pct(bbox.width, natural.width)}% + ${padding * 2}px)`,
+    height: `calc(${pct(bbox.height, natural.height)}% + ${padding * 2}px)`,
   };
 }
 
@@ -182,13 +182,13 @@ export function ScreenCanvas({
                 className={cn(
                   "absolute rounded-[3px]",
                   compact
-                    ? ["outline-2 outline-solid outline-offset-2", OUTLINE[box.severity]]
-                    : ["border-2", BORDER[box.severity]],
+                    ? ["outline-[1.5px] outline-solid outline-offset-2", OUTLINE[box.severity]]
+                    : ["border-[1.5px]", BORDER[box.severity]],
                   !compact && box.tone === "primary" && FILL[box.severity],
                   box.tone === "related" && !compact && "border-dashed",
                 )}
                 key={box.key}
-                style={toPercentBox(box.bbox, natural)}
+                style={toPercentBox(box.bbox, natural, compact ? 0 : 2)}
               >
                 {/*
                 라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
