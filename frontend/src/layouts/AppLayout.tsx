@@ -1,9 +1,8 @@
-import { Bell, BookOpen, ClipboardList, Home, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { BookOpen, ClipboardList, Home, Menu, Settings, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink, Outlet, useMatch } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
-import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 
 const navigation = [
@@ -92,56 +91,9 @@ function Sidebar({
   );
 }
 
-function AppHeader({
-  notificationsOpen,
-  onOpenMenu,
-  onToggleNotifications,
-}: {
-  notificationsOpen: boolean;
-  onOpenMenu: () => void;
-  onToggleNotifications: () => void;
-}) {
-  return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-5 lg:h-18 lg:px-9">
-      <div className="flex items-center gap-3 lg:hidden">
-        <button
-          aria-label="메뉴 열기"
-          className="rounded-control border border-border p-2 text-text"
-          onClick={onOpenMenu}
-        >
-          <Menu size={20} />
-        </button>
-        <Brand dark />
-      </div>
-      <div className="hidden lg:block" />
-      <div className="flex items-center gap-4">
-        <button
-          aria-expanded={notificationsOpen}
-          aria-label="알림"
-          className="relative p-2 text-text"
-          onClick={onToggleNotifications}
-        >
-          <Bell size={20} />
-          <span className="absolute right-1.5 top-1.5 size-2 rounded-full border-2 border-white bg-success" />
-        </button>
-        {notificationsOpen && (
-          <Card className="absolute right-5 top-14 z-30 w-72 p-4 shadow-xl lg:right-9 lg:top-16">
-            <p className="text-sm font-bold">알림</p>
-            <p className="mt-3 rounded-control bg-brand-50 p-3 text-xs leading-5 text-muted">
-              새 진단이 완료되면 이곳에서 확인할 수 있습니다.
-            </p>
-          </Card>
-        )}
-      </div>
-    </header>
-  );
-}
-
 export function AppLayout() {
-  const isOverview = Boolean(useMatch("/app/overview"));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   return (
     <div
@@ -170,26 +122,17 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      {!isOverview && (
-        <AppHeader
-          notificationsOpen={notificationsOpen}
-          onOpenMenu={() => setIsMenuOpen(true)}
-          onToggleNotifications={() => setNotificationsOpen((value) => !value)}
-        />
-      )}
       <main className="min-w-0 p-4 sm:p-6 lg:p-8">
-        {isOverview && (
-          <div className="mb-5 flex items-center gap-3 lg:hidden">
-            <button
-              aria-label="메뉴 열기"
-              className="rounded-control border border-border p-2 text-text"
-              onClick={() => setIsMenuOpen(true)}
-            >
-              <Menu size={20} />
-            </button>
-            <Brand dark />
-          </div>
-        )}
+        <div className="mb-5 flex items-center gap-3 lg:hidden">
+          <button
+            aria-label="메뉴 열기"
+            className="rounded-control border border-border p-2 text-text"
+            onClick={() => setIsMenuOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
+          <Brand dark />
+        </div>
         <Outlet />
       </main>
     </div>
