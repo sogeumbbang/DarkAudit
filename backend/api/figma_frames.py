@@ -47,11 +47,40 @@ def frame_from_node(node: dict[str, Any], page_index: int) -> FigmaFrame | None:
     )
 
 
-def collect_candidate_frames(document: dict[str, Any]) -> list[FigmaFrame]:
-    """규칙 2: 모든 Page 의 직접 자식 중 FRAME/COMPONENT/INSTANCE/SECTION 만 모은다."""
+def _collect_mobile_screen_roots(
+    node: dict[str, Any], page_index: int
+) -> list[FigmaFrame]:
+    """Collect outermost portrait phone frames without descending into their UI layers."""
+    if node.get("visible") is False:
+        return []
+    if node.get("type") in _CANDIDATE_TYPES:
+        frame = frame_from_node(node, page_index)
+        if (
+            frame is not None
+            and _MOBILE_WIDTH_RANGE[0] <= frame.width <= _MOBILE_WIDTH_RANGE[1]
+            and frame.height > frame.width
+        ):
+            return [frame]
+
+    frames: list[FigmaFrame] = []
+    for child in node.get("children") or []:
+        frames.extend(_collect_mobile_screen_roots(child, page_index))
+    return frames
+
+
+def collect_candidate_frames(
+    document: dict[str, Any], *, expand_mobile_containers: bool = False
+) -> list[FigmaFrame]:
+    """Collect top-level candidates, optionally expanding phone-flow containers."""
     frames: list[FigmaFrame] = []
     for page_index, page in enumerate(document.get("children") or []):
         for child in page.get("children") or []:
+            if expand_mobile_containers:
+                nested = _collect_mobile_screen_roots(child, page_index)
+                is_section = child.get("type") == "SECTION"
+                if len(nested) >= 2 or (is_section and nested):
+                    frames.extend(nested)
+                    continue
             if child.get("type") not in _CANDIDATE_TYPES:
                 continue
             frame = frame_from_node(child, page_index)

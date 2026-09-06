@@ -72,7 +72,10 @@ def _resolve_frames(
         except ValueError as exc:
             raise FigmaError(str(exc), status=422) from exc
 
-    candidates = collect_candidate_frames(document)
+    candidates = collect_candidate_frames(
+        document,
+        expand_mobile_containers=request.target in {"mobile-web", "app"},
+    )
     return select_frames(candidates, target=request.target, max_frames=settings.max_frames)
 
 

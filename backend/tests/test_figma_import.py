@@ -242,6 +242,66 @@ class FrameSelectionTest(unittest.TestCase):
         ordered = select_frames(collect_candidate_frames(document), target="mobile-web", max_frames=5)
         self.assertEqual([f.node_id for f in ordered], ["mobile"])
 
+    def test_expands_wide_flow_container_into_outermost_mobile_frames(self) -> None:
+        mobile_frames = []
+        for index in range(5):
+            mobile_frames.append(
+                {
+                    "id": f"screen-{index}",
+                    "type": "FRAME",
+                    "name": f"0{index + 1}_screen",
+                    "absoluteBoundingBox": {
+                        "x": index * 450,
+                        "y": 80,
+                        "width": 390,
+                        "height": 844,
+                    },
+                    "children": [
+                        {
+                            "id": f"card-{index}",
+                            "type": "FRAME",
+                            "name": "option card",
+                            "absoluteBoundingBox": {
+                                "x": index * 450 + 20,
+                                "y": 200,
+                                "width": 340,
+                                "height": 500,
+                            },
+                        }
+                    ],
+                }
+            )
+        document = {
+            "children": [
+                {
+                    "id": "0:1",
+                    "type": "CANVAS",
+                    "children": [
+                        {
+                            "id": "flow",
+                            "type": "SECTION",
+                            "name": "Dark Pattern Mobile Flow",
+                            "absoluteBoundingBox": {
+                                "x": 0,
+                                "y": 0,
+                                "width": 2366,
+                                "height": 1004,
+                            },
+                            "children": mobile_frames,
+                        }
+                    ],
+                }
+            ]
+        }
+
+        frames = collect_candidate_frames(document, expand_mobile_containers=True)
+
+        self.assertEqual(
+            [frame.node_id for frame in frames],
+            ["screen-0", "screen-1", "screen-2", "screen-3", "screen-4"],
+        )
+        self.assertFalse(any(frame.node_id.startswith("card-") for frame in frames))
+
     def test_prototype_flow_follows_nested_reaction_destinations(self) -> None:
         frames = select_prototype_flow(
             _PROTOTYPE_DOCUMENT, flow_name="가입 Flow", max_frames=5

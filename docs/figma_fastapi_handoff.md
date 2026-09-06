@@ -219,7 +219,7 @@ Figma 네트워크 호출과 렌더 다운로드는 background task에서 수행
 우선순위는 결정적으로 유지한다.
 
 1. URL에 `node-id`가 있으면 해당 노드 하나만 선택한다.
-2. `selectionMode=all-frames`이면 모든 Page의 직접 자식 중 `FRAME`, `COMPONENT`, `INSTANCE`, `SECTION` 후보를 수집한다.
+2. `selectionMode=all-frames`이면 모든 Page의 직접 자식 중 `FRAME`, `COMPONENT`, `INSTANCE`, `SECTION` 후보를 수집한다. 모바일 target에서 넓은 Flow 컨테이너나 Section 안에 모바일 프레임이 여러 개 있으면 가장 바깥쪽 모바일 프레임을 각각 선택하며, 그 내부 UI 레이어는 다시 화면 후보로 수집하지 않는다.
 3. 화면 후보는 `visible != false`, width/height > 0인 노드만 허용한다.
 4. 모바일 target이면 세로형이며 폭 280~600px인 후보를 우선한다.
 5. 캔버스 순서 `(page index, y, x)`로 정렬한다.
@@ -436,4 +436,3 @@ Figma API host와 렌더 다운로드 host를 구분한다.
 - 2차: flow 시작 노드와 reactions를 따라 순서를 계산하는 기능 추가
 
 지원하지 않는 모드를 조용히 all-frames로 바꾸면 사용자가 다른 화면 집합을 진단하게 되므로 금지한다.
-
