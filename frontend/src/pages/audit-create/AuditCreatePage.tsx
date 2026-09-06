@@ -1,18 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  CircleAlert,
-  Images,
-  LoaderCircle,
-  Play,
-} from "lucide-react";
+import { ArrowLeft, Images, LoaderCircle, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { z } from "zod";
+
+import { AnalysisProgress } from "@/pages/audit-create/AnalysisProgress";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -28,7 +22,6 @@ import {
   useStartAnalysis,
   useUploadAuditScreens,
 } from "@/features/audit-create/useAuditWorkflow";
-import { cn } from "@/lib/cn";
 import {
   AndroidFields,
   type AuditSource,
@@ -274,6 +267,7 @@ export function AuditCreatePage() {
   if (jobId)
     return (
       <AnalysisProgress
+        key={jobId}
         source={source}
         auditId={auditId}
         progress={analysis.data?.progress ?? 5}
@@ -469,95 +463,6 @@ export function AuditCreatePage() {
           </div>
         </div>
       </form>
-    </div>
-  );
-}
-
-function AnalysisProgress({
-  source,
-  auditId,
-  progress,
-  completed,
-  failed,
-  error,
-  onBack,
-}: {
-  source: AuditSource;
-  auditId?: string;
-  progress: number;
-  completed: boolean;
-  failed: boolean;
-  error?: string | null;
-  onBack: () => void;
-}) {
-  const workingTitle = {
-    website: "사이트를 캡처하고 분석하고 있습니다",
-    figma: "Figma 프레임과 레이어를 분석하고 있습니다",
-    android: "Android 앱을 실행하고 탐색하고 있습니다",
-    screenshots: "등록한 화면을 분석하고 있습니다",
-  }[source];
-  return (
-    <div className="mx-auto max-w-3xl py-10">
-      <Card className="p-8 text-center sm:p-12">
-        <span
-          className={cn(
-            "mx-auto flex size-16 items-center justify-center rounded-full",
-            completed
-              ? "bg-success/10 text-success"
-              : failed
-                ? "bg-danger/10 text-danger"
-                : "bg-brand-100 text-brand-700",
-          )}
-        >
-          {completed ? (
-            <CheckCircle2 size={32} />
-          ) : failed ? (
-            <CircleAlert size={32} />
-          ) : (
-            <LoaderCircle className="animate-spin" size={32} />
-          )}
-        </span>
-        <h1 className="mt-6 text-2xl font-bold">
-          {completed
-            ? "진단이 완료되었습니다"
-            : failed
-              ? "진단을 완료하지 못했습니다"
-              : workingTitle}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {completed
-            ? "수집한 화면과 AI 진단 결과를 대시보드에서 확인할 수 있습니다."
-            : failed
-              ? (error ?? "연동 설정과 서버 로그를 확인해주세요.")
-              : "UI 구조와 화면 증거를 수집해 다크패턴 규칙을 검사합니다."}
-        </p>
-        {!failed && (
-          <div className="mx-auto mt-8 max-w-lg">
-            <div className="flex justify-between text-xs">
-              <span>진행률</span>
-              <strong>{progress}%</strong>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-brand-100">
-              <div
-                className="h-full rounded-full bg-brand-600 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
-        {completed && (
-          <Button asChild className="mt-9">
-            <Link to={`/app/overview?audit=${auditId}`}>
-              결과 확인하기 <ArrowRight size={16} />
-            </Link>
-          </Button>
-        )}
-        {failed && (
-          <Button className="mt-9" variant="outline" onClick={onBack}>
-            입력 화면으로 돌아가기
-          </Button>
-        )}
-      </Card>
     </div>
   );
 }

@@ -29,12 +29,6 @@ const FILL: Record<FindingSeverity, string> = {
   LOW: "bg-brand-500/10",
 };
 
-const BADGE: Record<FindingSeverity, string> = {
-  HIGH: "bg-danger",
-  REVIEW: "bg-warning",
-  LOW: "bg-brand-600",
-};
-
 function collectHighlights(screenId: string, finding?: FindingDto): HighlightBox[] {
   if (!finding) return [];
   const boxes: HighlightBox[] = [];
@@ -179,37 +173,68 @@ export function ScreenCanvas({
             const compact = isCompactControl(box.bbox, natural);
             return (
               <div
+                role="img"
+                aria-label={box.tone === "primary" ? `${box.label} 탐지 영역` : "관련 영역"}
                 className={cn(
                   "absolute rounded-[3px]",
                   compact
-                    ? ["outline-[1.5px] outline-solid outline-offset-2", OUTLINE[box.severity]]
+                    ? [
+                        "outline-[1.5px] outline-offset-2",
+                        box.tone === "related" ? "outline-dashed" : "outline-solid",
+                        OUTLINE[box.severity],
+                      ]
                     : ["border-[1.5px]", BORDER[box.severity]],
                   !compact && box.tone === "primary" && FILL[box.severity],
                   box.tone === "related" && !compact && "border-dashed",
                 )}
                 key={box.key}
                 style={toPercentBox(box.bbox, natural, compact ? 0 : 2)}
-              >
-                {/*
-                라벨을 박스 안에 넣으면 얇은 요소(체크박스 한 줄 등)에서 박스보다
-                커져 실제 근거를 가린다. 주 근거는 위쪽, 관련 근거는 아래쪽 바깥에
-                붙여 가까운 두 박스의 라벨도 서로 겹치지 않게 한다.
-              */}
-                <span
-                  className={cn(
-                    "absolute left-0 z-10 whitespace-nowrap rounded px-1 py-px text-[9px] font-bold leading-tight text-white",
-                    box.tone === "related" ? "top-full mt-1" : "bottom-full mb-1",
-                    BADGE[box.severity],
-                    box.tone === "related" && "opacity-80",
-                  )}
-                >
-                  {box.label}
-                </span>
-              </div>
+              />
             );
           })}
         </div>
       )}
     </>
+  );
+}
+
+/** Keep labels in normal layout so they cannot cover screenshot content. */
+export function ScreenCanvasLegend({
+  screenId,
+  finding,
+}: {
+  screenId: string;
+  finding?: FindingDto;
+}) {
+  const highlights = collectHighlights(screenId, finding);
+  if (!highlights.length || !finding) return null;
+  return (
+    <div
+      role="group"
+      aria-label="탐지 표시 안내"
+      className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-muted"
+    >
+      {highlights.some((box) => box.tone === "primary") && (
+        <span className="inline-flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={cn("h-3 w-4 rounded-sm border-[1.5px]", BORDER[finding.severity])}
+          />
+          {finding.ruleId} 탐지 영역
+        </span>
+      )}
+      {highlights.some((box) => box.tone === "related") && (
+        <span className="inline-flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "h-3 w-4 rounded-sm border-[1.5px] border-dashed",
+              BORDER[finding.severity],
+            )}
+          />
+          관련 영역
+        </span>
+      )}
+    </div>
   );
 }

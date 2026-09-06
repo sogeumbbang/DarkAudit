@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
-import { ScreenCanvas } from "@/features/finding-review/ScreenCanvas";
+import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
 
@@ -224,6 +224,7 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
           </button>
         </div>
       </Card>
+      <ScreenCanvasLegend screenId={screen.id} finding={finding} />
     </div>
   );
 }

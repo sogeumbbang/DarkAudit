@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { ScreenCanvas } from "@/features/finding-review/ScreenCanvas";
+import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
 import type { AuditScreenDto, FindingDto } from "@/entities/audit/types";
 
 const auditScreen: AuditScreenDto = {
@@ -62,8 +62,7 @@ describe("ScreenCanvas", () => {
     });
     fireEvent.load(image);
 
-    const label = screen.getByText("DA-04");
-    const mark = label.parentElement;
+    const mark = screen.getByRole("img", { name: "DA-04 탐지 영역" });
     expect(mark).toHaveClass(
       "outline-[1.5px]",
       "outline-solid",
@@ -71,7 +70,24 @@ describe("ScreenCanvas", () => {
       "outline-danger",
     );
     expect(mark).not.toHaveClass("border-2", "bg-danger/10");
-    expect(label).toHaveClass("bottom-full", "mb-1");
-    expect(screen.getByText("관련")).toHaveClass("top-full", "mt-1");
+    expect(mark).toBeEmptyDOMElement();
+    expect(screen.getByRole("img", { name: "관련 영역" })).toBeEmptyDOMElement();
+    expect(screen.queryByText("DA-04")).not.toBeInTheDocument();
+    expect(screen.queryByText("관련")).not.toBeInTheDocument();
+  });
+
+  it("shows one legend per kind even when several related boxes overlap", () => {
+    const overlapping = {
+      ...finding,
+      relatedElements: [...(finding.relatedElements ?? []), ...(finding.relatedElements ?? [])],
+    };
+    const { rerender } = render(
+      <ScreenCanvasLegend screenId={auditScreen.id} finding={overlapping} />,
+    );
+    expect(screen.getByRole("group", { name: "탐지 표시 안내" })).not.toHaveClass("absolute");
+    expect(screen.getAllByText("DA-04 탐지 영역")).toHaveLength(1);
+    expect(screen.getAllByText("관련 영역")).toHaveLength(1);
+    rerender(<ScreenCanvasLegend screenId="other-screen" finding={overlapping} />);
+    expect(screen.queryByRole("group", { name: "탐지 표시 안내" })).not.toBeInTheDocument();
   });
 });
