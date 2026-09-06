@@ -167,6 +167,40 @@ python rules/build_rules.py --summary
 `standalone_sufficient: false`인 `DA-09`, `DA-12`, `DA-13`, `DA-14`는 단독으로 HIGH를
 부여하지 않고 다른 행위와의 결합 여부를 함께 판단합니다.
 
+## 탐지 성능
+
+합성 데이터 22개 Flow(110화면, Risky/Clean 쌍)에 Rule Engine을 돌려 정답 라벨과
+대조한 결과입니다. 전체 수치는 [docs/eval/rule_engine_report.json](docs/eval/rule_engine_report.json)에
+있습니다.
+
+| Rule | Precision | Recall | F1 |
+| --- | --- | --- | --- |
+| `DA-03` 잘못된 계층구조 | 1.00 | 1.00 | 1.00 |
+| `DA-12` 감정적 언어 | 1.00 | 1.00 | 1.00 |
+| `DA-13` 감각적 조작 | 1.00 | 1.00 | 1.00 |
+| `DA-15` 순차공개 가격책정 | 0.50 | 1.00 | 0.67 |
+| `DA-04` 특정옵션의 사전선택 | 0.18 | 1.00 | 0.31 |
+| `DA-07` 방해되는 절차 | 0.15 | 1.00 | 0.25 |
+| **micro** | **0.27** | **1.00** | **0.43** |
+
+**이 수치는 deterministic check 단독 성능이며 LLM 의미 검증 이전 값입니다.** Rule Engine이
+후보를 넓게 만들고 멀티모달 모델이 걸러내는 구조이므로, 재현율이 1.00이고 정밀도가 낮은
+것은 의도한 동작입니다. 규제 준수 도구에서는 미탐이 오탐보다 치명적이라 이 방향을 택했습니다.
+
+정밀도가 낮은 `DA-04`·`DA-07`은 deterministic check가 아직 구현되지 않아(선언 55개 중 11개
+구현) 다른 신호로 후보를 만들고 있습니다. **하이브리드 결합 후 성능 측정과 Gold Set 기반
+2차 라벨링은 다음 단계 과제입니다.**
+
+재현하려면 합성 데이터를 먼저 생성해야 합니다.
+
+```bash
+cd data/generator
+python generate.py --config configs/ins-001-risky.json   # 전체는 configs/*.json 반복
+python capture.py  --config configs/ins-001-risky.json
+python extract_ui.py --all
+cd ../../backend && python eval_rule_engine.py
+```
+
 ## 검증
 
 저장소 루트에서 Python 테스트를 실행합니다.

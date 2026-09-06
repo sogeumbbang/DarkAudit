@@ -1,0 +1,250 @@
+{
+  "generated_at": "2026-09-06T05:52:50+00:00",
+  "scope": "deterministic rule engine only (LLM semantic verification not included)",
+  "dataset": {
+    "flows": 22,
+    "screens": 110,
+    "source": "data/generator (synthetic, risky/clean pairs)"
+  },
+  "check_coverage": {
+    "declared": 55,
+    "implemented": 11
+  },
+  "per_rule": {
+    "DA-03": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "DA-04": {
+      "tp": 4,
+      "fp": 18,
+      "fn": 0,
+      "precision": 0.1818,
+      "recall": 1.0,
+      "f1": 0.3077
+    },
+    "DA-07": {
+      "tp": 7,
+      "fp": 41,
+      "fn": 0,
+      "precision": 0.1458,
+      "recall": 1.0,
+      "f1": 0.2545
+    },
+    "DA-12": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "DA-13": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "DA-15": {
+      "tp": 3,
+      "fp": 3,
+      "fn": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    }
+  },
+  "micro": {
+    "tp": 23,
+    "fp": 62,
+    "fn": 0,
+    "precision": 0.2706,
+    "recall": 1.0,
+    "f1": 0.4259
+  },
+  "macro_f1": 0.7048,
+  "per_flow": [
+    {
+      "flow": "dep-001-clean",
+      "gold": 0,
+      "predicted": 4,
+      "tp": 0,
+      "fp": 4,
+      "fn": 0
+    },
+    {
+      "flow": "dep-001-risky",
+      "gold": 8,
+      "predicted": 8,
+      "tp": 8,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "flow": "dep-002-clean",
+      "gold": 0,
+      "predicted": 4,
+      "tp": 0,
+      "fp": 4,
+      "fn": 0
+    },
+    {
+      "flow": "dep-002-risky",
+      "gold": 0,
+      "predicted": 4,
+      "tp": 0,
+      "fp": 4,
+      "fn": 0
+    },
+    {
+      "flow": "ins-001-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-001-risky",
+      "gold": 7,
+      "predicted": 8,
+      "tp": 7,
+      "fp": 1,
+      "fn": 0
+    },
+    {
+      "flow": "ins-002-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-002-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-003-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-003-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-004-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-004-risky",
+      "gold": 2,
+      "predicted": 3,
+      "tp": 2,
+      "fp": 1,
+      "fn": 0
+    },
+    {
+      "flow": "ins-005-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-005-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-006-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-006-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-007-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-007-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-008-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-008-risky",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-009-clean",
+      "gold": 0,
+      "predicted": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0
+    },
+    {
+      "flow": "ins-009-risky",
+      "gold": 1,
+      "predicted": 4,
+      "tp": 1,
+      "fp": 3,
+      "fn": 0
+    }
+  ]
+}

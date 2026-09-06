@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import collections
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.rule_engine import checks  # noqa: F401  — 데코레이터 등록을 위해 필요
@@ -24,6 +25,9 @@ from app.rule_engine.severity import drop_incomplete, merge, score
 ROOT = Path(__file__).resolve().parents[1] / "data" / "synthetic"
 UI = ROOT / "ui"
 LABELS = ROOT / "labels"
+
+# 합성 데이터는 생성물이라 저장소에 없다. 측정 결과만 커밋해 문서에서 인용한다.
+REPORT_PATH = Path(__file__).resolve().parents[1] / "docs" / "eval" / "rule_engine_report.json"
 
 # 현재 구현한 유형만 평가 대상으로 삼는다.
 TARGET = {"DA-03", "DA-04", "DA-07", "DA-12", "DA-13", "DA-15"}
@@ -111,6 +115,48 @@ def main() -> None:
     print(f"{'micro':<8}{T:>4}{F:>4}{N:>4}{P:>7.2f}{R:>7.2f}"
           f"{(2*P*R/(P+R) if P+R else 0):>7.2f}")
     print(f"{'macro F1':<8}{sum(f1s)/len(f1s):>29.2f}")
+
+    _write_report(rows, tp, fp, fn, cov)
+
+
+def _write_report(rows, tp, fp, fn, cov) -> None:
+    """
+    측정 결과를 파일로 남긴다.
+
+    콘솔 출력만으로는 "언제 어떤 데이터로 잰 값인지"가 사라져서 문서나 발표에
+    인용할 수 없다. 합성 데이터 자체는 생성물이라 저장소에 없으므로, 재현에
+    필요한 조건(flow 수, 체크 구현 현황)을 수치와 함께 남긴다.
+    """
+    def scores(t: int, f_: int, n: int) -> dict[str, float]:
+        p = t / (t + f_) if t + f_ else 0.0
+        r = t / (t + n) if t + n else 0.0
+        return {
+            "tp": t, "fp": f_, "fn": n,
+            "precision": round(p, 4), "recall": round(r, 4),
+            "f1": round(2 * p * r / (p + r) if p + r else 0.0, 4),
+        }
+
+    per_rule = {rid: scores(tp[rid], fp[rid], fn[rid]) for rid in sorted(TARGET)}
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "scope": "deterministic rule engine only (LLM semantic verification not included)",
+        "dataset": {
+            "flows": len(rows),
+            "screens": sum(1 for _ in UI.glob("*.json")) * 5,
+            "source": "data/generator (synthetic, risky/clean pairs)",
+        },
+        "check_coverage": {"declared": cov["declared"], "implemented": cov["implemented"]},
+        "per_rule": per_rule,
+        "micro": scores(sum(tp.values()), sum(fp.values()), sum(fn.values())),
+        "macro_f1": round(sum(v["f1"] for v in per_rule.values()) / len(per_rule), 4),
+        "per_flow": [
+            {"flow": r[0], "gold": r[1], "predicted": r[2], "tp": r[3], "fp": r[4], "fn": r[5]}
+            for r in rows
+        ],
+    }
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n리포트 저장: {REPORT_PATH.relative_to(Path(__file__).resolve().parents[1])}")
 
 
 if __name__ == "__main__":
