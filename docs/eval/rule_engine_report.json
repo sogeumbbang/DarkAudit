@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T05:52:50+00:00",
+  "generated_at": "2026-09-06T08:18:16+00:00",
   "scope": "deterministic rule engine only (LLM semantic verification not included)",
   "dataset": {
     "flows": 22,
@@ -29,11 +29,11 @@
     },
     "DA-07": {
       "tp": 7,
-      "fp": 41,
+      "fp": 0,
       "fn": 0,
-      "precision": 0.1458,
+      "precision": 1.0,
       "recall": 1.0,
-      "f1": 0.2545
+      "f1": 1.0
     },
     "DA-12": {
       "tp": 3,
@@ -62,20 +62,20 @@
   },
   "micro": {
     "tp": 23,
-    "fp": 62,
+    "fp": 21,
     "fn": 0,
-    "precision": 0.2706,
+    "precision": 0.5227,
     "recall": 1.0,
-    "f1": 0.4259
+    "f1": 0.6866
   },
-  "macro_f1": 0.7048,
+  "macro_f1": 0.8291,
   "per_flow": [
     {
       "flow": "dep-001-clean",
       "gold": 0,
-      "predicted": 4,
+      "predicted": 1,
       "tp": 0,
-      "fp": 4,
+      "fp": 1,
       "fn": 0
     },
     {
@@ -89,25 +89,25 @@
     {
       "flow": "dep-002-clean",
       "gold": 0,
-      "predicted": 4,
+      "predicted": 1,
       "tp": 0,
-      "fp": 4,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "dep-002-risky",
       "gold": 0,
-      "predicted": 4,
+      "predicted": 1,
       "tp": 0,
-      "fp": 4,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-001-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
@@ -121,41 +121,41 @@
     {
       "flow": "ins-002-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-002-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-003-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-003-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-004-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
@@ -169,81 +169,81 @@
     {
       "flow": "ins-005-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-005-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-006-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-006-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-007-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-007-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-008-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-008-risky",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-009-clean",
       "gold": 0,
-      "predicted": 3,
+      "predicted": 1,
       "tp": 0,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     },
     {
       "flow": "ins-009-risky",
       "gold": 1,
-      "predicted": 4,
+      "predicted": 2,
       "tp": 1,
-      "fp": 3,
+      "fp": 1,
       "fn": 0
     }
   ]

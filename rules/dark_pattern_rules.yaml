@@ -328,7 +328,10 @@ rules:
     deterministic_checks:
       - id: benefit_risk_asymmetry
         desc: "혜택 문구는 크고 명확하게, 손실·위험 문구는 작고 흐리게 표시 (원문 핵심 예시)"
-        threshold: "font_size_ratio <= 0.7 OR contrast_ratio < 4.5"
+        # 작음과 흐림이 함께 나타나야 이 유형이다. OR 로 두면 본문 대비가 전반적으로
+        # 4.5 아래인 화면에서 모든 문구가 후보가 되어 변별력이 사라진다. 접근성 기준
+        # 미달은 그 자체로 문제지만 정보를 숨겼다는 근거는 아니다.
+        threshold: "font_size_ratio <= 0.7 AND contrast_ratio < 4.5"
       - id: detail_behind_click
         desc: "중요 정보가 '자세히 보기' 클릭 또는 좌우 스크롤로만 확인 가능"
       - id: skippable_without_confirm

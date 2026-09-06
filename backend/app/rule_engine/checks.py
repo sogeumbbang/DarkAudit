@@ -150,8 +150,16 @@ def _nearest_text(screen: Screen, el: Element) -> str | None:
 @screen_check("DA-07", "benefit_risk_asymmetry")
 def da07_asymmetry(screen: Screen, rb: RuleBase) -> list[Detection]:
     """
-    본문 대비 현저히 작거나 흐린 텍스트를 찾는다.
+    본문보다 작으면서 동시에 대비도 낮은 텍스트를 찾는다.
     중요정보 해당 여부는 semantic_checks 가 판단한다.
+
+    규칙 원문은 "혜택 문구는 크고 명확하게, 손실·위험 문구는 작고 흐리게"다. 작음과
+    흐림이 함께 나타나는 것이 이 유형의 특징이므로 두 조건을 모두 만족할 때만 잡는다.
+
+    예전에는 OR 이었는데, 대비 조건이 WCAG 절대값(4.5)이라 본문 전체가 그 아래인
+    화면에서는 모든 문구가 후보가 됐다. 다크패턴이 없는 화면에서도 8~10건씩 나와
+    후보의 변별력이 사라졌다. 접근성 기준 미달은 그 자체로 문제지만 "정보를 숨겼다"는
+    근거는 아니다.
     """
     texts = [e for e in screen.of_type("text", "price") if e.text and len(e.text) > 5]
     if not texts:
@@ -167,7 +175,7 @@ def da07_asymmetry(screen: Screen, rb: RuleBase) -> list[Detection]:
     for e in texts:
         ratio = e.font_size / body if body else 1.0
         low_contrast = e.contrast is not None and e.contrast < 4.5
-        if ratio <= size_th or low_contrast:
+        if ratio <= size_th and low_contrast:
             out.append(Detection(
                 "", "", primary=e,
                 measurements={
