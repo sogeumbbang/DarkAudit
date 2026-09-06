@@ -169,36 +169,58 @@ python rules/build_rules.py --summary
 
 ## 탐지 성능
 
-합성 데이터 22개 Flow(110화면, Risky/Clean 쌍)에 Rule Engine을 돌려 정답 라벨과
-대조한 결과입니다. 전체 수치는 [docs/eval/rule_engine_report.json](docs/eval/rule_engine_report.json)에
-있습니다.
+합성 데이터 22개 Flow(110화면, Risky/Clean 쌍)로 측정했습니다. Rule Engine 단독 성능과
+LLM 검증까지 붙인 하이브리드 성능을 나란히 재서, 검증 단계가 실제로 기여하는지 확인합니다.
+
+| 단계 | Precision | Recall | F1 |
+| --- | --- | --- | --- |
+| Rule Engine 단독 | 0.27 | 1.00 | 0.43 |
+| **하이브리드 (LLM 검증 후)** | **0.40** | **1.00** | **0.57** |
+
+**미탐 0을 유지한 채 정밀도가 0.27에서 0.40으로 올랐습니다.** Rule Engine이 후보를 넓게
+만들고 멀티모달 모델이 걸러내는 설계가 의도대로 동작합니다. 규제 준수 도구에서는 미탐이
+오탐보다 치명적이므로 재현율을 우선했습니다.
+
+유형별 하이브리드 성능(3회 평균)입니다.
 
 | Rule | Precision | Recall | F1 |
 | --- | --- | --- | --- |
 | `DA-03` 잘못된 계층구조 | 1.00 | 1.00 | 1.00 |
 | `DA-12` 감정적 언어 | 1.00 | 1.00 | 1.00 |
-| `DA-13` 감각적 조작 | 1.00 | 1.00 | 1.00 |
-| `DA-15` 순차공개 가격책정 | 0.50 | 1.00 | 0.67 |
-| `DA-04` 특정옵션의 사전선택 | 0.18 | 1.00 | 0.31 |
-| `DA-07` 방해되는 절차 | 0.15 | 1.00 | 0.25 |
-| **micro** | **0.27** | **1.00** | **0.43** |
+| `DA-15` 순차공개 가격책정 | 1.00 | 1.00 | 1.00 |
+| `DA-07` 방해되는 절차 | 0.25 | 1.00 | 0.40 |
+| `DA-04` 특정옵션의 사전선택 | 0.21 | 1.00 | 0.35 |
 
-**이 수치는 deterministic check 단독 성능이며 LLM 의미 검증 이전 값입니다.** Rule Engine이
-후보를 넓게 만들고 멀티모달 모델이 걸러내는 구조이므로, 재현율이 1.00이고 정밀도가 낮은
-것은 의도한 동작입니다. 규제 준수 도구에서는 미탐이 오탐보다 치명적이라 이 방향을 택했습니다.
+3종은 오탐 없이 완벽하고, `DA-04`·`DA-07`이 평균을 끌어내립니다. 이 둘은 deterministic
+check가 아직 구현되지 않아(선언 55개 중 11개 구현) 후보가 과하게 생성되며, LLM 검증도
+전부 걸러내지 못합니다. **다음 단계의 우선 개선 지점입니다.**
 
-정밀도가 낮은 `DA-04`·`DA-07`은 deterministic check가 아직 구현되지 않아(선언 55개 중 11개
-구현) 다른 신호로 후보를 만들고 있습니다. **하이브리드 결합 후 성능 측정과 Gold Set 기반
-2차 라벨링은 다음 단계 과제입니다.**
+부가 지표: 위치 정확도 IoU 0.5 기준 성공률 **1.00**(mean IoU 1.00), 화면 5장 기준 평균
+응답 **5.9초**, 스키마 재시도율 **8.3%**, Counterfactual 일관성 **0.71**.
 
-재현하려면 합성 데이터를 먼저 생성해야 합니다.
+### 한계
+
+LLM은 같은 입력에도 매번 다르게 답합니다. 위 값은 **3회 측정 평균이며 F1 범위는
+0.542~0.582**입니다. 단일 측정값이 아니라는 점을 밝혀 둡니다. Gold Set 기반 2차 라벨링과
+라벨러 간 일치도 산출은 아직 하지 않았으므로, 정답 라벨은 생성기가 심은 패턴을 기준으로
+합니다.
+
+전체 수치는 [rule_engine_report.json](docs/eval/rule_engine_report.json),
+[hybrid_report.json](docs/eval/hybrid_report.json)에 있습니다.
+
+### 재현
+
+합성 데이터는 생성물이라 저장소에 없습니다. 먼저 생성해야 합니다.
 
 ```bash
 cd data/generator
 python generate.py --config configs/ins-001-risky.json   # 전체는 configs/*.json 반복
 python capture.py  --config configs/ins-001-risky.json
 python extract_ui.py --all
-cd ../../backend && python eval_rule_engine.py
+
+cd ../../backend
+python eval_rule_engine.py          # Rule Engine 단독
+python eval_hybrid.py --runs 3      # 하이브리드 (실제 모델 호출, OPENAI_API_KEY 필요)
 ```
 
 ## 검증

@@ -42,3 +42,6 @@ data/synthetic/ui/
 # DB
 *.db
 data/darkaudit.db
+
+# 평가 예측 원본. 합성 데이터와 마찬가지로 생성물이라 요약 리포트만 남긴다.
+docs/eval/hybrid/
