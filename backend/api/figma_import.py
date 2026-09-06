@@ -56,12 +56,33 @@ def _resolve_frames(
     document = file_doc.get("document") or {}
 
     if node_id is not None:
-        # 규칙 1: node-id 가 있으면 타입 제한 없이 해당 노드 하나만 쓴다.
+        # Figma 공유 링크는 실제 화면뿐 아니라 Canvas(예: 0:1)나 여러 화면을
+        # 감싼 Section/Frame을 가리키는 경우가 흔하다. 컨테이너 링크라면 그 아래
+        # 화면 후보를 선택하고, leaf/group 링크일 때만 기존처럼 노드 하나를 쓴다.
         found = find_node(document, node_id)
         if found is None:
             raise FigmaError(f"node-id not found in file: {node_id}", status=404)
         node, page_index = found
         frame = frame_from_node(node, page_index)
+
+        expands_mobile_container = request.target in {"mobile-web", "app"}
+        if frame is not None and (
+            not expands_mobile_container
+            or (280 <= frame.width <= 600 and frame.height > frame.width)
+        ):
+            return [frame]
+
+        scoped_document = {"children": [node]}
+        nested = collect_candidate_frames(
+            scoped_document,
+            expand_mobile_containers=expands_mobile_container,
+        )
+        if nested:
+            return select_frames(
+                nested,
+                target=request.target,
+                max_frames=settings.max_frames,
+            )
         return [frame] if frame is not None else []
 
     if request.selectionMode == "prototype-flow":

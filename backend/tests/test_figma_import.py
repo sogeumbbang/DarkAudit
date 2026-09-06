@@ -459,6 +459,27 @@ class FigmaApiIntegrationTest(unittest.TestCase):
         audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
         self.assertEqual(len(audit["screens"]), 1)  # GROUP 타입이지만 node-id 지정이라 선택됨
 
+    def test_canvas_node_id_imports_its_screen_frames(self) -> None:
+        audit_id = self._create_audit("Figma Canvas 링크")
+        with patch("backend.api.figma_import.FigmaClient", StubFigmaClient):
+            queued = self.client.post(
+                f"/api/v1/audits/{audit_id}/figma",
+                json={
+                    "fileUrl": "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/Mockup?node-id=0-1",
+                    "target": "mobile-web",
+                    "selectionMode": "all-frames",
+                    "flowName": None,
+                },
+            )
+        self.assertEqual(queued.status_code, 202, queued.text)
+        job = self.client.get(f"/api/v1/analysis-jobs/{queued.json()['jobId']}").json()
+        self.assertEqual(job["status"], "completed", job)
+        audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
+        self.assertEqual(
+            [screen["flowStep"] for screen in audit["screens"]],
+            ["01_Product_Select", "02_Confirm"],
+        )
+
     def test_partial_null_render_keeps_successful_frames(self) -> None:
         audit_id = self._create_audit("Figma 일부 실패")
         StubFigmaClient.null_node_ids = {"3:5"}
