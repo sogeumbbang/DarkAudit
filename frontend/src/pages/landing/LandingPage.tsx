@@ -165,7 +165,7 @@ export function LandingPage() {
             <Link to="/app/overview">진단 시작하기</Link>
           </Button>
         </header>
-        <main className="page-container grid items-center gap-16 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
+        <main className="page-container grid items-center gap-16 py-[74px] lg:grid-cols-[0.85fr_1.15fr] lg:py-[90px]">
           <div>
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-brand-400">
               금융 UX 사전 점검
@@ -244,7 +244,10 @@ export function LandingPage() {
               온라인 금융상품 판매 관련 다크패턴 가이드라인의 4개 범주와 15개 유형을 기반으로 검토를
               제공합니다.
             </p>
-            <Link className="mt-6 inline-block rounded-control bg-brand-100 px-4 py-3 text-xs font-semibold text-brand-700" to="/app/guidelines">
+            <Link
+              className="mt-6 inline-block rounded-control bg-brand-100 px-4 py-3 text-xs font-semibold text-brand-700"
+              to="/app/guidelines"
+            >
               전체 검토 기준 보기 →
             </Link>
           </div>
