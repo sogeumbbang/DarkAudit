@@ -38,8 +38,12 @@ class AssessmentContractTest(unittest.TestCase):
     def test_current_golden_empty_result_has_complete_rule_coverage(self):
         from dataclasses import replace
 
+        # golden 케이스에 한국어가 들어 있다. 인코딩을 지정하지 않으면 Windows
+        # 한국어 로케일(cp949)에서 UTF-8 파일을 못 읽어 테스트가 깨진다.
         case = json.loads(
-            Path(__file__).with_name("golden_cases.jsonl").read_text().splitlines()[0]
+            Path(__file__).with_name("golden_cases.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[0]
         )
         request = LLMAuditRequest(
             "golden-empty",

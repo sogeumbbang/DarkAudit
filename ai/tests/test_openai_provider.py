@@ -33,8 +33,13 @@ class RejectsTemperature:
 class OpenAIProviderTest(unittest.TestCase):
     def test_production_schema_references_have_no_unsupported_siblings(self):
         directory = Path(__file__).resolve().parents[1] / "schemas"
-        schema = json.loads((directory / "audit_output.schema.json").read_text())
-        self.assertEqual(schema, json.loads((directory / "hybrid_audit_output.schema.json").read_text()))
+        # 스키마에 한국어가 들어 있다. 인코딩을 지정하지 않으면 Windows 한국어
+        # 로케일(cp949)에서 UTF-8 파일을 못 읽어 테스트가 깨진다.
+        schema = json.loads((directory / "audit_output.schema.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            schema,
+            json.loads((directory / "hybrid_audit_output.schema.json").read_text(encoding="utf-8")),
+        )
         def inspect(node):
             if isinstance(node, dict):
                 if "$ref" in node:
