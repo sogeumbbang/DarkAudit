@@ -39,8 +39,7 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await page.getByRole("button", { name: "다음 탐지 항목" }).click();
   await expect(page.getByRole("heading", { name: "감정적 압박" }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "알림" }).click();
-  await expect(page.getByText("새 진단이 완료되면 이곳에서 확인할 수 있습니다.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "알림" })).toHaveCount(0);
   if (await page.getByRole("button", { name: "메뉴 열기" }).isVisible()) {
     await page.getByRole("button", { name: "메뉴 열기" }).click();
   }

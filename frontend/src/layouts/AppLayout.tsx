@@ -1,16 +1,6 @@
-import {
-  Bell,
-  BookOpen,
-  ChartNoAxesColumn,
-  ClipboardList,
-  Home,
-  Menu,
-  Settings,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { Bell, BookOpen, ClipboardList, Home, Menu, Settings, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useMatch } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
 import { Card } from "@/components/ui/Card";
@@ -20,7 +10,6 @@ const navigation = [
   { label: "대시보드", icon: Home, to: "/app/overview" },
   { label: "진단 관리", icon: ClipboardList, to: "/app/audits" },
   { label: "검토 기준", icon: BookOpen, to: "/app/guidelines" },
-  { label: "비교 분석", icon: ChartNoAxesColumn, to: "/app/benchmark" },
   { label: "설정", icon: Settings, to: "/app/settings" },
 ];
 
@@ -44,7 +33,11 @@ function Sidebar({
       )}
     >
       <div className="flex items-center justify-between px-2 py-2">
-        {!collapsed || mobile ? <Brand /> : <span className="px-1 text-xl font-bold text-brand-400">D</span>}
+        {!collapsed || mobile ? (
+          <Brand />
+        ) : (
+          <span className="px-1 text-xl font-bold text-brand-400">D</span>
+        )}
         <button
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
           className={cn(
@@ -75,14 +68,22 @@ function Sidebar({
         ))}
       </nav>
       <div className="mt-auto space-y-4">
-        <div className={cn("rounded-card border border-white/20 p-4", collapsed && !mobile && "hidden")}>
+        <div
+          className={cn(
+            "rounded-card border border-white/20 p-4",
+            collapsed && !mobile && "hidden",
+          )}
+        >
           <p className="flex items-center gap-2 text-sm font-semibold">
             <ShieldCheck className="text-brand-400" size={21} /> 안전한 규제 준수
           </p>
           <p className="mt-3 text-xs leading-5 text-white/55">
             금융보안 및 개인정보 보호 기준을 준수하여 안전하게 운영됩니다.
           </p>
-          <Link className="mt-4 inline-block text-xs font-semibold text-brand-400" to="/app/guidelines">
+          <Link
+            className="mt-4 inline-block text-xs font-semibold text-brand-400"
+            to="/app/guidelines"
+          >
             자세히 보기 →
           </Link>
         </div>
@@ -137,6 +138,7 @@ function AppHeader({
 }
 
 export function AppLayout() {
+  const isOverview = Boolean(useMatch("/app/overview"));
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -168,12 +170,26 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      <AppHeader
-        notificationsOpen={notificationsOpen}
-        onOpenMenu={() => setIsMenuOpen(true)}
-        onToggleNotifications={() => setNotificationsOpen((value) => !value)}
-      />
+      {!isOverview && (
+        <AppHeader
+          notificationsOpen={notificationsOpen}
+          onOpenMenu={() => setIsMenuOpen(true)}
+          onToggleNotifications={() => setNotificationsOpen((value) => !value)}
+        />
+      )}
       <main className="min-w-0 p-4 sm:p-6 lg:p-8">
+        {isOverview && (
+          <div className="mb-5 flex items-center gap-3 lg:hidden">
+            <button
+              aria-label="메뉴 열기"
+              className="rounded-control border border-border p-2 text-text"
+              onClick={() => setIsMenuOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+            <Brand dark />
+          </div>
+        )}
         <Outlet />
       </main>
     </div>
