@@ -59,6 +59,7 @@ docs/        라벨링 가이드와 프로젝트 문서
 
 세부 내용은 [AI](ai/README.md), [Backend](backend/README.md),
 [Frontend](frontend/README.md), [Dataset Generator](data/generator/README.md) 문서를 참고하세요.
+전체 구성은 [시스템 구성도](docs/architecture.md)에 정리했습니다.
 배포 절차는 [배포 가이드](docs/deploy.md), 라벨링 기준은
 [라벨링 가이드](docs/labeling_guide.md)에 있습니다.
 
