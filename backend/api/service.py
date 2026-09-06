@@ -492,6 +492,27 @@ def _store_output(
             if detection is not None
             else (primary.text if primary is not None else matched.primary_id or matched.rule_id)
         )
+
+        # 회차 비교용 지문의 재료.
+        #
+        # 모델이 쓴 요소 서술(detection.where.element)은 같은 화면을 다시 분석해도
+        # 표현이 달라진다. 그걸 지문에 넣으면 고친 게 없는데도 "기존 문제 해결 +
+        # 새 문제 발생"으로 잡힌다. 실제로 같은 입력을 두 번 돌렸을 때 매칭이
+        # 하나도 되지 않았다.
+        #
+        # 그래서 DOM 에서 온 텍스트만 지문에 쓰고, 모델 서술뿐인 경우에는 위치로
+        # 식별한다. 평가기(ai/evaluation)가 정답과 대조할 때 쓰는 기준과 같다.
+        #
+        # DOM 요소가 없으면 위에서 모델 서술을 text 로 담은 Element 를 만든다.
+        # 그것까지 쓰면 원래 문제로 돌아가므로 source 로 걸러낸다.
+        stable_text = (
+            primary.text if primary is not None and primary.source == "dom" else None
+        )
+        stable_bbox = (
+            primary.bbox
+            if primary is not None
+            else (list(detection.bbox) if detection is not None else None)
+        )
         confidence = detection.confidence if detection is not None else decision.confidence
 
         finding = Finding(
@@ -500,7 +521,8 @@ def _store_output(
             fingerprint=make_fingerprint(
                 matched.rule_id,
                 screen_index=indices[0] if indices else None,
-                text=element_text,
+                bbox=stable_bbox,
+                text=stable_text,
                 label_unit=label_unit,
             ),
             primary_element=primary,

@@ -23,6 +23,7 @@ from ai.pipeline.web_audit import URLAuditResult, URLCaptureResult
 from ai.schemas.audit_schema import (
     HybridAuditOutput,
     RISK_NAME_MAP,
+    VISUAL_FALLBACK_RULE_IDS,
     RiskType,
     RuleCandidate,
     ScreenReference,
@@ -528,6 +529,69 @@ class ApiIntegrationTest(unittest.TestCase):
     def test_delete_missing_audit_returns_404(self) -> None:
         response = self.client.delete("/api/v1/audits/audit-999999")
         self.assertEqual(response.status_code, 404, response.text)
+
+    def test_fingerprint_survives_reworded_model_description(self) -> None:
+        """
+        같은 화면을 다시 분석하면 모델은 요소를 다르게 서술한다. 그때마다 지문이
+        달라지면 고친 게 없는데도 "기존 문제 해결 + 새 문제 발생"으로 잡힌다.
+        실제로 같은 입력을 두 번 돌렸을 때 매칭이 하나도 되지 않았다.
+
+        위치가 같으면 같은 문제로 묶여야 한다.
+        """
+        def store(version: int, element_text: str) -> str:
+            with service.SessionLocal() as session:
+                audit = Audit(name=f"Rewording {version}", product_name="mobile-web")
+                run = AuditRun(version=1, status=RunStatus.DONE)
+                audit.runs.append(run)
+                run.screens.append(
+                    Screen(
+                        flow_type=FlowType.join,
+                        screen_index=1,
+                        flow_step="mobile: 옵션 선택",
+                        image_path="/artifacts/option.png",
+                        viewport_w=390,
+                        viewport_h=844,
+                    )
+                )
+                session.add(audit)
+                session.flush()
+
+                output = HybridAuditOutput.from_dict(
+                    {
+                        "audit_id": f"audit-{audit.id}",
+                        "schema_version": "1.1",
+                        "screens": [{"screen_id": "screen-01", "flow_step": "mobile: 옵션 선택"}],
+                        "candidate_decisions": [],
+                        "semantic_findings": [{
+                            "risk_type": RiskType.PRESELECTED_OPTION.value,
+                            "risk_name": RISK_NAME_MAP[RiskType.PRESELECTED_OPTION],
+                            "where": {
+                                "screen_ids": ["screen-01"],
+                                "element": element_text,
+                                "location": "옵션 카드",
+                            },
+                            "bbox": [0.06, 0.37, 0.09, 0.05],
+                            "related_elements": [],
+                            "what": "유료 옵션이 미리 선택되어 있다.",
+                            "observation": "체크박스가 선택 상태다.",
+                            "rule_id": "DA-04",
+                            "why": "추가 비용을 그대로 수용하게 된다.",
+                            "severity": "HIGH",
+                            "confidence": 0.9,
+                            "fix": "기본 미선택으로 바꾼다.",
+                        }],
+                    },
+                    [],
+                    VISUAL_FALLBACK_RULE_IDS,
+                )
+                service._store_output(session, run, output)
+                session.commit()
+                return run.findings[0].fingerprint
+
+        first = store(1, "안심케어 플러스 옵션 카드의 체크 표시")
+        second = store(2, "유료 부가서비스 선택 체크박스")
+
+        self.assertEqual(first, second)
 
     def test_da15_primary_bbox_is_kept_on_final_evidence_screen(self) -> None:
         with service.SessionLocal() as session:
