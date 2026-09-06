@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import math
 from dataclasses import dataclass
 from typing import Any
+
+from PIL import Image
 
 from ai.browser.explorer import HybridWebExplorer
 from ai.browser.models import CaptureArtifact, CaptureResult, ScanMode
@@ -125,11 +129,59 @@ def select_analysis_artifacts(
         raise ValueError("URL capture produced no screenshots")
     if not 1 <= limit <= 5:
         raise ValueError("limit must be between 1 and 5")
-    if len(artifacts) <= limit:
-        return artifacts
+    expanded: list[CaptureArtifact] = []
+    for artifact in artifacts:
+        if artifact.full_page:
+            expanded.extend(_split_full_page_artifact(artifact, max_segments=max(1, limit - 1)))
+        else:
+            expanded.append(artifact)
+    if len(expanded) <= limit:
+        return tuple(expanded)
     if limit == 1:
-        return (artifacts[0],)
+        return (expanded[0],)
 
-    last_index = len(artifacts) - 1
+    last_index = len(expanded) - 1
     indices = [round(position * last_index / (limit - 1)) for position in range(limit)]
-    return tuple(artifacts[index] for index in indices)
+    return tuple(expanded[index] for index in indices)
+
+
+def _split_full_page_artifact(
+    artifact: CaptureArtifact,
+    *,
+    max_segments: int = 4,
+) -> tuple[CaptureArtifact, ...]:
+    """Turn a tall full-page screenshot into readable, exhaustive vertical sections."""
+    with Image.open(artifact.image_path) as image:
+        width, height = image.size
+        if height <= artifact.viewport_height * 1.5 or max_segments <= 1:
+            return (artifact,)
+
+        segment_count = min(max_segments, math.ceil(height / artifact.viewport_height))
+        segments: list[CaptureArtifact] = []
+        for index in range(segment_count):
+            top = math.floor(index * height / segment_count)
+            bottom = math.ceil((index + 1) * height / segment_count)
+            crop = image.crop((0, top, width, bottom))
+            path = artifact.image_path.with_name(
+                f"{artifact.image_path.stem}-segment-{index + 1:02d}.png"
+            )
+            crop.save(path, format="PNG")
+            image_bytes = path.read_bytes()
+            segments.append(
+                CaptureArtifact(
+                    screen_id=f"{artifact.screen_id}_segment_{index + 1:02d}",
+                    flow_step=(
+                        f"{artifact.profile}: full page · 구간 {index + 1}/{segment_count}"
+                    ),
+                    profile=artifact.profile,
+                    url=artifact.url,
+                    title=artifact.title,
+                    image_path=path,
+                    viewport_width=width,
+                    viewport_height=bottom - top,
+                    full_page=False,
+                    action=artifact.action,
+                    fingerprint=hashlib.sha256(image_bytes).hexdigest(),
+                )
+            )
+        return tuple(segments)

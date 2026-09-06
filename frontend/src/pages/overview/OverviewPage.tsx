@@ -27,6 +27,17 @@ import { ScreenCanvas } from "@/features/finding-review/ScreenCanvas";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
 
+const auditStatusPresentation: Record<
+  AuditDto["status"],
+  { label: string; variant: "neutral" | "progress" | "success" | "danger" }
+> = {
+  draft: { label: "준비 중", variant: "neutral" },
+  queued: { label: "대기 중", variant: "progress" },
+  analyzing: { label: "진단 중", variant: "progress" },
+  completed: { label: "완료", variant: "success" },
+  failed: { label: "실패", variant: "danger" },
+};
+
 function FlowOverview({
   screens,
   selectedScreenId,
@@ -463,8 +474,8 @@ function RecentAudits({
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant="success">
-                    {audit.status === "completed" ? "완료" : "진행 중"}
+                  <Badge variant={auditStatusPresentation[audit.status].variant}>
+                    {auditStatusPresentation[audit.status].label}
                   </Badge>
                 </td>
                 <td className="px-6 py-4">
@@ -585,6 +596,7 @@ export function OverviewPage() {
   const findingPosition = finding ? audit.findings.findIndex((item) => item.id === finding.id) : 0;
   const needsReview = audit.findings.filter((item) => item.status !== "resolved").length;
   const resolved = audit.findings.filter((item) => item.status === "resolved").length;
+  const auditStatus = auditStatusPresentation[audit.status];
   const metrics = [
     {
       label: "탐지된 항목",
@@ -659,7 +671,9 @@ export function OverviewPage() {
       <section className="subtle-grid mt-6 overflow-hidden rounded-card bg-brand-900 p-6 text-white lg:p-8">
         <div className="grid items-center gap-8 xl:grid-cols-[1fr_1.15fr]">
           <div>
-            <Badge className="bg-brand-600 text-white">●&nbsp; 진행 중</Badge>
+            <Badge className="text-white" variant={auditStatus.variant}>
+              ●&nbsp; {auditStatus.label}
+            </Badge>
             <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
             <div className="mt-5 flex flex-wrap gap-6 text-xs text-white/70">
               <span className="flex items-center gap-2">

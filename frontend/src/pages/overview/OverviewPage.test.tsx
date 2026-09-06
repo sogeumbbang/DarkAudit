@@ -32,7 +32,9 @@ describe("OverviewPage", () => {
 
     await user.click(screen.getByText("적금 가입 흐름 v2"));
 
-    expect(screen.getByRole("heading", { name: "적금 가입 흐름 v2" })).toBeInTheDocument();
+    const completedHeading = screen.getByRole("heading", { name: "적금 가입 흐름 v2" });
+    expect(completedHeading).toBeInTheDocument();
+    expect(completedHeading.previousElementSibling).toHaveTextContent("완료");
     expect(screen.getByText("탐지된 항목이 없습니다")).toBeInTheDocument();
     // 탐지 항목이 없으면 기존대로 첫 화면을 보여준다.
     expect(screen.getByRole("img", { name: "상품 안내 캡처 화면 미리보기" })).toHaveAttribute(

@@ -196,12 +196,19 @@ def capture_and_analyze_url(
             audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
         )
         selected = select_analysis_artifacts(capture.artifacts, 5)
+        persisted = list(capture.artifacts)
+        persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
+        for artifact in selected:
+            if artifact.image_path.resolve() not in persisted_paths:
+                persisted.append(artifact)
+                persisted_paths.add(artifact.image_path.resolve())
         with SessionLocal() as session:
             run = session.get(AuditRun, run_id)
             if run is None:
                 raise ValueError("Capture run no longer exists")
             screens: list[Screen] = []
-            for index, artifact in enumerate(selected, 1):
+            screen_by_path: dict[Path, Screen] = {}
+            for index, artifact in enumerate(persisted, 1):
                 screen = Screen(
                     flow_type=FlowType.join,
                     screen_index=index,
@@ -212,14 +219,19 @@ def capture_and_analyze_url(
                 )
                 run.screens.append(screen)
                 screens.append(screen)
+                screen_by_path[artifact.image_path.resolve()] = screen
+
+            analysis_screens = [
+                screen_by_path[artifact.image_path.resolve()] for artifact in selected
+            ]
 
             # URL 캡처만 DOM 을 갖고 있으므로 Rule Engine 은 이 경로에서만 돈다.
-            element_lookup = _persist_dom_elements(session, screens, selected)
+            element_lookup = _persist_dom_elements(session, analysis_screens, selected)
             # Capture is useful on its own and must survive an optional AI failure.
             # Without this commit, a missing/invalid model setting rolled the screenshots
             # back together with the analysis transaction, leaving the UI with no evidence.
             session.commit()
-            rule_findings = _run_rule_engine(run.audit_id, screens, selected)
+            rule_findings = _run_rule_engine(run.audit_id, analysis_screens, selected)
 
             request = LLMAuditRequest(
                 audit_id,
@@ -228,13 +240,19 @@ def capture_and_analyze_url(
                     for artifact in selected
                 ),
             )
-            candidates = _candidate_payload(rule_findings, screens, selected)
+            candidates = _candidate_payload(rule_findings, analysis_screens, selected)
             pipeline = BaselineAuditPipeline(create_provider())
             analysis = pipeline.analyze(request, candidates)
             _update_job(job_id, progress=78)
 
             _store_output(
-                session, run, analysis, rule_findings, element_lookup, candidates
+                session,
+                run,
+                analysis,
+                rule_findings,
+                element_lookup,
+                candidates,
+                analysis_screens=analysis_screens,
             )
             _apply_regression(session, run)
             session.commit()
@@ -370,8 +388,11 @@ def _store_output(
     element_lookup: dict[str, Element] | None = None,
     candidates: list[dict] | None = None,
     grounded_visuals: set[tuple[str, str]] | None = None,
+    analysis_screens: list[Screen] | None = None,
 ) -> None:
-    ordered_screens = sorted(run.screens, key=lambda screen: screen.screen_index)
+    ordered_screens = analysis_screens or sorted(
+        run.screens, key=lambda screen: screen.screen_index
+    )
     if len(ordered_screens) != len(output.screens):
         raise ValueError("분석 결과의 화면 수가 저장된 화면 수와 다릅니다.")
     screens = {

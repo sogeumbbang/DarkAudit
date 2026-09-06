@@ -10,6 +10,8 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+from PIL import Image
+
 _temp_root = Path(tempfile.mkdtemp(prefix="darkaudit-api-test-"))
 os.environ["DARKAUDIT_DB_URL"] = f"sqlite:///{(_temp_root / 'test.db').as_posix()}"
 os.environ["DARKAUDIT_PROVIDER"] = "fake"
@@ -184,6 +186,78 @@ class ApiIntegrationTest(unittest.TestCase):
         audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
         self.assertEqual(audit["screens"][0]["flowStep"], "mobile: initial viewport")
         self.assertEqual(audit["screens"][0]["width"], 393)
+
+    def test_url_capture_keeps_full_page_but_analyzes_readable_segments(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={"name": "Segmented URL audit", "platform": "mobile-web"},
+        ).json()["id"]
+        directory = service.CAPTURE_DIR / "segmented"
+        directory.mkdir(parents=True, exist_ok=True)
+        initial_path = directory / "initial.png"
+        full_path = directory / "full.png"
+        Image.new("RGB", (390, 844), "white").save(initial_path)
+        Image.new("RGB", (390, 3200), "white").save(full_path)
+        initial = CaptureArtifact(
+            "mobile_initial", "mobile: initial viewport", "mobile",
+            "https://example.com", "Example", initial_path, 390, 844,
+            fingerprint="initial",
+        )
+        full = CaptureArtifact(
+            "mobile_full", "mobile: full page", "mobile",
+            "https://example.com", "Example", full_path, 390, 844,
+            full_page=True, fingerprint="full",
+        )
+        capture = URLCaptureResult(
+            audit_id=audit_id,
+            url="https://example.com",
+            mode=ScanMode.QUICK,
+            profiles=(CaptureResult(
+                audit_id=audit_id,
+                profile="mobile",
+                mode=ScanMode.QUICK,
+                artifacts=(initial, full),
+                stop_reason="quick capture completed",
+            ),),
+        )
+
+        def analysis_for(request, _candidates):
+            return HybridAuditOutput(
+                audit_id=audit_id,
+                schema_version="1.1",
+                screens=tuple(
+                    ScreenReference(screen.screen_id, screen.flow_step)
+                    for screen in request.screens
+                ),
+                candidate_decisions=(),
+                semantic_findings=(),
+                candidates=(),
+            )
+
+        with (
+            patch("backend.api.main.UrlSafetyPolicy.validate", return_value="https://example.com"),
+            patch("backend.api.service.URLCapturePipeline.run", return_value=capture),
+            patch("backend.api.service.BaselineAuditPipeline.analyze", side_effect=analysis_for),
+        ):
+            queued = self.client.post(
+                f"/api/v1/audits/{audit_id}/capture",
+                json={"url": "https://example.com", "mode": "quick", "profiles": ["mobile"]},
+            )
+
+        job = self.client.get(f"/api/v1/analysis-jobs/{queued.json()['jobId']}").json()
+        self.assertEqual(job["status"], "completed", job)
+        audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
+        self.assertEqual(len(audit["screens"]), 6)
+        self.assertEqual(audit["screens"][1]["flowStep"], "mobile: full page")
+        self.assertEqual(
+            [screen["flowStep"] for screen in audit["screens"][2:]],
+            [
+                "mobile: full page · 구간 1/4",
+                "mobile: full page · 구간 2/4",
+                "mobile: full page · 구간 3/4",
+                "mobile: full page · 구간 4/4",
+            ],
+        )
 
     def test_url_capture_survives_analysis_failure(self) -> None:
         audit_id = self.client.post(
