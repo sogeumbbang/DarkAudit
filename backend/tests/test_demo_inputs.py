@@ -28,7 +28,7 @@ class DemoInputsTest(unittest.TestCase):
             response = self.client.get("/api/v1/demo-inputs")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["website"]["url"], "https://demo.example/demo/web/index.html?step=4")
+        self.assertEqual(data["website"]["url"], "/demo/web/index.html?step=4")
         self.assertEqual(data["figma"]["fileUrl"], DEFAULT_FIGMA_URL)
         self.assertTrue(data["figma"]["available"])
         self.assertTrue(data["android"]["available"])

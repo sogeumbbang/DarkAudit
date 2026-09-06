@@ -12,16 +12,15 @@ const jobs = new Map<string, AnalysisJobDto>();
 
 export const handlers = [
   http.get("*/health", () => HttpResponse.json({ status: "ok" })),
-  http.get("*/api/v1/demo-inputs", ({ request }) => {
-    const origin = new URL(request.url).origin;
+  http.get("*/api/v1/demo-inputs", () => {
     return HttpResponse.json({
-      website: { url: `${origin}/demo/web/index.html?step=4`, available: true },
+      website: { url: "/demo/web/index.html?step=4", available: true },
       figma: {
         fileUrl: "https://www.figma.com/design/demo-file/Banking-Demo",
         available: true,
         reason: null,
       },
-      android: { downloadUrl: `${origin}/demo/darkaudit-demo.apk`, available: true, reason: null },
+      android: { downloadUrl: "/demo/darkaudit-demo.apk", available: true, reason: null },
     });
   }),
   http.get(

@@ -2,15 +2,21 @@ import { z } from "zod";
 
 import { apiRequest, resolveApiUrl, warmUpApi } from "@/api/client";
 
+// Resolve paths against the browser-facing API URL, not the proxy HTTP origin.
+const demoAssetUrl = z
+  .string()
+  .startsWith("/demo/")
+  .transform((path) => new URL(resolveApiUrl(path), window.location.origin).href);
+
 const demoInputsSchema = z.object({
-  website: z.object({ url: z.string().url(), available: z.boolean() }),
+  website: z.object({ url: demoAssetUrl, available: z.boolean() }),
   figma: z.object({
     fileUrl: z.string(),
     available: z.boolean(),
     reason: z.string().nullable(),
   }),
   android: z.object({
-    downloadUrl: z.string().url(),
+    downloadUrl: demoAssetUrl,
     available: z.boolean(),
     reason: z.string().nullable(),
   }),

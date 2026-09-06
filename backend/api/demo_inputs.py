@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -32,7 +32,7 @@ def demo_apk() -> FileResponse:
 
 
 @router.get("/api/v1/demo-inputs")
-def demo_inputs(request: Request) -> dict:
+def demo_inputs() -> dict:
     figma_url = os.getenv("DARKAUDIT_DEMO_FIGMA_URL", DEFAULT_FIGMA_URL).strip()
     figma_ready = bool(figma_url and os.getenv("FIGMA_ACCESS_TOKEN"))
     android_ready = bool(
@@ -40,7 +40,7 @@ def demo_inputs(request: Request) -> dict:
     )
     return {
         "website": {
-            "url": str(request.url_for("demo_web", filename="index.html")) + "?step=4",
+            "url": str(router.url_path_for("demo_web", filename="index.html")) + "?step=4",
             "available": True,
         },
         "figma": {
@@ -49,7 +49,7 @@ def demo_inputs(request: Request) -> dict:
             "reason": None if figma_ready else "Figma 데모를 준비 중입니다. 다른 입력으로 먼저 체험해 주세요.",
         },
         "android": {
-            "downloadUrl": str(request.url_for("demo_apk")),
+            "downloadUrl": str(router.url_path_for("demo_apk")),
             "available": android_ready,
             "reason": None if android_ready else "Android 데모를 준비 중입니다. 다른 입력으로 먼저 체험해 주세요.",
         },
