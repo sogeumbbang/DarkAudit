@@ -76,16 +76,17 @@ test("zoomed preview can be dragged and scrolled to every image edge", async ({
   const imageBox = await page
     .getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" })
     .boundingBox();
-  const highlightBox = await viewport
-    .getByText("DA-04", { exact: true })
-    .locator("..")
-    .boundingBox();
+  const highlight = viewport.getByRole("img", { name: "DA-04 탐지 영역", exact: true });
+  await expect(highlight).toBeVisible();
+  const highlightBox = await highlight.boundingBox();
   expect(imageBox).not.toBeNull();
   expect(highlightBox).not.toBeNull();
-  expect(highlightBox!.x).toBeCloseTo(imageBox!.x + imageBox!.width * (24 / 390), 0);
-  expect(highlightBox!.y).toBeCloseTo(imageBox!.y + imageBox!.height * (520 / 844), 0);
-  expect(highlightBox!.width).toBeCloseTo(imageBox!.width * (342 / 390), 0);
-  expect(highlightBox!.height).toBeCloseTo(imageBox!.height * (48 / 844), 0);
+  // 일반 탐지 박스는 내용과 테두리 사이에 렌더링 기준 2px 여백을 둔다.
+  const padding = 2;
+  expect(highlightBox!.x).toBeCloseTo(imageBox!.x + imageBox!.width * (24 / 390) - padding, 0);
+  expect(highlightBox!.y).toBeCloseTo(imageBox!.y + imageBox!.height * (520 / 844) - padding, 0);
+  expect(highlightBox!.width).toBeCloseTo(imageBox!.width * (342 / 390) + padding * 2, 0);
+  expect(highlightBox!.height).toBeCloseTo(imageBox!.height * (48 / 844) + padding * 2, 0);
 
   await page.getByRole("button", { name: "확대" }).click();
   await page.getByRole("button", { name: "확대" }).click();
