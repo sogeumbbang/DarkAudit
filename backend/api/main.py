@@ -40,8 +40,10 @@ from .service import (
     UPLOAD_DIR,
     analyze_uploaded_screens,
     capture_and_analyze_url,
+    compatible_capture_profiles,
     create_job,
     get_job,
+    recover_interrupted_runs,
     next_run,
     public_image_path,
     rules_by_id,
@@ -70,6 +72,7 @@ app.mount("/artifacts", StaticFiles(directory=DATA_DIR), name="artifacts")
 @app.on_event("startup")
 def startup() -> None:
     init_db()
+    recover_interrupted_runs()
 
 
 @app.get("/health")
@@ -229,7 +232,10 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
         raise HTTPException(400, "smart 모드에는 DARKAUDIT_COMPUTER_MODEL 설정이 필요합니다.")
     try:
         UrlSafetyPolicy().validate(str(payload.url))
+        profiles = compatible_capture_profiles(str(payload.url), tuple(payload.profiles))
     except UnsafeUrlError as exc:
+        raise HTTPException(400, str(exc))
+    except ValueError as exc:
         raise HTTPException(400, str(exc))
     with SessionLocal() as session:
         try:
@@ -241,7 +247,7 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
         job = create_job(audit_id, run.id)
         background.add_task(
             capture_and_analyze_url, job.jobId, run.id,
-            audit_id=audit_id, url=str(payload.url), profiles=tuple(payload.profiles),
+            audit_id=audit_id, url=str(payload.url), profiles=profiles,
             mode=ScanMode(payload.mode), goal=payload.goal,
         )
         return job

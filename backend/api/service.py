@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import threading
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from sqlalchemy import select
 
@@ -80,6 +81,32 @@ def get_job(job_id: str) -> JobDto:
         if job is None:
             raise KeyError(job_id)
         return job.model_copy(deep=True)
+
+
+def recover_interrupted_runs() -> int:
+    """Fail runs whose in-memory workers disappeared during a server restart."""
+    with SessionLocal() as session:
+        runs = session.scalars(
+            select(AuditRun).where(
+                AuditRun.status.in_((RunStatus.PENDING, RunStatus.RUNNING))
+            )
+        ).all()
+        for run in runs:
+            run.status = RunStatus.FAILED
+            run.note = "서버 재시작으로 진단 작업이 중단되었습니다. 다시 진단해 주세요."
+        session.commit()
+        return len(runs)
+
+
+def compatible_capture_profiles(url: str, profiles: tuple[str, ...]) -> tuple[str, ...]:
+    """Avoid loading an explicitly mobile URL with a desktop user agent."""
+    path = urlsplit(url).path.rstrip("/").lower()
+    is_mobile_path = path == "/m" or path.startswith("/m/")
+    if not is_mobile_path:
+        return profiles
+    if "mobile" not in profiles:
+        raise ValueError("/m/ 모바일 전용 URL은 모바일 화면을 선택해 주세요.")
+    return tuple(profile for profile in profiles if profile != "desktop")
 
 
 def _update_job(job_id: str, **changes: object) -> None:

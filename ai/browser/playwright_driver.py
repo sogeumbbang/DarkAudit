@@ -428,19 +428,6 @@ class PlaywrightBrowserSession:
             self._page.wait_for_load_state("load", timeout=8_000)
         except Exception:
             pass
-        try:
-            self._page.evaluate(
-                """
-                () => document.fonts
-                  ? Promise.race([
-                      document.fonts.ready,
-                      new Promise((resolve) => setTimeout(resolve, 2000)),
-                    ])
-                  : Promise.resolve()
-                """
-            )
-        except Exception:
-            pass
         self._page.wait_for_timeout(self.settle_time_ms)
 
     def _assert_render_quality(self) -> None:
