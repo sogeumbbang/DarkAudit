@@ -67,7 +67,7 @@ describe("OverviewPage", () => {
     );
   });
 
-  it("opens flow, recommendation, metadata, and navigates findings", async () => {
+  it("shows recommendation by default, opens flow and metadata, and navigates findings", async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByRole("heading", { name: "보험 가입 흐름 v1" });
@@ -108,7 +108,7 @@ describe("OverviewPage", () => {
     expect(screen.getByRole("dialog", { name: "전체 가입 흐름" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "닫기" }));
 
-    await user.click(screen.getByRole("button", { name: /개선 권고안 보기/ }));
+    expect(screen.getByRole("heading", { name: "개선 권고안" })).toBeInTheDocument();
     expect(screen.getByText(/추가 비용이 발생하는 옵션의 기본 선택을 해제/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "탐지 메타데이터" }));
     expect(screen.getByText(/신뢰도 94%/)).toBeInTheDocument();

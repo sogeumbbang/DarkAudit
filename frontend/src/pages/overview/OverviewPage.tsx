@@ -240,7 +240,6 @@ function FindingDetails({
   onStep: (delta: number) => void;
 }) {
   const findingStatus = useFindingStatus();
-  const [showRecommendation, setShowRecommendation] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);
 
   return (
@@ -305,18 +304,10 @@ function FindingDetails({
               <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
             </div>
           </div>
-          <button
-            className="mt-6 flex w-full items-center justify-center gap-3 rounded-control border border-brand-700 py-3 text-sm font-semibold text-brand-700"
-            onClick={() => setShowRecommendation((value) => !value)}
-          >
-            개선 권고안 보기
-            <ArrowRight size={15} />
-          </button>
-          {showRecommendation && (
-            <div className="mt-3 rounded-card bg-brand-50 p-4 text-sm leading-6 text-brand-950">
-              {finding.recommendation}
-            </div>
-          )}
+          <div className="mt-3 rounded-card bg-brand-50 p-4 text-sm leading-6 text-brand-950">
+            <h4 className="font-bold">개선 권고안</h4>
+            <p className="mt-2">{finding.recommendation}</p>
+          </div>
           {showMetadata && (
             <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
               신뢰도 {Math.round(finding.confidence * 100)}% · 심각도 {finding.severity}

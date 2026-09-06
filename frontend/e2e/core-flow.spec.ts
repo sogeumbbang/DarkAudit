@@ -34,7 +34,7 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("dialog", { name: "전체 가입 흐름" })).toBeVisible();
   await page.getByRole("button", { name: "닫기" }).click();
 
-  await page.getByRole("button", { name: /개선 권고안 보기/ }).click();
+  await expect(page.getByRole("heading", { name: "개선 권고안" })).toBeVisible();
   await expect(page.getByText(/추가 비용이 발생하는 옵션의 기본 선택을 해제/)).toBeVisible();
   await page.getByRole("button", { name: "다음 탐지 항목" }).click();
   await expect(page.getByRole("heading", { name: "감정적 압박" }).first()).toBeVisible();
@@ -48,7 +48,10 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("heading", { name: "금융 다크패턴 4개 범주" })).toBeVisible();
 });
 
-test("zoomed preview can be dragged and scrolled to every image edge", async ({ page, isMobile }) => {
+test("zoomed preview can be dragged and scrolled to every image edge", async ({
+  page,
+  isMobile,
+}) => {
   await page.goto("/app/overview");
   await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
 
