@@ -208,8 +208,10 @@ class HybridContractTest(unittest.TestCase):
         prompt = Path("ai/prompts/audit_v1.md").read_text(encoding="utf-8")
         self.assertIn("DA-07", prompt)
         self.assertIn("footer", prompt)
-        self.assertIn("interaction_evidence: true", prompt)
-        self.assertIn("DA-07을 새 `semantic_findings`로 생성하지 않는다", prompt)
+        dom = Path("ai/prompts/dom.md").read_text(encoding="utf-8")
+        self.assertIn("interaction_evidence=true", dom)
+        self.assertIn("DA-04·DA-07·DA-15", dom)
+        self.assertNotIn("DA-07을 새 `semantic_findings`로 생성하지 않는다", prompt)
 
 
 if __name__ == "__main__":

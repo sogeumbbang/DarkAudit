@@ -668,6 +668,48 @@ export function OverviewPage() {
   return (
     <div className="mx-auto max-w-[1500px]">
       <h1 className="text-2xl font-bold tracking-tight">대시보드</h1>
+      {audit.analysisSummary?.supportedRules && (
+        <section
+          aria-label="분석 범위"
+          className="mt-4 rounded-card border border-line bg-white p-4"
+        >
+          <h2 className="font-semibold">
+            {audit.analysisSummary.complete
+              ? "수집한 화면의 규칙 검사 완료"
+              : "검사 범위와 추가 확인 사항"}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            지원 규칙 {audit.analysisSummary.supportedRules.length}개 · 분석 화면{" "}
+            {audit.analysisSummary.analyzedScreenCount ?? 0}개. 전체 15개 유형 중 지원 규칙만
+            검사하며, 탐지 0건이 미수집 화면의 안전을 의미하지는 않습니다.
+          </p>
+          {!!audit.analysisSummary.limitations?.length && (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {audit.analysisSummary.limitations.map((limit) => (
+                <li key={limit}>{limit}</li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {audit.analysisSummary.ruleAssessments?.map((assessment) => (
+              <span
+                className="rounded border border-line px-2 py-1 text-xs"
+                key={assessment.ruleId}
+              >
+                {assessment.ruleId}:{" "}
+                {
+                  {
+                    detected: "탐지됨",
+                    not_detected: "관찰 범위 내 미탐지",
+                    insufficient_evidence: "근거 부족",
+                    not_supported: "검사하지 않음",
+                  }[assessment.status]
+                }
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="subtle-grid mt-6 overflow-hidden rounded-card bg-brand-900 p-6 text-white lg:p-8">
         <div className="grid items-center gap-8 xl:grid-cols-[1fr_1.15fr]">
           <div>

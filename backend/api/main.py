@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import io
 import os
 import shutil
 import tempfile
 import zipfile
 from pathlib import Path
+
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -193,8 +196,15 @@ async def upload_screens(
             suffix = Path(upload.filename or "screen.png").suffix.lower()
             if suffix not in {".png", ".jpg", ".jpeg", ".webp"}:
                 raise HTTPException(415, "PNG, JPG, WEBP 이미지만 지원합니다.")
-            path = target / f"{index:02d}{suffix}"
-            path.write_bytes(content)
+            path = target / f"{index:02d}.png"
+            try:
+                with Image.open(io.BytesIO(content)) as source:
+                    source.load()
+                    normalized = ImageOps.exif_transpose(source).convert("RGB")
+                    width, height = normalized.size
+                    normalized.save(path, format="PNG")
+            except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
+                raise HTTPException(422, "이미지를 읽을 수 없습니다. 올바른 PNG, JPG, WEBP 파일을 선택해주세요.") from exc
             label = (
                 flow_steps[index - 1] if index <= len(flow_steps)
                 else metadata[index - 1].get("flowStep") if index <= len(metadata)
@@ -202,7 +212,8 @@ async def upload_screens(
             )
             run.screens.append(Screen(
                 flow_type=FlowType.join, screen_index=index, flow_step=label,
-                image_path=public_image_path(path),
+                image_path=public_image_path(path), viewport_w=width, viewport_h=height,
+                analysis_context={"profile":audit.product_name or "unspecified", "state_id":str(index)},
             ))
         session.commit()
         return to_audit_dto(session, audit, rules_by_id())

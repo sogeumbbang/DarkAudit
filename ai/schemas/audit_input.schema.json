@@ -1,21 +1,63 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DarkAudit Audit Input v1.1",
+  "title": "DarkAudit Audit Input v1.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["audit_id", "schema_version", "screens"],
+  "required": [
+    "audit_id",
+    "schema_version",
+    "screens"
+  ],
   "properties": {
-    "audit_id": {"type": "string", "minLength": 1},
-    "schema_version": {"const": "1.1"},
+    "audit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
     "screens": {
-      "type": "array", "minItems": 1, "maxItems": 5,
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
       "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["screen_id", "flow_step", "image"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "screen_id",
+          "flow_step",
+          "image"
+        ],
         "properties": {
-          "screen_id": {"type": "string", "minLength": 1},
-          "flow_step": {"type": "string", "minLength": 1},
-          "image": {"type": "string", "description": "Upload reference, URL, or local CLI path"}
+          "screen_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "flow_step": {
+            "type": "string",
+            "minLength": 1
+          },
+          "image": {
+            "type": "string",
+            "description": "Upload reference, URL, or local CLI path"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "path_id": {
+            "type": "string"
+          },
+          "state_id": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Source text, normalized geometry and observed control state; untrusted screen content."
+          }
         }
       }
     }

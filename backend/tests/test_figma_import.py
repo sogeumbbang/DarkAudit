@@ -1,42 +1,13 @@
 from __future__ import annotations
 
 import base64
-import os
-import shutil
-import sys
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-# backend.api.store/main 은 모듈 싱글턴이라 DATA_DIR/DB 엔진이 "처음 import되는 시점"에
-# 고정된다. 다른 테스트 파일(test_api.py)이 pytest 수집 단계에서 먼저 import 되어
-# 이미 자신의 임시 폴더/DB로 초기화해뒀다면, 그 설정을 덮어쓰지 않고 그대로 공유한다
-# (같은 프로세스에서 서로 다른 DATA_DIR 를 만들면 relative_to() 가 깨진다).
-_already_configured = "backend.api.store" in sys.modules
-_owns_temp_root = not _already_configured
-
-if _owns_temp_root:
-    _temp_root = Path(tempfile.mkdtemp(prefix="darkaudit-figma-test-"))
-    os.environ["DARKAUDIT_DB_URL"] = f"sqlite:///{(_temp_root / 'test.db').as_posix()}"
-os.environ["DARKAUDIT_PROVIDER"] = "fake"
-os.environ["FIGMA_ACCESS_TOKEN"] = "test-token"
-os.environ["FIGMA_MAX_FRAMES"] = "5"
-
 import httpx  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
 
-from backend.api import figma_import, service  # noqa: E402
-
-if _owns_temp_root:
-    service.DATA_DIR = _temp_root
-    service.UPLOAD_DIR = _temp_root / "uploads"
-    service.CAPTURE_DIR = _temp_root / "captures"
-else:
-    _temp_root = service.DATA_DIR  # 정리는 그 파일을 소유한 테스트가 담당한다
-# FIGMA_DIR 는 항상 "현재" DATA_DIR 밑에 둔다 — 다른 파일이 먼저 DATA_DIR 를 정했더라도
-# public_image_path() 의 relative_to(DATA_DIR) 가 깨지지 않도록.
-service.FIGMA_DIR = service.DATA_DIR / "figma"
+from backend.api import service  # noqa: E402
 
 from backend.api.figma_client import (  # noqa: E402
     FigmaClient,
@@ -50,7 +21,6 @@ from backend.api.figma_frames import (  # noqa: E402
     select_frames,
     select_prototype_flow,
 )
-from backend.api.main import app  # noqa: E402
 
 # 1x1 흰색 PNG. 실제 다운로드 없이 magic bytes/Pillow 검증을 통과시키는 용도.
 _TINY_PNG = base64.b64decode(
@@ -395,19 +365,12 @@ class StubFigmaClient:
         return len(_TINY_PNG)
 
 
-class FigmaApiIntegrationTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.client_context = TestClient(app)
-        cls.client = cls.client_context.__enter__()
+from backend.tests.support import IsolatedApiTestCase
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.client_context.__exit__(None, None, None)
-        if _owns_temp_root:
-            shutil.rmtree(_temp_root, ignore_errors=True)
 
+class FigmaApiIntegrationTest(IsolatedApiTestCase):
     def setUp(self) -> None:
+        super().setUp()
         StubFigmaClient.document = _TWO_FRAME_DOCUMENT
         StubFigmaClient.null_node_ids = set()
 

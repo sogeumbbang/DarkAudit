@@ -13,7 +13,9 @@ from ai.browser.explorer import HybridWebExplorer
 from ai.browser.models import CaptureArtifact, ScanMode
 from ai.browser.playwright_driver import PlaywrightSessionFactory
 from ai.pipeline.baseline import MVP_RULE_IDS, BaselineAuditPipeline
-from ai.pipeline.web_audit import URLCapturePipeline, select_analysis_artifacts
+from ai.pipeline.web_audit import URLCapturePipeline, prepare_analysis_artifacts, analysis_batches, batch_indices
+from ai.pipeline.rule_candidates import run_artifact_rules, candidate_payload
+from ai.pipeline.quality import summarize
 from ai.providers import create_provider
 from ai.providers.computer_use import OpenAIComputerUseAgent
 from ai.rules.rule_loader import RuleLoader
@@ -38,13 +40,8 @@ from backend.app.models import (
 )
 from backend.app.regression import compare
 from backend.app.rule_engine import checks as _rule_engine_checks  # noqa: F401  — 데코레이터 등록을 위해 필요
-from backend.app.rule_engine.core import Element as RuleElement
-from backend.app.rule_engine.core import Flow as RuleFlow
 from backend.app.rule_engine.core import RuleBase
-from backend.app.rule_engine.core import Screen as RuleScreen
-from backend.app.rule_engine.core import run as run_rule_engine
-from backend.app.rule_engine.severity import ScoredFinding, drop_incomplete
-from backend.app.rule_engine.severity import merge as merge_rule_detections
+from backend.app.rule_engine.severity import ScoredFinding
 from backend.app.rule_engine.severity import score as score_rule_findings
 
 from .schemas import JobDto
@@ -153,22 +150,32 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
         run = session.get(AuditRun, run_id)
         if run is None:
             raise ValueError("Analysis run no longer exists")
-        request = LLMAuditRequest(
-            f"audit-{run.audit_id}",
-            tuple(
-                AuditScreen(f"screen-{screen.screen_index:02d}", screen.flow_step or f"화면 {screen.screen_index}", path)
-                for screen, path in zip(run.screens, local_paths, strict=True)
-            ),
-        )
-        pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=True)
-        output = pipeline.analyze(request)
-        grounded_visuals = {
-            (item["rule_id"], item["screen_id"])
-            for item in pipeline.last_run_telemetry.get("bbox_localizations", [])
-            if item.get("applied") is True
-        }
-        _update_job(job_id, progress=80)
-        _store_output(session, run, output, grounded_visuals=grounded_visuals)
+        ordered = list(zip(run.screens, local_paths, strict=True))
+        groups = (run.analysis_summary or {}).get("paths") or [[s.screen_index for s, _ in ordered]]
+        lookup = {s.screen_index: (s, p) for s, p in ordered}
+        for group in groups:
+            if len(group) > 5:
+                run.analysis_summary = {**(run.analysis_summary or {}), "warnings": [
+                    *(run.analysis_summary or {}).get("warnings", []), "long_flow_comparison_limited"]}
+            for positions in batch_indices(len(group)):
+                indices = [group[i] for i in positions]
+                batch = [lookup[index] for index in indices if index in lookup]
+                if not batch:
+                    continue
+                request = LLMAuditRequest(f"audit-{run.audit_id}", tuple(
+                    _audit_screen(s, p) for s, p in batch
+                ))
+                pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=True)
+                output = pipeline.analyze(request)
+                _record_analysis(run, pipeline, request)
+                grounded_visuals = {
+                    (item["rule_id"], item["screen_id"])
+                    for item in pipeline.last_run_telemetry.get("bbox_localizations", [])
+                    if item.get("applied") is True
+                }
+                _update_job(job_id, progress=80)
+                _store_output(session, run, output, grounded_visuals=grounded_visuals,
+                              analysis_screens=[s for s, _ in batch])
         _apply_regression(session, run)
         session.commit()
     _update_job(job_id, status="completed", progress=100)
@@ -195,7 +202,7 @@ def capture_and_analyze_url(
         capture = URLCapturePipeline(explorer).run(
             audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
         )
-        selected = select_analysis_artifacts(capture.artifacts, 5)
+        selected = prepare_analysis_artifacts(capture.artifacts)
         persisted = list(capture.artifacts)
         persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
         for artifact in selected:
@@ -231,34 +238,58 @@ def capture_and_analyze_url(
             # Without this commit, a missing/invalid model setting rolled the screenshots
             # back together with the analysis transaction, leaving the UI with no evidence.
             session.commit()
-            rule_findings = _run_rule_engine(run.audit_id, analysis_screens, selected)
-
-            request = LLMAuditRequest(
-                audit_id,
-                tuple(
-                    AuditScreen(artifact.screen_id, artifact.flow_step, artifact.image_path)
-                    for artifact in selected
-                ),
-            )
-            candidates = _candidate_payload(rule_findings, analysis_screens, selected)
-            pipeline = BaselineAuditPipeline(create_provider())
-            analysis = pipeline.analyze(request, candidates)
-            _update_job(job_id, progress=78)
-
-            _store_output(
-                session,
-                run,
-                analysis,
-                rule_findings,
-                element_lookup,
-                candidates,
-                analysis_screens=analysis_screens,
-            )
+            run.analysis_summary = {"source": "url", "warnings": [
+                f"{p.profile}: {p.stop_reason}" for p in capture.profiles
+                if p.stop_reason != "Computer Use completed exploration"
+            ]}
+            if any(sum(a.profile == b.profile and a.path_id == b.path_id for b in selected) > 5 for a in selected):
+                run.analysis_summary = {**run.analysis_summary, "warnings": [
+                    *run.analysis_summary["warnings"], "long_flow_comparison_limited"]}
+            for batch in analysis_batches(selected):
+                batch_screens = [screen_by_path[a.image_path.resolve()] for a in batch]
+                rule_findings = _run_rule_engine(run.audit_id, batch_screens, batch)
+                request = LLMAuditRequest(audit_id, tuple(
+                    AuditScreen(a.screen_id, a.flow_step, a.image_path, a.profile,
+                                a.path_id, a.state_id or a.screen_id, a.dom_elements) for a in batch
+                ))
+                candidates = _candidate_payload(rule_findings, batch_screens, batch)
+                # A missing DOM falls back to explicit visual checks, with the
+                # evidence limitation preserved in the result.
+                pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=any(not a.dom_elements for a in batch))
+                analysis = pipeline.analyze(request, candidates)
+                _record_analysis(run, pipeline, request, [w for a in batch for w in a.warnings])
+                _update_job(job_id, progress=78)
+                grounded = {(item["rule_id"], item["screen_id"])
+                            for item in pipeline.last_run_telemetry.get("bbox_localizations", []) if item.get("applied")}
+                _store_output(session, run, analysis, rule_findings, element_lookup, candidates,
+                              analysis_screens=batch_screens, grounded_visuals=grounded)
             _apply_regression(session, run)
             session.commit()
         _update_job(job_id, status="completed", progress=100)
     except Exception as exc:
         _fail_job(job_id, run_id, exc)
+
+
+def _audit_screen(screen: Screen, path: Path) -> AuditScreen:
+    context = screen.analysis_context or {}
+    return AuditScreen(f"screen-{screen.screen_index:02d}", screen.flow_step or f"화면 {screen.screen_index}",
+                       path, context.get("profile", "unspecified"), context.get("path_id", "main"),
+                       context.get("state_id", str(screen.screen_index)), tuple(context.get("evidence", [])))
+
+
+def _record_analysis(run: AuditRun, pipeline: BaselineAuditPipeline, request: LLMAuditRequest,
+                     warnings: list[str] | None = None) -> None:
+    summary = dict(run.analysis_summary or {})
+    telemetry = pipeline.last_run_telemetry
+    all_warnings = list(summary.get("warnings", [])) + (warnings or [])
+    all_warnings.extend(item["warning"] for item in telemetry.get("bbox_localizations", []) if item.get("warning"))
+    all_warnings.extend(telemetry.get("warnings", []))
+    summary["warnings"] = sorted(set(all_warnings))
+    summary["supportedRules"] = sorted(MVP_RULE_IDS)
+    summary["batches"] = [*summary.get("batches", []), {
+        "screens": [s.screen_id for s in request.screens], "telemetry": telemetry,
+    }]
+    run.analysis_summary = summarize(summary)
 
 
 def _mark_running(job_id: str, run_id: int, progress: float) -> None:
@@ -277,31 +308,10 @@ def _fail_job(job_id: str, run_id: int, exc: Exception) -> None:
         if run is not None:
             run.status = RunStatus.FAILED
             run.note = str(exc)[:1000]
+            run.analysis_summary = summarize({**(run.analysis_summary or {}), "warnings":
+                [*(run.analysis_summary or {}).get("warnings", []), "analysis_failed"]})
             session.commit()
     _update_job(job_id, status="failed", error=str(exc), progress=100)
-
-
-def _build_rule_flow(
-    audit_id: int, screens: list[Screen], artifacts: tuple[CaptureArtifact, ...]
-) -> RuleFlow:
-    rule_screens = [
-        RuleScreen(
-            screen.screen_index,
-            [
-                RuleElement(
-                    element_id=element["element_id"],
-                    element_type=element["element_type"],
-                    text=element.get("text"),
-                    bbox=element["bbox"],
-                    state=element.get("state") or {},
-                    style=element.get("computed_style") or {},
-                )
-                for element in getattr(artifact, "dom_elements", ())
-            ],
-        )
-        for screen, artifact in zip(screens, artifacts, strict=True)
-    ]
-    return RuleFlow(flow_id=f"audit-{audit_id}", flow_type="join", sector=None, screens=rule_screens)
 
 
 def _persist_dom_elements(
@@ -335,10 +345,7 @@ def _persist_dom_elements(
 def _run_rule_engine(
     audit_id: int, screens: list[Screen], artifacts: tuple[CaptureArtifact, ...]
 ) -> list[ScoredFinding]:
-    rb = RuleBase()
-    flow = _build_rule_flow(audit_id, screens, artifacts)
-    detections = run_rule_engine(flow, rb, only=MVP_RULE_IDS)
-    return score_rule_findings(drop_incomplete(merge_rule_detections(detections, rb), rb), rb)
+    return run_artifact_rules(str(audit_id), [s.screen_index for s in screens], artifacts)
 
 
 def _candidate_payload(
@@ -346,38 +353,21 @@ def _candidate_payload(
     screens: list[Screen],
     artifacts: tuple[CaptureArtifact, ...],
 ) -> list[dict]:
-    """Make deterministic evidence explicit without presenting it as a verdict."""
-    screen_ids = {
-        screen.screen_index: artifact.screen_id
-        for screen, artifact in zip(screens, artifacts, strict=True)
-    }
-    payload: list[dict] = []
-    candidate_ids: set[str] = set()
-    for finding in findings:
-        indices = [finding.screen_index] if finding.screen_index is not None else list(finding.screen_indices)
-        if not indices or indices[-1] not in screen_ids:
-            raise ValueError(f"Rule candidate {finding.rule_id} has no captured screen")
-        screen_index = indices[-1]
-        screen_id = screen_ids[screen_index]
-        anchor = finding.primary_id or "flow"
-        candidate_id = f"{finding.rule_id}:{screen_id}:{anchor}"
-        if candidate_id in candidate_ids:
-            raise ValueError(f"duplicate generated candidate_id: {candidate_id}")
-        candidate_ids.add(candidate_id)
-        payload.append({
-            "candidate_id": candidate_id,
-            "rule_id": finding.rule_id,
-            "screen_id": screen_id,
-            "screen_index": screen_index,
-            "primary_element_id": finding.primary_id,
-            "related_element_ids": list(finding.related_ids),
-            "triggered_checks": [
-                check if check.startswith(f"{finding.rule_id}.") else f"{finding.rule_id}.{check}"
-                for check in finding.triggered_checks
-            ],
-            "measurements": finding.measurements,
-        })
-    return payload
+    return candidate_payload(findings, [s.screen_index for s in screens], artifacts)
+
+
+def _same_primary(first: Element | None, second: Element | None) -> bool:
+    if first is None or second is None or first.screen_id != second.screen_id:
+        return False
+    if first.id == second.id:
+        return True
+    width = max(0, min(first.bbox_x + first.bbox_w, second.bbox_x + second.bbox_w)
+                - max(first.bbox_x, second.bbox_x))
+    height = max(0, min(first.bbox_y + first.bbox_h, second.bbox_y + second.bbox_h)
+                 - max(first.bbox_y, second.bbox_y))
+    intersection = width * height
+    union = first.bbox_w * first.bbox_h + second.bbox_w * second.bbox_h - intersection
+    return union > 0 and intersection / union >= 0.7
 
 
 def _store_output(
@@ -514,6 +504,12 @@ def _store_output(
             else (list(detection.bbox) if detection is not None else None)
         )
         confidence = detection.confidence if detection is not None else decision.confidence
+
+        if any(existing.rule_id == matched.rule_id
+               and existing.screen_indices == indices
+               and _same_primary(existing.primary_element, primary)
+               for existing in run.findings):
+            continue
 
         finding = Finding(
             rule_id=matched.rule_id,

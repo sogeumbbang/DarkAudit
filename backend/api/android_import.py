@@ -28,7 +28,8 @@ def capture_and_analyze_android(
                 raise ValueError("Android run no longer exists")
             target_dir = service.ANDROID_DIR / audit_id / f"run-{run.version}" / "screens"
 
-        captures = BrowserStackAndroidRunner(settings).capture(
+        runner = BrowserStackAndroidRunner(settings)
+        captures = runner.capture(
             apk_path, target_dir, audit_id=audit_id, goal=goal
         )
         if not captures:
@@ -48,8 +49,14 @@ def capture_and_analyze_android(
                         image_path=service.public_image_path(capture.image_path),
                         viewport_w=capture.width,
                         viewport_h=capture.height,
+                        analysis_context={"profile":"android", "state_id":capture.state_id,
+                                          "path_id":capture.path_id, "evidence":list(capture.ui_elements)},
                     )
                 )
+            paths: dict[str,list[int]] = {}
+            for index,capture in enumerate(captures,1):
+                paths.setdefault(capture.path_id, []).append(index)
+            run.analysis_summary = {"source":"android", "warnings":runner.last_warnings, "paths":getattr(runner,"last_paths",None) or list(paths.values())}
             session.commit()
         service.analyze_run_screens(job_id, run_id, [capture.image_path for capture in captures])
     except Exception as exc:

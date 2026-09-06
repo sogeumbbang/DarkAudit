@@ -71,6 +71,18 @@ export type AuditRunDto = {
   findingCount: number;
 };
 
+export type AnalysisSummary = {
+  complete?: boolean;
+  supportedRules?: string[];
+  limitations?: string[];
+  analyzedScreenCount?: number;
+  ruleAssessments?: {
+    ruleId: string;
+    status: "detected" | "not_detected" | "insufficient_evidence" | "not_supported";
+    reasons: string[];
+  }[];
+};
+
 export type AuditDto = {
   id: string;
   name: string;
@@ -81,6 +93,7 @@ export type AuditDto = {
   findings: FindingDto[];
   runs?: AuditRunDto[];
   latestRunId?: string | null;
+  analysisSummary?: AnalysisSummary;
 };
 
 export type DashboardSummaryDto = {

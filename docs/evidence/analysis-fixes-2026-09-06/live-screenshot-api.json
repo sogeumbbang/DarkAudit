@@ -1,0 +1,508 @@
+{
+  "job": {
+    "jobId": "job-ba7cd8f2bbae45b6879354c7c0b3245b",
+    "auditId": "audit-1",
+    "status": "completed",
+    "progress": 100.0,
+    "runId": "run-1",
+    "error": null
+  },
+  "dashboard": {
+    "activeAuditId": "audit-1",
+    "audits": [
+      {
+        "id": "audit-1",
+        "name": "Local sample verification",
+        "platform": "mobile-web",
+        "status": "completed",
+        "updatedAt": "2026-09-06T06:24:28.344267Z",
+        "screens": [
+          {
+            "id": "screen-01",
+            "order": 1,
+            "flowStep": "화면 1",
+            "imageUrl": "/artifacts/uploads/audit-1/run-1/01.png",
+            "findingCount": 0,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "screen-02",
+            "order": 2,
+            "flowStep": "화면 2",
+            "imageUrl": "/artifacts/uploads/audit-1/run-1/02.png",
+            "findingCount": 2,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "screen-03",
+            "order": 3,
+            "flowStep": "화면 3",
+            "imageUrl": "/artifacts/uploads/audit-1/run-1/03.png",
+            "findingCount": 2,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "screen-04",
+            "order": 4,
+            "flowStep": "화면 4",
+            "imageUrl": "/artifacts/uploads/audit-1/run-1/04.png",
+            "findingCount": 0,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "screen-05",
+            "order": 5,
+            "flowStep": "화면 5",
+            "imageUrl": "/artifacts/uploads/audit-1/run-1/05.png",
+            "findingCount": 0,
+            "width": 390,
+            "height": 844
+          }
+        ],
+        "findings": [
+          {
+            "id": "finding-1",
+            "ruleId": "DA-04",
+            "riskType": "PRESELECTED_OPTION",
+            "title": "특정옵션의 사전선택",
+            "description": "유료 부가 옵션이 선택된 상태로 보이고 추가 비용이 인접해 있어 사전선택 신호가 관찰된다.",
+            "screenIds": [
+              "screen-02"
+            ],
+            "element": "안심케어 플러스 선택 체크박스/선택 표시",
+            "defaultState": null,
+            "costImpact": null,
+            "severity": "HIGH",
+            "status": "open",
+            "confidence": 0.92,
+            "recommendation": "초기 상태를 미선택으로 변경하고, 사용자의 명시적 클릭/터치가 있어야 선택되도록 구성한다.",
+            "guideline": "사업자에게 유리한 선택사항을 미리 선택해 두고 금융소비자가 이를 지나치거나 그대로 수용하도록 유도하는 행위",
+            "observation": "화면 2에서 선택 카드 좌측에 체크 아이콘이 보이며, 해당 유료 옵션이 이미 선택된 상태로 제시된다. 다만 정지 화면만으로 초기 렌더 시점의 실제 사전선택 여부를 100% 확정할 수는 없다.",
+            "bbox": {
+              "screenId": "screen-02",
+              "x": 50.5,
+              "y": 295.8,
+              "width": 14.8,
+              "height": 16.8,
+              "coordinateSystem": "image"
+            },
+            "relatedElements": [],
+            "mitigated": false,
+            "combinationWith": [],
+            "combinationRules": [],
+            "triggeredChecks": [],
+            "measurements": null
+          },
+          {
+            "id": "finding-2",
+            "ruleId": "DA-03",
+            "riskType": "VISUAL_HIERARCHY_DISTORTION",
+            "title": "잘못된 계층구조",
+            "description": "수락 동작은 강하게 강조되고, 거절/보류 동작은 약하게 처리되어 선택 균형이 깨져 보인다.",
+            "screenIds": [
+              "screen-02"
+            ],
+            "element": "이 혜택 받고 계속하기 버튼",
+            "defaultState": null,
+            "costImpact": null,
+            "severity": "HIGH",
+            "status": "open",
+            "confidence": 0.95,
+            "recommendation": "수락과 거절/보류 선택지를 동일한 수준의 버튼/링크 스타일로 제공해 시각적 균형을 맞춘다.",
+            "guideline": "금융소비자에게 불리하거나 사업자에게 유리한 선택 항목을 시각적으로 두드러지게 표시해 자유로운 선택 또는 결정 능력을 왜곡하는 행위",
+            "observation": "화면 2에서 수락 버튼은 진한 초록색의 큰 버튼으로 하단에 배치되어 있으며, 거절/보류 विकल्प은 버튼이 아닌 작은 회색 텍스트 링크처럼 보인다. 이는 대립 선택지의 시각적 위계가 비대칭인 사례로 관찰된다.",
+            "bbox": {
+              "screenId": "screen-02",
+              "x": 24.2,
+              "y": 696.0,
+              "width": 341.6,
+              "height": 64.0,
+              "coordinateSystem": "image"
+            },
+            "relatedElements": [
+              {
+                "screenId": "screen-02",
+                "description": "혜택 없이 계속",
+                "bbox": {
+                  "screenId": "screen-02",
+                  "x": 152.1,
+                  "y": 784.9,
+                  "width": 85.8,
+                  "height": 25.3,
+                  "coordinateSystem": "image"
+                },
+                "elementType": "vision"
+              }
+            ],
+            "mitigated": false,
+            "combinationWith": [],
+            "combinationRules": [],
+            "triggeredChecks": [],
+            "measurements": null
+          },
+          {
+            "id": "finding-3",
+            "ruleId": "DA-03",
+            "riskType": "VISUAL_HIERARCHY_DISTORTION",
+            "title": "잘못된 계층구조",
+            "description": "수락 동작이 강조되고, 거절/보류 동작이 약하게 처리되어 자유로운 선택을 왜곡할 수 있다.",
+            "screenIds": [
+              "screen-03"
+            ],
+            "element": "동의하고 혜택 지키기 버튼",
+            "defaultState": null,
+            "costImpact": null,
+            "severity": "HIGH",
+            "status": "open",
+            "confidence": 0.94,
+            "recommendation": "대립 선택지를 동일한 수준의 시각적 강조로 제공하고, 거절/보류도 명확한 선택 버튼으로 표시한다.",
+            "guideline": "금융소비자에게 불리하거나 사업자에게 유리한 선택 항목을 시각적으로 두드러지게 표시해 자유로운 선택 또는 결정 능력을 왜곡하는 행위",
+            "observation": "화면 3에서 수락 버튼은 진한 초록색의 큰 버튼으로 하단에 배치되어 있으며, 거절/보류 विकल्प은 작은 회색 텍스트 링크처럼 보인다. 선택지 간 시각적 위계가 비대칭이다.",
+            "bbox": {
+              "screenId": "screen-03",
+              "x": 24.2,
+              "y": 688.2,
+              "width": 341.6,
+              "height": 64.0,
+              "coordinateSystem": "image"
+            },
+            "relatedElements": [
+              {
+                "screenId": "screen-03",
+                "description": "혜택을 포기하고 가입하기",
+                "bbox": {
+                  "screenId": "screen-03",
+                  "x": 152.1,
+                  "y": 784.9,
+                  "width": 85.8,
+                  "height": 25.3,
+                  "coordinateSystem": "image"
+                },
+                "elementType": "vision"
+              }
+            ],
+            "mitigated": false,
+            "combinationWith": [],
+            "combinationRules": [],
+            "triggeredChecks": [],
+            "measurements": null
+          },
+          {
+            "id": "finding-4",
+            "ruleId": "DA-12",
+            "riskType": "EMOTIONAL_LANGUAGE",
+            "title": "감정적 언어사용",
+            "description": "거절 시 손실을 강조하는 문구가 있어 선택을 압박한다.",
+            "screenIds": [
+              "screen-03"
+            ],
+            "element": "지금 동의하지 않으면 준비한 맞춤 혜택이 모두 사라져요",
+            "defaultState": null,
+            "costImpact": null,
+            "severity": "HIGH",
+            "status": "open",
+            "confidence": 0.91,
+            "recommendation": "거절 선택지를 손실 프레이밍 없는 중립 표현으로 바꾸고, 혜택 상실을 과도하게 강조하지 않는다.",
+            "guideline": "감정을 자극하는 언어적 표현을 통해 금융소비자가 특정 행동을 하도록 압박하는 행위",
+            "observation": "화면 3의 경고 문구는 동의하지 않으면 혜택을 잃는다는 식으로 손실을 강조한다. 이는 거절 선택을 감정적으로 압박하는 표현으로 보인다.",
+            "bbox": {
+              "screenId": "screen-03",
+              "x": 23.4,
+              "y": 573.9,
+              "width": 343.2,
+              "height": 101.3,
+              "coordinateSystem": "image"
+            },
+            "relatedElements": [],
+            "mitigated": false,
+            "combinationWith": [
+              "finding-3",
+              "finding-1"
+            ],
+            "combinationRules": [
+              "DA-03",
+              "DA-04"
+            ],
+            "triggeredChecks": [],
+            "measurements": null
+          }
+        ],
+        "runs": [
+          {
+            "id": "run-1",
+            "version": 1,
+            "status": "completed",
+            "note": "uploaded screenshots",
+            "createdAt": "2026-09-06T06:24:28.369175Z",
+            "findingCount": 4
+          }
+        ],
+        "latestRunId": "run-1",
+        "analysisSummary": {
+          "warnings": [
+            "evidence_contract:DA-15",
+            "ocr_evidence_unavailable"
+          ],
+          "supportedRules": [
+            "DA-03",
+            "DA-04",
+            "DA-07",
+            "DA-12",
+            "DA-15"
+          ],
+          "batches": [
+            {
+              "screens": [
+                "screen-01",
+                "screen-02",
+                "screen-03",
+                "screen-04",
+                "screen-05"
+              ],
+              "telemetry": {
+                "response_time_seconds": 40.4485907110211,
+                "screen_count": 5,
+                "schema_attempts": 2,
+                "schema_retries": 1,
+                "dropped_semantic_rule_ids": [],
+                "usage": {
+                  "input_tokens": 21413,
+                  "output_tokens": 5304,
+                  "total_tokens": 26717
+                },
+                "analysis_usage": {
+                  "input_tokens": 18543,
+                  "output_tokens": 5108,
+                  "total_tokens": 23651
+                },
+                "grounding_usage": {
+                  "input_tokens": 2870,
+                  "output_tokens": 196,
+                  "total_tokens": 3066
+                },
+                "bbox_localizations": [
+                  {
+                    "rule_id": "DA-04",
+                    "screen_id": "screen-02",
+                    "role": "primary",
+                    "candidate_id": "C2",
+                    "source": "set-of-mark+cv",
+                    "confidence": 0.98,
+                    "ocr_anchor_count": 0,
+                    "applied": true,
+                    "warning": null
+                  },
+                  {
+                    "rule_id": "DA-03",
+                    "screen_id": "screen-02",
+                    "role": "primary",
+                    "candidate_id": "C1",
+                    "source": "set-of-mark+cv",
+                    "confidence": 0.99,
+                    "ocr_anchor_count": 0,
+                    "applied": true,
+                    "warning": null
+                  },
+                  {
+                    "rule_id": "DA-03",
+                    "screen_id": "screen-02",
+                    "role": "related",
+                    "candidate_id": null,
+                    "source": "model",
+                    "confidence": 0.0,
+                    "ocr_anchor_count": 0,
+                    "applied": false
+                  },
+                  {
+                    "rule_id": "DA-03",
+                    "screen_id": "screen-03",
+                    "role": "primary",
+                    "candidate_id": "C1",
+                    "source": "set-of-mark+cv",
+                    "confidence": 0.99,
+                    "ocr_anchor_count": 0,
+                    "applied": true,
+                    "warning": null
+                  },
+                  {
+                    "rule_id": "DA-03",
+                    "screen_id": "screen-03",
+                    "role": "related",
+                    "candidate_id": null,
+                    "source": "model",
+                    "confidence": 0.0,
+                    "ocr_anchor_count": 0,
+                    "applied": false
+                  }
+                ],
+                "rule_assessments": [
+                  {
+                    "rule_id": "DA-03",
+                    "status": "detected",
+                    "reason": "화면 2와 3에서 수락 버튼은 큰 진한 초록색 CTA로 강조되고, 거절/보류 विकल्प은 하단의 작은 회색 텍스트 링크로 약하게 배치되어 대립 선택지의 시각적 위계가 비대칭이다. 화면 1, 4, 5에서는 해당 대립 선택 구조가 관찰되지 않았다.",
+                    "screen_ids": [
+                      "screen-01",
+                      "screen-02",
+                      "screen-03",
+                      "screen-04",
+                      "screen-05"
+                    ],
+                    "checks": [
+                      "visual_hierarchy",
+                      "optional_looks_mandatory"
+                    ],
+                    "choice_pairs": [
+                      {
+                        "screen_id": "screen-02",
+                        "accept_text": "이 혜택 받고 계속하기",
+                        "decline_text": "혜택 없이 계속",
+                        "decline_is_action": true
+                      },
+                      {
+                        "screen_id": "screen-03",
+                        "accept_text": "동의하고 혜택 지키기",
+                        "decline_text": "혜택을 포기하고 가입하기",
+                        "decline_is_action": true
+                      }
+                    ],
+                    "price_comparisons": []
+                  },
+                  {
+                    "rule_id": "DA-04",
+                    "status": "detected",
+                    "reason": "화면 2에서 '안심케어 플러스'가 체크된 상태로 보이며 '월 3,000원 추가'가 인접해 표시된다. 정지 화면만으로 초기 렌더 시점의 실제 사전선택 이력을 완전히 확정할 수는 없지만, 관찰 가능한 상태는 유료 옵션의 선택 표시와 비용이 함께 제시된 경우에 해당한다.",
+                    "screen_ids": [
+                      "screen-01",
+                      "screen-02",
+                      "screen-03",
+                      "screen-04",
+                      "screen-05"
+                    ],
+                    "checks": [
+                      "selected_paid_option"
+                    ],
+                    "choice_pairs": [],
+                    "price_comparisons": []
+                  },
+                  {
+                    "rule_id": "DA-07",
+                    "status": "not_detected",
+                    "reason": "검토한 5개 화면에서 중요한 비용·위험·권리 정보가 작은 글씨, 저대비, 접힌 상세로 숨겨진 명확한 증거는 관찰되지 않았다. 화면 4의 추가 비용 항목과 화면 5의 청약철회/해지 안내는 모두 읽을 수 있는 상태로 보이며, 숨김/축소로 판단할 근거가 부족하다.",
+                    "screen_ids": [
+                      "screen-01",
+                      "screen-02",
+                      "screen-03",
+                      "screen-04",
+                      "screen-05"
+                    ],
+                    "checks": [
+                      "small_important_text",
+                      "low_contrast_important_text",
+                      "hidden_important_details"
+                    ],
+                    "choice_pairs": [],
+                    "price_comparisons": []
+                  },
+                  {
+                    "rule_id": "DA-12",
+                    "status": "detected",
+                    "reason": "화면 3의 붉은 경고 박스에 '지금 동의하지 않으면 준비한 맞춤 혜택이 모두 사라져요'라는 손실 프레이밍 문구가 있어 거절을 압박한다. 화면 2와 4에도 혜택/금액 강조가 있으나, 독립적으로 확인되는 감정적 압박 문구는 화면 3이다.",
+                    "screen_ids": [
+                      "screen-01",
+                      "screen-02",
+                      "screen-03",
+                      "screen-04",
+                      "screen-05"
+                    ],
+                    "checks": [
+                      "loss_framed_decline",
+                      "trivializing_expression"
+                    ],
+                    "choice_pairs": [],
+                    "price_comparisons": []
+                  },
+                  {
+                    "rule_id": "DA-15",
+                    "status": "insufficient_evidence",
+                    "reason": "DA-15 cannot infer a hidden charge from an explained or already disclosed price change",
+                    "screen_ids": [
+                      "screen-01",
+                      "screen-02",
+                      "screen-03",
+                      "screen-04",
+                      "screen-05"
+                    ],
+                    "checks": [
+                      "late_mandatory_cost",
+                      "rate_deterioration"
+                    ],
+                    "choice_pairs": [],
+                    "price_comparisons": []
+                  }
+                ],
+                "provider": "OpenAIResponsesProvider",
+                "model": "gpt-5.4-mini",
+                "warnings": [
+                  "ocr_evidence_unavailable",
+                  "ocr_evidence_unavailable",
+                  "ocr_evidence_unavailable",
+                  "ocr_evidence_unavailable",
+                  "ocr_evidence_unavailable",
+                  "evidence_contract:DA-15",
+                  "ocr_evidence_unavailable"
+                ]
+              }
+            }
+          ],
+          "limitations": [
+            "일부 분석 근거 또는 검사 범위가 제한됐습니다.",
+            "일부 화면의 문자 위치를 추출하지 못해 위치 검증이 제한됐습니다."
+          ],
+          "ruleAssessments": [
+            {
+              "ruleId": "DA-03",
+              "status": "detected",
+              "reasons": [
+                "화면 2와 3에서 수락 버튼은 큰 진한 초록색 CTA로 강조되고, 거절/보류 विकल्प은 하단의 작은 회색 텍스트 링크로 약하게 배치되어 대립 선택지의 시각적 위계가 비대칭이다. 화면 1, 4, 5에서는 해당 대립 선택 구조가 관찰되지 않았다."
+              ]
+            },
+            {
+              "ruleId": "DA-04",
+              "status": "detected",
+              "reasons": [
+                "화면 2에서 '안심케어 플러스'가 체크된 상태로 보이며 '월 3,000원 추가'가 인접해 표시된다. 정지 화면만으로 초기 렌더 시점의 실제 사전선택 이력을 완전히 확정할 수는 없지만, 관찰 가능한 상태는 유료 옵션의 선택 표시와 비용이 함께 제시된 경우에 해당한다."
+              ]
+            },
+            {
+              "ruleId": "DA-07",
+              "status": "not_detected",
+              "reasons": [
+                "검토한 5개 화면에서 중요한 비용·위험·권리 정보가 작은 글씨, 저대비, 접힌 상세로 숨겨진 명확한 증거는 관찰되지 않았다. 화면 4의 추가 비용 항목과 화면 5의 청약철회/해지 안내는 모두 읽을 수 있는 상태로 보이며, 숨김/축소로 판단할 근거가 부족하다."
+              ]
+            },
+            {
+              "ruleId": "DA-12",
+              "status": "detected",
+              "reasons": [
+                "화면 3의 붉은 경고 박스에 '지금 동의하지 않으면 준비한 맞춤 혜택이 모두 사라져요'라는 손실 프레이밍 문구가 있어 거절을 압박한다. 화면 2와 4에도 혜택/금액 강조가 있으나, 독립적으로 확인되는 감정적 압박 문구는 화면 3이다."
+              ]
+            },
+            {
+              "ruleId": "DA-15",
+              "status": "insufficient_evidence",
+              "reasons": [
+                "DA-15 cannot infer a hidden charge from an explained or already disclosed price change"
+              ]
+            }
+          ],
+          "analyzedScreenCount": 5,
+          "complete": false
+        }
+      }
+    ]
+  }
+}

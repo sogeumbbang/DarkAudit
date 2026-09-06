@@ -35,6 +35,38 @@ class AndroidTapCandidateTest(unittest.TestCase):
         first = _tap_candidates(source, set())[0]
         self.assertEqual(_tap_candidates(source, {first.signature}), [])
 
+    def test_reuses_next_button_on_a_new_screen_and_bounds_loops(self) -> None:
+        class Runner(BrowserStackAndroidRunner):
+            state = 0
+            taps = 0
+            def _stable_source(self, session_id):
+                return (f'<hierarchy><node text="step {self.state}" />'
+                        '<node clickable="true" enabled="true" resource-id="next" text="다음" '
+                        'bounds="[0,600][390,680]" /></hierarchy>')
+            def _screenshot(self, session_id): return _TINY_PNG
+            def _tap(self, session_id, x, y):
+                self.taps += 1
+                self.state += 1
+
+        runner = Runner(AndroidRunnerSettings("user", "key", max_screens=3))
+        with tempfile.TemporaryDirectory() as directory:
+            captures = runner._explore("session", Path(directory))
+        self.assertEqual(len(captures), 3)
+        self.assertEqual(runner.taps, 2)
+        self.assertEqual(len({c.state_id for c in captures}), 3)
+
+        runner = Runner(AndroidRunnerSettings("user", "key", max_actions=4))
+        runner._tap = lambda *args: None
+        with tempfile.TemporaryDirectory() as directory:
+            captures = runner._explore("session", Path(directory))
+        self.assertEqual(len(captures), 1)
+        self.assertIn("android_no_safe_navigation", runner.last_warnings)
+
+    def test_goal_affects_safe_navigation_ranking(self) -> None:
+        source = ('<hierarchy><node clickable="true" text="상품 보기" bounds="[0,100][390,180]" />'
+                  '<node clickable="true" text="보험 보기" bounds="[0,200][390,280]" /></hierarchy>')
+        self.assertEqual(_tap_candidates(source, set(), "보험 조건 확인")[0].label, "보험 보기")
+
     def test_browserstack_capture_uploads_launches_and_stores_screenshot(self) -> None:
         requests: list[tuple[str, str]] = []
 

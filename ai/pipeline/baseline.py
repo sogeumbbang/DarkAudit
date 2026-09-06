@@ -15,10 +15,12 @@ from ai.schemas.audit_schema import (
 )
 from ai.vision.candidate_grounding import (
     extract_ocr_anchors,
+    OCRAnchor,
     ground_selected_control_bbox,
     ground_text_bbox,
 )
 from ai.vision.ocr import OCRProvider, create_ocr_provider
+from .assessment_contract import EvidenceContractError, _label_matches
 from .response_parser import drop_disallowed_semantic_findings, parse_hybrid_response
 
 MVP_RULE_IDS = frozenset({"DA-03", "DA-04", "DA-07", "DA-12", "DA-15"})
@@ -41,11 +43,27 @@ class BaselineAuditPipeline:
         )
         self.ocr_provider = ocr_provider or create_ocr_provider()
         self.last_run_telemetry: dict[str, Any] = {}
+        self._grounding_usage: list[dict[str, int]] = []
 
     def analyze(
         self, request: LLMAuditRequest,
         candidates: list[dict[str, Any] | RuleCandidate] | None = None,
     ) -> HybridAuditOutput:
+        evidence_warnings: list[str] = []
+        analysis_usage = []
+        self._grounding_usage = []
+        enriched_screens = []
+        for screen in request.screens:
+            if screen.evidence:
+                enriched_screens.append(screen)
+                continue
+            anchors = extract_ocr_anchors(screen.image_path, self.ocr_provider)
+            if not anchors:
+                evidence_warnings.append("ocr_evidence_unavailable")
+            enriched_screens.append(replace(screen, evidence=tuple(
+                {"text":a.text, "bbox":list(a.bbox), "source":"ocr", "confidence":a.confidence} for a in anchors
+            )))
+        request = replace(request, screens=tuple(enriched_screens))
         parsed_candidates = [
             item if isinstance(item, RuleCandidate) else RuleCandidate.from_dict(item)
             for item in (candidates or [])
@@ -64,17 +82,8 @@ class BaselineAuditPipeline:
             for item in parsed_candidates
         ]
         base_audit_prompt = (self.prompts_dir / "audit_v1.md").read_text(encoding="utf-8")
-        if self.allowed_semantic_rule_ids == VISUAL_FALLBACK_RULE_IDS:
-            base_audit_prompt += """
-
-## 스크린샷 전용 시각 판정
-
-이 요청은 DOM Candidate를 만들 수 없는 이미지 업로드 진단이다. 따라서 화면에서 직접
-확인 가능한 경우 DA-03, DA-04, DA-07, DA-12, DA-15를 semantic_findings로 반환할 수 있다.
-DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한다. DA-07은 중요한 정보가
-작거나 저대비로 숨겨진 시각 근거가 있어야 한다. DA-15는 동일 기기 프로필의 서로 다른
-두 화면 이상에서 초기 가격과 뒤늦게 증가한 가격이 확인되어야 한다.
-"""
+        mode_prompt = "visual.md" if self.allowed_semantic_rule_ids == VISUAL_FALLBACK_RULE_IDS else "dom.md"
+        base_audit_prompt += "\n\n" + (self.prompts_dir / mode_prompt).read_text(encoding="utf-8")
         arguments = {
             "request": request,
             "system_prompt": (self.prompts_dir / "system.md").read_text(encoding="utf-8"),
@@ -88,13 +97,36 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
         for attempt in range(1, self.max_attempts + 1):
             try:
                 raw = self.provider.analyze(**arguments)
+                usage = getattr(self.provider, "last_usage", None)
+                if usage:
+                    analysis_usage.append(dict(usage))
+                if getattr(self.provider, "requires_rule_assessments", False) and "rule_assessments" not in raw:
+                    raise ValueError("Model must assess all five rules in rule_assessments")
                 self._deduplicate_raw(raw)
                 # 정제 결과를 남긴다. 조용히 버리기만 하면 모델이 계속 규칙을
                 # 어겨도 알 수 없다.
                 dropped = drop_disallowed_semantic_findings(raw, self.allowed_semantic_rule_ids)
-                output = parse_hybrid_response(
-                    raw, request, parsed_candidates, self.allowed_semantic_rule_ids
-                )
+                while True:
+                    try:
+                        output = parse_hybrid_response(raw, request, parsed_candidates, self.allowed_semantic_rule_ids)
+                        break
+                    except EvidenceContractError as exc:
+                        if attempt < self.max_attempts:
+                            raise
+                        # Preserve other rules after an unsuccessful correction,
+                        # but explicitly mark this rule's evidence incomplete.
+                        rule = exc.rule_id
+                        evidence_warnings.append(f"evidence_contract:{rule}")
+                        raw["semantic_findings"] = [f for f in raw["semantic_findings"] if f["rule_id"] != rule]
+                        ids = {c.candidate_id for c in parsed_candidates if c.rule_id == rule}
+                        for decision in raw["candidate_decisions"]:
+                            if decision["candidate_id"] in ids:
+                                decision.update(decision="REJECT", reason=str(exc))
+                        for assessment in raw.get("rule_assessments", []):
+                            if assessment["rule_id"] == rule:
+                                assessment.update(status="insufficient_evidence", reason=str(exc),
+                                                  choice_pairs=[], price_comparisons=[])
+
                 result = self._filter_and_deduplicate(output)
                 result, localizations = self._ground_visual_bboxes(result, request)
                 self.last_run_telemetry = {
@@ -103,9 +135,17 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                     "schema_attempts": attempt,
                     "schema_retries": attempt - 1,
                     "dropped_semantic_rule_ids": sorted(set(dropped)),
-                    "usage": getattr(self.provider, "last_usage", None),
-                    "grounding_usage": getattr(self.provider, "last_grounding_usage", None),
+                    "usage": _sum_usage(analysis_usage + self._grounding_usage),
+                    "analysis_usage": _sum_usage(analysis_usage),
+                    "grounding_usage": _sum_usage(self._grounding_usage),
                     "bbox_localizations": localizations,
+                    "rule_assessments": list(result.rule_assessments),
+                    "provider": type(self.provider).__name__,
+                    "model": getattr(self.provider, "model", None),
+                    "warnings": evidence_warnings + (["mock_analysis"] if type(self.provider).__name__ == "FakeMultimodalProvider" else [])
+                        + (["rule_assessments_missing"] if not result.rule_assessments else [])
+                        + (["semantic_findings_dropped"] if dropped else [])
+                        + (["ocr_evidence_unavailable"] if any(x.get("ocr_anchor_count") == 0 for x in localizations) else []),
                 }
                 return result
             except ValueError as exc:
@@ -139,7 +179,15 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
 
         screens = {screen.screen_id: screen for screen in request.screens}
         provider_selector = getattr(self.provider, "select_bbox_candidate", None)
-        selector = provider_selector if callable(provider_selector) else None
+        def counted_selector(*args, **kwargs):
+            self.provider.last_grounding_usage = None
+            try:
+                return provider_selector(*args, **kwargs)
+            finally:
+                usage = getattr(self.provider, "last_grounding_usage", None)
+                if usage:
+                    self._grounding_usage.append(dict(usage))
+        selector = counted_selector if callable(provider_selector) else None
         findings = []
         telemetry: list[dict[str, Any]] = []
         anchor_cache: dict[Path, list] = {}
@@ -152,10 +200,10 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                 findings.append(finding)
                 continue
             if screen.image_path not in anchor_cache:
-                anchor_cache[screen.image_path] = extract_ocr_anchors(
-                    screen.image_path,
-                    self.ocr_provider,
-                )
+                anchor_cache[screen.image_path] = [
+                    OCRAnchor(e["text"], tuple(e["bbox"]), float(e.get("confidence", 1.0)))
+                    for e in screen.evidence if e.get("text") and e.get("bbox")
+                ] or extract_ocr_anchors(screen.image_path, self.ocr_provider)
             anchors = anchor_cache[screen.image_path]
             grounding_text = " | ".join(
                 value.strip()
@@ -191,6 +239,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
                 "confidence": grounded.confidence,
                 "ocr_anchor_count": len(anchors),
                 "applied": applied,
+                "warning": grounded.warning,
             })
             if finding.rule_id == "DA-03":
                 related_elements = []
@@ -223,15 +272,7 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
             findings.append(updated)
         if tuple(findings) == output.semantic_findings:
             return output, telemetry
-        return HybridAuditOutput(
-            output.audit_id,
-            output.schema_version,
-            output.screens,
-            output.candidate_decisions,
-            tuple(findings),
-            output.candidates,
-            output.allowed_semantic_rule_ids,
-        ), telemetry
+        return replace(output, semantic_findings=tuple(findings)), telemetry
 
     @staticmethod
     def _deduplicate_raw(raw: dict[str, Any]) -> None:
@@ -260,6 +301,13 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
         """Drop weak semantic-only claims and collapse duplicate findings."""
         kept = {}
         for finding in output.semantic_findings:
+            if finding.rule_id == "DA-03" and output.rule_assessments:
+                pairs = [pair for assessment in output.rule_assessments if assessment["rule_id"] == "DA-03"
+                         for pair in assessment["choice_pairs"] if pair["screen_id"] == finding.where.screen_ids[0]]
+                finding = replace(finding, related_elements=tuple(
+                    related for related in finding.related_elements
+                    if any(_label_matches(pair["decline_text"], related.element) for pair in pairs)
+                ))
             key = (finding.rule_id, tuple(sorted(finding.where.screen_ids)))
             if finding.confidence < 0.70:
                 continue
@@ -267,8 +315,20 @@ DA-04는 유료 옵션의 선택 표시와 추가 비용이 모두 보여야 한
             previous = kept.get(duplicate_key)
             if previous is None or finding.confidence > previous.confidence:
                 kept[duplicate_key] = finding
-        return HybridAuditOutput(
-            output.audit_id, output.schema_version, output.screens,
-            output.candidate_decisions, tuple(kept.values()), output.candidates,
-            output.allowed_semantic_rule_ids,
+        retained_rules = {f.rule_id for f in kept.values()} | {
+            candidate.rule_id for candidate in output.candidates
+            if any(d.candidate_id == candidate.candidate_id and d.decision.value == "KEEP" for d in output.candidate_decisions)
+        }
+        assessments = tuple(
+            {**a, "status":"insufficient_evidence", "reason":"탐지 신뢰도가 기준에 미달했습니다."}
+            if a["status"] == "detected" and a["rule_id"] not in retained_rules else a
+            for a in output.rule_assessments
         )
+        return replace(output, semantic_findings=tuple(kept.values()), rule_assessments=assessments)
+
+
+def _sum_usage(rows: list[dict[str, int]]) -> dict[str, int] | None:
+    if not rows:
+        return None
+    return {key: sum(row.get(key, 0) for row in rows)
+            for key in ("input_tokens", "output_tokens", "total_tokens")}

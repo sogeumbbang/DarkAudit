@@ -142,3 +142,22 @@ python test_fingerprint.py     # fingerprint 견고성
 python verify_schema.py        # 라벨 적재 + Regression
 python eval_rule_engine.py     # Rule Engine 평가
 ```
+
+## 분석 품질과 저장소 변경 (v1.2)
+
+`api/service.py`는 입력별 수집 이후 공통 모델 분석·근거 저장을 수행한다. URL은 DOM Rule 후보를
+함께 전달한다. Figma는 실제 `interactions[].actions[]` 전환을 분기별로 분석하고 Android는
+화면 상태별 행동 이력 및 XML 근거를 보관한다.
+
+`AuditRun.analysis_summary`에는 배치별 규칙 검사 상태, provider/model, 토큰 사용량,
+수집·OCR·좌표 검증 경고가 저장된다. API `analysisSummary.complete`는 수집된 지원 범위의
+검사 완료 여부이며 전체 15개 유형에 대한 안전 판정이 아니다. `Screen.analysis_context`는
+기기·경로·상태·원본 근거를 보관한다. 화면/Finding과 품질 정보는 같은 회차에서 반환한다.
+
+서버 시작 시 `store.init_db()`가 기존 DB에 누락된 두 JSON 열을 추가한다. 기존 행은 유지되며
+옛 분석은 품질 정보가 비어 있다. 운영 DB를 업데이트하기 전 일반 배포 절차대로 백업한다.
+재시작을 반복해도 동일 열을 중복 생성하지 않는다.
+
+저장소 루트에서 `python -m unittest discover -s backend/tests -v`를 실행한다. 테스트마다
+임시 DB·경로·환경을 격리하고, API 입력 4종의 공통 분석/DB 응답을 검증한다. 실제 Figma·
+BrowserStack 연결은 별도 인증과 테스트 파일을 갖춘 환경에서 확인해야 한다.

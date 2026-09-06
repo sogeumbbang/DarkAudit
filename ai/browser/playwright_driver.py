@@ -18,7 +18,7 @@ from .safety import UnsafeUrlError, UrlSafetyPolicy
 # data/generator/extract_ui.py 의 색상/대비 유틸을 그대로 쓰되, 요소 선택과
 # element_type 판정은 임의 사이트에서 동작하도록 태그/role/type 기반으로 바꿨다.
 _RULE_ENGINE_EXTRACT_JS = r"""
-() => {
+({fullPage = false, width = null, height = null} = {}) => {
   const rgb = (s) => {
     const m = (s || '').match(/[\d.]+/g);
     if (!m) return null;
@@ -65,7 +65,8 @@ _RULE_ENGINE_EXTRACT_JS = r"""
     const role = (el.getAttribute('role') || '').toLowerCase();
     const type = (el.getAttribute('type') || '').toLowerCase();
     if (tag === 'input' && (type === 'checkbox' || type === 'radio')) return 'checkbox';
-    if (role === 'checkbox' || role === 'radio') return 'checkbox';
+    if (role === 'checkbox' || role === 'radio' || role === 'switch') return 'checkbox';
+    if (tag === 'summary' || (el.hasAttribute('aria-expanded') && el.getAttribute('aria-expanded') === 'false')) return 'accordion';
     if (tag === 'button' || role === 'button' || (tag === 'input' && (type === 'button' || type === 'submit'))) return 'button';
     if (tag === 'a' || role === 'link') return 'link';
     if (MONEY_OR_RATE.test(text || '')) return 'price';
@@ -78,10 +79,12 @@ _RULE_ENGINE_EXTRACT_JS = r"""
     (n) => n.nodeType === 3 && n.textContent.trim().length > 0
   );
 
-  const W = window.innerWidth, H = window.innerHeight;
-  const SEL = 'button, a, input, select, textarea, label, '
-            + '[role="button"], [role="link"], [role="checkbox"], [role="radio"], '
-            + 'h1, h2, h3, h4, p, li, span';
+  const W = width || (fullPage ? Math.max(document.documentElement.scrollWidth, window.innerWidth) : window.innerWidth);
+  const H = height || (fullPage ? Math.max(document.documentElement.scrollHeight, window.innerHeight) : window.innerHeight);
+  const offsetX = fullPage ? window.scrollX : 0, offsetY = fullPage ? window.scrollY : 0;
+  const SEL = 'button, a, input, select, textarea, label, summary, [aria-expanded], '
+            + '[role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], '
+            + 'h1, h2, h3, h4, p, li, span, div';
   const INTERACTIVE = new Set(['button', 'checkbox', 'link']);
 
   const out = [];
@@ -89,31 +92,35 @@ _RULE_ENGINE_EXTRACT_JS = r"""
   document.querySelectorAll(SEL).forEach((el) => {
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) return;
-    if (r.bottom < 0 || r.right < 0 || r.top > H || r.left > W) return;
+    if (r.bottom + offsetY <= 0 || r.right + offsetX <= 0 || r.top + offsetY >= H || r.left + offsetX >= W) return;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.display === 'none') return;
+    if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) return;
 
     const text = (el.innerText || el.value || el.textContent || '').trim().replace(/\s+/g, ' ');
     const elementType = typeOf(el, text);
     if (elementType === 'text' && !hasOwnText(el)) return;
     if (elementType === 'text' && !text) return;
 
-    const id = daId(el);
-    if (seen.has(id)) return;
+    const baseId = daId(el);
+    let id = baseId, ordinal = 1;
+    while (seen.has(id)) id = `${baseId}-${ordinal++}`;
     seen.add(id);
 
     const fg = rgb(cs.color);
     const bg = bgOf(el);
     const animated = cs.animationName !== 'none' && cs.animationName !== '';
 
+    const left = Math.max(0, r.left + offsetX), top = Math.max(0, r.top + offsetY);
+    const right = Math.min(W, r.right + offsetX), bottom = Math.min(H, r.bottom + offsetY);
     out.push({
       element_id: id,
       element_type: elementType,
       text: text.slice(0, 200) || null,
-      bbox: [ +(r.x / W).toFixed(4), +(r.y / H).toFixed(4),
-              +(r.width / W).toFixed(4), +(r.height / H).toFixed(4) ],
+      bbox: [left / W, top / H, (right - left) / W, (bottom - top) / H],
+      document_bbox: [r.x + window.scrollX, r.y + window.scrollY, r.width, r.height],
       state: {
-        checked: 'checked' in el ? Boolean(el.checked) : null,
+        checked: 'checked' in el ? Boolean(el.checked) : (el.hasAttribute('aria-checked') ? el.getAttribute('aria-checked') === 'true' : null),
+        expanded: el.tagName.toLowerCase() === 'summary' ? Boolean(el.parentElement.open) : el.getAttribute('aria-expanded') === 'true',
         disabled: 'disabled' in el ? Boolean(el.disabled) : null,
       },
       computed_style: {
@@ -125,7 +132,7 @@ _RULE_ENGINE_EXTRACT_JS = r"""
     });
   });
 
-  return out.slice(0, 250);
+  return out;
 }
 """
 
@@ -323,7 +330,10 @@ class PlaywrightBrowserSession:
         )
         visible_text = self._visible_text()
         elements = tuple(self._interactive_elements())
-        dom_elements = tuple(self._rule_engine_elements())
+        from PIL import Image
+        with Image.open(path) as captured_image:
+            image_width, image_height = captured_image.size
+        dom_elements = tuple(self._rule_engine_elements(full_page, image_width, image_height))
         return CaptureArtifact(
             screen_id=f"{self.profile.name}_{index:02d}",
             flow_step=f"{self.profile.name}: {flow_step}",
@@ -331,17 +341,22 @@ class PlaywrightBrowserSession:
             url=self._page.url,
             title=self._page.title(),
             image_path=path,
-            viewport_width=self.profile.viewport_width,
-            viewport_height=self.profile.viewport_height,
+            viewport_width=image_width,
+            viewport_height=image_height,
             full_page=full_page,
             action=action,
             visible_text=visible_text,
             interactive_elements=elements,
             dom_elements=dom_elements,
             fingerprint=hashlib.sha256(image).hexdigest(),
+            state_id=getattr(self, "_state_id", 0).__str__(),
+            capture_height=self.profile.viewport_height,
+            warnings=("dom_unavailable",) if not dom_elements else (),
         )
 
     def execute(self, action: BrowserAction) -> None:
+        if action.type not in {BrowserActionType.SCROLL, BrowserActionType.WAIT, BrowserActionType.SCREENSHOT}:
+            self._state_id = getattr(self, "_state_id", 0) + 1
         match action.type:
             case BrowserActionType.CLICK:
                 self._page.mouse.click(action.x, action.y, button=action.button)
@@ -476,7 +491,7 @@ class PlaywrightBrowserSession:
         except Exception:
             return []
 
-    def _rule_engine_elements(self) -> list[dict[str, Any]]:
+    def _rule_engine_elements(self, full_page: bool = False, width: int | None = None, height: int | None = None) -> list[dict[str, Any]]:
         """DOM 을 backend.app.rule_engine 이 소비하는 Element 형태로 추출한다.
 
         data/generator/extract_ui.py 는 합성 데이터셋 전용 클래스명(.btn/.box 등)에
@@ -485,7 +500,7 @@ class PlaywrightBrowserSession:
         로직 자체는 extract_ui.py 와 동일하다.
         """
         try:
-            return self._page.evaluate(_RULE_ENGINE_EXTRACT_JS)
+            return self._page.evaluate(_RULE_ENGINE_EXTRACT_JS, {"fullPage": full_page, "width": width, "height": height})
         except Exception:
             return []
 

@@ -1,6 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { server } from "@/mocks/server";
+import { dashboardFixture } from "@/mocks/fixtures/dashboard";
+
 import { MemoryRouter } from "react-router-dom";
 
 import { OverviewPage } from "@/pages/overview/OverviewPage";
@@ -17,6 +21,26 @@ function renderPage() {
 }
 
 describe("OverviewPage", () => {
+  it("shows incomplete analysis separately from zero findings", async () => {
+    const fixture = structuredClone(dashboardFixture);
+    fixture.audits[0]!.findings = [];
+    fixture.audits[0]!.analysisSummary = {
+      complete: false,
+      supportedRules: ["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"],
+      analyzedScreenCount: 2,
+      limitations: ["일부 Figma 화면을 가져오지 못했습니다."],
+      ruleAssessments: [
+        { ruleId: "DA-15", status: "insufficient_evidence", reasons: ["최종 가격 화면 누락"] },
+      ],
+    };
+    server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
+    renderPage();
+    expect(await screen.findByRole("region", { name: "분석 범위" })).toBeInTheDocument();
+    expect(screen.getByText("검사 범위와 추가 확인 사항")).toBeInTheDocument();
+    expect(screen.getByText("일부 Figma 화면을 가져오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.getByText("DA-15: 근거 부족")).toBeInTheDocument();
+  });
+
   it("loads dashboard data and changes the selected audit", async () => {
     const user = userEvent.setup();
     renderPage();

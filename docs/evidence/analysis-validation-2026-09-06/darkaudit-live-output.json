@@ -1,0 +1,204 @@
+{
+  "output": {
+    "audit_id": "validation-sample",
+    "schema_version": "1.1",
+    "screens": [
+      {
+        "screen_id": "screen-01",
+        "flow_step": "01-product-intro"
+      },
+      {
+        "screen_id": "screen-02",
+        "flow_step": "02-preselected-addon"
+      },
+      {
+        "screen_id": "screen-03",
+        "flow_step": "03-consent-pressure"
+      },
+      {
+        "screen_id": "screen-04",
+        "flow_step": "04-delayed-price"
+      },
+      {
+        "screen_id": "screen-05",
+        "flow_step": "05-buried-cancellation"
+      }
+    ],
+    "candidate_decisions": [],
+    "semantic_findings": [
+      {
+        "risk_type": "PRESELECTED_OPTION",
+        "risk_name": "특정옵션의 사전선택",
+        "where": {
+          "screen_ids": [
+            "screen-02"
+          ],
+          "element": "안심케어 플러스 선택 카드",
+          "location": "중앙 상단 옵션 카드"
+        },
+        "bbox": [
+          0.112244,
+          0.345735,
+          0.072628,
+          0.03356
+        ],
+        "related_elements": [
+          {
+            "screen_id": "screen-02",
+            "element": "체크 표시된 선택 상태",
+            "bbox": [
+              0.1,
+              0.36,
+              0.07,
+              0.04
+            ]
+          }
+        ],
+        "what": "보장 옵션 카드에서 '안심케어 플러스'가 체크된 상태로 표시되고, 바로 아래에 '월 3,000원 추가'가 함께 보인다.",
+        "observation": "옵션 카드 왼쪽에 체크 표시가 있으며 카드 제목 아래에 빨간색으로 추가 비용이 표시된다.",
+        "rule_id": "DA-04",
+        "why": "초기 화면에서 사업자에게 유리한 유료 옵션이 선택된 상태로 제시되어 소비자가 그대로 수용하도록 유도할 수 있다.",
+        "severity": "HIGH",
+        "confidence": 0.98,
+        "fix": "초기 상태를 미선택으로 변경하고, 소비자의 클릭·터치가 있어야 선택 효과가 발생하도록 구성한다."
+      },
+      {
+        "risk_type": "VISUAL_HIERARCHY_DISTORTION",
+        "risk_name": "잘못된 계층구조",
+        "where": {
+          "screen_ids": [
+            "screen-03"
+          ],
+          "element": "동의하고 혜택 지키기 버튼",
+          "location": "하단 중앙"
+        },
+        "bbox": [
+          0.062,
+          0.815355,
+          0.876,
+          0.075782
+        ],
+        "related_elements": [
+          {
+            "screen_id": "screen-03",
+            "element": "혜택 상실 경고 문구",
+            "bbox": [
+              0.06,
+              0.66,
+              0.88,
+              0.12
+            ]
+          }
+        ],
+        "what": "하단의 초록색 주요 버튼이 '동의하고 혜택 지키기'로 크게 강조되고, 그 위에는 붉은 경고 문구가 배치되어 있다.",
+        "observation": "동의 버튼은 큰 초록색 채움 버튼으로 표시되고, 거절/보류에 해당하는 문구는 더 작고 연한 회색 링크 형태로 보인다.",
+        "rule_id": "DA-03",
+        "why": "대립 선택지 중 수락 쪽이 시각적으로 더 두드러져 자유로운 선택을 왜곡할 수 있다.",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "fix": "수락과 거절 선택지를 동일한 시각적 위계로 배치하고, 한쪽만 과도하게 강조하지 않는다."
+      },
+      {
+        "risk_type": "HIDDEN_INFORMATION",
+        "risk_name": "숨겨진 정보",
+        "where": {
+          "screen_ids": [
+            "screen-04"
+          ],
+          "element": "최종 금액 및 추가 비용 항목",
+          "location": "중앙 요약 카드"
+        },
+        "bbox": [
+          0.06,
+          0.31,
+          0.88,
+          0.34
+        ],
+        "related_elements": [
+          {
+            "screen_id": "screen-04",
+            "element": "기본 보험료 9,900원",
+            "bbox": [
+              0.52,
+              0.39,
+              0.18,
+              0.04
+            ]
+          },
+          {
+            "screen_id": "screen-04",
+            "element": "안심케어 플러스 3,000원",
+            "bbox": [
+              0.52,
+              0.46,
+              0.18,
+              0.04
+            ]
+          },
+          {
+            "screen_id": "screen-04",
+            "element": "보험료 납입관리 서비스 1,500원",
+            "bbox": [
+              0.52,
+              0.53,
+              0.18,
+              0.04
+            ]
+          }
+        ],
+        "what": "가입 전 최종 금액 확인 화면에서 기본 보험료 외에 안심케어 플러스와 보험료 납입관리 서비스 비용이 함께 합산되어 표시된다.",
+        "observation": "중앙 카드에 기본 보험료 9,900원, 안심케어 플러스 3,000원, 보험료 납입관리 서비스 1,500원이 나열되고 최종 월 납부 총 보험료가 14,400원으로 표시된다.",
+        "rule_id": "DA-07",
+        "why": "가입 의사결정에 중요한 추가 비용이 최종 단계에서 합산되어 드러나며, 소비자가 전체 비용을 명확히 인지해야 하는 정보다.",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "fix": "첫 화면부터 총 예상 비용과 추가 항목을 함께 명확히 표시한다."
+      }
+    ]
+  },
+  "telemetry": {
+    "response_time_seconds": 8.654878100001952,
+    "screen_count": 5,
+    "schema_attempts": 1,
+    "schema_retries": 0,
+    "dropped_semantic_rule_ids": [],
+    "usage": {
+      "input_tokens": 6939,
+      "output_tokens": 1019,
+      "total_tokens": 7958
+    },
+    "grounding_usage": null,
+    "bbox_localizations": [
+      {
+        "rule_id": "DA-04",
+        "screen_id": "screen-02",
+        "role": "primary",
+        "candidate_id": "C1",
+        "source": "cv",
+        "confidence": 0.78,
+        "ocr_anchor_count": 0,
+        "applied": true
+      },
+      {
+        "rule_id": "DA-03",
+        "screen_id": "screen-03",
+        "role": "primary",
+        "candidate_id": "C1",
+        "source": "cv",
+        "confidence": 0.78,
+        "ocr_anchor_count": 0,
+        "applied": true
+      },
+      {
+        "rule_id": "DA-03",
+        "screen_id": "screen-03",
+        "role": "related",
+        "candidate_id": null,
+        "source": "model",
+        "confidence": 0.0,
+        "ocr_anchor_count": 0,
+        "applied": false
+      }
+    ]
+  }
+}

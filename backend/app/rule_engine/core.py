@@ -69,6 +69,7 @@ class Element:
 class Screen:
     screen_index: int
     elements: list[Element]
+    state_id: str = ""
 
     def of_type(self, *types: str) -> list[Element]:
         return [e for e in self.elements if e.element_type in types]

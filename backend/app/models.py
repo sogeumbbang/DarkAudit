@@ -119,6 +119,8 @@ class AuditRun(Base):
     note: Mapped[str | None] = mapped_column(Text)                # "사전선택 해제 후 재검증" 등
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    analysis_summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     audit: Mapped[Audit] = relationship(back_populates="runs")
     screens: Mapped[list[Screen]] = relationship(
         back_populates="run", cascade="all, delete-orphan", order_by="Screen.screen_index"
@@ -143,6 +145,7 @@ class Screen(Base):
     image_path: Mapped[str | None] = mapped_column(String(400))
     viewport_w: Mapped[int | None] = mapped_column(Integer)
     viewport_h: Mapped[int | None] = mapped_column(Integer)
+    analysis_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     run: Mapped[AuditRun] = relationship(back_populates="screens")
     elements: Mapped[list[Element]] = relationship(

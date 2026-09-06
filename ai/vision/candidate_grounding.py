@@ -46,6 +46,7 @@ class GroundingResult:
     confidence: float
     source: str
     candidate_id: str | None = None
+    warning: str | None = None
 
 
 def _normalize_text(value: str) -> str:
@@ -476,8 +477,18 @@ def ground_selected_control_bbox(
             ]
             try:
                 decision = selector(marked_path, element_text, payload)
-            except Exception:
-                decision = None
+            except Exception as exc:
+                # Keep the model anchor when verification is unavailable; do not
+                # silently promote an unverified CV proposal into evidence.
+                return GroundingResult(
+                    approximate_bbox, 0.0, "verification-failed",
+                    warning=f"bbox_verification_failed:{type(exc).__name__}",
+                )
+        if decision is None:
+            return GroundingResult(
+                approximate_bbox, 0.0, "verification-unavailable",
+                warning="bbox_verification_empty",
+            )
         if decision is not None:
             requested = str(
                 decision.get("selected_candidate_id")
@@ -491,6 +502,11 @@ def ground_selected_control_bbox(
                     "set-of-mark-rejected",
                 )
             matched = next((item for item in candidates if item.candidate_id == requested), None)
+            if matched is None:
+                return GroundingResult(
+                    approximate_bbox, 0.0, "verification-invalid",
+                    warning="bbox_verification_invalid_candidate",
+                )
             if matched is not None:
                 selected = matched
                 raw_confidence = decision.get(

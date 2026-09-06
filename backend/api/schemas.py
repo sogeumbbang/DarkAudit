@@ -141,6 +141,7 @@ class AuditDto(BaseModel):
     # 회차 목록. 프론트가 아직 쓰지 않아도 무해하다.
     runs: list[AuditRunDto] = Field(default_factory=list)
     latestRunId: str | None = None
+    analysisSummary: dict = Field(default_factory=dict)
 
 
 class JobDto(BaseModel):

@@ -1,0 +1,112 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "text": "보험 상품 설명은 충분히 읽을 수 있게 일반 본문 글씨로 제공합니다.",
+      "checked": null
+    },
+    {
+      "type": "checkbox",
+      "text": "✓",
+      "checked": null
+    },
+    {
+      "type": "price",
+      "text": "유료 케어 월 3,000원 추가",
+      "checked": null
+    },
+    {
+      "type": "price",
+      "text": "중도 해지 수수료 50,000원 발생. 납입한 보험료보다 환급금이 적을 수 있습니다.",
+      "checked": null
+    }
+  ],
+  "da04_candidates": 0,
+  "da07_candidates": 0,
+  "fullpage_dom_bboxes": [
+    {
+      "element_id": "p-cns4pk",
+      "element_type": "text",
+      "text": "보험 상품 설명은 충분히 읽을 수 있게 일반 본문 글씨로 제공합니다.",
+      "bbox": [
+        0.0205,
+        0.01,
+        0.959,
+        0.06
+      ],
+      "state": {
+        "checked": null,
+        "disabled": null
+      },
+      "computed_style": {
+        "font_size": 16,
+        "contrast_ratio": 21,
+        "area_ratio": 0.05754,
+        "animated": false
+      }
+    },
+    {
+      "element_id": "button-6wy75",
+      "element_type": "checkbox",
+      "text": "✓",
+      "bbox": [
+        0.0205,
+        0.09,
+        0.0769,
+        0.0375
+      ],
+      "state": {
+        "checked": null,
+        "disabled": false
+      },
+      "computed_style": {
+        "font_size": 13.3333,
+        "contrast_ratio": 18.26,
+        "area_ratio": 0.00288,
+        "animated": false
+      }
+    },
+    {
+      "element_id": "span-1m11mp1",
+      "element_type": "price",
+      "text": "유료 케어 월 3,000원 추가",
+      "bbox": [
+        0.0974,
+        0.0969,
+        0.4502,
+        0.0213
+      ],
+      "state": {
+        "checked": null,
+        "disabled": null
+      },
+      "computed_style": {
+        "font_size": 16,
+        "contrast_ratio": 21,
+        "area_ratio": 0.00957,
+        "animated": false
+      }
+    },
+    {
+      "element_id": "p-1uug7hl",
+      "element_type": "price",
+      "text": "중도 해지 수수료 50,000원 발생. 납입한 보험료보다 환급금이 적을 수 있습니다.",
+      "bbox": [
+        0.0205,
+        0.1388,
+        0.959,
+        0.0163
+      ],
+      "state": {
+        "checked": null,
+        "disabled": null
+      },
+      "computed_style": {
+        "font_size": 9,
+        "contrast_ratio": 2.32,
+        "area_ratio": 0.01558,
+        "animated": false
+      }
+    }
+  ]
+}

@@ -101,6 +101,10 @@ class CaptureArtifact:
     # data/generator/extract_ui.py 의 스키마를 실제 페이지용으로 일반화한 것이다.
     dom_elements: tuple[dict[str, Any], ...] = ()
     fingerprint: str = ""
+    state_id: str = ""
+    path_id: str = "main"
+    capture_height: int = 0
+    warnings: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -117,6 +121,9 @@ class CaptureArtifact:
             "interactiveElements": list(self.interactive_elements),
             "domElements": list(self.dom_elements),
             "fingerprint": self.fingerprint,
+            "stateId": self.state_id,
+            "pathId": self.path_id,
+            "warnings": list(self.warnings),
         }
 
 

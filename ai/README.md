@@ -14,7 +14,7 @@ python -m ai.cli audit `
   --image .\screen_02.png --flow-step 결제
 ```
 
-The CLI accepts one to five images in Flow order and writes JSON only. The selected model must support image input and Structured Outputs in the Responses API.
+The CLI accepts one to five images in Flow order and writes an `{ "output": ..., "telemetry": ... }` JSON envelope. The selected model must support image input and Structured Outputs in the Responses API.
 
 ## Test
 
@@ -95,6 +95,14 @@ targets, cross-origin navigation, downloads, and popups. Use `--allow-private-ne
 explicit local development targets.
 
 Screenshots are written beneath `data/captures/<audit-id>/<profile>/` by default. URL capture
-manifests also contain visible text and interactive-element geometry for future deterministic
-rules. The final multimodal audit still receives at most five evenly sampled screenshots to
-preserve the current `LLMAuditRequest` contract.
+manifests include text, control state and normalized geometry used by the shared Rule Engine.
+All captured states and readable page crops are analyzed in batches of at most five, separately
+for each device and path. Initial context, adjacent transitions and native first/final price
+evidence are retained; exhaustive comparison of every distant pair is not guaranteed and is
+reported as a limitation. `analysisBatches` preserves each v1.2 model response and rule assessment;
+`analysis` is the merged finding view. Batch telemetry preserves evidence/grounding failures.
+
+The supported scope is DA-03, DA-04, DA-07, DA-12 and DA-15. The [v1.2 contract](specs/rule_ai_contract.md)
+defines required per-rule coverage and structured choice/price evidence. `telemetry.usage`
+sums analysis retries and all successful grounding responses; `analysis_usage` and
+`grounding_usage` expose the split. Navigation model usage is separate.

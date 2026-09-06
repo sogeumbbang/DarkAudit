@@ -84,6 +84,23 @@ export const auditSchema = z.object({
     )
     .optional(),
   latestRunId: z.string().nullable().optional(),
+  analysisSummary: z
+    .object({
+      complete: z.boolean().optional(),
+      supportedRules: z.array(z.string()).optional(),
+      limitations: z.array(z.string()).optional(),
+      analyzedScreenCount: z.number().int().nonnegative().optional(),
+      ruleAssessments: z
+        .array(
+          z.object({
+            ruleId: z.string(),
+            status: z.enum(["detected", "not_detected", "insufficient_evidence", "not_supported"]),
+            reasons: z.array(z.string()),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
 });
 
 export const dashboardSummarySchema = z.object({

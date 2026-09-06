@@ -153,7 +153,7 @@ def da07_asymmetry(screen: Screen, rb: RuleBase) -> list[Detection]:
     본문 대비 현저히 작거나 흐린 텍스트를 찾는다.
     중요정보 해당 여부는 semantic_checks 가 판단한다.
     """
-    texts = [e for e in screen.of_type("text") if e.text and len(e.text) > 20]
+    texts = [e for e in screen.of_type("text", "price") if e.text and len(e.text) > 5]
     if not texts:
         return []
 
@@ -184,7 +184,7 @@ def da07_accordion(screen: Screen, rb: RuleBase) -> list[Detection]:
     """중요 정보가 '자세히 보기' 뒤에 접혀 있는 경우."""
     return [
         Detection("", "", primary=e, measurements={"label": e.text})
-        for e in screen.of_type("accordion")
+        for e in screen.of_type("accordion") if not e.state.get("expanded")
     ]
 
 
@@ -231,15 +231,14 @@ def da13_motion(screen: Screen, rb: RuleBase) -> list[Detection]:
 # ---------------------------------------------------------------- DA-15
 
 
-def _amount_elements(screen: Screen) -> list[tuple[Element, float]]:
+def _amount_elements(screen: Screen, unit: str = "KRW") -> list[tuple[Element, float]]:
     values = []
     for e in screen.of_type("price"):
         if not e.text:
             continue
-        for m in _MONEY.finditer(e.text):
+        pattern = _MONEY if unit == "KRW" else _RATE
+        for m in pattern.finditer(e.text):
             values.append((e, float(m.group(1).replace(",", ""))))
-        for m in _RATE.finditer(e.text):
-            values.append((e, float(m.group(1))))
     return values
 
 
@@ -250,14 +249,15 @@ def da15_price(flow: Flow, rb: RuleBase) -> list[Detection]:
     series = [(i, v) for i, v in series if v]
     if len(series) < 2:
         return []
+    states = {s.screen_index: s.state_id for s in flow.screens}
+    if states[series[0][0]] and states[series[0][0]] == states[series[-1][0]]:
+        return []
 
     first_idx, first = series[0]
     last_idx, last = series[-1]
     first_element, first_amount = max(first, key=lambda item: item[1])
     last_element, last_amount = max(last, key=lambda item: item[1])
     # 금액(원)만 대상. 이율은 아래 별도 체크에서 다룬다.
-    if first_amount < 100 or last_amount < 100:
-        return []
     if last_amount <= first_amount:
         return []
 
@@ -276,11 +276,14 @@ def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     예적금 Flow 를 위해 필요하다. 보험(금액 상승)과 방향이 반대다.
     """
     series = [
-        (s.screen_index, [(element, value) for element, value in _amount_elements(s) if value < 100])
+        (s.screen_index, _amount_elements(s, "percent"))
         for s in flow.screens
     ]
     series = [(i, v) for i, v in series if v]
     if len(series) < 2:
+        return []
+    states = {s.screen_index: s.state_id for s in flow.screens}
+    if states[series[0][0]] and states[series[0][0]] == states[series[-1][0]]:
         return []
 
     first_idx, first = series[0]

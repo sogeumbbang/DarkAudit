@@ -263,7 +263,7 @@ class AuditSchemaTest(unittest.TestCase):
                 provider, allow_visual_fallback=True
             ).analyze(request)
             self.assertEqual(result.semantic_findings[0].rule_id, "DA-04")
-            self.assertIn("스크린샷 전용 시각 판정", provider.audit_prompt)
+            self.assertIn("현재 입력 모드: 이미지 및 보조 증거", provider.audit_prompt)
 
     def test_screenshot_da03_bbox_snaps_to_prominent_cta(self):
         image = Path(__file__).resolve().parents[2] / "frontend/public/sample-audit/03-consent-pressure.png"

@@ -1,0 +1,135 @@
+{
+  "date": "2026-09-06",
+  "scope": "Local code, contract, browser and source-orchestration regression validation; not production certification",
+  "runtime": {
+    "python": "3.12",
+    "frontend_tests_node": "24.15.0",
+    "browser": "Google Chrome"
+  },
+  "checks": {
+    "ai_unittest": {
+      "command": "python -m unittest discover -s ai/tests -v",
+      "passed": 84
+    },
+    "backend_unittest": {
+      "command": "python -m unittest discover -s backend/tests -v",
+      "passed": 73
+    },
+    "frontend_vitest": {
+      "command": "npm run test",
+      "passed": 13
+    },
+    "browser": {
+      "command": "npx playwright test e2e/core-flow.spec.ts e2e/accessibility.spec.ts",
+      "passed": 26
+    },
+    "lint": "passed",
+    "build": "passed",
+    "rules_build": {
+      "passed": true,
+      "rule_count": 15
+    },
+    "changed_frontend_prettier": "passed",
+    "full_frontend_prettier": {
+      "passed": false,
+      "unchanged_existing_files": [
+        "e2e/core-flow.spec.ts",
+        "src/layouts/AppLayout.tsx",
+        "src/pages/landing/LandingPage.tsx",
+        "src/pages/support/SupportPages.tsx"
+      ]
+    },
+    "real_result_ui_axe": [
+      {
+        "width": 1440,
+        "violations": []
+      },
+      {
+        "width": 390,
+        "violations": []
+      }
+    ],
+    "diff_whitespace": "passed"
+  },
+  "live_model": {
+    "provider": "OpenAIResponsesProvider",
+    "model": "gpt-5.4-mini",
+    "schema_version": "1.2",
+    "endpoint_flow": "screens upload -> analyze -> dashboard summary",
+    "screens": 5,
+    "job_status": "completed",
+    "rule_counts": {
+      "DA-03": 2,
+      "DA-04": 1,
+      "DA-12": 1
+    },
+    "DA-07": "not_detected",
+    "DA-15": "insufficient_evidence",
+    "complete": false,
+    "successful_grounding_calls": 3,
+    "evidence": "live-screenshot-api.json"
+  },
+  "not_verified": [
+    "Actual Figma API with user token and file",
+    "Actual BrowserStack session with target APK",
+    "External site smart-navigation reachability",
+    "Repeated accuracy evaluation against reviewed gold labels",
+    "Remote CI"
+  ],
+  "source_sha256": {
+    ".github/workflows/validation.yml": "1d0aa7e97825588ad6174140b808adbd57340a89c9a7d98876c7dec93a3411bc",
+    "ai/README.md": "8afb2a0cad8280d666358889e69cbf155eae3b33ca74752e2ab2ac67d7a0e576",
+    "ai/browser/models.py": "be39c0fddf772f6e905f5884ece30457ca484c3244e1c4e04de49e621f7bd586",
+    "ai/browser/playwright_driver.py": "e893847bd7c82bd67b76a1024f0f8709e065a09a0bfbab6b88463aa31f2a722d",
+    "ai/cli.py": "602c7a58c50624729802fa8c484404545e7fe6c81c1454cea744464c5b74aa3d",
+    "ai/pipeline/assessment_contract.py": "cb5ce3036266aba7c4cacf7a39c3dc9daa0e131be0ef8c326928f3871044c986",
+    "ai/pipeline/baseline.py": "2999e631c22cc01c26e1919609559e1e5e2f9c521f306de35de4c73c9aaffa7f",
+    "ai/pipeline/quality.py": "6f2e9404831df3b477580406bab577e667269557e70a6c3dc8b01fc68e128e53",
+    "ai/pipeline/response_parser.py": "2f291f8be737b80d095a7f2f8eee6389dbb5ad5c97db6e9acfc4b0c4f8127587",
+    "ai/pipeline/rule_candidates.py": "6885a9e9bbb6b109069e5ce84eb0c9bae9bab4fdfd8dc406d1a2589112413899",
+    "ai/pipeline/web_audit.py": "2ed4ea8dc719db863504b6e88b482ab27be09de7166464084207c4861d4e01f8",
+    "ai/prompts/audit_v1.md": "35660e745e6e4b2fbaac1c09d405f3cf7ec6184eb66059e2fff0ddb3488e56c0",
+    "ai/prompts/dom.md": "dd8cf4e487792d6ddc6b8b64f960c1369221009f1d2b05da2f42723b9122a7bb",
+    "ai/prompts/system.md": "33c8b32ad0f0f52f86ecb46694b547079f138f99dbad4e34caf0ebd58b839e32",
+    "ai/prompts/visual.md": "fe2180f465ddaf9cf0b927d9dc9d874ed6e3b522d4fd739cb4aa9e399c476966",
+    "ai/providers/openai_provider.py": "efb5b2fe2fa0b47709a61abe572baedb54c8180e7c11c44376c8e812e346dc5b",
+    "ai/schemas/audit_input.schema.json": "7534270ea5fbb339b815124bf32f660943ba76568c6ab8913446d165802e7660",
+    "ai/schemas/audit_output.schema.json": "d6d45f9fe3c8eaa5e5f9038af88bfa73f4454a0ca673482b51ba6552550e8a4b",
+    "ai/schemas/audit_schema.py": "154422baafe5f9b4f6928d18dda862f6609446ac50f174a560538a6efafcecc3",
+    "ai/schemas/hybrid_audit_output.schema.json": "d6d45f9fe3c8eaa5e5f9038af88bfa73f4454a0ca673482b51ba6552550e8a4b",
+    "ai/specs/risk_spec.md": "3119900b458da2140c252e64e34b3d41218c0a6940d1c8a598ce1a180f0fae98",
+    "ai/specs/rule_ai_contract.md": "f43a7a3470004bb469449d10966c2ed85de6eacad66e981094cb3e1943fdc075",
+    "ai/tests/test_assessment_contract.py": "9ea9429863752aee4f722ac891e339f9777a7df1a5da8e73bc57c19b0f5d1aa7",
+    "ai/tests/test_audit_schema.py": "ae42f6d2e4173b8817af3a194223a586160f115483a87324d3d8a854a856de03",
+    "ai/tests/test_capture_evidence.py": "ec5e3347b778ccf0727af45fb1f6f88b7f11650bc95d226f7f42d983041e268e",
+    "ai/tests/test_hybrid_contract.py": "d2f1b1c11cbc708b98a317be9fc2ede06241038f60209b78180d4d9c8af33919",
+    "ai/tests/test_openai_provider.py": "1af5f793f17001c060a710711cdf24250d5f75032db51a68a4164aed0ed632e1",
+    "ai/tests/test_smoke.py": "5473a23739e90c9b602a2c3e9c1f5d366d7a6afa69fa6ba28ba72c87492addb8",
+    "ai/vision/candidate_grounding.py": "bb172fda7ba539c24de62270ec8233e8bba854ffcc231501b7aebcd42c265007",
+    "backend/README.md": "c250e091a738b86b4b5dcf13a70426d00cad29694065034e8a47ae99ebabc537",
+    "backend/api/android_import.py": "1522c554891d388304ddb2b43de9364a53afabefedb0327f62840b93c364f93d",
+    "backend/api/android_runner.py": "a017462934eb31a69d816dabc65cadcaac4d24a23f0202ccf9d4a6d4e3e2f7f2",
+    "backend/api/figma_frames.py": "e023766fcfcbd2c67b154603b5aa0eb0df056e4a59193152fe4cf6c39d70cf5e",
+    "backend/api/figma_import.py": "d3584ea5ad975a68f9cef80d376676732dd5c07d08d7762044fd82300ebf54af",
+    "backend/api/main.py": "350bf0dbfc24cb6e8df12f0b6d419b18819719ff33ff3b56324a4367470484a4",
+    "backend/api/schemas.py": "fdae69fba0647e8043304a44848ff01355e8f0c5f65772d97ad98b05346a31a7",
+    "backend/api/service.py": "c157786c15a913ad64dca53ba8e97ad20808a1bee86fd5ee95d40309693a2fec",
+    "backend/api/store.py": "a1bbe85e2cc4281c71201459f89ec553d7c9d966f8f3c9207b0bce155571bae4",
+    "backend/app/models.py": "529f0dc91255c13e589abef2c0d97e9fbed12422cb676dd26a07c47efe7f6b72",
+    "backend/app/rule_engine/checks.py": "db69b308ae2d15a200db59d737e4157688eca1d7677e01a468dac1bc17b0827a",
+    "backend/app/rule_engine/core.py": "b7c443bba45dca1e7a60161066727495d985b8c093fcbdcdb7a0846f8dd0ca97",
+    "backend/tests/support.py": "b7ba73989a472384640d194e8fcc0feabb68239bf921fbe2e33fdc6d14f8e6e2",
+    "backend/tests/test_analysis_sources.py": "7bc8792b3ee67a8b329c8b36fbe87be443293c0873ffe54cce6cec6567688419",
+    "backend/tests/test_android_runner.py": "b736aaadbb27ca396a38caeaaaf6bf1743d784976be9b98e5d1d1f01d9b48d2e",
+    "backend/tests/test_api.py": "61d58870e5a941de1ea9cf8f0856379cc625975b7ee0fbfcf8d7f5190d67556b",
+    "backend/tests/test_figma_import.py": "33d3ffeb951d5abd51b1d367304af9755b85b00c742b203fdccacfd9e433da45",
+    "backend/tests/test_figma_paths.py": "63b58e92fa485e7eea93baab0fb47f420157bc046cd06dfdac0dcd0cbb8c0fd5",
+    "backend/tests/test_rule_engine_bbox.py": "e83733a6a1bdc377ca294957d3b65701764e9b321ca22cb0c9dde1af3c7f8043",
+    "frontend/package-lock.json": "39c320a8b99fe6726f8c53ff647ab1e245ef21a9bfbb69db8058c8c3998c5741",
+    "frontend/package.json": "d4dba25aff5a7c60518ed9007d30045550bd5d10fe8cc539e1884e0fbab58e43",
+    "frontend/src/api/schemas.ts": "d3f299fee9cbd51774f0cc3fc141ee56eb537c89153b20a2b099b5a74bb8d52b",
+    "frontend/src/entities/audit/types.ts": "a23380dd8814aed0a12e85a90ddf63dca6395efbc09075ee691b20bac9d8c310",
+    "frontend/src/pages/overview/OverviewPage.test.tsx": "8e0def94e72d1348e92999f07d3191a71d15fb089d558613cb6fe4e711401c71",
+    "frontend/src/pages/overview/OverviewPage.tsx": "0de19e8c27ddf6c4e20aa2a7e9ffd37d1255e64e367c88f66ad571652c45c237"
+  }
+}

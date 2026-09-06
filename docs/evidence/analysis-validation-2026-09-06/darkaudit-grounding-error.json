@@ -1,0 +1,5 @@
+{
+  "status": "failed",
+  "type": "BadRequestError",
+  "message": "Error code: 400 - {'error': {'message': \"Invalid schema for response_format 'bbox_candidate_selection': In context=('properties', 'rule_id'), schema must have a 'type' key.\", 'type': 'invalid_request_error', 'param': 'text.format.schema', 'code': 'invalid_json_schema'}}"
+}

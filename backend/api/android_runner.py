@@ -37,6 +37,9 @@ class AndroidRunnerSettings:
     platform_version: str = "14.0"
     max_screens: int = 5
     command_timeout: float = 180.0
+    max_actions: int = 20
+    settle_timeout: float = 8.0
+    poll_interval: float = 0.25
 
     @classmethod
     def from_env(cls) -> "AndroidRunnerSettings":
@@ -53,6 +56,7 @@ class AndroidRunnerSettings:
             device_name=os.getenv("BROWSERSTACK_ANDROID_DEVICE", "Google Pixel 8"),
             platform_version=os.getenv("BROWSERSTACK_ANDROID_VERSION", "14.0"),
             max_screens=max(1, min(int(os.getenv("ANDROID_MAX_SCREENS", "5")), 5)),
+            max_actions=max(1, min(int(os.getenv("ANDROID_MAX_ACTIONS", "20")), 50)),
         )
 
 
@@ -62,6 +66,9 @@ class AndroidCapture:
     flow_step: str
     width: int
     height: int
+    ui_elements: tuple[dict[str, Any], ...] = ()
+    state_id: str = ""
+    path_id: str = "main"
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,7 +80,7 @@ class _TapCandidate:
     score: int
 
 
-def _tap_candidates(source: str, attempted: set[str]) -> list[_TapCandidate]:
+def _tap_candidates(source: str, attempted: set[str], goal: str | None = None) -> list[_TapCandidate]:
     try:
         root = ET.fromstring(source)
     except ET.ParseError as exc:
@@ -109,6 +116,8 @@ def _tap_candidates(source: str, attempted: set[str]) -> list[_TapCandidate]:
             score = 0
         if label:
             score += 2
+        goal_terms = [term for term in re.findall(r"[\w]+", (goal or "").casefold()) if len(term) >= 2]
+        score += 5 * sum(term in normalized for term in goal_terms)
         candidates.append(
             _TapCandidate((left + right) // 2, (top + bottom) // 2, label, signature, score)
         )
@@ -121,6 +130,8 @@ class BrowserStackAndroidRunner:
 
     def __init__(self, settings: AndroidRunnerSettings, *, client: httpx.Client | None = None):
         self.settings = settings
+        self.last_warnings: list[str] = []
+        self.last_paths: list[list[int]] = []
         self.client = client or httpx.Client(
             auth=(settings.username, settings.access_key), timeout=settings.command_timeout
         )
@@ -130,7 +141,7 @@ class BrowserStackAndroidRunner:
         app_url = self._upload(apk_path, audit_id)
         session_id = self._create_session(app_url, audit_id, goal)
         try:
-            return self._explore(session_id, target_dir)
+            return self._explore(session_id, target_dir, goal=goal)
         finally:
             try:
                 self._request("DELETE", f"{self.webdriver_url}/session/{session_id}")
@@ -180,14 +191,37 @@ class BrowserStackAndroidRunner:
             raise AndroidRunnerError("BrowserStack가 Android 세션 ID를 반환하지 않았습니다.")
         return str(session_id)
 
-    def _explore(self, session_id: str, target_dir: Path) -> list[AndroidCapture]:
+    def _stable_source(self, session_id: str) -> str:
+        deadline = time.monotonic() + self.settings.settle_timeout
+        previous = None
+        stable = 0
+        while True:
+            response = self._request("GET", f"{self.webdriver_url}/session/{session_id}/source")
+            source = response.json().get("value") or ""
+            stable = stable + 1 if source == previous else 0
+            if stable >= 2:
+                return source
+            if time.monotonic() >= deadline:
+                self.last_warnings.append("android_screen_not_stable")
+                return source
+            previous = source
+            time.sleep(self.settings.poll_interval)
+
+    def _explore(self, session_id: str, target_dir: Path, *, goal: str | None = None) -> list[AndroidCapture]:
         captures: list[AndroidCapture] = []
-        image_hashes: set[str] = set()
-        attempted: set[str] = set()
-        for step in range(self.settings.max_screens):
+        attempted: dict[str, set[str]] = {}
+        seen_states: set[str] = set()
+        scrolled: set[str] = set()
+        backed: set[str] = set()
+        path_number = 0
+        current_path: list[int] = []
+        index_by_state: dict[str, int] = {}
+        for step in range(self.settings.max_actions + 1):
+            source = self._stable_source(session_id)
+            # XML includes selected state and text, unlike a global button ID.
+            state_id = hashlib.sha256(source.encode()).hexdigest()
             image = self._screenshot(session_id)
-            digest = hashlib.sha256(image).hexdigest()
-            if digest not in image_hashes:
+            if state_id not in seen_states:
                 path = target_dir / f"{len(captures) + 1:02d}.png"
                 path.write_bytes(image)
                 try:
@@ -196,22 +230,49 @@ class BrowserStackAndroidRunner:
                         screenshot.verify()
                 except (UnidentifiedImageError, OSError) as exc:
                     raise AndroidRunnerError("Android 스크린샷이 올바른 PNG가 아닙니다.") from exc
-                captures.append(
-                    AndroidCapture(path, "앱 실행" if not captures else f"자동 탐색 {len(captures)}", width, height)
-                )
-                image_hashes.add(digest)
-            if step + 1 >= self.settings.max_screens:
+                captures.append(AndroidCapture(
+                    path, "앱 실행" if not captures else f"자동 탐색 {len(captures)}", width, height,
+                    _ui_elements(source, width, height), state_id, f"path-{path_number}",
+                ))
+                path.with_suffix(".xml").write_text(source, encoding="utf-8")
+                seen_states.add(state_id)
+                index_by_state[state_id] = len(captures)
+            index = index_by_state[state_id]
+            if index in current_path:
+                current_path = current_path[:current_path.index(index) + 1]
+            else:
+                current_path.append(index)
+            if len(captures) >= self.settings.max_screens:
+                self.last_warnings.append("android_screen_limit")
                 break
-
-            source_response = self._request("GET", f"{self.webdriver_url}/session/{session_id}/source")
-            source = source_response.json().get("value") or ""
-            candidates = _tap_candidates(source, attempted)
-            if not candidates:
+            if step >= self.settings.max_actions:
+                self.last_warnings.append("android_action_limit")
                 break
-            candidate = candidates[0]
-            attempted.add(candidate.signature)
-            self._tap(session_id, candidate.x, candidate.y)
-            time.sleep(1.5)
+            tried = attempted.setdefault(state_id, set())
+            candidates = _tap_candidates(source, tried, goal)
+            if candidates:
+                candidate = candidates[0]
+                tried.add(candidate.signature)
+                self._tap(session_id, candidate.x, candidate.y)
+            elif 'scrollable="true"' in source and state_id not in scrolled:
+                scrolled.add(state_id)
+                self._request("POST", f"{self.webdriver_url}/session/{session_id}/actions", json={
+                    "actions": [{"type":"pointer", "id":"finger", "parameters":{"pointerType":"touch"},
+                        "actions":[{"type":"pointerMove","duration":0,"x":width//2,"y":height*3//4},
+                                   {"type":"pointerDown","button":0},
+                                   {"type":"pointerMove","duration":500,"x":width//2,"y":height//4},
+                                   {"type":"pointerUp","button":0}]}]})
+            elif len(seen_states) > 1 and state_id not in backed:
+                backed.add(state_id)
+                self.last_paths.append(list(current_path))
+                path_number += 1
+                self._request("POST", f"{self.webdriver_url}/session/{session_id}/back")
+            else:
+                self.last_warnings.append("android_no_safe_navigation")
+                break
+        if current_path and current_path not in self.last_paths:
+            self.last_paths.append(current_path)
+        self.last_warnings = sorted(set(self.last_warnings))
         return captures
 
     def _screenshot(self, session_id: str) -> bytes:
@@ -254,3 +315,28 @@ class BrowserStackAndroidRunner:
         except ValueError:
             pass
         raise AndroidRunnerError(f"{action} 실패 ({response.status_code}){': ' + detail[:300] if detail else ''}")
+
+
+def _ui_elements(source: str, width: int, height: int) -> tuple[dict[str, Any], ...]:
+    """Normalize Android accessibility evidence without inventing CSS styles."""
+    try:
+        root = ET.fromstring(source)
+    except ET.ParseError as exc:
+        raise AndroidRunnerError("Android UI 계층을 읽지 못했습니다.") from exc
+    elements = []
+    for index, node in enumerate(root.iter()):
+        attrs = node.attrib
+        bounds = _BOUNDS_RE.fullmatch(attrs.get("bounds", ""))
+        if not bounds or attrs.get("displayed") == "false":
+            continue
+        left, top, right, bottom = map(int, bounds.groups())
+        left, top, right, bottom = max(0,left), max(0,top), min(width,right), min(height,bottom)
+        if right <= left or bottom <= top:
+            continue
+        text = (attrs.get("text") or attrs.get("content-desc") or "").strip()
+        element_type = "checkbox" if attrs.get("checkable") == "true" else "button" if attrs.get("clickable") == "true" else "text"
+        elements.append({"element_id": f"android-{index}", "element_type": element_type,
+            "text": text, "bbox": [left/width,top/height,(right-left)/width,(bottom-top)/height],
+            "state": {"checked": attrs.get("checked") == "true", "enabled": attrs.get("enabled") != "false"},
+            "source": "android-accessibility"})
+    return tuple(elements)

@@ -53,7 +53,14 @@ const finding: FindingDto = {
 describe("ScreenCanvas", () => {
   it("draws compact control marks outside the evidence pixels", () => {
     render(<ScreenCanvas alt="화면" finding={finding} screen={auditScreen} />);
-    fireEvent.load(screen.getByRole("img", { name: "화면" }));
+    const image = screen.getByRole("img", { name: "화면" });
+    fireEvent.load(image);
+    expect(screen.queryByText("DA-04")).not.toBeInTheDocument();
+    Object.defineProperties(image, {
+      offsetWidth: { value: 390 },
+      offsetHeight: { value: 844 },
+    });
+    fireEvent.load(image);
 
     const label = screen.getByText("DA-04");
     const mark = label.parentElement;

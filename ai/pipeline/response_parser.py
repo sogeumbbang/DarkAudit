@@ -120,4 +120,7 @@ def parse_hybrid_response(
     actual = [(screen.screen_id, screen.flow_step) for screen in output.screens]
     if actual != expected:
         raise ValueError("Response screens do not match request order")
+    if "rule_assessments" in raw:
+        from .assessment_contract import validate_assessments
+        validate_assessments(raw["rule_assessments"], output, request)
     return output

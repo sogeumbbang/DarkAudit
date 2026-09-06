@@ -1,0 +1,30 @@
+{
+  "url_crop_dom": {
+    "original_count": 1,
+    "crop_counts": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "figma_rest_flow": {
+    "expected": [
+      "1:1",
+      "1:2",
+      "1:3"
+    ],
+    "actual": [
+      "1:1"
+    ]
+  },
+  "figma_node_overrides_flow": [
+    "1:1"
+  ],
+  "apk_same_next_button_on_second_screen": 0,
+  "fake_visual_findings": 0,
+  "cli_default_allowed_rules": [
+    "DA-03",
+    "DA-12"
+  ]
+}

@@ -55,6 +55,11 @@ def init_db() -> None:
     if "flow_step" not in columns:
         with _engine.begin() as connection:
             connection.execute(text("ALTER TABLE screen ADD COLUMN flow_step VARCHAR(200)"))
+    for table, column in (("audit_run", "analysis_summary"), ("screen", "analysis_context")):
+        existing = {item["name"] for item in inspect(_engine).get_columns(table)}
+        if column not in existing:
+            with _engine.begin() as connection:
+                connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} JSON"))
 
 
 def utcnow() -> datetime:
@@ -283,6 +288,9 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
         findings=findings,
         runs=run_dtos,
         latestRunId=f"run-{run.id}" if run else None,
+        analysisSummary=(run.analysis_summary or {}) if run else (
+            (audit.runs[-1].analysis_summary or {}) if audit.runs else {}
+        ),
     )
 
 

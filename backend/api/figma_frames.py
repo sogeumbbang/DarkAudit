@@ -98,7 +98,7 @@ def select_frames(frames: list[FigmaFrame], *, target: str, max_frames: int) -> 
     """규칙 4-6: 모바일 폭 우선 -> 이름 숫자 prefix 또는 캔버스 순서 -> 최대 개수."""
     candidates = list(frames)
 
-    if target == "mobile-web":
+    if target in {"mobile-web", "app"}:
         narrow = [
             frame
             for frame in candidates
@@ -118,68 +118,117 @@ def select_frames(frames: list[FigmaFrame], *, target: str, max_frames: int) -> 
 
 
 def _prototype_destinations(node: dict[str, Any]) -> list[str]:
-    """노드와 자식의 prototype reaction에서 목적지 ID를 선언 순서대로 모은다."""
+    """Normalize REST interactions and legacy reactions, including conditions.
+
+    Only navigation edges lead to another screen; overlays, media actions and
+    component state swaps are not subsequent customer journey steps.
+    """
     destinations: list[str] = []
+
+    def visit_action(action: dict[str, Any]) -> None:
+        if action.get("type") == "CONDITIONAL":
+            for block in action.get("conditionalBlocks") or []:
+                for nested in block.get("actions") or []:
+                    visit_action(nested)
+        elif action.get("type") == "NODE" and action.get("navigation", "NAVIGATE") == "NAVIGATE":
+            destination = action.get("destinationId")
+            if destination and destination not in destinations:
+                destinations.append(destination)
+
     stack = [node]
     while stack:
         current = stack.pop()
-        for reaction in current.get("reactions") or []:
-            action = reaction.get("action") or {}
-            destination_id = action.get("destinationId")
-            if destination_id and destination_id not in destinations:
-                destinations.append(destination_id)
-        # Figma 응답 순서를 유지하기 위해 DFS stack에는 역순으로 넣는다.
+        if current.get("visible") is False:
+            continue
+        for interaction in current.get("interactions", current.get("reactions", [])) or []:
+            actions = interaction.get("actions")
+            if actions is None:
+                actions = [interaction.get("action") or {}]
+            for action in actions:
+                visit_action(action)
+        # Older REST exports exposed only transitionNodeID.
+        legacy = current.get("transitionNodeID")
+        if legacy and legacy not in destinations:
+            destinations.append(legacy)
         stack.extend(reversed(current.get("children") or []))
     return destinations
 
 
-def select_prototype_flow(
-    document: dict[str, Any], *, flow_name: str | None, max_frames: int
-) -> list[FigmaFrame]:
-    """Canvas의 flowStartingPoints에서 시작해 prototype 전환 그래프를 순회한다.
-
-    Figma REST 응답은 Flow 자체를 별도 객체로 주지 않고 각 Canvas의
-    ``flowStartingPoints``와 노드 ``reactions[].action.destinationId``로 표현한다.
-    이름이 주어지면 대소문자를 무시한 완전 일치, 부분 일치 순으로 시작점을 고른다.
-    """
+def select_prototype_paths(
+    document: dict[str, Any], *, flow_name: str | None, max_frames: int,
+    start_node_id: str | None = None, max_paths: int = 8,
+) -> tuple[list[list[FigmaFrame]], list[str]]:
+    """Keep branches separate and report every bounded or unavailable traversal."""
     starts: list[tuple[str, str]] = []
     for page in document.get("children") or []:
         for point in page.get("flowStartingPoints") or []:
-            node_id = point.get("nodeId")
-            if node_id:
-                starts.append((node_id, (point.get("name") or "").strip()))
-
+            if point.get("nodeId"):
+                starts.append((point["nodeId"], (point.get("name") or "").strip()))
+    if start_node_id:
+        found = find_node(document, start_node_id)
+        if found is None:
+            raise ValueError(f"node-id not found in file: {start_node_id}")
+        node, _ = found
+        if node.get("type") not in {"CANVAS", "SECTION", "DOCUMENT"}:
+            starts = [(start_node_id, flow_name or "selected node")]
+        else:
+            # A container link scopes the start, not the reachable destinations.
+            def descendants(item: dict[str, Any]) -> set[str]:
+                return {item.get("id", "")} | set().union(
+                    *(descendants(child) for child in item.get("children") or [])
+                )
+            ids = descendants(node)
+            starts = [item for item in starts if item[0] in ids]
     if not starts:
-        return []
-
-    selected_start = starts[0]
+        return [], ["figma_no_prototype_start"]
     query = (flow_name or "").strip().casefold()
-    if query:
+    if query and not (start_node_id and len(starts) == 1 and starts[0][0] == start_node_id):
         exact = [item for item in starts if item[1].casefold() == query]
         partial = [item for item in starts if query in item[1].casefold()]
-        matches = exact or partial
-        if not matches:
+        if not (exact or partial):
             available = ", ".join(name or node_id for node_id, name in starts[:5])
             raise ValueError(f"Flow를 찾을 수 없습니다. 사용 가능한 Flow: {available}")
-        selected_start = matches[0]
+        starts = exact or partial
 
-    pending = [selected_start[0]]
-    visited: set[str] = set()
-    frames: list[FigmaFrame] = []
-    while pending and len(frames) < max_frames:
-        node_id = pending.pop(0)
+    paths: list[list[FigmaFrame]] = []
+    warnings: list[str] = []
+
+    def walk(node_id: str, path: list[FigmaFrame], visited: set[str]) -> None:
+        if len(paths) >= max_paths:
+            warnings.append("figma_path_limit")
+            return
         if node_id in visited:
-            continue
-        visited.add(node_id)
+            warnings.append("figma_cycle")
+            if path:
+                paths.append(path)
+            return
         found = find_node(document, node_id)
-        if found is None:
-            continue
-        node, page_index = found
-        frame = frame_from_node(node, page_index)
-        if frame is not None:
-            frames.append(frame)
-        for destination_id in _prototype_destinations(node):
-            if destination_id not in visited and destination_id not in pending:
-                pending.append(destination_id)
+        frame = frame_from_node(*found) if found else None
+        if frame is None:
+            warnings.append("figma_missing_destination")
+            if path:
+                paths.append(path)
+            return
+        current = [*path, frame]
+        destinations = _prototype_destinations(found[0])
+        if not destinations or len(current) >= max_frames:
+            paths.append(current)
+            if destinations:
+                warnings.append("figma_screen_limit")
+            return
+        for destination in destinations:
+            walk(destination, current, visited | {node_id})
 
-    return frames
+    walk(starts[0][0], [], set())
+    return paths, sorted(set(warnings))
+
+
+def select_prototype_flow(
+    document: dict[str, Any], *, flow_name: str | None, max_frames: int,
+    start_node_id: str | None = None,
+) -> list[FigmaFrame]:
+    """Compatibility view of the first path, never a concatenation of branches."""
+    paths, _ = select_prototype_paths(
+        document, flow_name=flow_name, max_frames=max_frames, start_node_id=start_node_id
+    )
+    return paths[0] if paths else []

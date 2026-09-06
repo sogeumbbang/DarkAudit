@@ -49,6 +49,7 @@ def _rejects_temperature(exc: Exception) -> bool:
 
 
 class OpenAIResponsesProvider:
+    requires_rule_assessments = True
     def __init__(self, model: str, client: Any | None = None) -> None:
         if not model.strip(): raise ValueError("model is required")
         if client is None:
@@ -108,7 +109,7 @@ class OpenAIResponsesProvider:
             },
         ]
         for screen in request.screens:
-            content.append({"type": "input_text", "text": f"screen_id={screen.screen_id}; flow_step={screen.flow_step}"})
+            content.append({"type": "input_text", "text": f"screen_id={screen.screen_id}; flow_step={screen.flow_step}; profile={screen.profile}; path_id={screen.path_id}; state_id={screen.state_id}; evidence={json.dumps(screen.evidence, ensure_ascii=False)}"})
             content.append({"type": "input_image", "image_url": self._data_url(screen.image_path), "detail": "high"})
         content.append({"type": "input_text", "text": "Rule Context:\n" + json.dumps(rules, ensure_ascii=False)})
         content.append({
@@ -118,7 +119,7 @@ class OpenAIResponsesProvider:
                 + json.dumps(candidates or [], ensure_ascii=False)
                 + "\nContract: Return exactly one KEEP or REJECT candidate_decision for every "
                   "candidate_id above. Never copy a candidate into semantic_findings. "
-                  "Create semantic_findings only for the prompt's semantic-only checks. "
+                  "Create semantic_findings only for rules allowed by the prompt's input mode. "
                   "Do not calculate final severity; preserve Rule Base severity."
             ),
         })
@@ -169,8 +170,8 @@ class OpenAIResponsesProvider:
                 "reason",
             ],
             "properties": {
-                "rule_id": {"const": rule_id},
-                "selected_candidate_id": {"enum": [*candidate_ids, "NONE"]},
+                "rule_id": {"type": "string", "const": rule_id},
+                "selected_candidate_id": {"type": "string", "enum": [*candidate_ids, "NONE"]},
                 "semantic_confidence": {"type": "number", "minimum": 0, "maximum": 1},
                 "reason": {"type": "string"},
             },
@@ -191,7 +192,7 @@ class OpenAIResponsesProvider:
                         "text": (
                             f"Target evidence: {element_text}\n"
                             "The image is an enlarged crop; red boxes and C labels are candidate regions. "
-                            "Choose only the exact selected-state control.\n"
+                            f"{target_instruction}\n"
                             f"Candidates: {json.dumps(candidates, ensure_ascii=False)}"
                         ),
                     },
@@ -206,7 +207,7 @@ class OpenAIResponsesProvider:
                 "format": {
                     "type": "json_schema",
                     "name": "bbox_candidate_selection",
-                    "schema": schema,
+                    "schema": _responses_schema(schema),
                     "strict": True,
                 }
             },

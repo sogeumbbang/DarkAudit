@@ -24,10 +24,10 @@
 
 | 입력 | 화면 확보 | Rule Engine | LLM이 새로 만들 수 있는 Finding |
 | --- | --- | --- | --- |
-| URL 캡처 | Playwright 캡처 + DOM 추출 | 후보 생성 | 의미 판단이 필요한 `DA-03`, `DA-12`만 |
-| 스크린샷 업로드 · Figma | 이미지 + OCR/CV UI 후보 | 후보 우선 bbox grounding | 전체 (DOM이 없어 의미 판정은 시각 정보에 의존) |
+| URL 캡처 | Playwright 캡처 + DOM 추출 | 후보 생성 | DOM 확보 시 `DA-03`, `DA-12`; DOM 실패 시 시각 모드 5개 규칙 |
+| 스크린샷 · Figma · APK | 이미지 + OCR / Figma 노드 / Android XML | 시각 분석 후 좌표 검증 | MVP 5개 규칙; 근거 부족은 별도 표시 |
 
-URL 경로는 deterministic 규칙을 Rule Engine 후보로만 다룹니다. 모델이 이 정책을 벗어난
+DOM이 확보된 URL 경로는 deterministic 규칙을 Rule Engine 후보로 다룹니다. 모델이 이 정책을 벗어난
 Finding을 내면 해당 항목만 버리고 나머지 판정으로 진행하며, 버린 규칙은 경고 로그와
 `last_run_telemetry["dropped_semantic_rule_ids"]`에 남습니다.
 
@@ -38,7 +38,10 @@ Finding을 내면 해당 항목만 버리고 나머지 판정으로 진행하며
 필요 패키지가 포함되어 있습니다. 로컬에 Tesseract가 없어도 OCR 없는 다중 CV 후보로
 계속 분석하고, 명시적으로 끄려면 `DARKAUDIT_OCR_PROVIDER=none`을 설정합니다.
 
-백엔드와 AI 분석기는 Audit 하나당 순서가 있는 이미지 **1~5개**를 처리합니다.
+직접 스크린샷 업로드와 모델 요청 한 번의 한도는 **1~5개**입니다. URL은 수집 화면과
+페이지 조각을 모두 배치 처리하며, Figma의 프로토타입 분기는 각각 분석합니다.
+한도·수집 실패·모의 분석·검사 근거 부족은 결과의 `analysisSummary`에 표시됩니다.
+Finding 0건이나 작업 완료 상태만으로 모든 규칙에 문제가 없다는 뜻은 아닙니다.
 데이터는 SQLite(`data/darkaudit.db`, `DARKAUDIT_DB_URL`로 변경 가능)에 저장되고
 업로드·캡처 이미지는 `data/` 아래에 남습니다. 배포 환경에서 이 경로를 영속 디스크에
 연결하지 않으면 재시작할 때 함께 사라집니다.
@@ -61,7 +64,8 @@ docs/        라벨링 가이드와 프로젝트 문서
 
 ## 빠른 시작
 
-필요 환경은 Python 3.10 이상과 Node.js 20 이상입니다.
+필요 환경은 Python 3.10 이상과 Node.js 22.22.2+, 24.15.0+ 또는 26+입니다.
+CI는 배포 이미지와 같은 Python 3.12 및 Node.js 24.15.0을 사용합니다.
 
 ### 1. Python 환경 구성
 
@@ -83,7 +87,8 @@ python -m venv .venv
 ### 2. 백엔드 실행
 
 모델 호출 없이 전체 흐름을 확인하려면 저장소 루트에 `.env`를 만들고 Fake provider를
-사용합니다. Fake provider는 분석을 성공 처리하지만 Finding은 생성하지 않습니다.
+사용합니다. Fake provider는 이미지에서 의미 Finding을 만들지 않고 URL 후보는 KEEP합니다.
+결과에 모의 분석으로 표시되며 실제 탐지 정확도를 검증하는 용도로 사용하지 않습니다.
 
 ```dotenv
 DARKAUDIT_PROVIDER=fake
@@ -137,7 +142,8 @@ VITE_USE_MOCKS=false
 ## CLI 분석
 
 웹 애플리케이션을 거치지 않고 이미지 1~5개를 순서대로 분석할 수도 있습니다.
-CLI는 OpenAI provider를 사용하며 결과 JSON만 표준 출력으로 내보냅니다.
+CLI는 OpenAI provider를 사용하며 `{ "output": ..., "telemetry": ... }` JSON을 출력합니다.
+판정 계약은 [v1.2 인터페이스](ai/specs/rule_ai_contract.md)를 따릅니다.
 
 ```bash
 python -m ai.cli audit \
@@ -243,7 +249,7 @@ npm run build
 Playwright 브라우저를 설치한 환경에서는 E2E와 접근성 테스트도 실행할 수 있습니다.
 
 ```bash
-npx playwright install chromium
+npx playwright install chrome
 npm run test:e2e
 npm run test:a11y
 ```

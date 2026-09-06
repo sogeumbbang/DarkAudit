@@ -3,20 +3,12 @@ from __future__ import annotations
 import base64
 import io
 import os
-import shutil
-import tempfile
 import unittest
 import zipfile
-from pathlib import Path
 from unittest.mock import patch
 
 from PIL import Image
 
-_temp_root = Path(tempfile.mkdtemp(prefix="darkaudit-api-test-"))
-os.environ["DARKAUDIT_DB_URL"] = f"sqlite:///{(_temp_root / 'test.db').as_posix()}"
-os.environ["DARKAUDIT_PROVIDER"] = "fake"
-
-from fastapi.testclient import TestClient
 
 from ai.browser.models import CaptureArtifact, CaptureResult, ScanMode
 from ai.pipeline.web_audit import URLAuditResult, URLCaptureResult
@@ -32,12 +24,6 @@ from backend.api import service
 from backend.app.models import Audit, AuditRun, Element, FlowType, RunStatus, Screen
 from backend.app.rule_engine.severity import ScoredFinding
 
-service.DATA_DIR = _temp_root
-service.UPLOAD_DIR = _temp_root / "uploads"
-service.CAPTURE_DIR = _temp_root / "captures"
-service.ANDROID_DIR = _temp_root / "android"
-
-from backend.api.main import app
 
 
 class DetectingProvider:
@@ -74,17 +60,10 @@ class DetectingProvider:
         }
 
 
-class ApiIntegrationTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.client_context = TestClient(app)
-        cls.client = cls.client_context.__enter__()
+from backend.tests.support import IsolatedApiTestCase
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.client_context.__exit__(None, None, None)
-        shutil.rmtree(_temp_root, ignore_errors=True)
 
+class ApiIntegrationTest(IsolatedApiTestCase):
     def test_uploaded_audit_runs_pipeline_and_persists_finding(self) -> None:
         created = self.client.post(
             "/api/v1/audits",
@@ -160,7 +139,7 @@ class ApiIntegrationTest(unittest.TestCase):
             ),
             HybridAuditOutput(
                 audit_id=audit_id,
-                schema_version="1.1",
+                schema_version="1.2",
                 screens=(ScreenReference("mobile-initial", "mobile: initial viewport"),),
                 candidate_decisions=(),
                 semantic_findings=(),
@@ -225,7 +204,7 @@ class ApiIntegrationTest(unittest.TestCase):
         def analysis_for(request, _candidates):
             return HybridAuditOutput(
                 audit_id=audit_id,
-                schema_version="1.1",
+                schema_version="1.2",
                 screens=tuple(
                     ScreenReference(screen.screen_id, screen.flow_step)
                     for screen in request.screens
@@ -356,12 +335,12 @@ class ApiIntegrationTest(unittest.TestCase):
         rule_findings = [
             ScoredFinding(
                 rule_id="DA-04", label_unit="element", screen_index=1,
-                primary_id="keep-option", triggered_checks=["premium_option_default"],
+                primary_id="mobile-hybrid::keep-option", triggered_checks=["premium_option_default"],
                 measurements={"checked": True},
             ),
             ScoredFinding(
                 rule_id="DA-04", label_unit="element", screen_index=1,
-                primary_id="reject-footer", triggered_checks=["premium_option_default"],
+                primary_id="mobile-hybrid::reject-footer", triggered_checks=["premium_option_default"],
                 measurements={"checked": False},
             ),
         ]
@@ -372,7 +351,7 @@ class ApiIntegrationTest(unittest.TestCase):
             decisions = [
                 {
                     "candidate_id": item["candidate_id"],
-                    "decision": "KEEP" if item["primary_element_id"] == "keep-option" else "REJECT",
+                    "decision": "KEEP" if item["primary_element_id"] == "mobile-hybrid::keep-option" else "REJECT",
                     "reason": "Verified against the captured screen",
                     "confidence": 0.91,
                     "base_severity": "HIGH",
@@ -399,7 +378,7 @@ class ApiIntegrationTest(unittest.TestCase):
             }
             raw = {
                 "audit_id": audit_id,
-                "schema_version": "1.1",
+                "schema_version": "1.2",
                 "screens": [{"screen_id": "mobile-hybrid", "flow_step": "mobile: offer"}],
                 "candidate_decisions": decisions,
                 "semantic_findings": [semantic],
@@ -427,8 +406,8 @@ class ApiIntegrationTest(unittest.TestCase):
                 for candidate in seen_candidates
             )},
             {
-                ("DA-04:mobile-hybrid:keep-option", "mobile-hybrid", 1),
-                ("DA-04:mobile-hybrid:reject-footer", "mobile-hybrid", 1),
+                ("DA-04:mobile-hybrid:mobile-hybrid::keep-option", "mobile-hybrid", 1),
+                ("DA-04:mobile-hybrid:mobile-hybrid::reject-footer", "mobile-hybrid", 1),
             },
         )
         dashboard = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
@@ -559,7 +538,7 @@ class ApiIntegrationTest(unittest.TestCase):
                 output = HybridAuditOutput.from_dict(
                     {
                         "audit_id": f"audit-{audit.id}",
-                        "schema_version": "1.1",
+                        "schema_version": "1.2",
                         "screens": [{"screen_id": "screen-01", "flow_step": "mobile: 옵션 선택"}],
                         "candidate_decisions": [],
                         "semantic_findings": [{
@@ -644,7 +623,7 @@ class ApiIntegrationTest(unittest.TestCase):
             output = HybridAuditOutput.from_dict(
                 {
                     "audit_id": audit_id,
-                    "schema_version": "1.1",
+                    "schema_version": "1.2",
                     "screens": [
                         {"screen_id": "initial", "flow_step": "mobile: initial price"},
                         {"screen_id": "final", "flow_step": "mobile: final price"},

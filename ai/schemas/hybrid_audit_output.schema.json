@@ -1,41 +1,1094 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DarkAudit Hybrid Audit Output v1.1",
+  "title": "DarkAudit Hybrid Audit Output v1.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "audit_id", "schema_version", "screens", "candidate_decisions", "semantic_findings"
+    "audit_id",
+    "schema_version",
+    "screens",
+    "candidate_decisions",
+    "semantic_findings",
+    "rule_assessments"
   ],
   "properties": {
-    "audit_id": {"type": "string", "minLength": 1},
-    "schema_version": {"const": "1.1"},
+    "audit_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
     "screens": {
       "type": "array",
       "minItems": 1,
       "maxItems": 5,
-      "items": {"$ref": "audit_output.schema.json#/$defs/screen"}
+      "items": {
+        "$ref": "#/$defs/screen"
+      }
     },
     "candidate_decisions": {
       "type": "array",
-      "items": {"$ref": "#/$defs/candidate_decision"}
+      "items": {
+        "$ref": "#/$defs/candidate_decision"
+      }
     },
     "semantic_findings": {
       "type": "array",
-      "items": {"$ref": "audit_output.schema.json#/$defs/detection"}
+      "items": {
+        "$ref": "#/$defs/detection"
+      }
+    },
+    "rule_assessments": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/DA_03_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_03_not_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_04_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_04_not_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_07_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_07_not_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_12_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_12_not_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_15_detected"
+          },
+          {
+            "$ref": "#/$defs/DA_15_not_detected"
+          }
+        ]
+      }
     }
   },
   "$defs": {
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "screen_id",
+        "flow_step"
+      ],
+      "properties": {
+        "screen_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "flow_step": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "bbox": {
+      "type": "array",
+      "description": "[x, y, width, height] normalized to the screen, each value in 0..1",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "where": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "screen_ids",
+        "element",
+        "location"
+      ],
+      "properties": {
+        "screen_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "element": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "related_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "screen_id",
+        "element",
+        "bbox"
+      ],
+      "properties": {
+        "screen_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "element": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bbox": {
+          "$ref": "#/$defs/bbox"
+        }
+      }
+    },
     "candidate_decision": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_id", "decision", "reason", "confidence", "base_severity"],
+      "required": [
+        "candidate_id",
+        "decision",
+        "reason",
+        "confidence",
+        "base_severity"
+      ],
       "properties": {
-        "candidate_id": {"type": "string", "minLength": 1},
-        "decision": {"enum": ["KEEP", "REJECT"]},
-        "reason": {"type": "string", "minLength": 1},
-        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-        "base_severity": {"enum": ["REVIEW", "HIGH"]}
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision": {
+          "enum": [
+            "KEEP",
+            "REJECT"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "base_severity": {
+          "enum": [
+            "REVIEW",
+            "HIGH"
+          ]
+        }
       }
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_type",
+        "risk_name",
+        "where",
+        "bbox",
+        "related_elements",
+        "what",
+        "observation",
+        "rule_id",
+        "why",
+        "severity",
+        "confidence",
+        "fix"
+      ],
+      "properties": {
+        "risk_type": {
+          "enum": [
+            "PRESELECTED_OPTION",
+            "VISUAL_HIERARCHY_DISTORTION",
+            "HIDDEN_INFORMATION",
+            "EMOTIONAL_LANGUAGE",
+            "SEQUENTIAL_PRICE_DISCLOSURE"
+          ]
+        },
+        "risk_name": {
+          "enum": [
+            "특정옵션의 사전선택",
+            "잘못된 계층구조",
+            "숨겨진 정보",
+            "감정적 언어",
+            "순차공개 가격책정"
+          ]
+        },
+        "where": {
+          "$ref": "#/$defs/where"
+        },
+        "bbox": {
+          "$ref": "#/$defs/bbox"
+        },
+        "related_elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/related_element"
+          }
+        },
+        "what": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_id": {
+          "enum": [
+            "DA-03",
+            "DA-04",
+            "DA-07",
+            "DA-12",
+            "DA-15"
+          ]
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "enum": [
+            "REVIEW",
+            "HIGH"
+          ],
+          "description": "Rule Base base_severity before combination or mitigation scoring"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fix": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "risk_type": {
+                "const": "PRESELECTED_OPTION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rule_id": {
+                "const": "DA-04"
+              },
+              "risk_name": {
+                "const": "특정옵션의 사전선택"
+              },
+              "severity": {
+                "const": "HIGH"
+              },
+              "where": {
+                "properties": {
+                  "screen_ids": {
+                    "maxItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk_type": {
+                "const": "VISUAL_HIERARCHY_DISTORTION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rule_id": {
+                "const": "DA-03"
+              },
+              "risk_name": {
+                "const": "잘못된 계층구조"
+              },
+              "severity": {
+                "const": "HIGH"
+              },
+              "where": {
+                "properties": {
+                  "screen_ids": {
+                    "maxItems": 1
+                  }
+                }
+              },
+              "related_elements": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk_type": {
+                "const": "HIDDEN_INFORMATION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rule_id": {
+                "const": "DA-07"
+              },
+              "risk_name": {
+                "const": "숨겨진 정보"
+              },
+              "severity": {
+                "const": "HIGH"
+              },
+              "where": {
+                "properties": {
+                  "screen_ids": {
+                    "maxItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk_type": {
+                "const": "EMOTIONAL_LANGUAGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rule_id": {
+                "const": "DA-12"
+              },
+              "risk_name": {
+                "const": "감정적 언어"
+              },
+              "severity": {
+                "const": "REVIEW"
+              },
+              "where": {
+                "properties": {
+                  "screen_ids": {
+                    "maxItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk_type": {
+                "const": "SEQUENTIAL_PRICE_DISCLOSURE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rule_id": {
+                "const": "DA-15"
+              },
+              "risk_name": {
+                "const": "순차공개 가격책정"
+              },
+              "severity": {
+                "const": "HIGH"
+              },
+              "where": {
+                "properties": {
+                  "screen_ids": {
+                    "minItems": 2
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DA_03_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-03"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ]
+          },
+          "minItems": 1
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/nonempty_assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_03_not_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-03"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_detected",
+            "insufficient_evidence",
+            "not_supported"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "visual_hierarchy",
+              "optional_looks_mandatory"
+            ]
+          }
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_04_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-04"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "selected_paid_option"
+            ]
+          },
+          "minItems": 1
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_04_not_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-04"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_detected",
+            "insufficient_evidence",
+            "not_supported"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "selected_paid_option"
+            ]
+          }
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_07_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-07"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ]
+          },
+          "minItems": 1
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_07_not_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-07"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_detected",
+            "insufficient_evidence",
+            "not_supported"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "small_important_text",
+              "low_contrast_important_text",
+              "hidden_important_details"
+            ]
+          }
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_12_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-12"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ]
+          },
+          "minItems": 1
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_12_not_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-12"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_detected",
+            "insufficient_evidence",
+            "not_supported"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "loss_framed_decline",
+              "trivializing_expression"
+            ]
+          }
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_15_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-15"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "detected"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ]
+          },
+          "minItems": 1
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/nonempty_assessment_price_comparisons"
+        }
+      }
+    },
+    "DA_15_not_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "status",
+        "reason",
+        "screen_ids",
+        "checks",
+        "choice_pairs",
+        "price_comparisons"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "const": "DA-15"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_detected",
+            "insufficient_evidence",
+            "not_supported"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/assessment_reason"
+        },
+        "screen_ids": {
+          "$ref": "#/$defs/assessment_screen_ids"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "late_mandatory_cost",
+              "rate_deterioration"
+            ]
+          }
+        },
+        "choice_pairs": {
+          "$ref": "#/$defs/assessment_choice_pairs"
+        },
+        "price_comparisons": {
+          "$ref": "#/$defs/assessment_price_comparisons"
+        }
+      }
+    },
+    "assessment_reason": {
+      "type": "string"
+    },
+    "assessment_screen_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assessment_choice_pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "screen_id",
+          "accept_text",
+          "decline_text",
+          "decline_is_action"
+        ],
+        "properties": {
+          "screen_id": {
+            "type": "string"
+          },
+          "accept_text": {
+            "type": "string"
+          },
+          "decline_text": {
+            "type": "string"
+          },
+          "decline_is_action": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "assessment_price_comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "product",
+          "initial_screen_id",
+          "final_screen_id",
+          "unit",
+          "initial_amount",
+          "final_amount",
+          "same_product",
+          "explained_by_user_choice",
+          "initially_disclosed"
+        ],
+        "properties": {
+          "product": {
+            "type": "string"
+          },
+          "initial_screen_id": {
+            "type": "string"
+          },
+          "final_screen_id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "KRW",
+              "percent"
+            ]
+          },
+          "initial_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "final_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "same_product": {
+            "type": "boolean"
+          },
+          "explained_by_user_choice": {
+            "type": "boolean"
+          },
+          "initially_disclosed": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "nonempty_assessment_choice_pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "screen_id",
+          "accept_text",
+          "decline_text",
+          "decline_is_action"
+        ],
+        "properties": {
+          "screen_id": {
+            "type": "string"
+          },
+          "accept_text": {
+            "type": "string"
+          },
+          "decline_text": {
+            "type": "string"
+          },
+          "decline_is_action": {
+            "type": "boolean"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "nonempty_assessment_price_comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "product",
+          "initial_screen_id",
+          "final_screen_id",
+          "unit",
+          "initial_amount",
+          "final_amount",
+          "same_product",
+          "explained_by_user_choice",
+          "initially_disclosed"
+        ],
+        "properties": {
+          "product": {
+            "type": "string"
+          },
+          "initial_screen_id": {
+            "type": "string"
+          },
+          "final_screen_id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "KRW",
+              "percent"
+            ]
+          },
+          "initial_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "final_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "same_product": {
+            "type": "boolean"
+          },
+          "explained_by_user_choice": {
+            "type": "boolean"
+          },
+          "initially_disclosed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "minItems": 1
     }
   }
 }

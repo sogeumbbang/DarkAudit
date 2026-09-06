@@ -87,8 +87,9 @@ def _run_image_audit(args: argparse.Namespace) -> int:
     if not args.model: raise SystemExit("Set --model or DARKAUDIT_MODEL")
     request = LLMAuditRequest(args.audit_id or f"audit_{uuid.uuid4().hex[:12]}",
                               tuple(AuditScreen(sid, step, image) for sid, step, image in zip(ids, args.flow_step, args.image)))
-    result = BaselineAuditPipeline(OpenAIResponsesProvider(args.model)).analyze(request)
-    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    pipeline = BaselineAuditPipeline(OpenAIResponsesProvider(args.model), allow_visual_fallback=True)
+    result = pipeline.analyze(request)
+    print(json.dumps({"output": result.to_dict(), "telemetry": pipeline.last_run_telemetry}, ensure_ascii=False, indent=2))
     return 0
 
 

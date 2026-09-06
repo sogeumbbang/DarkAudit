@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
 DEVICE_PROFILES = frozenset({"desktop", "mobile", "iphone"})
 
 
@@ -106,6 +106,10 @@ class AuditScreen:
     screen_id: str
     flow_step: str
     image_path: Path
+    profile: str = "unspecified"
+    path_id: str = "main"
+    state_id: str = ""
+    evidence: tuple[dict[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "image_path", Path(self.image_path))
@@ -388,6 +392,8 @@ class HybridAuditOutput:
         default=SEMANTIC_ONLY_RULE_IDS, repr=False, compare=False
     )
 
+    rule_assessments: tuple[dict[str, Any], ...] = ()
+
     def __post_init__(self) -> None:
         if not self.audit_id.strip() or self.schema_version != SCHEMA_VERSION:
             raise ValueError("invalid hybrid audit identity")
@@ -446,7 +452,7 @@ class HybridAuditOutput:
         allowed_semantic_rule_ids: frozenset[str] = SEMANTIC_ONLY_RULE_IDS,
     ) -> "HybridAuditOutput":
         fields = {"audit_id", "schema_version", "screens", "candidate_decisions", "semantic_findings"}
-        if not isinstance(value, dict) or set(value) != fields:
+        if not isinstance(value, dict) or set(value) not in (fields, fields | {"rule_assessments"}):
             raise ValueError("invalid HybridAuditOutput fields")
         if not isinstance(value["candidate_decisions"], list) or not isinstance(value["semantic_findings"], list):
             raise ValueError("hybrid output collections must be arrays")
@@ -458,6 +464,7 @@ class HybridAuditOutput:
             semantic_findings=tuple(Detection.from_dict(item) for item in value["semantic_findings"]),
             candidates=tuple(candidates),
             allowed_semantic_rule_ids=allowed_semantic_rule_ids,
+            rule_assessments=tuple(value.get("rule_assessments", [])),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -467,6 +474,7 @@ class HybridAuditOutput:
             "screens": [asdict(screen) for screen in self.screens],
             "candidate_decisions": [asdict(decision) for decision in self.candidate_decisions],
             "semantic_findings": [asdict(finding) for finding in self.semantic_findings],
+            **({"rule_assessments":list(self.rule_assessments)} if self.rule_assessments else {}),
         }
 
     @property

@@ -1,4 +1,5 @@
 import tempfile
+import json
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -30,6 +31,22 @@ class RejectsTemperature:
 
 
 class OpenAIProviderTest(unittest.TestCase):
+    def test_production_schema_references_have_no_unsupported_siblings(self):
+        directory = Path(__file__).resolve().parents[1] / "schemas"
+        schema = json.loads((directory / "audit_output.schema.json").read_text())
+        self.assertEqual(schema, json.loads((directory / "hybrid_audit_output.schema.json").read_text()))
+        def inspect(node):
+            if isinstance(node, dict):
+                if "$ref" in node:
+                    self.assertEqual(set(node), {"$ref"})
+                    self.assertIn(node["$ref"].split("/")[-1], schema["$defs"])
+                for value in node.values():
+                    inspect(value)
+            elif isinstance(node, list):
+                for value in node:
+                    inspect(value)
+        inspect(_responses_schema(schema))
+
     def test_removes_unsupported_conditional_schema_keywords(self):
         schema = {
             "type": "object",
@@ -69,7 +86,7 @@ class OpenAIProviderTest(unittest.TestCase):
             )
             self.assertIn("exactly one KEEP or REJECT", candidate_text)
             self.assertIn("Never copy a candidate into semantic_findings", candidate_text)
-            self.assertIn("semantic-only checks", candidate_text)
+            self.assertIn("input mode", candidate_text)
             self.assertIn("Do not calculate final severity", candidate_text)
             self.assertTrue(responses.kwargs["text"]["format"]["strict"])
             # 회차 간 결과가 흔들리면 Before/After 비교를 신뢰할 수 없다.
@@ -111,6 +128,8 @@ class OpenAIProviderTest(unittest.TestCase):
 
             schema = responses.kwargs["text"]["format"]["schema"]
             self.assertEqual(schema["properties"]["rule_id"]["const"], "DA-04")
+            for field in schema["properties"].values():
+                self.assertIn("type", field)
             self.assertEqual(
                 schema["properties"]["selected_candidate_id"]["enum"],
                 ["C1", "NONE"],
@@ -131,6 +150,7 @@ class OpenAIProviderTest(unittest.TestCase):
             cta_schema = responses.kwargs["text"]["format"]["schema"]
             self.assertEqual(cta_schema["properties"]["rule_id"]["const"], "DA-03")
             self.assertIn("prominent filled CTA", responses.kwargs["instructions"])
+            self.assertNotIn("selected-state control", responses.kwargs["input"][0]["content"][0]["text"])
 
     def test_other_errors_are_not_swallowed(self):
         """인증 실패 같은 오류까지 temperature 문제로 오인해 재시도하면 안 된다."""
