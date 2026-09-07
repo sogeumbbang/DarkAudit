@@ -35,7 +35,7 @@ class AndroidRunnerSettings:
     access_key: str
     device_name: str = "Google Pixel 8"
     platform_version: str = "14.0"
-    max_screens: int = 5
+    max_screens: int = 6
     command_timeout: float = 180.0
     max_actions: int = 20
     settle_timeout: float = 8.0
@@ -55,7 +55,7 @@ class AndroidRunnerSettings:
             access_key=access_key,
             device_name=os.getenv("BROWSERSTACK_ANDROID_DEVICE", "Google Pixel 8"),
             platform_version=os.getenv("BROWSERSTACK_ANDROID_VERSION", "14.0"),
-            max_screens=max(1, min(int(os.getenv("ANDROID_MAX_SCREENS", "5")), 5)),
+            max_screens=max(1, min(int(os.getenv("ANDROID_MAX_SCREENS", "6")), 6)),
             max_actions=max(1, min(int(os.getenv("ANDROID_MAX_ACTIONS", "20")), 50)),
         )
 

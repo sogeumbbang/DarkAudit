@@ -1,0 +1,164 @@
+[
+  {
+    "scenario": "travel",
+    "step": 1,
+    "title": "환전부터 여행까지\n수수료 걱정 없이",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "travel",
+    "step": 2,
+    "title": "여행 준비,\n이대로면 충분해요",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "travel",
+    "step": 3,
+    "title": "좋은 환율을\n놓치지 않을 방법",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "travel",
+    "step": 4,
+    "title": "이 혜택, 정말\n그냥 버리실 건가요?",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "travel",
+    "step": 5,
+    "title": "할인 소식을\n정말 안 받으시나요?",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "travel",
+    "step": 6,
+    "title": "여행 준비의\n마지막 확인",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 1,
+    "title": "아픈 날에도\n걱정은 작아지도록",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 2,
+    "title": "빠짐없이 챙긴\n우리 아이의 보장",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 3,
+    "title": "우리 아이에게\n꼭 맞는 소식",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 4,
+    "title": "치료비 때문에\n미안해지지 않도록",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 5,
+    "title": "보장 준비가\n거의 끝났어요",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "pet",
+    "step": 6,
+    "title": "우리 아이의\n안심 플랜",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 1,
+    "title": "신용의 가능성,\n오늘부터 더 높게",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 2,
+    "title": "좋은 습관이\n계속 이어지도록",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 3,
+    "title": "가능한 혜택을\n모두 찾아드릴게요",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 4,
+    "title": "여기서 멈추면\n노력이 아깝잖아요",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 5,
+    "title": "조금만 더\n확인해 주세요",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  },
+  {
+    "scenario": "credit",
+    "step": 6,
+    "title": "다음 달부터\n이 금액으로 계속",
+    "geometry": {
+      "width": 393,
+      "height": 852
+    }
+  }
+]

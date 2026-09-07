@@ -1,4 +1,7 @@
+import json
+from pathlib import Path
 import unittest
+from backend.api.demo_inputs import DEFAULT_FIGMA_FLOW
 from backend.api.figma_frames import select_prototype_paths
 from backend.api.figma_import import _resolve_frames
 from backend.api.figma_client import FigmaSettings
@@ -61,6 +64,18 @@ def document():
 
 
 class FigmaPathsTest(unittest.TestCase):
+    def test_demo_named_flow_excludes_original_single_screen(self):
+        fixture = Path(__file__).resolve().parents[2] / "demo/figma/online/graph.json"
+        exported = json.loads(fixture.read_text(encoding="utf-8"))
+        paths, warnings = select_prototype_paths(
+            exported["document"], flow_name=DEFAULT_FIGMA_FLOW, max_frames=6
+        )
+        self.assertEqual(
+            [[frame.node_id for frame in path] for path in paths],
+            [["17:2", "19:3", "20:4", "23:5", "23:26", "24:7"]],
+        )
+        self.assertEqual(warnings, [])
+
     def test_rest_conditional_branches_are_separate_paths(self):
         paths, warnings = select_prototype_paths(
             document(), flow_name="Join", max_frames=5

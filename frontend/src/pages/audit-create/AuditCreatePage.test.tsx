@@ -25,6 +25,24 @@ async function expectCompleted() {
 }
 
 describe("AuditCreatePage", () => {
+  it("loads all six pet insurance screenshots in flow order", async () => {
+    server.use(
+      http.get(
+        "*/sample-audit/:filename",
+        () =>
+          new HttpResponse(new Uint8Array([137, 80, 78, 71]), {
+            headers: { "Content-Type": "image/png" },
+          }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "스크린샷 데모 불러오기" }));
+    expect(await screen.findByLabelText("6번 화면 단계 이름")).toHaveValue("최종 보험료");
+    expect(screen.getByLabelText("1번 화면 단계 이름")).toHaveValue("보장 소개");
+    expect(screen.getAllByRole("button", { name: "화면 삭제" })).toHaveLength(6);
+  });
+
   it("loads URL demo settings and submits the real capture flow", async () => {
     const user = userEvent.setup();
     let capture: Record<string, unknown> | undefined;
@@ -43,12 +61,53 @@ describe("AuditCreatePage", () => {
     const button = await screen.findByRole("button", { name: "URL 데모 불러오기" });
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
-    expect(screen.getByLabelText("진단 이름")).toHaveValue("URL 데모 · 감정적 언어 검사");
+    expect(screen.getByLabelText("진단 이름")).toHaveValue("URL 데모 · 로밍 패스 환전 멤버십");
     expect((screen.getByLabelText("검사할 웹사이트 주소") as HTMLInputElement).value).toContain(
-      "/demo/web/index.html?step=4",
+      "/demo/web/index.html?step=1",
     );
     await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
-    await waitFor(() => expect(capture).toMatchObject({ mode: "quick", profiles: ["mobile"] }));
+    await waitFor(() => expect(capture).toMatchObject({ mode: "smart", profiles: ["mobile"] }));
+  });
+
+  it("selects the named six-screen prototype when supplied by demo configuration", async () => {
+    let imported: Record<string, unknown> | undefined;
+    server.use(
+      http.get("*/api/v1/demo-inputs", () =>
+        HttpResponse.json({
+          website: { url: "/demo/web/index.html?step=1", available: true },
+          figma: {
+            fileUrl: "https://www.figma.com/design/demo-file/Lit",
+            available: true,
+            reason: null,
+            selectionMode: "prototype-flow",
+            flowName: "릿 크레딧 · 6단계",
+          },
+          android: { downloadUrl: "/demo/darkaudit-demo.apk", available: false, reason: null },
+        }),
+      ),
+      http.post("*/api/v1/audits/:id/figma", async ({ request }) => {
+        imported = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          jobId: "figma-demo",
+          auditId: "demo",
+          status: "queued",
+          progress: 0,
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByRole("button", { name: "Figma 데모 불러오기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    expect(screen.getByLabelText(/Flow 이름 또는 설명/)).toHaveValue("릿 크레딧 · 6단계");
+    await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
+    await waitFor(() =>
+      expect(imported).toMatchObject({
+        selectionMode: "prototype-flow",
+        flowName: "릿 크레딧 · 6단계",
+      }),
+    );
   });
 
   it("loads the configured Figma file and selects all frames", async () => {
@@ -73,7 +132,7 @@ describe("AuditCreatePage", () => {
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
     expect(await screen.findByText("darkaudit-demo.apk")).toBeInTheDocument();
-    expect(screen.getByLabelText("진단 이름")).toHaveValue("APK 데모 · 모아 투자관리 검사");
+    expect(screen.getByLabelText("진단 이름")).toHaveValue("APK 데모 · 모아 소액투자");
     await user.click(screen.getByRole("button", { name: "분석 시작하기" }));
     await expectCompleted();
   }, 10_000);

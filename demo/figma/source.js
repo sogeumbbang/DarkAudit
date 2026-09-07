@@ -1,0 +1,101 @@
+// Portable Figma development plugin: six editable screens with native text and navigation.
+// Run in a blank Design file. The existing pages and designs are preserved.
+(async () => {
+  const available = await figma.listAvailableFontsAsync();
+  const family = ["Noto Sans KR", "Noto Sans CJK KR", "Pretendard"].find(name => available.some(f => f.fontName.family === name));
+  if (!family) throw new Error("Install Noto Sans KR before running this demo generator.");
+  const regular = available.find(f => f.fontName.family === family && f.fontName.style === "Regular").fontName;
+  const bold = available.find(f => f.fontName.family === family && f.fontName.style === "Bold").fontName;
+  await Promise.all([figma.loadFontAsync(regular), figma.loadFontAsync(bold)]);
+  const pageName = "Lit Credit · 6-screen demo";
+  if (figma.root.children.some(p => p.name === pageName)) throw new Error("This demo already exists. Use a new blank file to generate another copy.");
+  const page = figma.createPage(); page.name = pageName;
+  const foundations = figma.createPage(); foundations.name = "Lit · Foundations and components";
+  const collection = figma.variables.createVariableCollection("Lit / Demo");
+  const colors = { ink: "27223c", muted: "858094", accent: "7050e5", soft: "f1eeff", white: "ffffff", faint: "c2c5cb", line: "e8e8ee", pressure: "a44835" };
+  const rgb = hex => ({r:parseInt(hex.slice(0,2),16)/255,g:parseInt(hex.slice(2,4),16)/255,b:parseInt(hex.slice(4,6),16)/255});
+  const variables = {};
+  for (const [name, hex] of Object.entries(colors)) {
+    const variable = figma.variables.createVariable(`color/${name}`, collection, "COLOR");
+    variable.scopes = ["FRAME_FILL", "SHAPE_FILL", "TEXT_FILL", "STROKE_COLOR"];
+    variable.setValueForMode(collection.defaultModeId, rgb(hex));
+    variable.setVariableCodeSyntax("WEB", `--lit-${name}`); variables[name] = variable;
+  }
+  function paint(name) { return [figma.variables.setBoundVariableForPaint({type:"SOLID",color:rgb(colors[name])},"color",variables[name])]; }
+  function frame(parent, name, width, gap=12, fill=null, padding=0) {
+    const node=figma.createFrame(); node.name=name; node.layoutMode="VERTICAL"; node.primaryAxisSizingMode="AUTO";
+    node.counterAxisSizingMode="FIXED"; node.resize(width,10); node.primaryAxisSizingMode="AUTO"; node.itemSpacing=gap;
+    node.paddingTop=node.paddingBottom=node.paddingLeft=node.paddingRight=padding;
+    node.fills=fill ? paint(fill) : []; node.clipsContent=false; parent.appendChild(node); return node;
+  }
+  function text(parent, value, size=12, color="ink", weight=false) {
+    const node=figma.createText(); node.name=value.split("\n")[0].slice(0,45); node.fontName=weight?bold:regular;
+    node.fontSize=size; node.lineHeight={unit:"PERCENT",value:135}; node.characters=value; node.fills=paint(color);
+    parent.appendChild(node); node.resize(parent.width-parent.paddingLeft-parent.paddingRight,20);
+    node.textAutoResize="HEIGHT"; return node;
+  }
+  const title = frame(foundations,"Documentation",480,16,"white",24); title.x=100; title.y=100;
+  text(title,"lit · CREDIT MEMBERSHIP",26,"accent",true);
+  text(title,"가상 신용관리 구독 / 6단계 흐름",18,"ink",true);
+  text(title,"DarkAudit 평가용 합성 화면입니다. 실제 서비스, 금융정보 입력, 결제는 없습니다.\n01 체험 → 02 설정 → 03 정보 제공 → 04 해지 만류 → 05 해지 절차 → 06 갱신금액");
+  text(title,"의도한 유형: 숨겨진 정보, 기본 선택, 시각적 위계 왜곡, 감정적 압박, 순차적 가격 공개. 과장된 표현과 해지 방해는 추가 정성 검토 대상입니다.");
+  text(title,"서체: " + family + " / 29 · 19 · 12 · 10 · 8px\n색상: Violet #7050E5 / Ink #27223C / Surface #F1EEFF\n화면 크기: 393 × 852 / 기본 여백: 24px");
+  const primary=figma.createComponent(); primary.name="Button / Primary"; foundations.appendChild(primary);
+  primary.x=650; primary.y=100; primary.resize(345,52); primary.layoutMode="HORIZONTAL"; primary.primaryAxisSizingMode="FIXED"; primary.counterAxisSizingMode="FIXED";
+  primary.primaryAxisAlignItems="CENTER"; primary.counterAxisAlignItems="CENTER"; primary.fills=paint("accent"); primary.cornerRadius=12;
+  const label=figma.createText(); label.fontName=bold; label.fontSize=13; label.characters="다음"; label.fills=paint("white"); primary.appendChild(label);
+  const property=primary.addComponentProperty("Label","TEXT","다음"); label.componentPropertyReferences={characters:property};
+  primary.description="6단계 가상 흐름의 안전한 화면 이동 버튼. 실제 계약·결제를 수행하지 않음.";
+  const screens=[], buttons=[];
+  for (let index=0;index<DEMO.steps.length;index++) {
+    const data=DEMO.steps[index];
+    const screen=frame(page,`${String(index+1).padStart(2,"0")}_${data.name}`,393,0,"white",24);
+    screen.x=100+index*453; screen.y=100; screen.resize(393,852); screen.primaryAxisSizingMode="FIXED"; screen.clipsContent=true;
+    const header=frame(screen,"Brand and progress",345,14);
+    text(header,"◈  lit     릿 크레딧",24,"accent",true);
+    text(header,`CREDIT MEMBERSHIP                                  0${index+1} / 06`,10,"muted");
+    const track=frame(header,"Progress",345,0,"soft"); track.resize(345,3);track.primaryAxisSizingMode="FIXED";
+    const bar=figma.createRectangle(); track.appendChild(bar);bar.resize(345*(index+1)/6,3);bar.fills=paint("accent");
+    const body=frame(screen,"Content",345,8); body.paddingTop=18; body.layoutGrow=1;
+    text(body,data.tag,11,"accent",true);text(body,data.title,29,"ink",true);text(body,data.description,12,"muted");
+    if(data.kind==="offer") {
+      const hero=frame(body,"Membership highlight",345,4,"accent",16);hero.cornerRadius=18;
+      text(hero,data.product,11,"white");text(hero,data.metric,38,"white",true);text(hero,data.metricLabel,12,"white");
+      text(hero,"LIT PLUS                         YOUR NEXT POSSIBILITY",8,"white");
+      text(body,"체험 기간 이용료                                    0원 / 7일",14,"ink",true);
+      data.features.forEach(value=>text(body,"✓  "+value,12));text(body,data.fine,8,"faint");
+    } else if(data.kind==="options") {
+      for(const [name,detail] of data.options) {
+        const option=frame(body,"Selected / "+name,345,5,"soft",15);option.cornerRadius=12;option.strokes=paint("accent");
+        text(option,"☑  "+name,13,"ink",true);text(option,detail,10,"muted");
+      }
+      text(body,data.note,10,"muted");
+    } else if(data.kind==="choice" || data.kind==="pressure") {
+      const card=frame(body,"Personal credit card",345,10,"soft",24);card.cornerRadius=18;
+      text(card,"LIT PLUS / PERSONAL CREDIT",10,"accent");text(card,"◈",58,"accent",true);
+      text(card,data.metric,19,"ink",true);text(card,data.metricLabel,11,"muted");
+      if(data.pressure) text(body,data.pressure,18,"pressure",true);
+      else data.features.forEach(value=>text(body,"✓  "+value,12));
+    } else if(data.kind==="conditions") {
+      const doc=frame(body,"Cancellation guide",345,15,"soft",20);doc.cornerRadius=16;
+      text(doc,"≡  구독 관리 안내",19,"ink",true);data.features.forEach(value=>text(doc,value,13));
+      text(doc,"LIT / PERSONAL PLAN",9,"muted");text(body,data.fine,9,"faint");
+    } else {
+      const receipt=frame(body,"Renewal receipt",345,16,"soft",20);receipt.cornerRadius=16;
+      text(receipt,"LIT / PLAN SUMMARY",10,"accent");data.rows.forEach(([name,amount])=>text(receipt,name+"      "+amount,13));
+      text(receipt,"최종 월 이용료",12,"muted");text(receipt,data.amount+"원",36,"accent",true);
+      text(body,data.note,11,"muted");text(body,"✓  데모 흐름을 모두 확인했어요",14,"accent",true);text(body,"실제 계약이나 결제는 발생하지 않습니다.",10,"muted");
+    }
+    const actions=frame(screen,"Actions",345,7);actions.paddingTop=16;
+    if(data.cta) {
+      const button=primary.createInstance();actions.appendChild(button);button.setProperties({[property]:data.cta});buttons.push({node:button,index});
+      if(data.secondary) {const secondary=text(actions,data.secondary,9,"faint");secondary.textAlignHorizontal="CENTER";buttons.push({node:secondary,index});}
+    }
+    const footer=text(screen,"DarkAudit 가상 데모 · 실제 금융상품이 아닙니다",8,"muted");footer.textAlignHorizontal="CENTER";
+    screens.push(screen);
+  }
+  for(const {node,index} of buttons) await node.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[{type:"NODE",destinationId:screens[index+1].id,navigation:"NAVIGATE",transition:null,resetScrollPosition:true}]}]);
+  page.flowStartingPoints=[{nodeId:screens[0].id,name:"릿 크레딧 · 6단계"}];
+  await figma.setCurrentPageAsync(page);figma.currentPage.selection=screens;figma.viewport.scrollAndZoomIntoView(screens);
+  figma.closePlugin("6개의 편집 가능한 프레임과 프로토타입 연결을 만들었습니다.");
+})().catch(error=>figma.closePlugin(String(error)));

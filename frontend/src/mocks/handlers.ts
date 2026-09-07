@@ -14,7 +14,7 @@ export const handlers = [
   http.get("*/health", () => HttpResponse.json({ status: "ok" })),
   http.get("*/api/v1/demo-inputs", () => {
     return HttpResponse.json({
-      website: { url: "/demo/web/index.html?step=4", available: true },
+      website: { url: "/demo/web/index.html?step=1", available: true },
       figma: {
         fileUrl: "https://www.figma.com/design/demo-file/Banking-Demo",
         available: true,

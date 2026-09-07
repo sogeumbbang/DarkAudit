@@ -1,90 +1,100 @@
-# DarkAudit 데모 입력
+# DarkAudit 데모 v2
 
-실제 금융상품이 아닌 **모아 투자관리**라는 가상 서비스다. 개인정보 수집, 네트워크 통신(APK), 실제 계약·결제는 없다. 실제 탐지기의 입력을 제공하며 탐지 결과를 조작하거나 주입하지 않는다.
+서로 다른 네 개의 가상 금융 서비스다. 각 흐름은 **6개의 연속 화면**으로 구성하며, 실제 개인정보 입력·계약·결제는 없다. 화면의 문구와 상태 자체가 분석 입력이며 정답이나 탐지 결과를 API에 주입하지 않는다.
 
-## 웹 데모
+[전체 미리보기](index.html)
 
-정적 파일: `frontend/public/dark-pattern-demo/`. 프론트엔드 배포 후 주소는 `https://<frontend-domain>/dark-pattern-demo/index.html`다. 루트에서 아래 명령으로 로컬 미리보기를 실행한다.
+| 입력 | 서비스 | 6단계 흐름 | 산출물 |
+| --- | --- | --- | --- |
+| URL | roam · 로밍 패스 | 환전 멤버십 → 여행 옵션 → 혜택 알림 → 혜택 포기 확인 → 알림 재권유 → 최종 이용료 | `frontend/public/dark-pattern-demo/` |
+| Figma | lit · 릿 크레딧 | 무료 체험 → 자동 갱신 설정 → 정보 제공 → 해지 만류 → 해지 절차 → 갱신 금액 | [온라인 Figma](https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/DarkAudit-Mobile-Banking-Mockup?node-id=14-2) · `demo/figma/` 생성 원본 |
+| APK | moa · 모아 소액투자 | 멤버십 → 투자 설정 → 상품 알림 → 혜택 포기 → 위험 확인 → 최종 이용료 | `demo/assets/darkaudit-demo.apk` |
+| 스크린샷 | moru · 모루 펫케어 | 보험 안내 → 특약 선택 → 정보 동의 → 특약 재권유 → 면책 조건 → 최종 보험료 | `frontend/public/sample-audit/`의 새 6장 |
+
+기존 Figma 파일의 새 페이지 **Lit Credit · 6-screen demo**에 수정 가능한 6개 프레임을 생성했다. 데모 버튼은 **릿 크레딧 · 6단계** 프로토타입을 이름으로 선택하므로 기존 `01_Product_Select` 한 장은 포함하지 않는다. `previews/figma-*.png`는 실제 Figma 출력이고, `credit-*.png`는 웹 콘텐츠 원본 미리보기다. 다른 Figma 파일 URL을 환경 변수로 지정하면 전체 프레임 모드를 사용한다.
+
+## 의도한 패턴
+
+| 입력 | 포함한 사례 | 가격 비교 |
+| --- | --- | --- |
+| URL | DA-05 제한 조건과 어긋나는 100% 우대 강조, DA-07 작은 조건, DA-04 기본 체크, DA-03 수신/거절 위계 차이, DA-12 죄책감, DA-11 거절 후 재권유, DA-15 필수 비용 후공개 | 기본 4,900원 → 필수 비용 포함 6,400원; 선택 알림 포함 8,300원 |
+| Figma | DA-05 점수 상승 기대 강조, DA-07 유료 전환·해지 조건 축소, DA-04 자동 갱신 기본 선택, DA-03 정보 제공 유도, DA-12 해지 만류, 해지 절차 방해, DA-15 관리비 후공개 | 체험 0원 / 고지 갱신료 7,900원 → 최종 갱신료 9,900원 |
+| APK | DA-07 원금 손실 고지 축소, DA-04 자동 재투자·광고 동의, DA-03 버튼 위계, DA-12 기회 상실 압박, DA-02 이중 부정 질문, DA-15 필수 관리비 후공개 | 동일 멤버십 6,900원 → 8,400원; 유료 옵션 없음 |
+| 스크린샷 | DA-05 일부 조건의 90% 보장 강조, DA-07 면책·기존 질환 제외 축소, DA-04 특약 기본 선택, DA-03 정보 제공 유도, DA-12 반려동물에 대한 죄책감, DA-15 관리비 후공개 | 기본 12,900원 → 필수 비용 포함 14,000원; 선택 특약 포함 19,000원 |
+
+DA-15 비교에서는 **선택 옵션 비용과 필수 비용을 분리**한다. 선택 해제 시 웹 최종 금액도 바뀐다. `rules` 메타데이터는 제작 명세이며 분석 결과에 주입하지 않는다. 현재 기본 분석 파이프라인의 핵심 지원 규칙은 DA-03/04/07/12/15다. 다른 사례와 해지 방해는 추가 정성 검토용이며 실제 검출을 보장하지 않는다.
+
+## 실행 및 데모 버튼
+
+URL 데모 버튼은 `/demo/web/index.html?step=1`을 **스마트 탐색**으로 연다. 모바일 한 가지 프로필로 진행한다. 탐색 목표는 거절 버튼이 있으면 거절하고 다음 화면으로 계속 이동해 6단계 최종 비용을 확인하는 것이다. Computer Use 설정이 필요하다. 실제 분석용 URL은 공개 배포된 API 주소를 사용한다. 사설 네트워크 차단을 우회하지 않는다.
+
+로컬 디자인 미리보기:
 
 ```bash
 python3 -m http.server 18765 --bind 127.0.0.1 --directory frontend/public/dark-pattern-demo
 ```
 
-DarkAudit URL 분석은 사설 주소를 차단하므로 실제 URL 입력에는 공개 배포 주소를 사용한다. 임시 공개 주소가 필요하면 별도 터미널에서 `cloudflared tunnel --url http://127.0.0.1:18765 --no-autoupdate`를 실행한다. **정적 데모 폴더만 공개한다.** 임시 주소는 출력 로그에서 확인하며 서버·터널 종료 시 접근할 수 없다.
+- URL: `http://127.0.0.1:18765/index.html`
+- 보험 원본: `http://127.0.0.1:18765/index.html?scenario=pet`
+- 신용관리 원본: `http://127.0.0.1:18765/index.html?scenario=credit`
+- `&step=1`부터 `&step=6`으로 개별 화면을 열 수 있다.
 
-- `?step=2`: 미리 선택된 동의 화면부터 빠른 캡처.
-- `?step=3`: 불균형한 선택 버튼 화면부터 빠른 캡처.
-- `?step=4`: 감정적 압박 화면부터 빠른 캡처.
-- `?variant=clean&step=2`: 동일 화면의 개선 버전.
-- 전체 흐름: 첫 화면에서 **스마트 탐색**, 목표 `다음 버튼으로 5단계 최종 이용료까지 확인하세요. 실제 거래는 하지 마세요.`
+스크린샷 버튼은 아래 순서의 786×1704 PNG를 불러온다. 원본 레이아웃은 393×852 CSS px이며 2배 크기로 렌더링했다.
 
-빠른 캡처는 현재 페이지를 검사하므로 DA-15의 앞뒤 가격 비교에는 전체 흐름 캡처가 필요하다.
+1. `01-product-intro.png` — 보장 소개
+2. `02-preselected-addon.png` — 특약 선택
+3. `03-consent-pressure.png` — 개인정보 동의
+4. `04-emotional-pressure.png` — 특약 재권유
+5. `05-hidden-conditions.png` — 면책 조건
+6. `06-final-price.png` — 최종 보험료
 
-## Android APK
+폴더의 이전 `04-delayed-price.png`, `05-buried-cancellation.png`는 기존 참조 호환용이며 새 데모에서 사용하지 않는다.
 
-산출물: `demo/android/build/darkaudit-demo.apk`. Android 6.0(API 23) 이상에서 실행하는 오프라인 네이티브 앱이다. 기본 실행은 다크패턴 버전이며 앱 시작 시 로그인이나 권한 요청이 없다. 체크박스와 버튼은 Android 접근성 트리에서 읽을 수 있다.
-
-DarkAudit의 **Android 앱** 탭에서 APK를 업로드한다. 백엔드에 BrowserStack 인증값을 설정하고 **5개 화면을 모두 수집**한다.
+6개 화면이 모두 수집되도록 기존 배포 환경도 변경한다. 설정 변경 뒤 백엔드를 재시작하고 **새 진단**을 실행한다.
 
 ```dotenv
-BROWSERSTACK_USERNAME=<your-username>
-BROWSERSTACK_ACCESS_KEY=<your-access-key>
-ANDROID_MAX_SCREENS=5
-ANDROID_MAX_ACTIONS=10
+FIGMA_MAX_FRAMES=6
+ANDROID_MAX_SCREENS=6
+ANDROID_MAX_ACTIONS=20
+VITE_USE_MOCKS=false
 ```
 
-탐색 목표는 `다음 버튼으로 최종 이용료까지 확인`으로 설정한다. 수집 한도를 3장으로 설정하면 마지막 가격 화면이 수집되지 않는다. 선택 버튼 두 개는 모두 다음 화면으로 이동한다. 시스템 뒤로가기는 이전 화면으로 이동한다.
+이미지 업로드 상한과 Android 수집 상한은 6개다. 모델의 한 번 요청당 5장 계약은 유지한다. 기존 분할 분석으로 1–5번과 1·5·6번을 분석해 첫·마지막 가격 근거와 인접 화면을 보존한다. 긴 흐름 비교 제한 안내가 표시될 수 있다.
 
-로컬 설치 및 개선 버전 확인:
+## APK
 
-```bash
-adb install -r demo/android/build/darkaudit-demo.apk
-adb shell am start -n com.darkaudit.demo/.MainActivity
-adb shell am force-stop com.darkaudit.demo
-adb shell am start -n com.darkaudit.demo/.MainActivity --ez clean true
-```
-
-재빌드에는 JDK 11+, Android SDK `platforms;android-34`, `build-tools;34.0.0`, `zip`이 필요하다.
+Android 6.0(API 23) 이상, 로그인·권한·네트워크 없는 네이티브 앱이다. 기본 체크를 직접 해제할 수 있으며 시스템 뒤로가기로 이전 화면을 볼 수 있다. 마지막 화면에는 거래 버튼이 없다.
 
 ```bash
 ANDROID_SDK_ROOT=/path/to/android-sdk bash demo/android/build.sh
+adb install -r demo/android/build/darkaudit-demo.apk
+adb shell am start -n com.darkaudit.demo/.MainActivity
 ```
 
-디버그 서명 키와 APK는 무시되는 `build/`에 생성된다. 실제 배포용 서명 키가 아니다. 빌드는 Android 공식 [서명 도구](https://developer.android.com/tools/apksigner)로 서명을 검증한다.
+JDK 11+, Android SDK platform 34와 build-tools 34.0.0이 필요하다. 재빌드 후 `demo/assets/darkaudit-demo.apk`와 `frontend/public/dark-pattern-demo/darkaudit-demo.apk`를 갱신한다. 빌드 폴더의 디버그 서명 키는 커밋하지 않는다.
 
-## 의도한 검출 사례
+## Figma 생성 원본
 
-| 화면 | 규칙 | 다크패턴 버전 | 개선 버전 |
-| --- | --- | --- | --- |
-| 1 | DA-07 | 원금 손실·예금자보호 제외 문구가 작고 흐림 | 읽기 쉬운 크기와 대비 |
-| 2 | DA-04 | 무료 선택사항 3개가 기본 체크됨 | 기본 체크 없음 |
-| 3 | DA-03 | 수신 버튼은 크고 진함, 거절 버튼은 작고 흐림 | 같은 크기·색상 |
-| 4 | DA-12 | 혜택 소멸·후회를 강조하는 문구 | 중립적인 선택 설명 |
-| 1 → 5 | DA-15 | 총액 9,900원에서 필수 수수료를 더해 11,400원 | 첫 화면부터 총액·수수료 공개 |
-
-이는 의도한 정답이며 모델의 실제 검출을 보장하는 수치가 아니다. `DARKAUDIT_PROVIDER=openai`, `VITE_USE_MOCKS=false`로 실행하고 발표 전에 실제 결과를 확인한다. 전체 15종 중 현재 지원되는 5종을 대상으로 한다.
-
-## 이번 제작에서 확인한 내용
-
-- 웹: 390×844에서 다크패턴·개선 버전 각각 5단계 이동, 체크박스 기본값, 가로 넘침 없음 확인.
-- 공개 URL: HTTPS 응답, 스타일·스크립트 로드, 다음 화면 이동, URL 안전 정책 통과 확인.
-- APK: 서명 검증, Android 11 에뮬레이터 설치·실행, 두 버전 각각 5단계 이동 확인.
-- APK 탐색: 실제 `android_runner._tap_candidates`로 화면별 XML에서 버튼을 선택해 최종 화면까지 도달 확인.
-- BrowserStack 원격 세션과 실제 AI 검출 결과는 이번 제작 검증에 포함하지 않았다.
-
-APK를 임시 웹 서버에서도 내려받게 하려면 빌드 후 아래 명령을 실행한다. 이 임시 복사본은 Git에서 제외된다.
+`demo/figma/manifest.json`을 Figma 데스크톱의 개발 플러그인으로 가져와 **빈 Design 파일**에서 실행할 수 있다. Noto Sans KR(Regular/Bold) 또는 지원 한글 폰트가 필요하다. 393×852 프레임 6개, 네이티브 텍스트·체크 표시, 재사용 버튼 컴포넌트, 색상 변수, 화면 전환과 시작점을 생성한다. 기존 페이지를 삭제하지 않는다.
 
 ```bash
-cp demo/android/build/darkaudit-demo.apk frontend/public/dark-pattern-demo/darkaudit-demo.apk
+node demo/figma/build.mjs
 ```
 
-## 심사위원용 데모 버튼
+`scenarios.js`의 신용관리 내용과 `source.js`에서 `code.js` 및 `flow.json`을 재생성한다. 동일 생성 원본의 화면별 실행으로 온라인 Figma 파일을 만들었으며, 독립 플러그인 전체 실행은 별도로 검증하지 않았다. `online/state.json`에 실제 노드 ID, `online/graph.json`에 전환 연결과 레이아웃 검사 결과를 보관한다. 프로토타입을 수동 분석할 때는 Flow 이름 `릿 크레딧 · 6단계`를 사용한다. 서버의 `FIGMA_ACCESS_TOKEN`에도 해당 파일의 읽기 권한이 필요하다.
 
-새 진단 화면의 **입력 유형별 데모 체험**에서 URL·Figma·APK·스크린샷을 선택하면 진단 이름과 입력값이 채워진다. **분석 시작하기**는 기존의 실제 캡처·임포트·분석 API를 실행한다.
+## 검증과 재생성
 
-- URL: 백엔드의 `/demo/web/index.html?step=4`를 모바일 빠른 캡처로 검사한다. 임시 터널과 Vercel 로그인 보호에 의존하지 않는다.
-- Figma: 기본 샘플 파일을 최상위 프레임 모드로 가져온다. `DARKAUDIT_DEMO_FIGMA_URL`로 다른 파일을 지정할 수 있으며, 빈 값이면 비활성화된다. 서버 토큰 계정에 파일 읽기 권한이 필요하다. 이 샘플의 전체 프레임 모드는 DA-15 화면 순서 검증용이 아니다.
-- APK: `/demo/darkaudit-demo.apk`에서 파일을 자동으로 불러와 기존 업로드에 전달한다. `demo/assets/darkaudit-demo.apk`는 심사용으로 버전 관리하는 디버그 APK다. 재빌드 후 이 파일도 갱신한다. 서명 키는 계속 `build/`에만 보관한다.
-- 외부 연동 설정이 없으면 해당 데모 버튼에 준비 상태를 표시한다. 심사 환경에는 `FIGMA_ACCESS_TOKEN`, `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, `ANDROID_MAX_SCREENS=5`가 필요하다.
+```bash
+python demo/render_previews.py
+python demo/verify_android.py --adb /path/to/adb --device emulator-5554
+```
 
-Docker 이미지에 웹 데모와 APK가 포함된다. 프론트엔드보다 백엔드를 먼저 배포하고 `/api/v1/demo-inputs`의 준비 상태를 확인한다. `VITE_USE_MOCKS=false` 및 실제 AI 제공자 설정을 사용한다. 로컬 API 주소는 URL 분석의 사설 네트워크 차단 대상이므로 URL 데모는 공개 배포된 API에서 실행한다.
+첫 명령은 Playwright, Chrome, Pillow가 필요하며 외부 네트워크를 사용하지 않는다. 두 번째는 설치·실행 가능한 로컬 에뮬레이터가 필요하다.
+
+- 웹 원본 18개: 393×852에서 가로·세로 넘침 없음, 360×800에서 가로 넘침 없음 및 이동 버튼 위치 확인.
+- URL/보험: 유료 옵션 선택 해제 후 최종 금액 반영 확인.
+- APK: 빌드·서명, Android 11 에뮬레이터 설치, 실제 `_tap_candidates`로 6단계 끝까지 이동 확인.
+- 6장 업로드: 모든 화면 분석, 첫·마지막 가격 근거 동시 포함, 모델 요청당 5장 상한 확인.
+- Figma: 실제 6개 프레임 렌더링 확인, 한글 텍스트 84개 편집 가능, 프레임 밖 텍스트 없음. 실제 전환 그래프를 분석기에 입력해 이름으로 선택한 경로가 6개이고 기존 화면이 제외됨을 확인.
+- 실제 AI 검출률, BrowserStack 원격 실행, 배포 서버의 Figma 토큰 권한 검증은 포함하지 않는다.

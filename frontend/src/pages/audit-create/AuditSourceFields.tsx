@@ -294,7 +294,7 @@ export function AndroidFields({
         onChange={setGoal}
       />
       <InfoBox>
-        결제·가입·제출·로그인 동작은 누르지 않으며 최대 5개 화면까지만 수집합니다. iOS 자동화에는
+        결제·가입·제출·로그인 동작은 누르지 않으며 최대 6개 화면까지만 수집합니다. iOS 자동화에는
         별도의 기기 runner가 필요합니다. APK는 자동 탐색을 위해 BrowserStack으로 전송됩니다.
       </InfoBox>
     </section>
@@ -328,7 +328,7 @@ export function ScreenshotFields({
         스크린샷 직접 진단
       </h2>
       <p className="mt-1 text-xs text-muted">
-        자동 접근이 어려운 화면을 최대 5개까지 순서대로 등록합니다.
+        자동 접근이 어려운 화면을 최대 6개까지 순서대로 등록합니다.
       </p>
       <FieldTitle>스크린샷 플랫폼</FieldTitle>
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -418,7 +418,7 @@ export function ScreenshotFields({
           ))}
         </div>
       )}
-      {screens.length > 0 && screens.length < 5 && (
+      {screens.length > 0 && screens.length < 6 && (
         <Button
           className="mt-3"
           type="button"

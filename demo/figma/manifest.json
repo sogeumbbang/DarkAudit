@@ -1,0 +1,8 @@
+{
+  "name": "DarkAudit · Lit Credit Demo",
+  "id": "darkaudit-lit-credit-demo",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "networkAccess": { "allowedDomains": ["none"] }
+}

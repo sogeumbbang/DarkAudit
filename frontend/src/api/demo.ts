@@ -12,6 +12,8 @@ const demoInputsSchema = z.object({
   website: z.object({ url: demoAssetUrl, available: z.boolean() }),
   figma: z.object({
     fileUrl: z.string(),
+    selectionMode: z.enum(["prototype-flow", "all-frames"]).default("all-frames"),
+    flowName: z.string().nullable().optional(),
     available: z.boolean(),
     reason: z.string().nullable(),
   }),

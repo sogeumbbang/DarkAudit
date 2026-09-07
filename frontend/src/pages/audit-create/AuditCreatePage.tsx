@@ -88,11 +88,12 @@ export function AuditCreatePage() {
 
   async function loadSampleScreens() {
     const samples = [
-      ["01-product-intro.png", "상품 안내"],
-      ["02-preselected-addon.png", "유료 옵션 선택"],
-      ["03-consent-pressure.png", "약관 동의"],
-      ["04-delayed-price.png", "최종 금액 확인"],
-      ["05-buried-cancellation.png", "가입 완료"],
+      ["01-product-intro.png", "보장 소개"],
+      ["02-preselected-addon.png", "특약 선택"],
+      ["03-consent-pressure.png", "개인정보 동의"],
+      ["04-emotional-pressure.png", "특약 재권유"],
+      ["05-hidden-conditions.png", "면책 조건"],
+      ["06-final-price.png", "최종 보험료"],
     ] as const;
 
     setLoadingSamples(true);
@@ -119,7 +120,7 @@ export function AuditCreatePage() {
       });
       setSource("screenshots");
       setUploadPlatform("mobile-web");
-      setValue("name", "샘플 보험 가입 화면 검사", { shouldValidate: true });
+      setValue("name", "스크린샷 데모 · 모루 반려동물 보험", { shouldValidate: true });
     } catch (error) {
       setSampleError(error instanceof Error ? error.message : "샘플 화면을 불러오지 못했습니다.");
     } finally {
@@ -136,21 +137,23 @@ export function AuditCreatePage() {
     try {
       if (kind === "website") {
         setUrl(config.website.url);
-        setScanMode("quick");
+        setScanMode("smart");
         setProfiles(["mobile"]);
-        setWebsiteGoal("");
-        setValue("name", "URL 데모 · 감정적 언어 검사", { shouldValidate: true });
+        setWebsiteGoal(
+          "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.",
+        );
+        setValue("name", "URL 데모 · 로밍 패스 환전 멤버십", { shouldValidate: true });
       } else if (kind === "figma") {
         setFigmaUrl(config.figma.fileUrl);
         setFigmaTarget("mobile-web");
-        setFigmaSelection("all-frames");
-        setFigmaFlow("");
+        setFigmaSelection(config.figma.selectionMode);
+        setFigmaFlow(config.figma.flowName ?? "");
         setValue("name", "Figma 데모 · 금융상품 화면 검사", { shouldValidate: true });
       } else {
         const file = await getDemoApk(config.android.downloadUrl);
         setAppFile(file);
-        setAndroidGoal("다음 버튼으로 5단계 최종 이용료까지 확인");
-        setValue("name", "APK 데모 · 모아 투자관리 검사", { shouldValidate: true });
+        setAndroidGoal("다음 버튼으로 6단계 최종 이용료까지 확인");
+        setValue("name", "APK 데모 · 모아 소액투자", { shouldValidate: true });
       }
       setSource(kind);
       setDemoNotice(
@@ -166,7 +169,7 @@ export function AuditCreatePage() {
   function addFiles(files: FileList | File[]) {
     const images = Array.from(files)
       .filter((file) => file.type.startsWith("image/"))
-      .slice(0, 5 - screens.length);
+      .slice(0, 6 - screens.length);
     setScreens((current) => [
       ...current,
       ...images.map((file, index) => ({
@@ -303,9 +306,9 @@ export function AuditCreatePage() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {(
             [
-              ["website", "URL", "감정적 압박 문구가 있는 웹페이지"],
-              ["figma", "Figma", "금융상품 디자인의 최상위 프레임"],
-              ["android", "APK", "다크패턴 5종이 포함된 앱 흐름"],
+              ["website", "URL", "환전 멤버십 · 6단계 여행 준비 흐름"],
+              ["figma", "Figma", "설정된 Figma 파일의 주요 화면 검사"],
+              ["android", "APK", "소액투자 · 6단계 투자 설정 흐름"],
             ] as const
           ).map(([kind, label, description]) => (
             <div className="rounded-control border border-border bg-white p-4" key={kind}>
@@ -333,7 +336,7 @@ export function AuditCreatePage() {
           <div className="rounded-control border border-border bg-white p-4">
             <p className="text-sm font-bold">스크린샷</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
-              보험 가입 과정의 샘플 화면 5장
+              반려동물 보험 · 6단계 보장 설계 화면
             </p>
             <Button
               className="mt-3 w-full"
@@ -347,7 +350,7 @@ export function AuditCreatePage() {
               ) : (
                 <Play size={16} />
               )}
-              샘플 5장 불러오기
+              스크린샷 데모 불러오기
             </Button>
           </div>
         </div>

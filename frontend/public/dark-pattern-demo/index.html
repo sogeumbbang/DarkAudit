@@ -1,18 +1,23 @@
 <!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>모아 투자관리 · DarkAudit 테스트</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="shell">
-    <header><strong>moa<span> 모아 투자관리</span></strong><small>가상 서비스 · 테스트 전용</small></header>
-    <nav aria-label="진행 상태"><span id="step-label"></span><div class="track"><div id="progress"></div></div></nav>
-    <main id="screen"></main>
-    <footer>실제 금융상품이 아닙니다. 개인정보 입력과 실제 거래가 없습니다.</footer>
-  </div>
-  <script src="demo.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>로밍 패스 · DarkAudit 가상 데모</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header><div id="brand"></div></header>
+      <nav aria-label="진행 상태">
+        <span id="step-label"></span>
+        <div class="track"><div id="progress"></div></div>
+      </nav>
+      <main id="screen"></main>
+      <div id="actions"></div>
+      <footer>DarkAudit 가상 데모 · 실제 금융상품이 아닙니다.</footer>
+    </div>
+    <script src="scenarios.js"></script>
+    <script src="demo.js"></script>
+  </body>
 </html>

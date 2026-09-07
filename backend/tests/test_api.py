@@ -64,6 +64,37 @@ from backend.tests.support import IsolatedApiTestCase
 
 
 class ApiIntegrationTest(IsolatedApiTestCase):
+    def test_six_screen_demo_upload_and_analysis_keep_first_and_final_context(self) -> None:
+        from ai.providers.fake_provider import FakeMultimodalProvider
+
+        batches = []
+
+        class RecordingProvider(FakeMultimodalProvider):
+            def analyze(self, **kwargs):
+                batches.append([screen.screen_id for screen in kwargs["request"].screens])
+                return super().analyze(**kwargs)
+
+        audit_id = self.client.post("/api/v1/audits", json={
+            "name": "6단계 보험 데모", "platform": "mobile-web",
+        }).json()["id"]
+        image = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        )
+        files = [("files", (f"{index}.png", image, "image/png")) for index in range(6)]
+        uploaded = self.client.post(f"/api/v1/audits/{audit_id}/screens", files=files,
+                                    data={"screen_ids": [f"demo-{i}" for i in range(6)]})
+        self.assertEqual(uploaded.status_code, 200, uploaded.text)
+        self.assertEqual(len(uploaded.json()["screens"]), 6)
+        with patch("backend.api.service.create_provider", return_value=RecordingProvider()):
+            queued = self.client.post(f"/api/v1/audits/{audit_id}/analyze")
+        job = self.client.get(f"/api/v1/analysis-jobs/{queued.json()['jobId']}").json()
+        self.assertEqual(job["status"], "completed", job)
+        self.assertEqual(set().union(*map(set, batches)), {f"screen-{i:02d}" for i in range(1, 7)})
+        self.assertTrue(any({"screen-01", "screen-06"} <= set(batch) for batch in batches))
+        self.assertTrue(all(len(batch) <= 5 for batch in batches))
+        rejected = self.client.post(f"/api/v1/audits/{audit_id}/screens", files=files + [files[0]])
+        self.assertEqual(rejected.status_code, 400)
+
     def test_uploaded_audit_runs_pipeline_and_persists_finding(self) -> None:
         created = self.client.post(
             "/api/v1/audits",

@@ -84,7 +84,7 @@ class FigmaSettings:
     api_base_url: str = "https://api.figma.com/v1"
     timeout_seconds: float = 30.0
     render_scale: int = 2
-    max_frames: int = 5
+    max_frames: int = 6
 
     @classmethod
     def from_env(cls) -> "FigmaSettings":
@@ -97,7 +97,7 @@ class FigmaSettings:
             api_base_url=os.getenv("FIGMA_API_BASE_URL", "https://api.figma.com/v1"),
             timeout_seconds=float(os.getenv("FIGMA_HTTP_TIMEOUT_SECONDS", "30")),
             render_scale=int(os.getenv("FIGMA_RENDER_SCALE", "2")),
-            max_frames=int(os.getenv("FIGMA_MAX_FRAMES", "5")),
+            max_frames=int(os.getenv("FIGMA_MAX_FRAMES", "6")),
         )
 
 

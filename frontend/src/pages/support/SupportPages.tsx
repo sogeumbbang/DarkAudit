@@ -75,7 +75,7 @@ export function SettingsPage() {
           업로드 이미지는 진단 근거로만 사용하며, 서버의 AI provider와 모델 설정은 배포 환경에서 관리됩니다.
         </p>
         <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-control bg-brand-50 p-4"><dt className="text-muted">이미지 입력</dt><dd className="mt-1 font-semibold">최대 5장</dd></div>
+          <div className="rounded-control bg-brand-50 p-4"><dt className="text-muted">이미지 입력</dt><dd className="mt-1 font-semibold">최대 6장</dd></div>
           <div className="rounded-control bg-brand-50 p-4"><dt className="text-muted">지원 방식</dt><dd className="mt-1 font-semibold">URL · Screenshot · Figma</dd></div>
         </dl>
       </Card>

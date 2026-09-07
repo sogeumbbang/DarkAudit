@@ -1,0 +1,153 @@
+{
+  "figma_status": "online_six_screen_flow_verified",
+  "figma_url": "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/DarkAudit-Mobile-Banking-Mockup?node-id=14-2",
+  "flow_name": "릿 크레딧 · 6단계",
+  "screens_per_demo": 6,
+  "files": [
+    {
+      "path": "url/index.html",
+      "sha256": "6c070562cf2912c35bd96c4293631f17802c340d34068cc937bde66542c5d1c9",
+      "bytes": 747
+    },
+    {
+      "path": "url/style.css",
+      "sha256": "9b9187ee06949882c634cb5e1bb2b4ae7acbf97829f61729dfe274ff7bec663a",
+      "bytes": 9878
+    },
+    {
+      "path": "url/demo.js",
+      "sha256": "48debaa33770693eb320de36542b9e366c4e7598514a265efc8b4bbe9ea17c35",
+      "bytes": 5915
+    },
+    {
+      "path": "url/scenarios.js",
+      "sha256": "5c62440173a5cc23cd05970816f1900613a49a90982b4728c179e2897b663681",
+      "bytes": 13481
+    },
+    {
+      "path": "figma/manifest.json",
+      "sha256": "04a607922de2c65e48e863a5d355e6e269a4bd8c443ad4127bf97305ca7c40b9",
+      "bytes": 199
+    },
+    {
+      "path": "figma/code.js",
+      "sha256": "77a213b1744b478d67f9d1091ac1a1df0f4b215c3b9bae1926f87f0cd45057e5",
+      "bytes": 13824
+    },
+    {
+      "path": "figma/source.js",
+      "sha256": "983e0d4f73d802da748ff622cb0438ec5f5c73f9156dc6b85a7b67797b932165",
+      "bytes": 9011
+    },
+    {
+      "path": "figma/flow.json",
+      "sha256": "6f1131e382dc11227583401ee8c5a9a3a1963818456110d858b717027a0b94fb",
+      "bytes": 4757
+    },
+    {
+      "path": "figma/online/state.json",
+      "sha256": "5937d2346b897c4d2906c9045fce0562182af7ee08bcf96b064d9025ecbe3ab2",
+      "bytes": 357
+    },
+    {
+      "path": "figma/online/graph.json",
+      "sha256": "d78147c831ae162b51c0a14f3774375ca6c238e9c1050b765642407676013e3b",
+      "bytes": 11039
+    },
+    {
+      "path": "apk/darkaudit-demo.apk",
+      "sha256": "e552d3714a348ff82146dca08449ad252e057a165757affcc3b0d7c4aa042226",
+      "bytes": 16751
+    },
+    {
+      "path": "screenshots/01-product-intro.png",
+      "sha256": "168a7dde11e994e948b8569faa54f8de8d8a59b524bbfe678d83dbc74a13115d",
+      "bytes": 112317
+    },
+    {
+      "path": "screenshots/02-preselected-addon.png",
+      "sha256": "3d395bb2e342cbdce1c551456c7d25ef058be7ad5f6c17ac1b1056f5792bce82",
+      "bytes": 97988
+    },
+    {
+      "path": "screenshots/03-consent-pressure.png",
+      "sha256": "3f4bb1f263523cedc31be378e7b713037c26988afcaf36d08b1638f70019e11e",
+      "bytes": 139131
+    },
+    {
+      "path": "screenshots/04-emotional-pressure.png",
+      "sha256": "957568e27f5dfdcaf1917a7fa3e6ff0231a162754a57aedb4550bec7b1c9677d",
+      "bytes": 140838
+    },
+    {
+      "path": "screenshots/05-hidden-conditions.png",
+      "sha256": "ca4535f9997c5e7b18a6d5a7023e8e4586e0cc5735d7216629d445cc7ffea9ea",
+      "bytes": 96072
+    },
+    {
+      "path": "screenshots/06-final-price.png",
+      "sha256": "0ceec5d1533982b16b49e523fee7edafdc9faeb5b71f1afccff31f5d6f3b27ba",
+      "bytes": 107466
+    },
+    {
+      "path": "previews/travel-overview.png",
+      "sha256": "1997c14529b83591765a1ffdc120813da73f9f33073720a6e703030ea996b78d",
+      "bytes": 393080
+    },
+    {
+      "path": "previews/figma-overview.png",
+      "sha256": "1547758f63f409004867379aa7af67123d2359dfc35d9ec2a894772b321a004f",
+      "bytes": 195585
+    },
+    {
+      "path": "previews/android-overview.png",
+      "sha256": "e6fa32aef60b5e4327219796c326b93fe121c85442cae090b070dafe7990f756",
+      "bytes": 329959
+    },
+    {
+      "path": "previews/pet-overview.png",
+      "sha256": "48c02f7a02170549a498344cd205c13a5548dc479c6c94b5a646d97fb00877d3",
+      "bytes": 404460
+    },
+    {
+      "path": "figma/previews/figma-01.png",
+      "sha256": "c6dbb1161dae9e52bd32443ebf71fae377cb97316fe78b795a0c3b479ddf00aa",
+      "bytes": 38808
+    },
+    {
+      "path": "figma/previews/figma-02.png",
+      "sha256": "daa42b141cfe8e8fabf0229258576d3901e5c73b19e1f26579590777263d1f90",
+      "bytes": 37776
+    },
+    {
+      "path": "figma/previews/figma-03.png",
+      "sha256": "500945b9a7a9384aab51b8ea04b988bec1b823a5b1e26886e335a02159c5d4fd",
+      "bytes": 31057
+    },
+    {
+      "path": "figma/previews/figma-04.png",
+      "sha256": "dd8b114ed12aea2a167a143ac9f148ac6676761e8c944984432976150156e4ba",
+      "bytes": 33732
+    },
+    {
+      "path": "figma/previews/figma-05.png",
+      "sha256": "d5387f5684b4782a2f69b7f68063194eff230e0f32ad9c3169370d8270790181",
+      "bytes": 33364
+    },
+    {
+      "path": "figma/previews/figma-06.png",
+      "sha256": "5db024ae4dc4a34124cfb4c70cba64bbf11b496e588c5aa1fd844f38721b2b13",
+      "bytes": 36941
+    },
+    {
+      "path": "index.html",
+      "sha256": "22f5f474ca1d51c0d5a20688a5139017a1d8e5113f9b2a6a4f9fa810169e7500",
+      "bytes": 2736
+    },
+    {
+      "path": "README.txt",
+      "sha256": "f70ae7755ff3c4925011f9b7bff3309a0562fc7c62959e97d520dd36b5b4b15b",
+      "bytes": 1583
+    }
+  ]
+}

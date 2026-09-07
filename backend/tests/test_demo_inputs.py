@@ -9,7 +9,7 @@ from unittest.mock import patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.api.demo_inputs import DEFAULT_FIGMA_URL, router
+from backend.api.demo_inputs import DEFAULT_FIGMA_FLOW, DEFAULT_FIGMA_URL, router
 
 
 class DemoInputsTest(unittest.TestCase):
@@ -28,8 +28,10 @@ class DemoInputsTest(unittest.TestCase):
             response = self.client.get("/api/v1/demo-inputs")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["website"]["url"], "/demo/web/index.html?step=4")
+        self.assertEqual(data["website"]["url"], "/demo/web/index.html?step=1")
         self.assertEqual(data["figma"]["fileUrl"], DEFAULT_FIGMA_URL)
+        self.assertEqual(data["figma"]["selectionMode"], "prototype-flow")
+        self.assertEqual(data["figma"]["flowName"], DEFAULT_FIGMA_FLOW)
         self.assertTrue(data["figma"]["available"])
         self.assertTrue(data["android"]["available"])
         self.assertNotIn("private-", response.text)
@@ -50,12 +52,25 @@ class DemoInputsTest(unittest.TestCase):
                 data = self.client.get("/api/v1/demo-inputs").json()["figma"]
                 self.assertEqual(data["fileUrl"], url)
                 self.assertEqual(data["available"], bool(url))
+                self.assertEqual(data["selectionMode"], "all-frames")
+                self.assertIsNone(data["flowName"])
+
+    def test_figma_demo_does_not_pin_a_shared_links_selected_screen(self):
+        for query in ("node-id=3-2", "node-id=3%3A2", "node-id=3-2&node-id=3-5"):
+            with self.subTest(query=query), patch.dict(os.environ, {
+                "FIGMA_ACCESS_TOKEN": "configured",
+                "DARKAUDIT_DEMO_FIGMA_URL": f"{DEFAULT_FIGMA_URL}?{query}&t=share#section",
+            }, clear=True):
+                data = self.client.get("/api/v1/demo-inputs").json()["figma"]
+            self.assertEqual(data["fileUrl"], f"{DEFAULT_FIGMA_URL}?t=share#section")
+            self.assertTrue(data["available"])
 
     def test_web_assets_load_and_other_files_are_not_exposed(self):
-        html = self.client.get("/demo/web/index.html?step=4")
+        html = self.client.get("/demo/web/index.html?step=1")
         self.assertEqual(html.status_code, 200)
         self.assertIn('src="demo.js"', html.text)
         self.assertEqual(self.client.get("/demo/web/demo.js").status_code, 200)
+        self.assertEqual(self.client.get("/demo/web/scenarios.js").status_code, 200)
         self.assertEqual(self.client.get("/demo/web/style.css").status_code, 200)
         for name in (".env", ".gitignore", "darkaudit-demo.apk"):
             self.assertEqual(self.client.get(f"/demo/web/{name}").status_code, 404)

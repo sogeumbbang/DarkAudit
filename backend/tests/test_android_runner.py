@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import base64
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import httpx
@@ -20,6 +22,13 @@ _TINY_PNG = base64.b64decode(
 
 
 class AndroidTapCandidateTest(unittest.TestCase):
+    def test_default_capture_budget_covers_six_screen_demo_and_stays_bounded(self) -> None:
+        with patch.dict(os.environ, {"BROWSERSTACK_USERNAME": "user", "BROWSERSTACK_ACCESS_KEY": "key"}, clear=True):
+            self.assertEqual(AndroidRunnerSettings.from_env().max_screens, 6)
+            for value, expected in (("1", 1), ("5", 5), ("6", 6), ("100", 6)):
+                with patch.dict(os.environ, {"ANDROID_MAX_SCREENS": value}):
+                    self.assertEqual(AndroidRunnerSettings.from_env().max_screens, expected)
+
     def test_screenshot_accepts_wrapped_base64_without_changing_image(self) -> None:
         encoded = base64.b64encode(_TINY_PNG).decode("ascii")
         wrapped = base64.encodebytes(_TINY_PNG).decode("ascii")

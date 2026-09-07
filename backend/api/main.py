@@ -174,8 +174,8 @@ async def upload_screens(
     flow_steps: list[str] = Form(default=[]),
     x_darkaudit_screen_metadata: str | None = Header(default=None),
 ) -> AuditDto:
-    if not 1 <= len(files) <= 5:
-        raise HTTPException(400, "1개에서 5개의 이미지가 필요합니다.")
+    if not 1 <= len(files) <= 6:
+        raise HTTPException(400, "1개에서 6개의 이미지가 필요합니다.")
     metadata = []
     if x_darkaudit_screen_metadata:
         try:

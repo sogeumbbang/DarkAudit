@@ -1,0 +1,384 @@
+{
+  "document": {
+    "id": "0:0",
+    "type": "DOCUMENT",
+    "children": [
+      {
+        "id": "0:1",
+        "type": "CANVAS",
+        "name": "Page 1",
+        "children": [
+          {
+            "id": "3:2",
+            "type": "FRAME",
+            "name": "01_Product_Select",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "14:2",
+        "type": "CANVAS",
+        "name": "Lit Credit · 6-screen demo",
+        "flowStartingPoints": [
+          {
+            "nodeId": "17:2",
+            "name": "릿 크레딧 · 6단계"
+          }
+        ],
+        "children": [
+          {
+            "id": "17:2",
+            "type": "FRAME",
+            "name": "01_무료 체험 안내",
+            "absoluteBoundingBox": {
+              "x": 100,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": [
+              {
+                "id": "17:23",
+                "type": "INSTANCE",
+                "name": "Button / Primary",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "19:3",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "19:3",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "19:3",
+            "type": "FRAME",
+            "name": "02_구독 설정",
+            "absoluteBoundingBox": {
+              "x": 553,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": [
+              {
+                "id": "19:24",
+                "type": "INSTANCE",
+                "name": "Button / Primary",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "20:4",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "20:4",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "20:4",
+            "type": "FRAME",
+            "name": "03_정보 활용 선택",
+            "absoluteBoundingBox": {
+              "x": 1006,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": [
+              {
+                "id": "20:22",
+                "type": "INSTANCE",
+                "name": "Button / Primary",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "23:5",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "23:5",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "20:24",
+                "type": "TEXT",
+                "name": "정보 제공 없이 계속",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "23:5",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "23:5",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "23:5",
+            "type": "FRAME",
+            "name": "04_해지 만류",
+            "absoluteBoundingBox": {
+              "x": 1459,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": [
+              {
+                "id": "23:22",
+                "type": "INSTANCE",
+                "name": "Button / Primary",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "23:26",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "23:26",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "23:24",
+                "type": "TEXT",
+                "name": "저는 신용 혜택을 포기할게요",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "23:26",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "23:26",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "23:26",
+            "type": "FRAME",
+            "name": "05_해지 절차",
+            "absoluteBoundingBox": {
+              "x": 1912,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": [
+              {
+                "id": "23:44",
+                "type": "INSTANCE",
+                "name": "Button / Primary",
+                "reactions": [
+                  {
+                    "action": {
+                      "type": "NODE",
+                      "destinationId": "24:7",
+                      "navigation": "NAVIGATE",
+                      "transition": null,
+                      "resetVideoPosition": false,
+                      "resetScrollPosition": true
+                    },
+                    "actions": [
+                      {
+                        "type": "NODE",
+                        "destinationId": "24:7",
+                        "navigation": "NAVIGATE",
+                        "transition": null,
+                        "resetVideoPosition": false,
+                        "resetScrollPosition": true
+                      }
+                    ],
+                    "trigger": {
+                      "type": "ON_CLICK"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "24:7",
+            "type": "FRAME",
+            "name": "06_갱신 금액",
+            "absoluteBoundingBox": {
+              "x": 2365,
+              "y": 100,
+              "width": 393,
+              "height": 852
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "17:2",
+      "width": 393,
+      "height": 852,
+      "textCount": 16,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    },
+    {
+      "id": "19:3",
+      "width": 393,
+      "height": 852,
+      "textCount": 14,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    },
+    {
+      "id": "20:4",
+      "width": 393,
+      "height": 852,
+      "textCount": 14,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    },
+    {
+      "id": "23:5",
+      "width": 393,
+      "height": 852,
+      "textCount": 13,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    },
+    {
+      "id": "23:26",
+      "width": 393,
+      "height": 852,
+      "textCount": 13,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    },
+    {
+      "id": "24:7",
+      "width": 393,
+      "height": 852,
+      "textCount": 14,
+      "fontFamilies": [
+        "Noto Sans KR"
+      ],
+      "clippedText": []
+    }
+  ],
+  "mutatedNodeIds": []
+}
