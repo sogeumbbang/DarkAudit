@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DarkAudit — Navy & Gold Landing</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #FAF9F6; }
+    #da-navy-gold { max-width: 1120px; margin: 0 auto; }
+    @media (max-width: 580px) { body { padding: 0; } }
+  </style>
+</head>
+<body>
+<!-- 랜딩 디자인 시안입니다. 버튼은 페이지 안의 예시 영역으로 이동합니다. -->
+<div id="da-navy-gold">
+<style>
+#da-navy-gold{--da-brand:#233B63;--da-strong:#1B2E4D;--da-tint:#EEF2F8;--da-ink:#202B3B;--da-muted:#657080;--da-line:#E3E6EB;--da-base:#FAF9F6;color:var(--da-ink);background:#FFF;font-family:Inter,"Pretendard",-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;font-size:14px;line-height:1.65;color-scheme:light;border:1px solid var(--da-line);border-radius:12px;overflow:hidden;text-align:left}
+#da-navy-gold *{box-sizing:border-box}
+#da-navy-gold [hidden]{display:none!important}
+#da-navy-gold button{font:inherit;cursor:pointer}
+#da-navy-gold button:focus-visible{outline:3px solid #C4A35D;outline-offset:3px}
+#da-navy-gold h1,#da-navy-gold h2,#da-navy-gold h3,#da-navy-gold p{margin:0;color:inherit}
+#da-navy-gold button,#da-navy-gold a{-webkit-tap-highlight-color:transparent}
+#da-navy-gold .da-header{min-height:76px;padding:16px 36px;display:flex;gap:24px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--da-line);background:#FFF}
+#da-navy-gold .da-logo{border:0;background:transparent;padding:0;display:flex;gap:10px;align-items:center;color:var(--da-ink);font-size:21px;font-weight:750;letter-spacing:-.8px}
+#da-navy-gold .da-logomark{display:grid;place-items:center;width:32px;height:35px;border-radius:9px;background:var(--da-brand);color:#FFF}
+#da-navy-gold .da-nav{display:flex;gap:24px;align-items:center}
+#da-navy-gold .da-nav button{padding:7px 0;background:none;border:0;color:var(--da-muted);font-size:12px}
+#da-navy-gold .da-nav button[aria-pressed=true]{color:var(--da-strong);font-weight:700}
+#da-navy-gold .da-btn{display:inline-flex;justify-content:center;align-items:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid transparent;background:var(--da-brand);color:#FFF;border-radius:7px;font-size:12px;font-weight:600}
+#da-navy-gold .da-btn:hover{background:var(--da-strong)}
+#da-navy-gold .da-btn.secondary{background:#FFF;border-color:var(--da-line);color:var(--da-ink)}
+#da-navy-gold .da-btn.secondary:hover{background:var(--da-base)}
+#da-navy-gold .da-hero{padding:64px 46px 54px;display:grid;grid-template-columns:1.05fr 1fr;gap:35px;align-items:center;background:radial-gradient(ellipse at 78% 33%,#EEE4CD90,transparent 48%),radial-gradient(ellipse at 55% 78%,#DDE6F380,transparent 47%),#FDFCF9}
+#da-navy-gold .da-kicker{font-size:11px;font-weight:650;letter-spacing:1.7px;color:var(--da-strong);display:flex;gap:8px;align-items:center;margin-bottom:23px}
+#da-navy-gold .da-kicker:before{content:'';width:6px;height:6px;background:var(--da-brand);border-radius:50%}
+#da-navy-gold h1{font-size:clamp(32px,4vw,45px);line-height:1.33;font-weight:750;letter-spacing:-2px;word-break:keep-all}
+#da-navy-gold .da-em{color:var(--da-brand)}
+#da-navy-gold .da-lead{font-size:14px;color:var(--da-muted);line-height:1.9;margin-top:20px;word-break:keep-all}
+#da-navy-gold .da-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:27px}
+#da-navy-gold .da-fine{font-size:11px;color:var(--da-muted);margin-top:14px}
+#da-navy-gold .da-demo{background:#FFF;border:1px solid var(--da-line);border-radius:12px;box-shadow:0 12px 40px #233B6310}
+#da-navy-gold .da-demo-head{padding:17px 20px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--da-line);font-size:12px;font-weight:650}
+#da-navy-gold .da-tag{font-size:10px;padding:3px 7px;background:#F0F2F6;color:#657080;border-radius:4px;font-weight:500;white-space:nowrap}
+#da-navy-gold .da-demo-body{padding:20px}
+#da-navy-gold .da-caption{font-size:11px;color:var(--da-muted)}
+#da-navy-gold .da-demo-title{font-size:17px;font-weight:700;letter-spacing:-.4px;margin:5px 0 18px}
+#da-navy-gold .da-inspect{display:flex;align-items:flex-start;gap:11px;background:var(--da-base);padding:15px;border-radius:8px;margin-bottom:16px}
+#da-navy-gold .da-icon{color:var(--da-brand);display:inline-flex}
+#da-navy-gold .da-inspect strong{display:block;font-size:12px;font-weight:650}
+#da-navy-gold .da-inspect span{font-size:11px;color:var(--da-muted)}
+#da-navy-gold .da-preview-row{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:12px 0;border-bottom:1px solid #EDF0F4;font-size:11px}
+#da-navy-gold .da-warn{color:#8A5A16;background:#FBF1DF;font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap}
+#da-navy-gold .da-textlink{background:none;border:0;color:var(--da-brand);padding:15px 0 0;font-size:12px;font-weight:650}
+#da-navy-gold .da-demo-bottom{display:flex;gap:8px;align-items:center;padding:12px 20px;background:#FBFBFC;border-top:1px solid var(--da-line);font-size:10px;color:var(--da-muted);border-radius:0 0 12px 12px}
+#da-navy-gold .da-methods{padding:30px 46px;border-top:1px solid var(--da-line);border-bottom:1px solid var(--da-line);display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+#da-navy-gold .da-method{display:grid;grid-template-columns:26px 1fr;gap:11px}
+#da-navy-gold .da-number{font-size:11px;color:var(--da-brand);font-weight:700;padding-top:2px}
+#da-navy-gold .da-method h3{font-size:13px;font-weight:650;margin-bottom:4px}
+#da-navy-gold .da-method p{font-size:11px;color:var(--da-muted);line-height:1.8;word-break:keep-all}
+#da-navy-gold .da-bottom{padding:35px 46px 40px;display:flex;align-items:center;justify-content:space-between;gap:26px;background:var(--da-base)}
+#da-navy-gold .da-bottom h2{font-size:21px;letter-spacing:-.8px;font-weight:700;margin-bottom:6px}
+#da-navy-gold .da-bottom p{font-size:12px;color:var(--da-muted)}
+#da-navy-gold .da-foot{padding:15px 36px;display:flex;gap:14px;justify-content:space-between;color:var(--da-muted);font-size:10px;border-top:1px solid var(--da-line)}
+@media(max-width:800px){#da-navy-gold .da-header{padding:16px 23px}
+#da-navy-gold .da-hero{padding:42px 28px;gap:22px}
+#da-navy-gold h1{font-size:34px}
+#da-navy-gold .da-methods{padding:25px 28px;gap:15px}
+#da-navy-gold .da-bottom{padding:30px 28px}
+#da-navy-gold .da-work{padding:20px}
+#da-navy-gold .da-master-detail{grid-template-columns:190px minmax(0,1fr);gap:12px}
+#da-navy-gold .da-evidence{grid-template-columns:1fr;padding:18px}
+#da-navy-gold .da-screenshot{max-width:300px;width:100%;justify-self:center}
+#da-navy-gold .da-nav{gap:14px}}
+@media(max-width:580px){#da-navy-gold .da-header{padding:15px 18px;gap:12px;flex-wrap:wrap}
+#da-navy-gold .da-header>.da-btn{display:none}
+#da-navy-gold .da-logo{font-size:19px}
+#da-navy-gold .da-nav{gap:14px}
+#da-navy-gold .da-nav button{min-height:44px}
+#da-navy-gold .da-hero{grid-template-columns:1fr;padding:34px 23px;gap:30px}
+#da-navy-gold h1{font-size:35px}
+#da-navy-gold .da-methods{grid-template-columns:1fr;padding:25px 23px;gap:23px}
+#da-navy-gold .da-bottom{padding:28px 23px;align-items:flex-start;flex-direction:column;gap:18px}
+#da-navy-gold .da-foot{padding:15px 23px;flex-wrap:wrap}
+#da-navy-gold .da-work{padding:21px 14px}
+#da-navy-gold .da-work-title{align-items:flex-start;flex-direction:column}
+#da-navy-gold .da-summary{padding:14px;gap:15px}
+#da-navy-gold .da-summary .da-sample{margin-left:0;width:100%}
+#da-navy-gold .da-master-detail{grid-template-columns:1fr}
+#da-navy-gold .da-master{padding:14px 10px}
+#da-navy-gold .da-issue{padding:10px;margin-bottom:3px}
+#da-navy-gold .da-detail-title{padding:17px}
+#da-navy-gold .da-evidence{padding:17px}
+#da-navy-gold .da-lead{font-size:13px}}
+#da-navy-gold .da-kicker:before{background:#C4A35D}
+#da-navy-gold .da-em{color:#233B63;text-decoration:underline;text-decoration-color:#C4A35D;text-decoration-thickness:3px;text-underline-offset:10px;text-decoration-skip-ink:none}
+#da-navy-gold .da-logomark{color:#E8D5A8}
+#da-navy-gold .da-number{color:#8C713A}
+#da-navy-gold .da-demo-head{border-top:3px solid #C4A35D;border-radius:12px 12px 0 0}
+#da-navy-gold .da-preview-row.da-expanded{background:#EEF2F8;padding-left:9px;padding-right:9px}
+</style>
+<header class="da-header">
+<button class="da-logo" data-page="landing" aria-label="DarkAudit 홈">
+<span class="da-logomark">
+<i data-lucide="scan-line" aria-hidden="true">
+</i>
+</span>DarkAudit</button>
+<nav class="da-nav" aria-label="주요 메뉴">
+<button data-page="landing" aria-pressed="true">서비스 소개</button>
+<button data-page="report" aria-pressed="false">리포트 미리보기</button>
+</nav>
+<button class="da-btn secondary" data-page="report">샘플 리포트 <i data-lucide="arrow-up-right" aria-hidden="true">
+</i>
+</button>
+</header>
+<section data-view="landing" aria-label="서비스 소개">
+<div class="da-hero">
+<div>
+<div class="da-kicker">DESIGNED FOR TRUST</div>
+<h1>금융의 신뢰를,<br>화면 설계부터<br>
+<span class="da-em">더 단단하게.</span>
+</h1>
+<p class="da-lead">금융상품 가입 화면의 소비자 보호 위험을 살펴보고,<br>판단 근거와 개선 방향을 함께 확인하세요.</p>
+<div class="da-actions">
+<button class="da-btn" data-page="report">샘플 리포트 살펴보기 <i data-lucide="arrow-right" aria-hidden="true">
+</i>
+</button>
+<button class="da-btn secondary" data-scroll="process">어떻게 점검하나요?</button>
+</div>
+<div class="da-fine">기획부터 QA까지, 출시 전 화면 검토를 위한 도구</div>
+</div>
+<div class="da-demo">
+<div class="da-demo-head">
+<span>소비자 보호 사전점검</span>
+<span class="da-tag">샘플 리포트</span>
+</div>
+<div class="da-demo-body">
+<div class="da-caption">보험 가입 화면</div>
+<div class="da-demo-title">확인할 지점을 명확하게.</div>
+<div class="da-inspect">
+<div class="da-icon">
+<i data-lucide="scan-search" aria-hidden="true">
+</i>
+</div>
+<div>
+<strong>문제가 보이는 위치부터</strong>
+<span>화면 요소와 판단 근거를 연결합니다.</span>
+</div>
+</div>
+<div class="da-preview-row">
+<span>01 &nbsp; 선택 옵션의 사전 설정</span>
+<span class="da-warn">검토 필요</span>
+</div>
+<div class="da-preview-row">
+<span>02 &nbsp; 선택지 간 시각적 강조 차이</span>
+<span class="da-warn">검토 필요</span>
+</div>
+<div class="da-preview-row">
+<span>03 &nbsp; 가입 취소 절차</span>
+<span class="da-tag">근거 부족</span>
+</div>
+<button class="da-textlink" data-page="report">예시 항목 확인하기 ↓</button>
+</div>
+<div class="da-demo-bottom">
+<i data-lucide="info" aria-hidden="true">
+</i>최종 판단을 돕는 검토 자료를 제공합니다.</div>
+</div>
+</div>
+<div class="da-methods" id="da-process">
+<div class="da-method">
+<span class="da-number">01</span>
+<div>
+<h3>화면을 모으고</h3>
+<p>가입 흐름에 따라 점검할 화면을 준비합니다.</p>
+</div>
+</div>
+<div class="da-method">
+<span class="da-number">02</span>
+<div>
+<h3>근거를 살펴보고</h3>
+<p>확인이 필요한 요소와 판단 이유를 확인합니다.</p>
+</div>
+</div>
+<div class="da-method">
+<span class="da-number">03</span>
+<div>
+<h3>개선으로 연결하세요</h3>
+<p>화면별 개선안을 검토하고 다음 설계에 반영합니다.</p>
+</div>
+</div>
+</div>
+<div class="da-bottom">
+<div>
+<h2>발견에서 끝나지 않는 점검.</h2>
+<p>화면, 근거, 개선안을 한곳에서 확인하세요.</p>
+</div>
+<button class="da-btn secondary" data-page="report">리포트 미리보기 <i data-lucide="arrow-right" aria-hidden="true">
+</i>
+</button>
+</div>
+</section>
+
+<footer class="da-foot">
+<span>DarkAudit &nbsp; / &nbsp; Consumer Protection by Design</span>
+<span>라이트 모드 · Navy & Gold</span>
+</footer>
+
+<script>
+(()=>{const root=document.getElementById('da-navy-gold');const demo=root.querySelector('.da-demo');root.querySelectorAll('[data-page]').forEach(button=>{button.removeAttribute('aria-pressed');button.addEventListener('click',()=>{const report=button.dataset.page==='report';(report?demo:root).scrollIntoView({behavior:'auto',block:'nearest'});if(report)root.querySelectorAll('.da-preview-row').forEach(row=>row.classList.toggle('da-expanded'));});});root.querySelector('[data-scroll]').addEventListener('click',()=>root.querySelector('#da-process').scrollIntoView({behavior:'auto',block:'nearest'}));})();
+</script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script>
+  if (window.lucide) {
+    lucide.createIcons({ attrs: { width: 18, height: 18 } });
+  }
+</script>
+</body>
+</html>

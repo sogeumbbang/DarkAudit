@@ -81,7 +81,7 @@ export function AnalysisProgress({
             className="relative mx-auto flex size-24 items-center justify-center overflow-hidden rounded-3xl border border-brand-100 bg-gradient-to-b from-brand-50 to-brand-100"
           >
             <ScanLine size={44} strokeWidth={1.3} className="text-brand-600" />
-            <div className="analysis-scan-line absolute inset-x-3 top-3 h-px bg-brand-500 shadow-[0_0_12px_2px_#5da18855]" />
+            <div className="analysis-scan-line absolute inset-x-3 top-3 h-px bg-brand-500 shadow-[0_0_12px_2px_var(--color-brand-400)]" />
           </div>
         ) : (
           <span

@@ -21,7 +21,7 @@ const patterns = [
     title: "사전선택",
     description: "선택적 서비스가 기본으로 활성화되어 추가 비용이 발생할 수 있습니다.",
     preview: (
-      <div className="flex items-center gap-3 rounded-control bg-white p-4 shadow-lg">
+      <div className="flex items-center gap-3 rounded-control bg-white p-4 shadow-card">
         <span className="flex size-5 items-center justify-center rounded bg-brand-600 text-white">
           <Check size={13} />
         </span>
@@ -37,7 +37,7 @@ const patterns = [
     title: "감정적 압박",
     description: "거절하거나 나가려는 선택에 부담을 주는 문구와 표현이 사용될 수 있습니다.",
     preview: (
-      <div className="rounded-control bg-white p-4 text-center shadow-lg">
+      <div className="rounded-control bg-white p-4 text-center shadow-card">
         <p className="text-xs leading-5 text-muted">
           혜택을 포기하고
           <br />
@@ -54,7 +54,7 @@ const patterns = [
     title: "순차공개 가격책정",
     description: "전체 비용 정보가 과정 후반에 드러나 실제 가격을 왜곡할 수 있습니다.",
     preview: (
-      <div className="rounded-control bg-white p-4 shadow-lg">
+      <div className="rounded-control bg-white p-4 shadow-card">
         <p className="text-[10px] text-muted">초기 안내</p>
         <p className="mt-1 font-bold">월 9,900원</p>
         <div className="my-3 h-px bg-border" />
@@ -68,11 +68,11 @@ const patterns = [
 function ProductMockup() {
   return (
     <div className="relative mx-auto max-w-xl pb-12 sm:pr-12">
-      <Card className="overflow-hidden border-white/15 bg-white text-text shadow-2xl">
+      <Card className="overflow-hidden border-border bg-white text-text shadow-card">
         <div className="grid grid-cols-[105px_1fr] sm:grid-cols-[125px_1fr]">
-          <div className="bg-brand-950 p-4 text-white">
+          <div className="bg-brand-50 p-4 text-text">
             <p className="text-xs font-bold">⌂ DarkAudit</p>
-            <div className="mt-6 space-y-3 text-[9px] text-white/50">
+            <div className="mt-6 space-y-3 text-[9px] text-muted">
               <p className="rounded bg-brand-600 px-2 py-2 text-white">대시보드</p>
               <p className="px-2">진단 관리</p>
               <p className="px-2">검토 기준</p>
@@ -82,7 +82,7 @@ function ProductMockup() {
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold">대시보드</p>
-              <span className="rounded bg-brand-950 px-2 py-1 text-[7px] text-white">
+              <span className="rounded bg-brand-600 px-2 py-1 text-[7px] text-white">
                 + 새 진단
               </span>
             </div>
@@ -114,7 +114,7 @@ function ProductMockup() {
           </div>
         </div>
       </Card>
-      <div className="absolute -bottom-1 right-0 hidden h-[300px] w-[154px] rotate-2 rounded-[30px] border-[7px] border-[#222] bg-[#f9faf9] p-3 text-text shadow-2xl sm:block">
+      <div className="absolute -bottom-1 right-0 hidden h-[300px] w-[154px] rotate-2 rounded-[30px] border-[7px] border-text bg-background p-3 text-text shadow-card sm:block">
         <div className="mx-auto mb-8 h-1.5 w-10 rounded-full bg-black/70" />
         <p className="text-[8px] font-bold">옵션 선택</p>
         <p className="mt-7 text-[7px] text-muted">월 보험료</p>
@@ -135,7 +135,7 @@ function ProductMockup() {
           다음
         </div>
       </div>
-      <div className="absolute -bottom-3 left-[44%] hidden w-48 rounded-card border border-brand-400 bg-white p-4 text-text shadow-xl md:block">
+      <div className="absolute -bottom-3 left-[44%] hidden w-48 rounded-card border border-brand-400 bg-white p-4 text-text shadow-card md:block">
         <div className="flex justify-between text-[9px]">
           <strong className="text-brand-700">DP-04</strong>
           <span className="text-danger">● 검토 필요</span>
@@ -151,11 +151,11 @@ function ProductMockup() {
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-text">
-      <section className="subtle-grid overflow-hidden bg-brand-950 text-white">
+    <div className="min-h-screen bg-background text-text">
+      <section className="landing-aurora overflow-hidden text-text">
         <header className="page-container flex items-center justify-between py-6">
-          <Brand />
-          <nav className="hidden items-center gap-12 text-sm text-white/80 lg:flex">
+          <Brand dark />
+          <nav className="hidden items-center gap-12 text-sm text-muted lg:flex">
             <a href="#product">제품 소개</a>
             <a href="#standards">검토 기준</a>
             <a href="#process">작동 방식</a>
@@ -167,22 +167,24 @@ export function LandingPage() {
         </header>
         <main className="page-container grid items-center gap-16 py-[74px] lg:grid-cols-[0.85fr_1.15fr] lg:py-[90px]">
           <div>
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-brand-400">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-brand-600">
               금융 UX 사전 점검
             </p>
             <h1 className="max-w-2xl text-4xl font-bold leading-[1.25] tracking-tight sm:text-5xl xl:text-6xl">
               금융상품 UX를
               <br />
-              <span className="text-brand-400">더 명확한 기준으로</span>
+              <span className="text-brand-600 decoration-accent underline decoration-2 underline-offset-8">
+                더 명확한 기준으로
+              </span>
               <br />
               검토하세요.
             </h1>
-            <p className="mt-7 max-w-lg text-base leading-8 text-white/70">
+            <p className="mt-7 max-w-lg text-base leading-8 text-muted">
               금융위원회 온라인 금융상품 판매 관련 다크패턴 가이드라인을 기반으로 AI가 금융상품
               화면과 이용 흐름을 분석합니다.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Button asChild variant="secondary">
+              <Button asChild>
                 <Link to="/app/overview">
                   진단 시작하기 <ArrowRight size={17} />
                 </Link>
@@ -194,9 +196,9 @@ export function LandingPage() {
                 서비스 살펴보기 <ArrowRight size={16} />
               </a>
             </div>
-            <p className="mt-10 flex items-center gap-2 text-xs text-white/60">
-              <ShieldCheck className="text-brand-400" size={18} /> 금융권 보안 기준을 준수하여
-              안전하게 데이터를 처리합니다.
+            <p className="mt-10 flex items-center gap-2 text-xs text-muted">
+              <ShieldCheck className="text-accent" size={18} /> 금융권 보안 기준을 준수하여 안전하게
+              데이터를 처리합니다.
             </p>
           </div>
           <ProductMockup />
@@ -229,7 +231,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-gradient-to-r from-brand-50 to-white py-20" id="standards">
+      <section className="bg-brand-50/50 py-20" id="standards">
         <div className="page-container grid items-center gap-12 lg:grid-cols-[0.9fr_0.8fr_1.2fr]">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">
@@ -329,9 +331,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="subtle-grid bg-brand-950 py-12 text-center text-white" id="cases">
+      <section className="bg-surface py-12 text-center text-text" id="cases">
         <h2 className="text-2xl font-bold">금융상품 UX 검토를 시작하세요.</h2>
-        <p className="mt-3 text-sm text-white/65">
+        <p className="mt-3 text-sm text-muted">
           출시 전 검토로 소비자에게 더 명확하고 신뢰할 수 있는 경험을 제공할 수 있습니다.
         </p>
         <Button asChild className="mt-6">

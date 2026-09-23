@@ -8,7 +8,7 @@ export function Brand({ dark = false }: BrandProps) {
       className={`inline-flex items-center text-xl font-bold tracking-tight ${dark ? "text-text" : "text-white"}`}
       to="/landing"
     >
-      Dark<span className={dark ? "text-brand-600" : "text-brand-400"}>Audit</span>
+      Dark<span className={dark ? "text-brand-600" : "text-accent"}>Audit</span>
     </Link>
   );
 }

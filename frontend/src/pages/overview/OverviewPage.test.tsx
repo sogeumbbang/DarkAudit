@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/mocks/server";
@@ -21,6 +21,31 @@ function renderPage() {
 }
 
 describe("OverviewPage", () => {
+  it("selects an item from the master list and updates its screen and evidence", async () => {
+    const user = userEvent.setup();
+    const fixture = structuredClone(dashboardFixture);
+    const audit = fixture.audits[0]!;
+    const target = { ...audit.findings[1]!, id: "extra-finding", title: "추가 점검 항목" };
+    audit.findings.push(target);
+    server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
+    renderPage();
+    const list = await screen.findByRole("navigation", { name: "점검 항목" });
+    const item = within(list).getByRole("button", { name: /추가 점검 항목/ });
+    await user.click(item);
+    expect(item).toHaveAttribute("aria-current", "true");
+    expect(within(list).getAllByRole("button")).toHaveLength(4);
+    const detail = screen.getByRole("region", { name: "선택한 항목 검토" });
+    expect(within(detail).getByRole("heading", { name: target.title })).toBeInTheDocument();
+    expect(within(detail).getByText(target.recommendation)).toBeInTheDocument();
+    const selectedScreen = audit.screens.find(
+      (item) => item.id === (target.bbox?.screenId ?? target.screenIds[0]),
+    )!;
+    expect(within(detail).getByRole("img", { name: /캡처 화면 미리보기/ })).toHaveAttribute(
+      "src",
+      selectedScreen.imageUrl,
+    );
+  });
+
   it("shows incomplete analysis separately from zero findings", async () => {
     const fixture = structuredClone(dashboardFixture);
     fixture.audits[0]!.findings = [];
@@ -123,7 +148,6 @@ describe("OverviewPage", () => {
     expect(await screen.findByRole("heading", { name: "보험 가입 흐름 v1" })).toBeInTheDocument();
     expect(screen.getByText("1 / 3")).toBeInTheDocument();
 
-    // 카드는 3건까지만 노출되므로 그 뒤 항목은 화살표로만 닿는다.
     await user.click(screen.getByRole("button", { name: "다음 탐지 항목" }));
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
 

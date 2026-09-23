@@ -26,21 +26,21 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-20 flex-col bg-brand-950 p-5 text-white transition-[width]",
+        "fixed inset-y-0 left-0 z-20 flex-col border-r border-border bg-surface p-5 text-text transition-[width]",
         collapsed && !mobile ? "w-[88px]" : "w-[280px]",
         mobile ? "flex lg:hidden" : "hidden lg:flex",
       )}
     >
       <div className="flex items-center justify-between px-2 py-2">
         {!collapsed || mobile ? (
-          <Brand />
+          <Brand dark />
         ) : (
-          <span className="px-1 text-xl font-bold text-brand-400">D</span>
+          <span className="px-1 text-xl font-bold text-brand-600">D</span>
         )}
         <button
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
           className={cn(
-            "rounded-control border border-white/20 p-2 text-white/80",
+            "rounded-control border border-border p-2 text-muted",
             mobile && "invisible",
           )}
           onClick={onCollapse}
@@ -53,8 +53,8 @@ function Sidebar({
           <NavLink
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-control px-4 py-3.5 text-sm font-medium text-white/75 transition-colors hover:bg-white/5 hover:text-white",
-                isActive && "bg-brand-600 text-white shadow-lg shadow-black/10",
+                "flex items-center gap-3 rounded-control px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
+                isActive && "bg-brand-50 text-brand-600 ring-1 ring-inset ring-accent/35",
               )
             }
             key={to}
@@ -69,18 +69,18 @@ function Sidebar({
       <div className="mt-auto space-y-4">
         <div
           className={cn(
-            "rounded-card border border-white/20 p-4",
+            "rounded-card border border-accent/30 bg-background p-4",
             collapsed && !mobile && "hidden",
           )}
         >
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="text-brand-400" size={21} /> 안전한 규제 준수
+            <ShieldCheck className="text-brand-600" size={21} /> 안전한 규제 준수
           </p>
-          <p className="mt-3 text-xs leading-5 text-white/55">
+          <p className="mt-3 text-xs leading-5 text-muted">
             금융보안 및 개인정보 보호 기준을 준수하여 안전하게 운영됩니다.
           </p>
           <Link
-            className="mt-4 inline-block text-xs font-semibold text-brand-400"
+            className="mt-4 inline-block text-xs font-semibold text-brand-600"
             to="/app/guidelines"
           >
             자세히 보기 →
@@ -114,7 +114,7 @@ export function AppLayout() {
             <Sidebar mobile onNavigate={() => setIsMenuOpen(false)} />
             <button
               aria-label="메뉴 닫기"
-              className="absolute right-5 top-7 rounded-control border border-white/20 p-2 text-white lg:hidden"
+              className="absolute right-5 top-7 rounded-control border border-border p-2 text-text lg:hidden"
               onClick={() => setIsMenuOpen(false)}
             >
               <X size={17} />

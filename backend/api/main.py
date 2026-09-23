@@ -32,6 +32,8 @@ from .schemas import (
     CreateAuditRequest,
     DashboardSummaryDto,
     FindingStatusRequest,
+    FindingDecisionRequest,
+    FindingDecisionDto,
     ImportFigmaRequest,
     JobDto,
     RegressionDto,
@@ -52,7 +54,7 @@ from .service import (
     public_image_path,
     rules_by_id,
 )
-from .store import SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto
+from .store import utcnow, SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto
 
 app = FastAPI(title="DarkAudit API", version="1.1.0")
 app.include_router(demo_router)
@@ -377,3 +379,24 @@ def update_finding(finding_id: str, payload: FindingStatusRequest) -> dict[str, 
         finding.status = FindingStatus.RESOLVED if payload.status == "resolved" else FindingStatus.OPEN
         session.commit()
     return {"id": finding_id, "status": payload.status}
+
+
+@app.put("/api/v1/findings/{finding_id}/decision", response_model=FindingDecisionDto)
+def save_finding_decision(finding_id: str, payload: FindingDecisionRequest) -> FindingDecisionDto:
+    try:
+        pk = int(finding_id.rsplit("-", 1)[-1])
+    except ValueError:
+        raise HTTPException(404, "Finding not found")
+    with SessionLocal() as session:
+        finding = session.get(Finding, pk)
+        if finding is None:
+            raise HTTPException(404, "Finding not found")
+        updated_at = utcnow()
+        finding.decision_note = payload.decisionNote.strip()
+        finding.decision_updated_at = updated_at
+        session.commit()
+        return FindingDecisionDto(
+            id=finding_id,
+            decisionNote=finding.decision_note,
+            decisionUpdatedAt=updated_at.isoformat(),
+        )

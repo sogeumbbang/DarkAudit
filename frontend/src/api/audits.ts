@@ -101,3 +101,10 @@ export function updateFindingStatus(findingId: string, status: FindingStatus) {
     body: JSON.stringify({ status }),
   });
 }
+
+export function saveFindingDecision(findingId: string, decisionNote: string) {
+  return apiRequest<{ id: string; decisionNote: string; decisionUpdatedAt: string }>(
+    `/api/v1/findings/${findingId}/decision`,
+    { method: "PUT", body: JSON.stringify({ decisionNote }) },
+  );
+}

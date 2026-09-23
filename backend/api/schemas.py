@@ -86,6 +86,8 @@ class FindingDto(BaseModel):
     severity: Severity
     status: FindingStatus = "open"
     confidence: float = Field(ge=0, le=1)
+    decisionNote: str = ""
+    decisionUpdatedAt: str | None = None
     recommendation: str
     guideline: str
 
@@ -195,3 +197,13 @@ class RegressionDto(BaseModel):
     new: list[RegressionChangeDto] = Field(default_factory=list)
     regressed: list[RegressionChangeDto] = Field(default_factory=list)
     resolvedRatio: float = 0.0
+
+
+class FindingDecisionRequest(BaseModel):
+    decisionNote: str = Field(max_length=4000)
+
+
+class FindingDecisionDto(BaseModel):
+    id: str
+    decisionNote: str
+    decisionUpdatedAt: str

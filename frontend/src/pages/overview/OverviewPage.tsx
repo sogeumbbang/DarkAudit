@@ -24,8 +24,11 @@ import { Card } from "@/components/ui/Card";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
+import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
+
+import "./overview.css";
 
 const auditStatusPresentation: Record<
   AuditDto["status"],
@@ -50,9 +53,9 @@ function FlowOverview({
   onShowAll: () => void;
 }) {
   return (
-    <Card className="p-5">
+    <Card className="min-w-0 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold">가입 흐름 요약</h2>
+        <h2 className="text-base font-semibold">가입 흐름 요약</h2>
         <button
           className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-xs font-semibold text-brand-700"
           onClick={onShowAll}
@@ -60,11 +63,11 @@ function FlowOverview({
           전체 흐름 보기 <ArrowRight size={13} />
         </button>
       </div>
-      <div className="mt-5 grid grid-cols-5 gap-2 overflow-x-auto py-2">
+      <div className="mt-5 flex gap-3 overflow-x-auto py-2">
         {screens.map((screen, index) => (
           <button
             className={cn(
-              "relative min-w-20 rounded-control p-1 text-center",
+              "relative min-w-20 flex-1 rounded-control p-1 text-center",
               selectedScreenId === screen.id && "bg-brand-50 ring-2 ring-inset ring-brand-500",
             )}
             key={screen.id}
@@ -73,7 +76,7 @@ function FlowOverview({
             {index < screens.length - 1 && (
               <span className="absolute left-[60%] top-3 h-px w-[80%] border-t border-dashed border-muted/40" />
             )}
-            <div className="relative mx-auto flex size-6 items-center justify-center rounded-full bg-brand-900 text-[9px] font-bold text-white">
+            <div className="relative mx-auto flex size-6 items-center justify-center rounded-full bg-brand-600 text-[9px] font-bold text-white">
               {index + 1}
               {screen.findingCount > 0 && (
                 <span className="absolute -right-5 flex size-4 items-center justify-center rounded-full bg-danger text-[8px]">
@@ -142,14 +145,16 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
   }
 
   return (
-    <div ref={previewRef}>
-      <Card className="relative mt-4 min-h-[380px] overflow-hidden p-5">
-        <h2 className="text-sm font-bold">화면 미리보기</h2>
+    <div className="min-w-0" ref={previewRef}>
+      <Card className="relative h-full min-h-[520px] overflow-hidden">
+        <h2 className="flex min-h-16 items-center border-b border-border px-6 py-4 text-base font-semibold">
+          화면 미리보기
+        </h2>
         <div
           aria-label="화면 미리보기 이동 영역"
           data-testid="screen-preview-viewport"
           className={cn(
-            "scrollbar-hidden absolute inset-x-0 bottom-0 top-14 touch-none select-none overflow-auto bg-gradient-to-b from-white to-brand-50/60 p-5",
+            "scrollbar-hidden absolute inset-x-0 bottom-12 top-16 touch-none select-none overflow-auto bg-background p-5",
             isPanning ? "cursor-grabbing" : "cursor-grab",
           )}
           onPointerCancel={stopPanning}
@@ -223,8 +228,10 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
             <Expand size={15} />
           </button>
         </div>
+        <div className="absolute inset-x-0 bottom-0 h-12 border-t border-border bg-surface px-6">
+          <ScreenCanvasLegend screenId={screen.id} finding={finding} />
+        </div>
       </Card>
-      <ScreenCanvasLegend screenId={screen.id} finding={finding} />
     </div>
   );
 }
@@ -244,9 +251,9 @@ function FindingDetails({
   const [showMetadata, setShowMetadata] = useState(false);
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
-        <h2 className="text-sm font-bold">탐지 항목 상세</h2>
+    <Card className="min-w-0 overflow-hidden">
+      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
+        <h2 className="text-base font-semibold">탐지 항목 상세</h2>
         <div className="flex items-center gap-3 text-sm">
           <button
             aria-label="이전 탐지 항목"
@@ -277,7 +284,7 @@ function FindingDetails({
       {finding ? (
         <div className="p-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-brand-700">{finding.ruleId}</p>
+            <p className="text-base font-semibold text-brand-700">{finding.ruleId}</p>
             <Badge variant={finding.status === "resolved" ? "success" : "danger"}>
               ●&nbsp; {finding.status === "resolved" ? "해결됨" : "검토 필요"}
             </Badge>
@@ -301,7 +308,7 @@ function FindingDetails({
           <div className="mt-6 flex gap-4 rounded-card border border-border p-5">
             <FileText className="shrink-0 text-brand-600" size={25} />
             <div>
-              <p className="text-sm font-bold">금융위원회 금융소비자 보호 가이드라인</p>
+              <p className="text-base font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
               <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
             </div>
           </div>
@@ -309,6 +316,7 @@ function FindingDetails({
             <h4 className="font-bold">개선 권고안</h4>
             <p className="mt-2">{finding.recommendation}</p>
           </div>
+          <FindingDecisionNote finding={finding} />
           {showMetadata && (
             <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
               신뢰도 {Math.round(finding.confidence * 100)}% · 심각도 {finding.severity}
@@ -317,7 +325,7 @@ function FindingDetails({
           <button
             className={cn(
               "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-3 text-sm font-semibold text-white disabled:opacity-50",
-              finding.status === "resolved" ? "bg-muted" : "bg-brand-700",
+              finding.status === "resolved" ? "bg-muted" : "bg-brand-600",
             )}
             disabled={findingStatus.isPending}
             onClick={() =>
@@ -348,7 +356,7 @@ function FindingDetails({
   );
 }
 
-function FindingsRow({
+function FindingsList({
   findings,
   selectedFindingId,
   onSelect,
@@ -357,22 +365,28 @@ function FindingsRow({
   selectedFindingId?: string;
   onSelect: (finding: FindingDto) => void;
 }) {
-  const [showAll, setShowAll] = useState(false);
-  if (!findings.length) return null;
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.05fr]">
-      {findings.slice(0, showAll ? findings.length : 3).map((finding) => (
-        <button className="text-left" key={finding.id} onClick={() => onSelect(finding)}>
-          <Card
+    <Card className="min-w-0 overflow-hidden">
+      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
+        <h2 className="text-base font-semibold">점검 항목</h2>
+        <span className="text-xs tabular-nums text-muted">{findings.length}개</span>
+      </div>
+      <nav aria-label="점검 항목" className="max-h-[640px] space-y-2 overflow-y-auto p-3">
+        {findings.map((finding) => (
+          <button
+            aria-current={selectedFindingId === finding.id ? "true" : undefined}
+            aria-controls="finding-review-detail"
+            key={finding.id}
+            onClick={() => onSelect(finding)}
             className={cn(
-              "h-full p-5",
-              selectedFindingId === finding.id && "border-danger/60 ring-1 ring-danger/20",
+              "w-full rounded-control border border-transparent p-4 text-left transition-colors hover:bg-brand-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+              selectedFindingId === finding.id && "border-brand-300 bg-brand-50",
             )}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-bold text-brand-700">{finding.ruleId}</p>
               <Badge
+                className="shrink-0 whitespace-nowrap"
                 variant={
                   finding.status === "resolved"
                     ? "success"
@@ -384,30 +398,21 @@ function FindingsRow({
                 {finding.status === "resolved" ? "해결됨" : "검토 필요"}
               </Badge>
             </div>
-            <div className="mt-2 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-bold">{finding.title}</h3>
-                <p className="mt-1 text-xs leading-5 text-muted">{finding.description}</p>
-              </div>
-              <ChevronRight className="mt-1 shrink-0" size={16} />
+            <div className="mt-3 min-w-0">
+              <h3 className="break-keep text-sm font-semibold leading-6 [overflow-wrap:anywhere]">
+                {finding.title}
+              </h3>
+              <p className="mt-1 line-clamp-2 break-keep text-xs leading-5 text-muted [overflow-wrap:anywhere]">
+                {finding.description}
+              </p>
             </div>
-          </Card>
-        </button>
-      ))}
-      {findings.length > 3 && (
-        <button className="text-left" onClick={() => setShowAll((value) => !value)}>
-          <Card className="flex h-full items-center justify-between p-5">
-            <div>
-              <p className="font-bold">{showAll ? "탐지 항목 접기" : "탐지 항목 전체 보기"}</p>
-              <p className="mt-2 text-xs text-muted">총 {findings.length}개</p>
-            </div>
-            <span className="flex size-8 items-center justify-center rounded-full bg-brand-700 text-white">
-              <ArrowRight size={15} />
-            </span>
-          </Card>
-        </button>
-      )}
-    </div>
+          </button>
+        ))}
+        {!findings.length && (
+          <p className="p-4 text-sm leading-6 text-muted">검토할 점검 항목이 없습니다.</p>
+        )}
+      </nav>
+    </Card>
   );
 }
 
@@ -419,9 +424,9 @@ function RecentAudits({
   onSelect: (auditId: string) => void;
 }) {
   return (
-    <Card className="mt-4 overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
-        <h2 className="text-sm font-bold">최근 진단</h2>
+    <Card className="min-w-0 overflow-hidden">
+      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
+        <h2 className="text-base font-semibold">최근 진단</h2>
         <Link
           className="flex items-center gap-2 text-xs font-semibold text-brand-700"
           to="/app/audits"
@@ -496,7 +501,7 @@ function DashboardLoading() {
       role="status"
     >
       <div className="h-8 w-32 rounded bg-black/10" />
-      <div className="mt-6 h-44 rounded-card bg-brand-900/20" />
+      <div className="mt-6 h-44 rounded-card bg-brand-100" />
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <div className="space-y-4">
           <div className="h-56 rounded-card bg-black/5" />
@@ -526,7 +531,7 @@ export function OverviewPage() {
           {error instanceof Error ? error.message : "잠시 후 다시 시도해주세요."}
         </p>
         <button
-          className="mx-auto mt-6 flex items-center gap-2 rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
+          className="mx-auto mt-6 flex items-center gap-2 rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white"
           onClick={() => refetch()}
         >
           <RefreshCw size={15} /> 다시 시도
@@ -544,7 +549,7 @@ export function OverviewPage() {
           첫 금융상품 가입 흐름을 등록하고 UX 검토를 시작하세요.
         </p>
         <Link
-          className="mx-auto mt-6 inline-flex rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
+          className="mx-auto mt-6 inline-flex rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white"
           to="/app/audits/new"
         >
           새 진단 시작하기
@@ -568,7 +573,7 @@ export function OverviewPage() {
             : "화면 업로드나 URL 캡처가 아직 시작되지 않은 진단입니다."}
         </p>
         <Link
-          className="mx-auto mt-6 inline-flex rounded-control bg-brand-700 px-5 py-3 text-sm font-semibold text-white"
+          className="mx-auto mt-6 inline-flex rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white"
           to="/app/audits/new"
         >
           새 진단 시작하기
@@ -595,7 +600,7 @@ export function OverviewPage() {
       value: audit.findings.length,
       icon: ShieldCheck,
       action: "전체 보기",
-      color: "text-brand-400",
+      color: "text-brand-600",
     },
     {
       label: "검토 필요",
@@ -609,7 +614,7 @@ export function OverviewPage() {
       value: resolved,
       icon: CheckCircle2,
       action: "해결 항목 보기",
-      color: "text-white",
+      color: "text-success",
     },
   ];
 
@@ -649,7 +654,6 @@ export function OverviewPage() {
     if (next) selectFinding(next);
   }
 
-  // 카드로는 3건까지만 노출되므로, 그 뒤 항목은 이 화살표로만 닿을 수 있다.
   function stepFinding(delta: number) {
     if (audit.findings.length < 2) return;
     const total = audit.findings.length;
@@ -658,13 +662,10 @@ export function OverviewPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1500px]">
+    <div className="overview-page mx-auto max-w-[1500px]">
       <h1 className="text-2xl font-bold tracking-tight">대시보드</h1>
       {audit.analysisSummary?.supportedRules && (
-        <section
-          aria-label="분석 범위"
-          className="mt-4 rounded-card border border-line bg-white p-4"
-        >
+        <section aria-label="분석 범위" className="rounded-card border border-border bg-white p-6">
           <h2 className="font-semibold">
             {audit.analysisSummary.complete
               ? "수집한 화면의 규칙 검사 완료"
@@ -685,7 +686,7 @@ export function OverviewPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             {audit.analysisSummary.ruleAssessments?.map((assessment) => (
               <span
-                className="rounded border border-line px-2 py-1 text-xs"
+                className="rounded border border-border px-2 py-1 text-xs"
                 key={assessment.ruleId}
               >
                 {assessment.ruleId}:{" "}
@@ -702,78 +703,73 @@ export function OverviewPage() {
           </div>
         </section>
       )}
-      <section className="subtle-grid mt-6 overflow-hidden rounded-card bg-brand-900 p-6 text-white lg:p-8">
-        <div className="grid items-center gap-8 xl:grid-cols-[1fr_1.15fr]">
-          <div>
-            {/*
-              variant 색은 밝은 표면 기준이라 어두운 히어로 위에서는 대비가 깨진다.
-              text-white 로 덮으면 bg-brand-100 위 흰 글씨가 되어 대비 1.17 까지
-              떨어졌다. 여기서는 히어로에 맞는 색을 직접 준다. 상태는 색이 아니라
-              라벨 문구가 전달하므로 정보가 사라지지도 않는다.
-            */}
-            <Badge className="bg-white/15 text-white">●&nbsp; {auditStatus.label}</Badge>
-            <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
-            <div className="mt-5 flex flex-wrap gap-6 text-xs text-white/70">
-              <span className="flex items-center gap-2">
-                <Smartphone size={15} /> 모바일 웹
-              </span>
-              <span className="flex items-center gap-2">
-                <MonitorSmartphone size={15} /> 화면 {audit.screens.length}개
-              </span>
-              <span className="flex items-center gap-2">
-                <CalendarDays size={15} />{" "}
-                {new Intl.DateTimeFormat("ko-KR", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(new Date(audit.updatedAt))}
-              </span>
-            </div>
+      <section className="overview-summary">
+        <Card className="flex min-w-0 flex-col justify-center p-6">
+          <Badge className="self-start" variant={auditStatus.variant}>
+            {auditStatus.label}
+          </Badge>
+          <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs leading-5 text-muted">
+            <span className="flex items-center gap-2">
+              <Smartphone size={15} /> 모바일 웹
+            </span>
+            <span className="flex items-center gap-2">
+              <MonitorSmartphone size={15} /> 화면 {audit.screens.length}개
+            </span>
+            <span className="flex items-center gap-2">
+              <CalendarDays size={15} />{" "}
+              {new Intl.DateTimeFormat("ko-KR", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(new Date(audit.updatedAt))}
+            </span>
           </div>
-          <div className="grid grid-cols-1 divide-y divide-white/15 rounded-card border border-white/20 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            {metrics.map(({ label, value, icon: Icon, action, color }) => (
-              <button
-                className="p-5 text-left disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={value === 0}
-                key={label}
-                onClick={() => selectMetric(label)}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={color} size={22} />
-                  <span className="text-2xl font-bold">{value}</span>
-                </div>
-                <p className="mt-3 text-xs font-semibold">{label}</p>
-                <p className="mt-5 flex items-center gap-2 text-xs text-brand-400">
-                  {action} <ArrowRight size={12} />
-                </p>
-              </button>
-            ))}
-          </div>
+        </Card>
+        <div className="overview-metrics">
+          {metrics.map(({ label, value, icon: Icon, action, color }) => (
+            <button
+              className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-6 text-left shadow-card transition-colors hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={value === 0}
+              key={label}
+              onClick={() => selectMetric(label)}
+            >
+              <div className="flex items-center gap-3">
+                <Icon className={color} size={22} />
+                <span className="text-2xl font-bold">{value}</span>
+              </div>
+              <p className="mt-3 text-xs font-semibold">{label}</p>
+              <p className="mt-auto flex items-center gap-2 pt-4 text-xs text-brand-600">
+                {action} <ArrowRight size={12} />
+              </p>
+            </button>
+          ))}
         </div>
       </section>
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <div>
-          <FlowOverview
-            screens={audit.screens}
-            selectedScreenId={screen.id}
-            onSelect={selectScreen}
-            onShowAll={() => setShowFlow(true)}
-          />
-          <ScreenPreview finding={finding} screen={screen} />
-        </div>
-        <FindingDetails
-          finding={finding}
-          key={finding?.id ?? "no-finding"}
-          onStep={stepFinding}
-          position={findingPosition}
-          total={audit.findings.length}
-        />
-      </div>
-      <div className="mt-4">
-        <FindingsRow
+      <FlowOverview
+        screens={audit.screens}
+        selectedScreenId={screen.id}
+        onSelect={selectScreen}
+        onShowAll={() => setShowFlow(true)}
+      />
+      <div className="overview-review">
+        <FindingsList
           findings={audit.findings}
           selectedFindingId={finding?.id}
           onSelect={selectFinding}
         />
+        <section
+          id="finding-review-detail"
+          aria-label="선택한 항목 검토"
+          className="overview-detail"
+        >
+          <ScreenPreview key={screen.id} finding={finding} screen={screen} />
+          <FindingDetails
+            finding={finding}
+            onStep={stepFinding}
+            position={findingPosition}
+            total={audit.findings.length}
+          />
+        </section>
       </div>
       <RecentAudits audits={data.audits} onSelect={selectAudit} />
       {showFlow && (
@@ -808,7 +804,7 @@ export function OverviewPage() {
                     className="mx-auto h-64 max-w-full object-contain"
                     src={item.imageUrl}
                   />
-                  <p className="mt-3 text-sm font-bold">
+                  <p className="mt-3 text-base font-semibold">
                     {item.order}. {item.flowStep}
                   </p>
                 </button>

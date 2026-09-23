@@ -41,6 +41,8 @@ export const findingSchema = z.object({
   severity: z.enum(["HIGH", "REVIEW", "LOW"]),
   status: z.enum(["open", "reviewing", "resolved"]),
   confidence: z.number().min(0).max(1),
+  decisionNote: z.string().optional(),
+  decisionUpdatedAt: z.string().nullable().optional(),
   recommendation: z.string(),
   guideline: z.string(),
   observation: z.string().nullable().optional(),

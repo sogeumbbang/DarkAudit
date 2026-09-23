@@ -61,6 +61,12 @@ def init_db() -> None:
             with _engine.begin() as connection:
                 connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} JSON"))
 
+    existing = {item["name"] for item in inspect(_engine).get_columns("finding")}
+    for column, sql_type in (("decision_note", "TEXT"), ("decision_updated_at", "TIMESTAMP")):
+        if column not in existing:
+            with _engine.begin() as connection:
+                connection.execute(text(f"ALTER TABLE finding ADD COLUMN {column} {sql_type}"))
+
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -214,6 +220,8 @@ def to_finding_dto(
         severity=f.severity.value,
         status="resolved" if f.status.value == "RESOLVED" else "open",
         confidence=f.confidence if f.confidence is not None else 0.7,
+        decisionNote=f.decision_note or "",
+        decisionUpdatedAt=aware(f.decision_updated_at).isoformat() if f.decision_updated_at else None,
         recommendation=(ev.fix_text if ev else None) or rule.get("fix_template", ""),
         guideline=rule.get("official_definition", ""),
         observation=(ev.observation if ev else None),

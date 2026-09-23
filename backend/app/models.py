@@ -233,6 +233,8 @@ class Finding(Base):
     status: Mapped[FindingStatus] = mapped_column(
         Enum(FindingStatus), default=FindingStatus.OPEN
     )
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    decision_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     confidence: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 

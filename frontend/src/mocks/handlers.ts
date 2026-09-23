@@ -11,6 +11,23 @@ import type {
 const jobs = new Map<string, AnalysisJobDto>();
 
 export const handlers = [
+  http.put("*/api/v1/findings/:findingId/decision", async ({ params, request }) => {
+    const { decisionNote } = (await request.json()) as { decisionNote: string };
+    if (typeof decisionNote !== "string" || decisionNote.length > 4000) {
+      return HttpResponse.json({ detail: "Invalid decision note" }, { status: 422 });
+    }
+    const finding = dashboardFixture.audits
+      .flatMap((audit) => audit.findings)
+      .find((item) => item.id === params.findingId);
+    if (!finding) return HttpResponse.json({ detail: "Finding not found" }, { status: 404 });
+    finding.decisionNote = decisionNote.trim();
+    finding.decisionUpdatedAt = new Date().toISOString();
+    return HttpResponse.json({
+      id: finding.id,
+      decisionNote: finding.decisionNote,
+      decisionUpdatedAt: finding.decisionUpdatedAt,
+    });
+  }),
   http.get("*/health", () => HttpResponse.json({ status: "ok" })),
   http.get("*/api/v1/demo-inputs", () => {
     return HttpResponse.json({

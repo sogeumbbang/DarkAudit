@@ -50,6 +50,8 @@ export type FindingDto = {
   severity: FindingSeverity;
   status: FindingStatus;
   confidence: number;
+  decisionNote?: string;
+  decisionUpdatedAt?: string | null;
   recommendation: string;
   guideline: string;
   observation?: string | null;
