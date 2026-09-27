@@ -27,6 +27,8 @@
    | `DARKAUDIT_PROVIDER` | 필수 | 실제 분석은 `openai`. `fake`면 호출 없이 배선만 확인되고 탐지는 항상 0건 |
    | `DARKAUDIT_MODEL` | 필수 | Responses API의 이미지 입력과 Structured Outputs를 지원하는 모델 |
    | `OPENAI_API_KEY` | 필수 | |
+   | `DARKAUDIT_CHAT_MODEL` | 선택 | 다크패턴 챗봇 답변 모델. 비우면 `DARKAUDIT_MODEL`을 쓴다 |
+   | `DARKAUDIT_EMBEDDING_MODEL` | 선택 | 챗봇 문서 검색용 임베딩 모델. 기본값 `text-embedding-3-large` |
    | `DARKAUDIT_COMPUTER_MODEL` | 선택 | URL `스마트 탐색` 모드에만 필요. 없으면 그 요청은 400으로 거절된다 |
    | `FIGMA_ACCESS_TOKEN` | 선택 | Figma 임포트용. `file_content:read` 권한만 있으면 된다 |
    | `BROWSERSTACK_USERNAME` | APK 사용 시 필수 | BrowserStack App Automate 사용자명 |

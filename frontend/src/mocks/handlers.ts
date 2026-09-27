@@ -11,6 +11,23 @@ import type {
 const jobs = new Map<string, AnalysisJobDto>();
 
 export const handlers = [
+  http.post("*/api/v1/chat", async ({ request }) => {
+    const { message } = (await request.json()) as { message: string };
+    await delay(300);
+    return HttpResponse.json({
+      answer: `목업 응답입니다. "${message}"에 대한 가이드라인 근거를 확인하세요. [1]`,
+      sources: [
+        {
+          index: 1,
+          title: "온라인 금융상품 판매 관련 다크패턴 가이드라인 (별첨)",
+          section: "오도형 > ④ 특정옵션의 사전선택",
+          sourceFile: "251224[별첨] 온라인 금융상품 판매 관련 다크패턴 가이드라인.pdf",
+          excerpt:
+            "사업자에게 유리한 선택사항(옵션)을 미리 선택해놓고 금융소비자가 이를 지나치게 하거나 그대로 수용하도록 유도하는 행위",
+        },
+      ],
+    });
+  }),
   http.put("*/api/v1/findings/:findingId/decision", async ({ params, request }) => {
     const { decisionNote } = (await request.json()) as { decisionNote: string };
     if (typeof decisionNote !== "string" || decisionNote.length > 4000) {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
+import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
 import { cn } from "@/lib/cn";
 
 const navigation = [
@@ -135,6 +136,7 @@ export function AppLayout() {
         </div>
         <Outlet />
       </main>
+      <ChatbotWidget />
     </div>
   );
 }
