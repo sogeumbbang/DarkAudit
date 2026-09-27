@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 
@@ -10,9 +10,9 @@ import { server } from "@/mocks/server";
 const first = { ...dashboardFixture.audits[0]!.findings[0]!, decisionNote: "" };
 const second = { ...dashboardFixture.audits[0]!.findings[1]!, decisionNote: "" };
 
-function setup() {
+function setup(initial = first) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  const view = (finding = first) => (
+  const view = (finding = initial) => (
     <QueryClientProvider client={client}>
       <FindingDecisionNote finding={finding} />
     </QueryClientProvider>
@@ -31,27 +31,56 @@ it("keeps separate drafts when switching findings", async () => {
   expect(screen.getByRole("textbox")).toHaveValue("기본 선택 해제");
 });
 
-it("saves a decision and displays the persisted record when opened again", async () => {
-  const user = userEvent.setup();
-  let saved = "";
+function captureSaves() {
+  const saves: string[] = [];
   server.use(
     http.put("*/api/v1/findings/:findingId/decision", async ({ request }) => {
-      saved = ((await request.json()) as { decisionNote: string }).decisionNote;
+      const { decisionNote } = (await request.json()) as { decisionNote: string };
+      saves.push(decisionNote);
       return HttpResponse.json({
         id: first.id,
-        decisionNote: saved,
+        decisionNote: decisionNote.trim(),
         decisionUpdatedAt: "2026-09-23T00:00:00Z",
       });
     }),
   );
-  const { rerender, view } = setup();
+  return saves;
+}
+
+it("shows the saved decision above the input and clears the input", async () => {
+  const user = userEvent.setup();
+  const saves = captureSaves();
+  setup();
   await user.type(screen.getByRole("textbox"), "기본 선택 해제");
   await user.click(screen.getByRole("button", { name: "결정 저장" }));
-  await waitFor(() => expect(saved).toBe("기본 선택 해제"));
-  rerender(view({ ...first, decisionNote: saved, decisionUpdatedAt: "2026-09-23T00:00:00Z" }));
-  expect(screen.getByRole("textbox")).toHaveValue(saved);
-  expect(screen.getByRole("status")).toHaveTextContent("마지막 저장");
-  expect(screen.getByRole("button", { name: "결정 저장" })).toBeDisabled();
+  const record = await screen.findByRole("article", { name: "저장된 결정" });
+  expect(saves).toEqual(["기본 선택 해제"]);
+  expect(within(record).getByText("기본 선택 해제")).toBeInTheDocument();
+  expect(record).toHaveTextContent("마지막 저장");
+  expect(screen.getByRole("textbox")).toHaveValue("");
+  expect(screen.getByRole("button", { name: "결정 덮어쓰기" })).toBeDisabled();
+});
+
+it("overwrites the saved decision with a new one", async () => {
+  const user = userEvent.setup();
+  const saves = captureSaves();
+  setup({ ...first, decisionNote: "기존 결정", decisionUpdatedAt: "2026-09-22T00:00:00Z" });
+  const record = screen.getByRole("article", { name: "저장된 결정" });
+  expect(record).toHaveTextContent("기존 결정");
+  await user.click(within(record).getByRole("button", { name: "수정" }));
+  expect(screen.getByRole("textbox")).toHaveValue("기존 결정");
+  await user.clear(screen.getByRole("textbox"));
+  await user.type(screen.getByRole("textbox"), "새 결정");
+  await user.click(screen.getByRole("button", { name: "결정 덮어쓰기" }));
+  await waitFor(() => expect(record).toHaveTextContent("새 결정"));
+  expect(record).not.toHaveTextContent("기존 결정");
+  expect(saves).toEqual(["새 결정"]);
+  expect(screen.getByRole("textbox")).toHaveValue("");
+});
+
+it("does not show a record before anything is saved", () => {
+  setup();
+  expect(screen.queryByRole("article", { name: "저장된 결정" })).not.toBeInTheDocument();
 });
 
 it("keeps text on failure and allows retrying", async () => {
