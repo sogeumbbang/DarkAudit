@@ -49,6 +49,28 @@ def _is_duplicate(chunk: Chunk, selected: list[ScoredChunk]) -> bool:
     return False
 
 
+def _pin_named_rules(query: str, ranked: list[ScoredChunk]) -> list[ScoredChunk]:
+    """질문에 'DA-03'처럼 규칙 번호가 있으면 그 규칙 청크를 맨 앞에 둔다.
+
+    개요 청크에도 DA-01~DA-15 가 모두 나열돼 있어 번호만으로는 개요가 이기기 쉽다.
+    번호를 직접 물었다면 그 규칙 본문이 가장 확실한 근거다.
+    """
+    named = [f"DA-{int(number):02d}" for number in re.findall(r"da[-\s]?(\d{1,2})", query.lower())]
+    if not named:
+        return ranked
+    top = max((item.score for item in ranked), default=1.0) or 1.0
+
+    def order(rule_id: str) -> int:
+        return named.index(rule_id) if rule_id in named else len(named)
+
+    pinned = sorted(
+        (ScoredChunk(item.chunk, top + len(named) - order(item.chunk.section[:5]))
+         for item in ranked if item.chunk.section[:5] in named),
+        key=lambda item: item.score, reverse=True,
+    )
+    return pinned + [item for item in ranked if item.chunk.section[:5] not in named]
+
+
 def _top_unique(ranked: list[ScoredChunk], k: int) -> list[ScoredChunk]:
     selected: list[ScoredChunk] = []
     for item in ranked:
@@ -92,7 +114,7 @@ class LexicalRetriever:
         return sorted(scored, key=lambda item: item.score, reverse=True)
 
     def search(self, query: str, k: int) -> list[ScoredChunk]:
-        return _top_unique(self.rank(query), k)
+        return _top_unique(_pin_named_rules(query, self.rank(query)), k)
 
 
 class HybridRetriever:
@@ -133,7 +155,7 @@ class HybridRetriever:
             for rank, index in enumerate(ranking):
                 fused[index] += weight / (RRF_K + rank + 1)
         ranked = [ScoredChunk(self.chunks[i], score) for i, score in fused.most_common()]
-        return _top_unique(ranked, k)
+        return _top_unique(_pin_named_rules(query, ranked), k)
 
 
 def _normalize(vector: list[float]) -> list[float]:

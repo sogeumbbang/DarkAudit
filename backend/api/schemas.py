@@ -207,26 +207,3 @@ class FindingDecisionDto(BaseModel):
     id: str
     decisionNote: str
     decisionUpdatedAt: str
-
-
-class ChatTurnDto(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str = Field(min_length=1, max_length=4000)
-
-
-class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=1000)
-    history: list[ChatTurnDto] = Field(default_factory=list, max_length=20)
-
-
-class ChatSourceDto(BaseModel):
-    index: int
-    title: str
-    section: str
-    sourceFile: str
-    excerpt: str
-
-
-class ChatResponseDto(BaseModel):
-    answer: str
-    sources: list[ChatSourceDto]

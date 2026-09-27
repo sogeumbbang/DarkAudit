@@ -59,6 +59,7 @@ from .store import utcnow, SessionLocal, get_audit, init_db, list_audits, to_aud
 
 app = FastAPI(title="DarkAudit API", version="1.1.0")
 app.include_router(demo_router)
+# 다크패턴 챗봇(부가 기능). 끄기/제거는 docs/chatbot.md 참고.
 app.include_router(chat_router)
 app.add_middleware(
     CORSMiddleware,

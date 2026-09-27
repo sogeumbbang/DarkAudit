@@ -20,6 +20,11 @@ class ChatApiTest(IsolatedApiTestCase):
         self.assertIn("[1]", body["answer"])
         self.assertIn("특정옵션의 사전선택", body["sources"][0]["section"])
         self.assertEqual(set(body["sources"][0]), {"index", "title", "section", "sourceFile", "excerpt"})
+        structured = body["structured"]
+        self.assertEqual(set(structured), {"inScope", "summary", "summaryCitations", "relatedRules",
+                                           "keyPoints", "checklist"})
+        self.assertTrue(structured["inScope"])
+        self.assertIn({"ruleId": "DA-04", "name": "특정옵션의 사전선택"}, structured["relatedRules"])
 
     def test_rejects_invalid_requests(self):
         for payload in ({}, {"message": ""}, {"message": "a" * 1001},
@@ -35,3 +40,11 @@ class ChatApiTest(IsolatedApiTestCase):
         chat.get_chatbot.cache_clear()
         with patch.object(chat.get_chatbot(), "ask", side_effect=RuntimeError("boom")):
             self.assertEqual(self.client.post("/api/v1/chat", json={"message": "반복간섭"}).status_code, 502)
+
+    def test_can_be_disabled_by_environment(self):
+        for value in ("false", "0", "off"):
+            with self.subTest(value=value), patch.dict("os.environ", {"DARKAUDIT_CHATBOT_ENABLED": value}):
+                response = self.client.post("/api/v1/chat", json={"message": "반복간섭"})
+                self.assertEqual(response.status_code, 404)
+        with patch.dict("os.environ", {"DARKAUDIT_CHATBOT_ENABLED": "true"}):
+            self.assertEqual(self.client.post("/api/v1/chat", json={"message": "반복간섭"}).status_code, 200)

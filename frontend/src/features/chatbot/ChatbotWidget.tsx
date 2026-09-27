@@ -1,42 +1,31 @@
 import { MessageCircle, Send, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { askChatbot, type ChatSource, type ChatTurn } from "@/api/chat";
 import { ApiError } from "@/api/client";
+import { ChatAnswerCard } from "@/features/chatbot/ChatAnswerCard";
+import {
+  askChatbot,
+  type ChatSource,
+  type ChatStructured,
+  type ChatTurn,
+} from "@/features/chatbot/api";
+import { chatbotEnabled } from "@/features/chatbot/config";
 import { cn } from "@/lib/cn";
 
-type Message = ChatTurn & { id: number; sources?: ChatSource[] };
+type Message = ChatTurn & { id: number; sources?: ChatSource[]; structured?: ChatStructured };
 
 const HISTORY_TURNS = 6;
 const SUGGESTIONS = [
-  "특정옵션 사전선택이 뭐야?",
+  "DA-03은 어떤 기준으로 탐지해?",
+  "사전선택된 옵션은 어떻게 고쳐야 해?",
   "반복간섭은 몇 번부터 해당돼?",
-  "가이드라인은 언제부터 시행돼?",
 ];
 
-// 모델이 마크다운 강조(**)를 섞어도 일반 텍스트로 보이게 한다.
-const plain = (text: string) => text.replace(/\*\*/g, "");
-
-function SourceList({ sources }: { sources: ChatSource[] }) {
-  return (
-    <details className="mt-2 text-xs text-muted">
-      <summary className="cursor-pointer font-semibold">근거 {sources.length}건</summary>
-      <ol className="mt-2 space-y-2">
-        {sources.map((source) => (
-          <li className="rounded-control bg-background p-2 leading-5" key={source.index}>
-            <p className="font-semibold text-text">
-              [{source.index}] {source.section}
-            </p>
-            <p className="mt-0.5">{source.title}</p>
-            <p className="mt-1">{source.excerpt}</p>
-          </li>
-        ))}
-      </ol>
-    </details>
-  );
+export function ChatbotWidget() {
+  return chatbotEnabled() ? <ChatbotPanel /> : null;
 }
 
-export function ChatbotWidget() {
+function ChatbotPanel() {
   const inputId = useId();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -71,6 +60,7 @@ export function ChatbotWidget() {
           role: "assistant",
           content: result.answer,
           sources: result.sources,
+          structured: result.structured,
         },
       ]);
     } catch (caught) {
@@ -100,13 +90,13 @@ export function ChatbotWidget() {
   return (
     <section
       aria-label="다크패턴 챗봇"
-      className="fixed inset-x-4 bottom-4 z-30 flex max-h-[min(640px,calc(100vh-2rem))] flex-col rounded-card border border-border bg-surface shadow-2xl sm:left-auto sm:right-5 sm:w-[400px]"
+      className="fixed inset-x-4 bottom-4 z-30 flex max-h-[min(640px,calc(100vh-2rem))] flex-col rounded-card border border-border bg-surface shadow-2xl sm:left-auto sm:right-5 sm:w-[440px]"
     >
       <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <h2 className="text-sm font-bold">다크패턴 가이드 챗봇</h2>
           <p className="mt-1 text-xs text-muted">
-            금융위원회 다크패턴 가이드라인(2025.12) 문서를 근거로 답합니다.
+            금융위 다크패턴 가이드라인(2025.12)과 DarkAudit 규칙(DA-01~15)을 근거로 답합니다.
           </p>
         </div>
         <button
@@ -148,15 +138,16 @@ export function ChatbotWidget() {
           >
             <div
               className={cn(
-                "max-w-[88%] rounded-card px-4 py-3 text-sm leading-6",
+                "rounded-card px-4 py-3 text-sm leading-6 break-words",
                 message.role === "user"
-                  ? "bg-brand-600 text-white"
-                  : "border border-border bg-background text-text",
+                  ? "max-w-[85%] bg-brand-600 text-white"
+                  : "w-full border border-border bg-background text-text",
               )}
             >
-              <p className="whitespace-pre-wrap break-words">{plain(message.content)}</p>
-              {message.sources && message.sources.length > 0 && (
-                <SourceList sources={message.sources} />
+              {message.structured ? (
+                <ChatAnswerCard sources={message.sources ?? []} structured={message.structured} />
+              ) : (
+                <p className="whitespace-pre-wrap">{message.content}</p>
               )}
             </div>
           </div>
