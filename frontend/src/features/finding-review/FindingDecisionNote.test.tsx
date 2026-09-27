@@ -98,3 +98,20 @@ it("keeps text on failure and allows retrying", async () => {
   expect(screen.getByRole("textbox")).toHaveValue("추가 비용 안내");
   expect(screen.getByRole("button", { name: "결정 저장" })).toBeEnabled();
 });
+
+it("deletes the saved decision after confirmation", async () => {
+  const user = userEvent.setup();
+  const saves = captureSaves();
+  setup({ ...first, decisionNote: "기존 결정", decisionUpdatedAt: "2026-09-22T00:00:00Z" });
+  const record = screen.getByRole("article", { name: "저장된 결정" });
+  await user.click(within(record).getByRole("button", { name: "삭제" }));
+  await user.click(within(record).getByRole("button", { name: "취소" }));
+  expect(saves).toEqual([]);
+  await user.click(within(record).getByRole("button", { name: "삭제" }));
+  await user.click(within(record).getByRole("button", { name: "삭제 확인" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("article", { name: "저장된 결정" })).not.toBeInTheDocument(),
+  );
+  expect(saves).toEqual([""]);
+  expect(screen.getByRole("button", { name: "결정 저장" })).toBeDisabled();
+});

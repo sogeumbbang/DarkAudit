@@ -19,6 +19,7 @@ export function FindingDecisionNote({ finding }: { finding: FindingDto }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   // 대시보드 재조회 전에도 방금 저장한 기록을 바로 보여주기 위한 로컬 사본
   const [savedById, setSavedById] = useState<Record<string, SavedDecision>>({});
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const saved = savedById[finding.id] ?? {
     note: finding.decisionNote ?? "",
     updatedAt: finding.decisionUpdatedAt ?? null,
@@ -35,10 +36,14 @@ export function FindingDecisionNote({ finding }: { finding: FindingDto }) {
       setDrafts((current) =>
         current[variables.id] === variables.text ? { ...current, [variables.id]: "" } : current,
       );
+      setConfirmingDeleteId(null);
       await queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
   const currentSave = save.variables?.id === finding.id;
+  // 빈 문자열 저장이 곧 삭제다. 백엔드는 기록을 비우는 것으로 처리한다.
+  const deleting = save.isPending && currentSave && save.variables?.text === "";
+  const confirmingDelete = confirmingDeleteId === finding.id;
 
   return (
     <section className="mt-6 border-t border-border pt-6" aria-label="수정 결정 기록">
@@ -55,13 +60,45 @@ export function FindingDecisionNote({ finding }: { finding: FindingDto }) {
         >
           <div className="flex items-center justify-between gap-3">
             <h4 className="text-xs font-bold">저장된 결정</h4>
-            <Button
-              variant="ghost"
-              className="px-2 py-1 text-xs"
-              onClick={() => setDrafts((current) => ({ ...current, [finding.id]: saved.note }))}
-            >
-              수정
-            </Button>
+            {confirmingDelete ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-danger">삭제할까요?</span>
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 text-xs text-danger"
+                  disabled={save.isPending}
+                  onClick={() => save.mutate({ id: finding.id, text: "" })}
+                >
+                  {deleting ? "삭제 중…" : "삭제 확인"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 text-xs"
+                  disabled={save.isPending}
+                  onClick={() => setConfirmingDeleteId(null)}
+                >
+                  취소
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 text-xs"
+                  onClick={() => setDrafts((current) => ({ ...current, [finding.id]: saved.note }))}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 text-xs text-danger"
+                  disabled={save.isPending}
+                  onClick={() => setConfirmingDeleteId(finding.id)}
+                >
+                  삭제
+                </Button>
+              </div>
+            )}
           </div>
           <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{saved.note}</p>
           {saved.updatedAt && (
@@ -94,7 +131,11 @@ export function FindingDecisionNote({ finding }: { finding: FindingDto }) {
           disabled={!dirty || save.isPending}
           onClick={() => save.mutate({ id: finding.id, text: note })}
         >
-          {save.isPending && currentSave ? "저장 중…" : saved.note ? "결정 덮어쓰기" : "결정 저장"}
+          {save.isPending && currentSave && !deleting
+            ? "저장 중…"
+            : saved.note
+              ? "결정 덮어쓰기"
+              : "결정 저장"}
         </Button>
       </div>
       <p className="mt-2 text-xs leading-5 text-muted" role="status">
@@ -106,7 +147,9 @@ export function FindingDecisionNote({ finding }: { finding: FindingDto }) {
       </p>
       {save.isError && currentSave && (
         <p className="mt-2 text-xs leading-5 text-danger" role="alert">
-          저장하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해주세요.
+          {save.variables?.text === ""
+            ? "삭제하지 못했습니다. 다시 시도해주세요."
+            : "저장하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해주세요."}
         </p>
       )}
     </section>
