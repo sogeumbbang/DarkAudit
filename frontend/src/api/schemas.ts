@@ -56,6 +56,11 @@ export const findingSchema = z.object({
 });
 
 export const auditSchema = z.object({
+  productType: z
+    .enum(["insurance", "deposit", "loan", "investment", "other"])
+    .nullable()
+    .optional(),
+  createdAt: z.string().datetime({ offset: true }).nullable().optional(),
   id: z.string().min(1),
   name: z.string().min(1),
   platform: z.enum(["mobile-web", "desktop-web", "app"]),

@@ -21,6 +21,8 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { AuditReport } from "@/features/audit-report/AuditReport";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
@@ -416,87 +418,10 @@ function FindingsList({
   );
 }
 
-function RecentAudits({
-  audits,
-  onSelect,
-}: {
-  audits: AuditDto[];
-  onSelect: (auditId: string) => void;
-}) {
-  return (
-    <Card className="min-w-0 overflow-hidden">
-      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h2 className="text-base font-semibold">최근 진단</h2>
-        <Link
-          className="flex items-center gap-2 text-xs font-semibold text-brand-700"
-          to="/app/audits"
-        >
-          전체 진단 보기 <ArrowRight size={13} />
-        </Link>
-      </div>
-      <div aria-label="최근 진단 표" className="overflow-x-auto" tabIndex={0}>
-        <table className="w-full min-w-[780px] text-left text-xs">
-          <thead className="border-b border-border bg-black/[0.015] text-muted">
-            <tr>
-              {["진단 이름", "플랫폼", "화면", "탐지 항목", "상태", "최근 수정", ""].map((head) => (
-                <th className="px-6 py-3 font-medium" key={head}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {audits.map((audit) => (
-              <tr
-                className="cursor-pointer hover:bg-brand-50/50"
-                key={audit.id}
-                onClick={() => onSelect(audit.id)}
-              >
-                <td className="px-6 py-4 font-semibold">{audit.name}</td>
-                <td className="px-6 py-4">
-                  <span className="flex items-center gap-2">
-                    <Smartphone size={14} /> 모바일 웹
-                  </span>
-                </td>
-                <td className="px-6 py-4">{audit.screens.length}</td>
-                <td className="px-6 py-4">
-                  <span className="flex gap-5">
-                    <i className="not-italic text-danger">● {audit.findings.length}</i>
-                    <i className="not-italic text-warning">
-                      ● {audit.findings.filter((finding) => finding.status !== "resolved").length}
-                    </i>
-                    <i className="not-italic text-success">
-                      ● {audit.findings.filter((finding) => finding.status === "resolved").length}
-                    </i>
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge variant={auditStatusPresentation[audit.status].variant}>
-                    {auditStatusPresentation[audit.status].label}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4">
-                  {new Intl.DateTimeFormat("ko-KR", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }).format(new Date(audit.updatedAt))}
-                </td>
-                <td className="px-6 py-4">
-                  <MoreVertical size={15} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
 function DashboardLoading() {
   return (
     <div
-      aria-label="대시보드 불러오는 중"
+      aria-label="상세 결과 불러오는 중"
       className="mx-auto max-w-[1500px] animate-pulse"
       role="status"
     >
@@ -517,6 +442,8 @@ export function OverviewPage() {
   const { data, isPending, isError, error, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFlow, setShowFlow] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const reportButtonRef = useRef<HTMLButtonElement>(null);
 
   if (isPending) {
     return <DashboardLoading />;
@@ -526,7 +453,7 @@ export function OverviewPage() {
     return (
       <Card className="mx-auto mt-20 max-w-lg p-10 text-center">
         <CircleAlert className="mx-auto text-danger" size={36} />
-        <h1 className="mt-5 text-xl font-bold">대시보드를 불러오지 못했습니다</h1>
+        <h1 className="mt-5 text-xl font-bold">상세 결과를 불러오지 못했습니다</h1>
         <p className="mt-2 text-sm text-muted">
           {error instanceof Error ? error.message : "잠시 후 다시 시도해주세요."}
         </p>
@@ -598,30 +525,22 @@ export function OverviewPage() {
     {
       label: "탐지된 항목",
       value: audit.findings.length,
-      icon: ShieldCheck,
       action: "전체 보기",
       color: "text-brand-600",
     },
     {
       label: "검토 필요",
       value: needsReview,
-      icon: CircleAlert,
       action: "지금 검토",
       color: "text-warning",
     },
     {
       label: "해결됨",
       value: resolved,
-      icon: CheckCircle2,
       action: "해결 항목 보기",
       color: "text-success",
     },
   ];
-
-  function selectAudit(auditId: string) {
-    setSearchParams({ audit: auditId });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
 
   function selectScreen(screenId: string) {
     const relatedFinding = audit.findings.find((item) => item.screenIds.includes(screenId));
@@ -663,7 +582,30 @@ export function OverviewPage() {
 
   return (
     <div className="overview-page mx-auto max-w-[1500px]">
-      <h1 className="text-2xl font-bold tracking-tight">대시보드</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Link
+            className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline"
+            to="/app/audits"
+          >
+            <ChevronLeft size={16} />
+            진단 관리
+          </Link>
+          <h1 className="text-2xl font-bold tracking-tight">진단 결과 상세</h1>
+        </div>
+        <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
+          <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+        </Button>
+      </div>
+      {showReport && (
+        <AuditReport
+          audit={audit}
+          onClose={() => {
+            setShowReport(false);
+            requestAnimationFrame(() => reportButtonRef.current?.focus());
+          }}
+        />
+      )}
       {audit.analysisSummary?.supportedRules && (
         <section aria-label="분석 범위" className="rounded-card border border-border bg-white p-6">
           <h2 className="font-semibold">
@@ -703,15 +645,20 @@ export function OverviewPage() {
           </div>
         </section>
       )}
-      <section className="overview-summary">
-        <Card className="flex min-w-0 flex-col justify-center p-6">
+      <section aria-label="진단 요약">
+        <Card className="flex min-w-0 flex-col p-6 sm:p-8">
           <Badge className="self-start" variant={auditStatus.variant}>
             {auditStatus.label}
           </Badge>
           <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs leading-5 text-muted">
             <span className="flex items-center gap-2">
-              <Smartphone size={15} /> 모바일 웹
+              <Smartphone size={15} />
+              {
+                { "mobile-web": "모바일 웹", "desktop-web": "데스크톱 웹", app: "앱" }[
+                  audit.platform
+                ]
+              }
             </span>
             <span className="flex items-center gap-2">
               <MonitorSmartphone size={15} /> 화면 {audit.screens.length}개
@@ -724,26 +671,22 @@ export function OverviewPage() {
               }).format(new Date(audit.updatedAt))}
             </span>
           </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border pt-5">
+            {metrics.map(({ label, value, action, color }) => (
+              <button
+                className="inline-flex items-center gap-2 rounded py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 enabled:hover:underline enabled:hover:underline-offset-4 disabled:cursor-default"
+                disabled={value === 0}
+                key={label}
+                onClick={() => selectMetric(label)}
+                title={action}
+                type="button"
+              >
+                <span className="text-muted">{label}</span>
+                <span className={cn("font-bold tabular-nums", color)}>{value}건</span>
+              </button>
+            ))}
+          </div>
         </Card>
-        <div className="overview-metrics">
-          {metrics.map(({ label, value, icon: Icon, action, color }) => (
-            <button
-              className="flex min-w-0 flex-col rounded-card border border-border bg-surface p-6 text-left shadow-card transition-colors hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={value === 0}
-              key={label}
-              onClick={() => selectMetric(label)}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className={color} size={22} />
-                <span className="text-2xl font-bold">{value}</span>
-              </div>
-              <p className="mt-3 text-xs font-semibold">{label}</p>
-              <p className="mt-auto flex items-center gap-2 pt-4 text-xs text-brand-600">
-                {action} <ArrowRight size={12} />
-              </p>
-            </button>
-          ))}
-        </div>
       </section>
       <FlowOverview
         screens={audit.screens}
@@ -771,7 +714,6 @@ export function OverviewPage() {
           />
         </section>
       </div>
-      <RecentAudits audits={data.audits} onSelect={selectAudit} />
       {showFlow && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"

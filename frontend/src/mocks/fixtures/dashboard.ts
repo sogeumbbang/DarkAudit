@@ -93,6 +93,8 @@ export const dashboardFixture: DashboardSummaryDto = {
   audits: [
     {
       id: "audit-insurance-v1",
+      productType: "insurance",
+      createdAt: "2024-05-13T09:00:00+09:00",
       name: "보험 가입 흐름 v1",
       platform: "mobile-web",
       status: "analyzing",
@@ -144,6 +146,8 @@ export const dashboardFixture: DashboardSummaryDto = {
     },
     {
       id: "audit-savings-v2",
+      productType: "deposit",
+      createdAt: "2024-05-12T09:00:00+09:00",
       name: "적금 가입 흐름 v2",
       platform: "mobile-web",
       status: "completed",

@@ -60,6 +60,8 @@ export const handlers = [
       id: auditId,
       name: input.name,
       platform: input.platform,
+      productType: input.productType ?? null,
+      createdAt: new Date().toISOString(),
       status: "draft" as const,
       updatedAt: new Date().toISOString(),
       screens: [],

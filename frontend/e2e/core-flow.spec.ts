@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// 데모에서 첫 화면이 바로 결과가 되도록 "/" 는 대시보드로 보낸다.
+// 공개 첫 화면은 랜딩이다.
 test("root shows the landing page", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
@@ -19,11 +19,51 @@ test("overview logo opens the landing page", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
 });
 
-test("landing page opens the audit dashboard", async ({ page }) => {
+test("landing page opens a new audit directly", async ({ page }) => {
   await page.goto("/landing");
   await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
   await page.getByRole("link", { name: "진단 시작하기" }).first().click();
+  await expect(page).toHaveURL(/\/app\/audits\/new$/);
+});
+
+test("landing keeps navigation visible and exposes all review criteria", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/landing");
+  const navigation = page.getByRole("navigation", { name: "랜딩 메뉴" });
+  await expect(navigation).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: testInfo.outputPath("landing-hero.png") });
+  await navigation.getByRole("link", { name: "검토 기준" }).click();
+  await expect(navigation).toBeInViewport();
+  const standards = page.getByRole("region", { name: "15개 기준을 모두 공개합니다." });
+  await expect(standards.getByRole("listitem")).toHaveCount(15);
+  await expect(standards.getByText("MVP 자동 탐지", { exact: true })).toHaveCount(5);
+  await expect(standards.getByRole("heading", { level: 2 })).toBeInViewport();
+  await standards.locator("summary").filter({ hasText: "특정옵션의 사전선택" }).click();
+  await expect(standards.getByText(/유료 서비스뿐 아니라 선택 동의와 기본값도/)).toBeVisible();
+  await expect(navigation).toBeInViewport();
+  await page.screenshot({ path: testInfo.outputPath("landing-criteria.png") });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await navigation.getByRole("link", { name: "대시보드" }).click();
+  await expect(page.getByRole("heading", { name: "대시보드", exact: true })).toBeVisible();
+});
+
+test("app opens the management dashboard by default", async ({ page }) => {
+  await page.goto("/app");
+  await expect(page).toHaveURL(/\/app\/dashboard$/);
+});
+
+test("audit list opens results and returns to the list", async ({ page }, testInfo) => {
+  await page.goto("/app/audits");
+  await expect(page.getByRole("heading", { name: "진단 기록" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("audit-list.png"), fullPage: true });
+  await page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true }).click();
   await expect(page.getByRole("heading", { name: "보험 가입 흐름 v1" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "최근 진단" })).toHaveCount(0);
+  await page.getByRole("link", { name: "진단 관리" }).click();
+  await expect(page.getByRole("heading", { name: "진단 기록" })).toBeVisible();
 });
 
 test("dashboard controls expose real content and navigation", async ({ page }) => {

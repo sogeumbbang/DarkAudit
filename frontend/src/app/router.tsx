@@ -37,7 +37,13 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     hydrateFallbackElement: routeFallback,
     children: [
-      { index: true, element: <Navigate to="overview" replace /> },
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      {
+        path: "dashboard",
+        lazy: async () => ({
+          Component: (await import("@/pages/dashboard/DashboardPage")).DashboardPage,
+        }),
+      },
       {
         path: "overview",
         lazy: async () => ({

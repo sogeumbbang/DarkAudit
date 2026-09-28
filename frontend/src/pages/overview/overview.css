@@ -4,8 +4,6 @@
   gap: var(--overview-gap);
 }
 
-.overview-summary,
-.overview-metrics,
 .overview-review,
 .overview-detail {
   display: grid;
@@ -14,16 +12,7 @@
   align-items: stretch;
 }
 
-@media (min-width: 640px) {
-  .overview-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 @media (min-width: 1280px) {
-  .overview-summary {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  }
   .overview-review {
     grid-template-columns: 300px minmax(0, 1fr);
   }

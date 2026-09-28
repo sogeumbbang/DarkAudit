@@ -1,16 +1,16 @@
-import { BookOpen, ClipboardList, Home, Menu, Settings, ShieldCheck, X } from "lucide-react";
-import { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { BookOpen, ClipboardList, LayoutDashboard, Plus, Menu, X } from "lucide-react";
+import { Fragment, useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
 import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
 import { cn } from "@/lib/cn";
 
 const navigation = [
-  { label: "대시보드", icon: Home, to: "/app/overview" },
-  { label: "진단 관리", icon: ClipboardList, to: "/app/audits" },
-  { label: "검토 기준", icon: BookOpen, to: "/app/guidelines" },
-  { label: "설정", icon: Settings, to: "/app/settings" },
+  { label: "대시보드", icon: LayoutDashboard, to: "/app/dashboard", nested: false },
+  { label: "새 진단", icon: Plus, to: "/app/audits/new", nested: true },
+  { label: "진단 기록", icon: ClipboardList, to: "/app/audits", nested: true },
+  { label: "검토 기준", icon: BookOpen, to: "/app/guidelines", nested: false },
 ];
 
 function Sidebar({
@@ -50,44 +50,31 @@ function Sidebar({
         </button>
       </div>
       <nav aria-label="주요 메뉴" className="mt-7 space-y-2">
-        {navigation.map(({ label, icon: Icon, to }) => (
-          <NavLink
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-control px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
-                isActive && "bg-brand-50 text-brand-600 ring-1 ring-inset ring-accent/35",
-              )
-            }
-            key={to}
-            onClick={onNavigate}
-            to={to}
-          >
-            <Icon aria-hidden="true" size={19} />
-            {(!collapsed || mobile) && label}
-          </NavLink>
+        {navigation.map(({ label, icon: Icon, to, nested }) => (
+          <Fragment key={to}>
+            {label === "새 진단" && (!collapsed || mobile) && (
+              <p className="px-4 pb-1 pt-5 text-xs font-semibold text-muted">진단 관리</p>
+            )}
+            <NavLink
+              end
+              aria-label={label}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-control px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
+                  isActive && "bg-brand-50 text-brand-600 ring-1 ring-inset ring-accent/35",
+                  nested && (!collapsed || mobile) && "ml-4 border-l border-border",
+                )
+              }
+              key={to}
+              onClick={onNavigate}
+              to={to}
+            >
+              <Icon aria-hidden="true" size={19} />
+              {(!collapsed || mobile) && label}
+            </NavLink>
+          </Fragment>
         ))}
       </nav>
-      <div className="mt-auto space-y-4">
-        <div
-          className={cn(
-            "rounded-card border border-accent/30 bg-background p-4",
-            collapsed && !mobile && "hidden",
-          )}
-        >
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="text-brand-600" size={21} /> 안전한 규제 준수
-          </p>
-          <p className="mt-3 text-xs leading-5 text-muted">
-            금융보안 및 개인정보 보호 기준을 준수하여 안전하게 운영됩니다.
-          </p>
-          <Link
-            className="mt-4 inline-block text-xs font-semibold text-brand-600"
-            to="/app/guidelines"
-          >
-            자세히 보기 →
-          </Link>
-        </div>
-      </div>
     </aside>
   );
 }
@@ -123,7 +110,7 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      <main className="min-w-0 p-4 sm:p-6 lg:p-8">
+      <main className="min-w-0 px-6 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
         <div className="mb-5 flex items-center gap-3 lg:hidden">
           <button
             aria-label="메뉴 열기"

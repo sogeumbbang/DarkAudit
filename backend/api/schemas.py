@@ -37,6 +37,7 @@ FindingStatus = Literal["open", "reviewing", "resolved"]
 class CreateAuditRequest(BaseModel):
     name: str = Field(min_length=1)
     platform: Literal["mobile-web", "desktop-web", "app"]
+    productType: Literal["insurance", "deposit", "loan", "investment", "other"] | None = None
 
 
 class ScreenDto(BaseModel):
@@ -132,8 +133,10 @@ class AuditDto(BaseModel):
     id: str
     name: str
     platform: Literal["mobile-web", "desktop-web", "app"]
+    productType: Literal["insurance", "deposit", "loan", "investment", "other"] | None = None
     status: Literal["draft", "queued", "analyzing", "completed", "failed"]
     updatedAt: datetime
+    createdAt: datetime | None = None
     screens: list[ScreenDto]
 
     # 최신 완료 Run 의 결과를 그대로 노출한다.

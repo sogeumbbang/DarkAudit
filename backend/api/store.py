@@ -292,6 +292,8 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
         platform=audit.product_name or "mobile-web",
         status=status,
         updatedAt=aware(audit.created_at),
+        createdAt=aware(audit.created_at),
+        productType=audit.sector if audit.sector in {"insurance", "deposit", "loan", "investment", "other"} else None,
         screens=screen_dtos,
         findings=findings,
         runs=run_dtos,

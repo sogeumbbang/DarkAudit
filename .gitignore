@@ -26,6 +26,7 @@ data/synthetic/screenshots/
 data/uploads/
 data/captures/
 data/figma/
+data/android/
 *.db
 *.sqlite3
 

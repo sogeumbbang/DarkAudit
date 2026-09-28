@@ -34,6 +34,7 @@ import {
 } from "@/pages/audit-create/AuditSourceFields";
 
 const auditSchema = z.object({
+  productType: z.enum(["", "insurance", "deposit", "loan", "investment", "other"]),
   name: z.string().trim().min(2, "진단 이름을 2자 이상 입력해주세요."),
 });
 type AuditForm = z.infer<typeof auditSchema>;
@@ -58,7 +59,7 @@ export function AuditCreatePage() {
   const [loadingSamples, setLoadingSamples] = useState(false);
   const [sampleError, setSampleError] = useState<string>();
   const [loadingDemo, setLoadingDemo] = useState<AuditSource>();
-  const [demoNotice, setDemoNotice] = useState<string>();
+  const executionLock = useRef(false);
   const demoInputs = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
   const [jobId, setJobId] = useState<string>();
   const [auditId, setAuditId] = useState<string>();
@@ -83,10 +84,12 @@ export function AuditCreatePage() {
     formState: { errors },
   } = useForm<AuditForm>({
     resolver: zodResolver(auditSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", productType: "" },
   });
 
-  async function loadSampleScreens() {
+  async function runSampleDemo() {
+    if (executionLock.current) return;
+    executionLock.current = true;
     const samples = [
       ["01-product-intro.png", "보장 소개"],
       ["02-preselected-addon.png", "특약 선택"],
@@ -98,7 +101,7 @@ export function AuditCreatePage() {
 
     setLoadingSamples(true);
     setSampleError(undefined);
-    setDemoNotice(undefined);
+
     try {
       const loaded = await Promise.all(
         samples.map(async ([fileName, flowStep]) => {
@@ -120,21 +123,36 @@ export function AuditCreatePage() {
       });
       setSource("screenshots");
       setUploadPlatform("mobile-web");
-      setValue("name", "스크린샷 데모 · 모루 반려동물 보험", { shouldValidate: true });
+      const name = "스크린샷 데모 · 모루 반려동물 보험";
+      setValue("name", name, { shouldValidate: true });
+      setValue("productType", "insurance");
+      await runAudit(
+        { name, productType: "insurance" },
+        {
+          ...currentInput(),
+          source: "screenshots",
+          uploadPlatform: "mobile-web",
+          screens: loaded,
+        },
+      );
     } catch (error) {
       setSampleError(error instanceof Error ? error.message : "샘플 화면을 불러오지 못했습니다.");
     } finally {
       setLoadingSamples(false);
+      executionLock.current = false;
     }
   }
 
-  async function loadDemo(kind: "website" | "figma" | "android") {
+  async function runDemo(kind: "website" | "figma" | "android") {
     const config = demoInputs.data;
-    if (!config?.[kind].available) return;
+    if (!config?.[kind].available || executionLock.current) return;
+    executionLock.current = true;
     setLoadingDemo(kind);
     setSampleError(undefined);
-    setDemoNotice(undefined);
+
     try {
+      const input = { ...currentInput(), source: kind };
+      let name: string;
       if (kind === "website") {
         setUrl(config.website.url);
         setScanMode("smart");
@@ -142,27 +160,40 @@ export function AuditCreatePage() {
         setWebsiteGoal(
           "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.",
         );
-        setValue("name", "URL 데모 · 로밍 패스 환전 멤버십", { shouldValidate: true });
+        name = "URL 데모 · 로밍 패스 환전 멤버십";
+        input.url = config.website.url;
+        input.scanMode = "smart";
+        input.profiles = ["mobile"];
+        input.websiteGoal =
+          "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.";
       } else if (kind === "figma") {
         setFigmaUrl(config.figma.fileUrl);
         setFigmaTarget("mobile-web");
         setFigmaSelection(config.figma.selectionMode);
         setFigmaFlow(config.figma.flowName ?? "");
-        setValue("name", "Figma 데모 · 금융상품 화면 검사", { shouldValidate: true });
+        name = "Figma 데모 · 금융상품 화면 검사";
+        input.figmaUrl = config.figma.fileUrl;
+        input.figmaTarget = "mobile-web";
+        input.figmaSelection = config.figma.selectionMode;
+        input.figmaFlow = config.figma.flowName ?? "";
       } else {
         const file = await getDemoApk(config.android.downloadUrl);
         setAppFile(file);
         setAndroidGoal("다음 버튼으로 6단계 최종 이용료까지 확인");
-        setValue("name", "APK 데모 · 모아 소액투자", { shouldValidate: true });
+        name = "APK 데모 · 모아 소액투자";
+        input.appFile = file;
+        input.androidGoal = "다음 버튼으로 6단계 최종 이용료까지 확인";
       }
       setSource(kind);
-      setDemoNotice(
-        "데모 입력을 준비했습니다. 아래 ‘분석 시작하기’를 눌러 실제 진단을 실행하세요.",
-      );
+      setValue("name", name, { shouldValidate: true });
+      const productType = kind === "android" ? "investment" : "";
+      setValue("productType", productType);
+      await runAudit({ name, productType }, input);
     } catch (error) {
-      setSampleError(error instanceof Error ? error.message : "데모를 불러오지 못했습니다.");
+      setSampleError(error instanceof Error ? error.message : "데모를 실행하지 못했습니다.");
     } finally {
       setLoadingDemo(undefined);
+      executionLock.current = false;
     }
   }
 
@@ -199,18 +230,68 @@ export function AuditCreatePage() {
     );
   }
 
-  function platformForSource(): AuditDto["platform"] {
-    if (source === "figma") return figmaTarget;
-    if (source === "android") return "app";
-    if (source === "screenshots") return uploadPlatform;
-    return profiles.length === 1 && profiles[0] === "desktop" ? "desktop-web" : "mobile-web";
+  function currentInput() {
+    return {
+      source,
+      url,
+      scanMode,
+      profiles,
+      websiteGoal,
+      figmaUrl,
+      figmaTarget,
+      figmaSelection,
+      figmaFlow,
+      appFile,
+      androidGoal,
+      uploadPlatform,
+      screens,
+    };
   }
 
   async function submit(values: AuditForm) {
-    if (!canSubmit()) return;
+    if (!canSubmit() || executionLock.current) return;
+    executionLock.current = true;
+    setSampleError(undefined);
+    try {
+      await runAudit(values, currentInput());
+    } catch {
+      // Mutation errors are displayed below the form.
+    } finally {
+      executionLock.current = false;
+    }
+  }
+
+  async function runAudit(values: AuditForm, input: ReturnType<typeof currentInput>) {
+    const {
+      source,
+      url,
+      scanMode,
+      profiles,
+      websiteGoal,
+      figmaUrl,
+      figmaTarget,
+      figmaSelection,
+      figmaFlow,
+      appFile,
+      androidGoal,
+      uploadPlatform,
+      screens,
+    } = input;
+    const platform =
+      source === "figma"
+        ? figmaTarget
+        : source === "android"
+          ? "app"
+          : source === "screenshots"
+            ? uploadPlatform
+            : profiles.length === 1 && profiles[0] === "desktop"
+              ? "desktop-web"
+              : "mobile-web";
+    mutations.forEach((mutation) => mutation.reset());
     const audit = await createAudit.mutateAsync({
       name: values.name,
-      platform: platformForSource(),
+      platform,
+      productType: values.productType || null,
     });
     setAuditId(audit.id);
     if (source === "website") {
@@ -301,7 +382,7 @@ export function AuditCreatePage() {
           <Images size={19} /> 입력 유형별 데모 체험
         </p>
         <p className="mt-1 text-xs leading-5 text-muted">
-          자료 없이도 체험할 수 있습니다. 데모를 불러온 뒤 ‘분석 시작하기’를 눌러주세요.
+          자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {(
@@ -319,14 +400,14 @@ export function AuditCreatePage() {
                 type="button"
                 variant="outline"
                 disabled={pending || !demoInputs.data?.[kind].available}
-                onClick={() => void loadDemo(kind)}
+                onClick={() => void runDemo(kind)}
               >
                 {loadingDemo === kind ? (
                   <LoaderCircle className="animate-spin" size={16} />
                 ) : (
                   <Play size={16} />
                 )}
-                {label} 데모 불러오기
+                {label} 데모 실행
               </Button>
               {kind !== "website" && demoInputs.data?.[kind].reason && (
                 <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
@@ -343,14 +424,14 @@ export function AuditCreatePage() {
               disabled={pending}
               type="button"
               variant="outline"
-              onClick={loadSampleScreens}
+              onClick={runSampleDemo}
             >
               {loadingSamples ? (
                 <LoaderCircle className="animate-spin" size={16} />
               ) : (
                 <Play size={16} />
               )}
-              스크린샷 데모 불러오기
+              스크린샷 데모 실행
             </Button>
           </div>
         </div>
@@ -374,15 +455,10 @@ export function AuditCreatePage() {
             {sampleError}
           </p>
         )}
-        {demoNotice && (
-          <p role="status" className="mt-3 text-xs text-brand-900">
-            {demoNotice}
-          </p>
-        )}
       </Card>
       <form
         className="mt-8 grid gap-6 lg:grid-cols-[0.68fr_1.32fr]"
-        onSubmit={handleSubmit(submit)}
+        onSubmit={(event) => void handleSubmit(submit)(event)}
       >
         <Card className="h-fit p-6">
           <h2 className="font-bold">진단 정보</h2>
@@ -396,6 +472,21 @@ export function AuditCreatePage() {
             {...register("name")}
           />
           {errors.name && <p className="mt-2 text-xs text-danger">{errors.name.message}</p>}
+          <label className="mt-5 block text-sm font-semibold" htmlFor="product-type">
+            상품 유형
+          </label>
+          <select
+            id="product-type"
+            className="mt-2 w-full rounded-control border border-border bg-surface px-4 py-3 text-sm"
+            {...register("productType")}
+          >
+            <option value="">미지정</option>
+            <option value="insurance">보험</option>
+            <option value="deposit">예금·적금</option>
+            <option value="loan">대출</option>
+            <option value="investment">투자</option>
+            <option value="other">기타</option>
+          </select>
           <div className="mt-4 rounded-control border border-border p-4 text-xs leading-6 text-muted">
             자동 탐색은 결제·가입 완료·개인정보 제출과 같은 위험 동작을 수행하지 않습니다.
           </div>

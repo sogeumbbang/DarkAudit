@@ -63,8 +63,20 @@
 
 @layer utilities {
   .page-container {
-    width: min(100% - 2rem, 1440px);
+    width: min(100% - 3rem, 1280px);
     margin-inline: auto;
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      width: min(100% - 5rem, 1280px);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      width: min(100% - 8rem, 1280px);
+    }
   }
 
   .subtle-grid {

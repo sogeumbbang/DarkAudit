@@ -93,7 +93,7 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/audits", response_model=AuditDto, status_code=status.HTTP_201_CREATED)
 def create_audit(payload: CreateAuditRequest) -> AuditDto:
     with SessionLocal() as session:
-        audit = Audit(name=payload.name.strip(), product_name=payload.platform)
+        audit = Audit(name=payload.name.strip(), product_name=payload.platform, sector=payload.productType)
         session.add(audit)
         session.commit()
         return to_audit_dto(session, audit, rules_by_id())

@@ -9,11 +9,11 @@ import { MemoryRouter } from "react-router-dom";
 
 import { OverviewPage } from "@/pages/overview/OverviewPage";
 
-function renderPage() {
+function renderPage(path = "/app/overview") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/app/overview"]}>
+      <MemoryRouter initialEntries={[path]}>
         <OverviewPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -40,10 +40,10 @@ describe("OverviewPage", () => {
     const selectedScreen = audit.screens.find(
       (item) => item.id === (target.bbox?.screenId ?? target.screenIds[0]),
     )!;
-    expect(within(detail).getByRole("img", { name: /캡처 화면 미리보기/ })).toHaveAttribute(
-      "src",
-      selectedScreen.imageUrl,
-    );
+    const preview = within(detail).getByRole<HTMLImageElement>("img", {
+      name: /캡처 화면 미리보기/,
+    });
+    expect(new URL(preview.src).pathname).toBe(selectedScreen.imageUrl);
   });
 
   it("shows incomplete analysis separately from zero findings", async () => {
@@ -66,11 +66,10 @@ describe("OverviewPage", () => {
     expect(screen.getByText("DA-15: 근거 부족")).toBeInTheDocument();
   });
 
-  it("loads dashboard data and changes the selected audit", async () => {
-    const user = userEvent.setup();
+  it("loads the active audit without listing other audits", async () => {
     renderPage();
 
-    expect(screen.getByLabelText("대시보드 불러오는 중")).toBeInTheDocument();
+    expect(screen.getByLabelText("상세 결과 불러오는 중")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "보험 가입 흐름 v1" })).toBeInTheDocument();
     // 첫 진입에서 미리보기는 화면 1이 아니라 선택된 탐지 항목(DA-04)이 있는
     // 화면이어야 한다. 둘이 어긋나면 위치 강조가 보이지 않는다.
@@ -79,9 +78,13 @@ describe("OverviewPage", () => {
       expect.stringContaining("/mock/option.png"),
     );
 
-    await user.click(screen.getByText("적금 가입 흐름 v2"));
+    expect(screen.queryByText("적금 가입 흐름 v2")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "진단 관리" })).toHaveAttribute("href", "/app/audits");
+  });
 
-    const completedHeading = screen.getByRole("heading", { name: "적금 가입 흐름 v2" });
+  it("opens the audit identified in the detail URL", async () => {
+    renderPage("/app/overview?audit=audit-savings-v2");
+    const completedHeading = await screen.findByRole("heading", { name: "적금 가입 흐름 v2" });
     expect(completedHeading).toBeInTheDocument();
     expect(completedHeading.previousElementSibling).toHaveTextContent("완료");
     expect(screen.getByText("탐지된 항목이 없습니다")).toBeInTheDocument();

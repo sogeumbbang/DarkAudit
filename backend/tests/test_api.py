@@ -64,6 +64,23 @@ from backend.tests.support import IsolatedApiTestCase
 
 
 class ApiIntegrationTest(IsolatedApiTestCase):
+    def test_dashboard_preserves_product_type_and_creation_date(self) -> None:
+        response = self.client.post("/api/v1/audits", json={
+            "name": "상품 유형 검증", "platform": "mobile-web", "productType": "insurance",
+        })
+        self.assertEqual(response.status_code, 201, response.text)
+        created = response.json()
+        self.assertEqual(created["productType"], "insurance")
+        self.assertTrue(created["createdAt"])
+        audits = self.client.get("/api/v1/dashboard/summary").json()["audits"]
+        loaded = next(audit for audit in audits if audit["id"] == created["id"])
+        self.assertEqual(loaded["productType"], "insurance")
+        self.assertEqual(loaded["createdAt"], created["createdAt"])
+        invalid = self.client.post("/api/v1/audits", json={
+            "name": "잘못된 유형", "platform": "mobile-web", "productType": "invalid",
+        })
+        self.assertEqual(invalid.status_code, 422)
+
     def test_six_screen_demo_upload_and_analysis_keep_first_and_final_context(self) -> None:
         from ai.providers.fake_provider import FakeMultimodalProvider
 

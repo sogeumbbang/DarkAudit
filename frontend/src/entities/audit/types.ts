@@ -85,7 +85,11 @@ export type AnalysisSummary = {
   }[];
 };
 
+export type ProductType = "insurance" | "deposit" | "loan" | "investment" | "other";
+
 export type AuditDto = {
+  productType?: ProductType | null;
+  createdAt?: string | null;
   id: string;
   name: string;
   platform: "mobile-web" | "desktop-web" | "app";
@@ -104,6 +108,7 @@ export type DashboardSummaryDto = {
 };
 
 export type CreateAuditDto = {
+  productType?: ProductType | null;
   name: string;
   platform: AuditDto["platform"];
 };
