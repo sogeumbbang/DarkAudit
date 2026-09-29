@@ -94,7 +94,7 @@ export function AnalysisProgress({
           </span>
         )}
         <div role="status" aria-live="polite" aria-atomic="true">
-          <h1 className="mt-6 text-2xl font-bold">
+          <h1 className="font-display mt-6 text-2xl font-bold">
             {completed
               ? "진단이 완료되었습니다"
               : failed

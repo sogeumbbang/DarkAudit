@@ -15,7 +15,7 @@ export function BenchmarkPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <ChartNoAxesColumn className="text-brand-600" size={30} />
-      <h1 className="mt-4 text-3xl font-bold">비교 분석</h1>
+      <h1 className="font-display mt-4 text-3xl font-bold">비교 분석</h1>
       <Card className="mt-7 p-7">
         <h2 className="font-bold">수정 전·후 결과 비교</h2>
         <p className="mt-3 text-sm leading-6 text-muted">
@@ -36,7 +36,7 @@ export function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Settings className="text-brand-600" size={30} />
-      <h1 className="mt-4 text-3xl font-bold">설정</h1>
+      <h1 className="font-display mt-4 text-3xl font-bold">설정</h1>
       <Card className="mt-7 p-7">
         <h2 className="flex items-center gap-2 font-bold">
           <ShieldCheck size={20} /> 데모 운영 모드
@@ -158,7 +158,7 @@ export function AuditManagementPage() {
     <div className="mx-auto max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">진단 기록</h1>
+          <h1 className="font-display text-3xl font-bold">진단 기록</h1>
           <p className="mt-3 text-sm leading-6 text-muted">
             진행한 진단을 최신순으로 확인하고, 선택한 진단의 상세 결과를 열어보세요.
           </p>

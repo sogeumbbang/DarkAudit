@@ -36,7 +36,7 @@ async function waitForStableLayout(page: Page) {
 
 test("landing visual", async ({ page }) => {
   await page.goto("/landing");
-  await page.getByRole("heading", { name: /금융상품 UX를/ }).waitFor();
+  await page.getByRole("heading", { name: /다 만든 화면,/ }).waitFor();
   await waitForStableLayout(page);
   await expect(page).toHaveScreenshot("landing.png", { fullPage: true, animations: "disabled" });
 });

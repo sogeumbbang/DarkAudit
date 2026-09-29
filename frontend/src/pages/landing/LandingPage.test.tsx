@@ -11,8 +11,8 @@ describe("LandingPage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: /금융상품 UX를/ })).toBeInTheDocument();
-    for (const link of screen.getAllByRole("link", { name: "진단 시작하기" })) {
+    expect(screen.getByRole("heading", { name: /다 만든 화면,/ })).toBeInTheDocument();
+    for (const link of screen.getAllByRole("link", { name: /진단 시작하기|내 화면 점검하기/ })) {
       expect(link).toHaveAttribute("href", "/app/audits/new");
     }
     expect(screen.queryByText(/로그인|회원가입/)).not.toBeInTheDocument();
@@ -39,6 +39,6 @@ describe("LandingPage", () => {
       "12",
       "15",
     ]);
-    expect(screen.getAllByRole("link", { name: "진단 시작하기" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /진단 시작하기|내 화면 점검하기/ })).toHaveLength(2);
   });
 });

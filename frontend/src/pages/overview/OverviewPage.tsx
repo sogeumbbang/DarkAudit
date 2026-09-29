@@ -291,7 +291,7 @@ function FindingDetails({
               ●&nbsp; {finding.status === "resolved" ? "해결됨" : "검토 필요"}
             </Badge>
           </div>
-          <h3 className="mt-3 text-2xl font-bold">{finding.title}</h3>
+          <h3 className="font-display mt-3 text-2xl font-bold">{finding.title}</h3>
           <p className="mt-3 text-sm leading-6 text-muted">{finding.description}</p>
           <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
             <div className="grid grid-cols-2 py-3">
@@ -314,7 +314,7 @@ function FindingDetails({
               <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
             </div>
           </div>
-          <div className="mt-3 rounded-card bg-brand-50 p-4 text-sm leading-6 text-brand-950">
+          <div className="mt-5 border-l-2 border-brand-600 bg-brand-50 p-5 text-sm leading-6 text-brand-950">
             <h4 className="font-bold">개선 권고안</h4>
             <p className="mt-2">{finding.recommendation}</p>
           </div>
@@ -373,7 +373,7 @@ function FindingsList({
         <h2 className="text-base font-semibold">점검 항목</h2>
         <span className="text-xs tabular-nums text-muted">{findings.length}개</span>
       </div>
-      <nav aria-label="점검 항목" className="max-h-[640px] space-y-2 overflow-y-auto p-3">
+      <nav aria-label="점검 항목" className="max-h-[640px] divide-y divide-border overflow-y-auto">
         {findings.map((finding) => (
           <button
             aria-current={selectedFindingId === finding.id ? "true" : undefined}
@@ -381,8 +381,8 @@ function FindingsList({
             key={finding.id}
             onClick={() => onSelect(finding)}
             className={cn(
-              "w-full rounded-control border border-transparent p-4 text-left transition-colors hover:bg-brand-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-              selectedFindingId === finding.id && "border-brand-300 bg-brand-50",
+              "w-full border-l-2 border-transparent p-5 text-left transition-colors hover:bg-brand-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500",
+              selectedFindingId === finding.id && "border-brand-600 bg-brand-50",
             )}
           >
             <div className="flex items-center justify-between gap-3">
@@ -582,7 +582,7 @@ export function OverviewPage() {
 
   return (
     <div className="overview-page mx-auto max-w-[1500px]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-600 pb-6">
         <div>
           <Link
             className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline"
@@ -591,7 +591,7 @@ export function OverviewPage() {
             <ChevronLeft size={16} />
             진단 관리
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">진단 결과 상세</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">진단 결과 상세</h1>
         </div>
         <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
           <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
@@ -650,7 +650,7 @@ export function OverviewPage() {
           <Badge className="self-start" variant={auditStatus.variant}>
             {auditStatus.label}
           </Badge>
-          <h2 className="mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
+          <h2 className="font-display mt-4 text-2xl font-bold sm:text-3xl">{audit.name}</h2>
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs leading-5 text-muted">
             <span className="flex items-center gap-2">
               <Smartphone size={15} />

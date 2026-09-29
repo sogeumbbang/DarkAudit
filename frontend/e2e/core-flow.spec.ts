@@ -3,48 +3,62 @@ import { expect, test } from "@playwright/test";
 // 공개 첫 화면은 랜딩이다.
 test("root shows the landing page", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /다 만든 화면,/ })).toBeVisible();
 });
 
 // 로고 링크와 이미 공유된 링크가 /landing 을 쓴다. 같은 화면이어야 한다.
 test("landing alias serves the same page", async ({ page }) => {
   await page.goto("/landing");
-  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /다 만든 화면,/ })).toBeVisible();
 });
 
 test("overview logo opens the landing page", async ({ page }) => {
   await page.goto("/app/overview");
   await page.locator('a[href="/landing"]:visible').first().click();
   await expect(page).toHaveURL(/\/landing$/);
-  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /다 만든 화면,/ })).toBeVisible();
 });
 
 test("landing page opens a new audit directly", async ({ page }) => {
   await page.goto("/landing");
-  await expect(page.getByRole("heading", { name: /금융상품 UX를/ })).toBeVisible();
-  await page.getByRole("link", { name: "진단 시작하기" }).first().click();
+  await expect(page.getByRole("heading", { name: /다 만든 화면,/ })).toBeVisible();
+  await page.getByRole("link", { name: "내 화면 점검하기" }).click();
   await expect(page).toHaveURL(/\/app\/audits\/new$/);
 });
 
 test("landing keeps navigation visible and exposes all review criteria", async ({
   page,
+  isMobile,
 }, testInfo) => {
   await page.goto("/landing");
   const navigation = page.getByRole("navigation", { name: "랜딩 메뉴" });
-  await expect(navigation).toBeVisible();
+  if (isMobile) {
+    await expect(navigation).toBeHidden();
+    await page.getByRole("button", { name: "랜딩 메뉴 열기" }).click();
+    await expect(navigation).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(navigation).toBeHidden();
+    await expect(page.getByRole("button", { name: "랜딩 메뉴 열기" })).toBeFocused();
+  } else {
+    await expect(navigation).toBeVisible();
+  }
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: testInfo.outputPath("landing-hero.png") });
+  if (isMobile) await page.getByRole("button", { name: "랜딩 메뉴 열기" }).click();
   await navigation.getByRole("link", { name: "검토 기준" }).click();
-  await expect(navigation).toBeInViewport();
+  if (isMobile) await expect(navigation).toBeHidden();
+  else await expect(navigation).toBeInViewport();
   const standards = page.getByRole("region", { name: "15개 기준을 모두 공개합니다." });
   await expect(standards.getByRole("listitem")).toHaveCount(15);
   await expect(standards.getByText("MVP 자동 탐지", { exact: true })).toHaveCount(5);
   await expect(standards.getByRole("heading", { level: 2 })).toBeInViewport();
   await standards.locator("summary").filter({ hasText: "특정옵션의 사전선택" }).click();
   await expect(standards.getByText(/유료 서비스뿐 아니라 선택 동의와 기본값도/)).toBeVisible();
-  await expect(navigation).toBeInViewport();
+  if (isMobile) await expect(page.getByRole("button", { name: "랜딩 메뉴 열기" })).toBeInViewport();
+  else await expect(navigation).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath("landing-criteria.png") });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  if (isMobile) await page.getByRole("button", { name: "랜딩 메뉴 열기" }).click();
   await navigation.getByRole("link", { name: "대시보드" }).click();
   await expect(page.getByRole("heading", { name: "대시보드", exact: true })).toBeVisible();
 });
@@ -98,6 +112,8 @@ test("zoomed preview can be dragged and scrolled to every image edge", async ({
   await expect(viewport).toHaveCSS("overflow", "auto");
   await expect(viewport).toHaveCSS("scrollbar-width", "none");
   await expect(viewport).toHaveCSS("cursor", "grab");
+  // Keep the pointer target on screen even when the summary above it grows.
+  await viewport.scrollIntoViewIfNeeded();
   const baseViewportBox = await viewport.boundingBox();
   expect(baseViewportBox).not.toBeNull();
   if (!isMobile) {

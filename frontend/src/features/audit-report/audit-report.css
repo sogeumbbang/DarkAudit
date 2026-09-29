@@ -45,6 +45,7 @@
   font-weight: 700;
 }
 .audit-report-document h1 {
+  font-family: var(--font-display);
   font-size: 28px;
   font-weight: 700;
 }

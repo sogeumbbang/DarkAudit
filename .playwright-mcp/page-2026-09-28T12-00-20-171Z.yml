@@ -1,0 +1,301 @@
+- generic [ref=f16e2]:
+  - banner [ref=f16e3]:
+    - generic [ref=f16e5]:
+      - link [ref=f16e7] [cursor=pointer]:
+        - /url: /
+        - img "Bitnomial by Payward" [ref=f16e8]
+      - navigation [ref=f16e10]:
+        - list [ref=f16e11]:
+          - listitem [ref=f16e12]:
+            - link "Trade" [ref=f16e13] [cursor=pointer]:
+              - /url: https://botanical.finance
+          - listitem [ref=f16e14]:
+            - link "Markets" [ref=f16e15] [cursor=pointer]:
+              - /url: /market
+          - listitem [ref=f16e16]:
+            - link "Services" [ref=f16e17] [cursor=pointer]:
+              - /url: /services
+          - listitem [ref=f16e18]:
+            - link "Docs" [ref=f16e19] [cursor=pointer]:
+              - /url: /exchange/docs
+          - listitem [ref=f16e20]:
+            - link "About" [ref=f16e21] [cursor=pointer]:
+              - /url: /about
+      - link "Sign In" [ref=f16e23] [cursor=pointer]:
+        - /url: /clearing/dashboard/signin
+  - generic:
+    - button "X"
+    - generic:
+      - button "<"
+      - button ">"
+  - main [ref=f16e24]:
+    - generic [ref=f16e28]:
+      - generic [ref=f16e29]: US-Regulated Exchange & Clearinghouse
+      - heading "Perpetuals. Futures. Options. Spot. Predictions." [level=1] [ref=f16e30]
+      - paragraph [ref=f16e31]: Trade leveraged spot, perpetuals, futures, options, and prediction markets, all on one US-regulated exchange, built on crypto-rails.
+      - button "Start Trading" [ref=f16e33] [cursor=pointer]
+      - generic [ref=f16e34]:
+        - text: Signing up with Bitnomial, LLC requires additional verification with an FCM to trade futures. Futures accounts are offered by Bitnomial Clearing, LLC, a CFTC-registered FCM and NFA member. Trading in futures involves substantial risks. You should only trade in financial products that you are familiar with and understand the associated risks, and after carefully considering whether such trading is suitable in light of your investment experience, financial position, and investment objectives. Leverage in futures trading can work for you or against you. The risk of loss using leverage can exceed your initial investment amount. See Bitnomial
+        - link "entity affiliation and registration disclosures" [ref=f16e35] [cursor=pointer]:
+          - /url: /disclosures
+        - text: and
+        - link "FCM financial and risk disclosures" [ref=f16e36] [cursor=pointer]:
+          - /url: /clearing/disclosures
+        - text: .
+    - generic [ref=f16e39]:
+      - generic [ref=f16e41]:
+        - heading "Perpetual Futures" [level=2] [ref=f16e43]
+        - paragraph [ref=f16e45]: First-ever CFTC-regulated perpetual futures.
+        - link "LEARN MORE" [ref=f16e46] [cursor=pointer]:
+          - /url: /market/perpetuals
+      - generic [ref=f16e48]:
+        - heading "Leveraged Spot" [level=2] [ref=f16e50]
+        - paragraph [ref=f16e52]: First-ever leveraged retail spot market on a CFTC-regulated derivatives exchange.
+        - link "LEARN MORE" [ref=f16e53] [cursor=pointer]:
+          - /url: /market/spot
+      - generic [ref=f16e55]:
+        - heading "Futures & Options" [level=2] [ref=f16e57]
+        - paragraph [ref=f16e59]: The only crypto-margined and crypto-settled futures and options in the US.
+        - link "LEARN MORE" [ref=f16e60] [cursor=pointer]:
+          - /url: /market/futures
+    - generic [ref=f16e62]:
+      - heading "One Platform. Every Product." [level=2] [ref=f16e63]
+      - generic [ref=f16e64]:
+        - generic [ref=f16e65]:
+          - generic [ref=f16e66]: "01"
+          - generic [ref=f16e67]:
+            - heading "REGULATED" [level=4] [ref=f16e68]
+            - paragraph [ref=f16e70]: Regulated by the US CFTC in the world's most trusted jurisdiction
+        - generic [ref=f16e71]:
+          - generic [ref=f16e72]: "02"
+          - generic [ref=f16e73]:
+            - heading "LEVERAGE" [level=4] [ref=f16e74]
+            - generic [ref=f16e75]:
+              - paragraph [ref=f16e76]: Maximize capital efficiency with up to 6x leverage on margin trades*
+              - generic [ref=f16e77]: "* Margin rates subject to change"
+        - generic [ref=f16e78]:
+          - generic [ref=f16e79]: "03"
+          - generic [ref=f16e80]:
+            - heading "CRYPTO SETTLEMENT" [level=4] [ref=f16e81]
+            - paragraph [ref=f16e83]: Settle in the underlying digital asset for inventory management, robust hedging, and precise price discovery
+        - generic [ref=f16e84]:
+          - generic [ref=f16e85]: "04"
+          - generic [ref=f16e86]:
+            - heading "CRYPTO MARGIN" [level=4] [ref=f16e87]
+            - paragraph [ref=f16e89]: First and only CFTC-regulated exchange accepting digital assets as margin collateral
+        - generic [ref=f16e90]:
+          - generic [ref=f16e91]: "05"
+          - generic [ref=f16e92]:
+            - heading "TAX BENEFITS" [level=4] [ref=f16e93]
+            - generic [ref=f16e94]:
+              - paragraph [ref=f16e95]: Blended 60% long term, 40% short term US capital gains tax treatment on eligible trades*
+              - generic [ref=f16e96]: "* The information provided should not be considered tax advice. Consult your tax advisor before making any investment"
+        - generic [ref=f16e97]:
+          - generic [ref=f16e98]: "06"
+          - generic [ref=f16e99]:
+            - heading "NO PRE-COLLATERALIZATION" [level=4] [ref=f16e100]
+            - generic [ref=f16e101]:
+              - paragraph [ref=f16e102]: Hold on to your assets until you take the contract to delivery*
+              - generic [ref=f16e103]: "* Except for event contracts"
+        - generic [ref=f16e104]:
+          - generic [ref=f16e105]: "07"
+          - generic [ref=f16e106]:
+            - heading "UNIFIED CLEARING" [level=4] [ref=f16e107]
+            - paragraph [ref=f16e109]: Single collateral pool across perpetuals, futures, options, and spot on one integrated clearinghouse
+    - generic [ref=f16e111]:
+      - heading "Questions? We're Here to Help." [level=3] [ref=f16e113]
+      - generic [ref=f16e114]:
+        - generic [ref=f16e115]:
+          - generic [ref=f16e116]:
+            - link "Is Bitnomial regulated?" [ref=f16e117] [cursor=pointer]:
+              - /url: "#"
+            - paragraph [ref=f16e119]: Yes, Bitnomial subsidiaries are regulated by the US Commodity Futures Trading Commission (CFTC) as a Designated Contract Market (DCM), a Derivative Clearing Organization (DCO), and a Futures Commission Merchant (FCM).
+          - generic [ref=f16e120]:
+            - link "Is Bitnomial only open to US residents?" [ref=f16e121] [cursor=pointer]:
+              - /url: "#"
+            - paragraph [ref=f16e123]: No, Bitnomial is open to residents of the United States and around the world. Check with your local regulatory authority and FCM to see if you are eligible.
+          - generic [ref=f16e124]:
+            - link "What is Botanical?" [ref=f16e125] [cursor=pointer]:
+              - /url: "#"
+            - paragraph [ref=f16e127]:
+              - link "Botanical" [ref=f16e128] [cursor=pointer]:
+                - /url: https://botanical.finance
+              - text: is Bitnomial's trading technology platform that facilitates trading in both perpetual futures and traditional futures & options, all within a unified trading interface.
+        - link "See All FAQs" [ref=f16e129] [cursor=pointer]:
+          - /url: /help#faq
+        - generic [ref=f16e130]:
+          - paragraph [ref=f16e131]: Can't find what you're looking for?
+          - link "Contact Us" [ref=f16e132] [cursor=pointer]:
+            - /url: help
+    - generic [ref=f16e134]:
+      - heading "Press" [level=2] [ref=f16e136]
+      - generic [ref=f16e137]:
+        - article [ref=f16e138]:
+          - generic [ref=f16e139]: COINTELEGRAPH
+          - heading [level=2] [ref=f16e141]:
+            - link "TRX Futures Listing Launches on Bitnomial, Broadening Regulated U.S. Derivatives Access to TRON" [ref=f16e142] [cursor=pointer]:
+              - /url: /news/2026-07-27/trx-futures-launch/
+          - generic [ref=f16e143]: JULY 27, 2026
+        - article [ref=f16e144]:
+          - generic [ref=f16e145]: WEDBUSH
+          - heading [level=2] [ref=f16e147]:
+            - link "Wedbush Joins DKeX and Bitnomial Clearinghouse, Further Expanding Access to Prediction Markets and Digital Asset Derivatives" [ref=f16e148] [cursor=pointer]:
+              - /url: /news/2026-06-29/wedbush-dkex-bitnomial-clearinghouse/
+          - generic [ref=f16e149]: JUNE 29, 2026
+        - article [ref=f16e150]:
+          - generic [ref=f16e151]: PAYWARD
+          - heading [level=2] [ref=f16e153]:
+            - link "Payward Completes Acquisition of Bitnomial, the First Fully CFTC-Licensed Crypto-Native Derivatives Stack in the US" [ref=f16e154] [cursor=pointer]:
+              - /url: /news/2026-05-01/payward-completes-acquisition-bitnomial/
+          - generic [ref=f16e155]: MAY 01, 2026
+      - link "See all press" [ref=f16e157] [cursor=pointer]:
+        - /url: /news
+    - generic [ref=f16e159]:
+      - heading "Blog" [level=2] [ref=f16e160]
+      - generic [ref=f16e161]:
+        - article [ref=f16e162]:
+          - link "regulation The ETF Approval Fast Lane The SEC's generic listing standards compressed crypto ETF timelines from 240 days to 75, but the real story is the infrastructure that made it possible. For any token that wants an ETF, the path now starts on a DCM. March 02, 2026" [ref=f16e163] [cursor=pointer]:
+            - /url: /blog/etf-approval-fast-lane/
+            - generic [ref=f16e164]: regulation
+            - heading "The ETF Approval Fast Lane" [level=3] [ref=f16e165]
+            - paragraph [ref=f16e166]: The SEC's generic listing standards compressed crypto ETF timelines from 240 days to 75, but the real story is the infrastructure that made it possible. For any token that wants an ETF, the path now starts on a DCM.
+            - paragraph [ref=f16e167]: March 02, 2026
+        - article [ref=f16e168]:
+          - link "product Digital Assets Now First-Class Margin Collateral in the U.S. Bitnomial built the first and only crypto-native spot and derivatives exchange and clearinghouse in the U.S. That infrastructure includes crypto settlement, crypto margin collateral, perpetual futures, and most recently leveraged retail spot trading. New CFTC and OCC guidance means both independent and bank-affiliated brokerages can now support Bitnomial's crypto margin deposits and settlement for the first time. December 11, 2025" [ref=f16e169] [cursor=pointer]:
+            - /url: /blog/first-class-crypto-margin/
+            - generic [ref=f16e170]: product
+            - heading "Digital Assets Now First-Class Margin Collateral in the U.S." [level=3] [ref=f16e171]
+            - paragraph [ref=f16e172]: Bitnomial built the first and only crypto-native spot and derivatives exchange and clearinghouse in the U.S. That infrastructure includes crypto settlement, crypto margin collateral, perpetual futures, and most recently leveraged retail spot trading. New CFTC and OCC guidance means both independent and bank-affiliated brokerages can now support Bitnomial's crypto margin deposits and settlement for the first time.
+            - paragraph [ref=f16e173]: December 11, 2025
+        - article [ref=f16e174]:
+          - link "product Why Crypto-Settled Futures Matter Bitnomial Exchange is the only U.S.-regulated exchange offering futures and options that settle in crypto or 'physical settlement'. While most U.S. crypto derivatives settle in fiat, Bitnomial's contracts deliver actual digital assets at expiration. This distinction opens up real ownership, digital assets as margin, and trading strategies unavailable with cash-only futures. October 08, 2025" [ref=f16e175] [cursor=pointer]:
+            - /url: /blog/physically-settled-crypto-futures/
+            - generic [ref=f16e176]: product
+            - heading "Why Crypto-Settled Futures Matter" [level=3] [ref=f16e177]
+            - paragraph [ref=f16e178]: Bitnomial Exchange is the only U.S.-regulated exchange offering futures and options that settle in crypto or 'physical settlement'. While most U.S. crypto derivatives settle in fiat, Bitnomial's contracts deliver actual digital assets at expiration. This distinction opens up real ownership, digital assets as margin, and trading strategies unavailable with cash-only futures.
+            - paragraph [ref=f16e179]: October 08, 2025
+      - link "SEE ALL POSTS" [ref=f16e181] [cursor=pointer]:
+        - /url: /blog
+    - generic [ref=f16e183]:
+      - generic [ref=f16e184]:
+        - heading "Start Trading" [level=3] [ref=f16e185]
+        - paragraph [ref=f16e186]: Leveraged spot, perpetuals, futures, options, and prediction markets, all on one CFTC-regulated exchange with crypto margin and settlement.
+      - generic [ref=f16e187]:
+        - button "Start Trading" [ref=f16e189] [cursor=pointer]
+        - generic [ref=f16e190]:
+          - text: Signing up with Bitnomial, LLC requires additional verification with an FCM to trade futures. Futures accounts are offered by Bitnomial Clearing, LLC, a CFTC-registered FCM and NFA member. Trading in futures involves substantial risks. You should only trade in financial products that you are familiar with and understand the associated risks, and after carefully considering whether such trading is suitable in light of your investment experience, financial position, and investment objectives. Leverage in futures trading can work for you or against you. The risk of loss using leverage can exceed your initial investment amount. See Bitnomial
+          - link "entity affiliation and registration disclosures" [ref=f16e191] [cursor=pointer]:
+            - /url: /disclosures
+          - text: and
+          - link "FCM financial and risk disclosures" [ref=f16e192] [cursor=pointer]:
+            - /url: /clearing/disclosures
+          - text: .
+  - contentinfo [ref=f16e193]:
+    - generic [ref=f16e194]:
+      - generic [ref=f16e195]:
+        - generic [ref=f16e196]:
+          - link [ref=f16e198] [cursor=pointer]:
+            - /url: /
+            - img "Bitnomial by Payward" [ref=f16e199]
+          - generic [ref=f16e200]:
+            - link "GitHub" [ref=f16e201] [cursor=pointer]:
+              - /url: https://www.github.com/bitnomial
+            - link "X" [ref=f16e205] [cursor=pointer]:
+              - /url: https://x.com/bitnomial
+            - link "LinkedIn" [ref=f16e209] [cursor=pointer]:
+              - /url: https://linkedin.com/company/bitnomial/
+        - navigation "Footer" [ref=f16e213]:
+          - list [ref=f16e214]:
+            - listitem [ref=f16e215]: Bitnomial, LLC
+            - listitem [ref=f16e216]:
+              - link "About" [ref=f16e217] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=f16e218]:
+              - link "Blog" [ref=f16e219] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=f16e220]:
+              - link "News" [ref=f16e221] [cursor=pointer]:
+                - /url: /news
+            - listitem [ref=f16e222]:
+              - link "Help" [ref=f16e223] [cursor=pointer]:
+                - /url: /help
+            - listitem [ref=f16e224]:
+              - link "Privacy" [ref=f16e225] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=f16e226]:
+              - link "Terms" [ref=f16e227] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=f16e228]:
+              - link "Disclosures" [ref=f16e229] [cursor=pointer]:
+                - /url: /disclosures
+            - listitem [ref=f16e230]:
+              - link "Security" [ref=f16e231] [cursor=pointer]:
+                - /url: /security
+          - list [ref=f16e232]:
+            - listitem [ref=f16e233]: Markets
+            - listitem [ref=f16e234]:
+              - link "Data" [ref=f16e235] [cursor=pointer]:
+                - /url: /market/data
+            - listitem [ref=f16e236]:
+              - link "Spot" [ref=f16e237] [cursor=pointer]:
+                - /url: /market/spot
+            - listitem [ref=f16e238]:
+              - link "Perpetuals" [ref=f16e239] [cursor=pointer]:
+                - /url: /market/perpetuals
+            - listitem [ref=f16e240]:
+              - link "Futures" [ref=f16e241] [cursor=pointer]:
+                - /url: /market/futures
+            - listitem [ref=f16e242]:
+              - link "Options" [ref=f16e243] [cursor=pointer]:
+                - /url: /market/options
+          - list [ref=f16e244]:
+            - listitem [ref=f16e245]: Bitnomial Exchange, LLC
+            - listitem [ref=f16e246]:
+              - link "Exchange" [ref=f16e247] [cursor=pointer]:
+                - /url: /exchange
+            - listitem [ref=f16e248]:
+              - link "Clearinghouse" [ref=f16e249] [cursor=pointer]:
+                - /url: /clearinghouse
+            - listitem [ref=f16e250]:
+              - link "Docs" [ref=f16e251] [cursor=pointer]:
+                - /url: /exchange/docs
+            - listitem [ref=f16e252]:
+              - link "Rulebook" [ref=f16e253] [cursor=pointer]:
+                - /url: /exchange/rulebook
+          - list [ref=f16e254]:
+            - listitem [ref=f16e255]: Bitnomial Clearing, LLC
+            - listitem [ref=f16e256]:
+              - link "About" [ref=f16e257] [cursor=pointer]:
+                - /url: /clearing
+            - listitem [ref=f16e258]:
+              - link "Disclosures" [ref=f16e259] [cursor=pointer]:
+                - /url: /clearing/regulation/disclosures
+        - paragraph [ref=f16e261]: © 2026 Bitnomial, LLC All rights reserved. Bitnomial®, BTNL®, Bitcoin Complex®, Crypto Complex®, Botanical™ and respective logos are registered trademarks
+      - paragraph [ref=f16e263]:
+        - link "Bitnomial, LLC" [ref=f16e264] [cursor=pointer]:
+          - /url: /
+        - text: ", headquartered in Chicago, is a derivatives exchange company that owns and operates U.S. CFTC-regulated"
+        - link "exchange (DCM)" [ref=f16e265] [cursor=pointer]:
+          - /url: /exchange/
+        - text: ","
+        - link "clearinghouse (DCO)" [ref=f16e266] [cursor=pointer]:
+          - /url: /clearinghouse/
+        - text: ", and"
+        - link "clearing brokerage (FCM)" [ref=f16e267] [cursor=pointer]:
+          - /url: /clearing/
+        - text: subsidiaries. Bitnomial offers
+        - link "leveraged spot" [ref=f16e268] [cursor=pointer]:
+          - /url: /market/spot
+        - text: ","
+        - link "perpetuals" [ref=f16e269] [cursor=pointer]:
+          - /url: /market/perpetuals
+        - text: ","
+        - link "futures" [ref=f16e270] [cursor=pointer]:
+          - /url: /market/futures
+        - text: ","
+        - link "options" [ref=f16e271] [cursor=pointer]:
+          - /url: /market/options
+        - text: ", and"
+        - link "prediction markets" [ref=f16e272] [cursor=pointer]:
+          - /url: /market/predictions
+        - text: on a single unified exchange and clearinghouse with digital asset margin and settlement capabilities.

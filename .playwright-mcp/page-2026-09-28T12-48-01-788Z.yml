@@ -1,0 +1,24 @@
+- generic [ref=f29e3]:
+  - complementary [ref=f29e4]:
+    - generic [ref=f29e5]:
+      - link "Dark Audit" [ref=f29e6] [cursor=pointer]:
+        - /url: /landing
+        - text: Dark
+        - generic [ref=f29e7]: Audit
+      - button "사이드바 접기" [ref=f29e8]
+    - navigation "주요 메뉴" [ref=f29e10]:
+      - link "대시보드" [ref=f29e11] [cursor=pointer]:
+        - /url: /app/dashboard
+      - paragraph [ref=f29e17]: 진단 관리
+      - link "새 진단" [ref=f29e18] [cursor=pointer]:
+        - /url: /app/audits/new
+      - link "진단 기록" [ref=f29e20] [cursor=pointer]:
+        - /url: /app/audits
+      - link "검토 기준" [ref=f29e24] [cursor=pointer]:
+        - /url: /app/guidelines
+    - generic [ref=f29e27]:
+      - paragraph [ref=f29e28]: DARKAUDIT
+      - paragraph [ref=f29e29]: 금융상품 화면을 검토하고,개선의 근거를 남깁니다.
+  - main [ref=f29e30]:
+    - status "상세 결과 불러오는 중" [ref=f29e31]
+  - button "다크패턴 챗봇" [ref=f29e39]

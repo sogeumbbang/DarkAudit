@@ -22,7 +22,9 @@ export function GuidelinesPage() {
   return (
     <div className="mx-auto max-w-5xl pb-8">
       <p className="text-xs font-semibold tracking-wide text-brand-600">검토 기준 · 15개 유형</p>
-      <h1 className="mt-3 text-3xl font-bold tracking-tight">금융 다크패턴 4개 범주</h1>
+      <h1 className="font-display mt-3 text-3xl font-bold tracking-tight">
+        금융 다크패턴 4개 범주
+      </h1>
       <p className="mt-3 text-sm leading-6 text-muted">
         범주를 고르고, 궁금한 유형을 펼쳐 확인하세요.
       </p>

@@ -372,7 +372,7 @@ export function AuditCreatePage() {
       </Link>
       <div className="mt-4">
         <p className="text-xs font-bold uppercase tracking-widest text-brand-600">새 진단</p>
-        <h1 className="mt-2 text-3xl font-bold">AI UX 진단 시작</h1>
+        <h1 className="font-display mt-2 text-3xl font-bold">AI UX 진단 시작</h1>
         <p className="mt-3 text-sm text-muted">
           구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다.
         </p>

@@ -49,7 +49,7 @@ function Sidebar({
           <Menu size={17} />
         </button>
       </div>
-      <nav aria-label="주요 메뉴" className="mt-7 space-y-2">
+      <nav aria-label="주요 메뉴" className="mt-8 space-y-1 border-t border-border pt-6">
         {navigation.map(({ label, icon: Icon, to, nested }) => (
           <Fragment key={to}>
             {label === "새 진단" && (!collapsed || mobile) && (
@@ -60,8 +60,8 @@ function Sidebar({
               aria-label={label}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-control px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
-                  isActive && "bg-brand-50 text-brand-600 ring-1 ring-inset ring-accent/35",
+                  "flex items-center gap-3 border-l-2 border-transparent px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
+                  isActive && "border-brand-600 bg-brand-50 text-brand-600",
                   nested && (!collapsed || mobile) && "ml-4 border-l border-border",
                 )
               }
@@ -75,6 +75,16 @@ function Sidebar({
           </Fragment>
         ))}
       </nav>
+      {(!collapsed || mobile) && (
+        <div className="mt-auto border-t border-border px-3 pt-5">
+          <p className="text-[10px] tracking-[0.15em] text-brand-600">DARKAUDIT</p>
+          <p className="mt-2 text-xs leading-6 text-muted">
+            금융상품 화면을 검토하고,
+            <br />
+            개선의 근거를 남깁니다.
+          </p>
+        </div>
+      )}
     </aside>
   );
 }
@@ -110,7 +120,7 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      <main className="min-w-0 px-6 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
+      <main className="min-w-0 px-6 pb-28 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10 xl:px-12">
         <div className="mb-5 flex items-center gap-3 lg:hidden">
           <button
             aria-label="메뉴 열기"

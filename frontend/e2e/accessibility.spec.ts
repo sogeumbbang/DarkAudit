@@ -6,7 +6,7 @@ for (const route of ["/landing", "/app/overview", "/app/audits/new", "/app/guide
     await page.goto(route);
     const expectedHeading =
       route === "/landing"
-        ? /금융상품 UX를/
+        ? /다 만든 화면,/
         : route === "/app/overview"
           ? "보험 가입 흐름 v1"
           : route === "/app/audits/new"

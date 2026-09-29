@@ -1,3 +1,4 @@
+import { ArrowUpRight, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -15,10 +16,22 @@ export function DashboardPage() {
   const metrics = dashboardMetrics(audits);
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="text-3xl font-bold">대시보드</h1>
-      <p className="mt-3 text-sm leading-7 text-muted">
-        여러 진단의 진행 상태와 검토 결과를 한곳에서 관리하세요.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-6 border-b border-brand-600 pb-7">
+        <div>
+          <p className="mb-4 text-[11px] tracking-[0.16em] text-muted">DARKAUDIT / WORKSPACE</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            대시보드
+          </h1>
+          <p className="mt-3 text-sm leading-7 text-muted">
+            여러 진단의 진행 상태와 검토 결과를 한곳에서 관리하세요.
+          </p>
+        </div>
+        <Button asChild variant="accent">
+          <Link to="/app/audits/new">
+            <Plus size={16} aria-hidden="true" /> 새 진단 시작
+          </Link>
+        </Button>
+      </div>
       {isPending ? (
         <p role="status" className="mt-8">
           진단 현황을 불러오는 중입니다.
@@ -32,16 +45,22 @@ export function DashboardPage() {
         </Card>
       ) : (
         <>
-          <dl aria-label="진단 현황" className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <dl
+            aria-label="진단 현황"
+            className="grid grid-cols-2 border-b border-border bg-surface lg:grid-cols-4"
+          >
             {[
               ["전체 진단", metrics.total, "등록된 진단 수"],
               ["검토 필요", metrics.needsReview, "미해결 후보 또는 추가 확인"],
               ["검토 완료", metrics.reviewed, "분석 완료 · 미해결 후보 없음"],
               ["위험 후보 수", metrics.candidates, "해결된 항목을 포함한 전체 후보"],
             ].map(([label, value, description]) => (
-              <div key={label} className="rounded-card border border-border bg-surface p-5 sm:p-6">
+              <div
+                key={label}
+                className="border-r border-border p-5 last:border-r-0 sm:p-6 [&:nth-child(2)]:border-r-0 [&:nth-child(-n+2)]:border-b lg:[&:nth-child(2)]:border-r lg:[&:nth-child(-n+2)]:border-b-0"
+              >
                 <dt className="text-sm font-medium text-muted">{label}</dt>
-                <dd className="mt-3 text-3xl font-bold tabular-nums">
+                <dd className="mt-5 text-4xl font-medium tracking-tight tabular-nums text-brand-700 sm:text-5xl">
                   {value}
                   <span className="ml-1 text-sm font-normal text-muted">건</span>
                 </dd>
@@ -49,14 +68,14 @@ export function DashboardPage() {
               </div>
             ))}
           </dl>
-          <Card className="mt-8 overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-5">
+          <Card className="mt-10 overflow-hidden border-x-0 border-t-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-600 py-5">
               <h2 className="font-semibold">진단 목록</h2>
               <Link
-                className="text-sm font-semibold text-brand-700 hover:underline"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline"
                 to="/app/audits"
               >
-                진단 기록 보기 →
+                진단 기록 보기 <ArrowUpRight size={16} aria-hidden="true" />
               </Link>
             </div>
             {!audits.length ? (
