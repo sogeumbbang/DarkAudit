@@ -377,85 +377,6 @@ export function AuditCreatePage() {
           구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다.
         </p>
       </div>
-      <Card className="mt-7 border-brand-400 bg-brand-50 p-5">
-        <p className="flex items-center gap-2 font-bold text-brand-900">
-          <Images size={19} /> 입력 유형별 데모 체험
-        </p>
-        <p className="mt-1 text-xs leading-5 text-muted">
-          자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {(
-            [
-              ["website", "URL", "환전 멤버십 · 6단계 여행 준비 흐름"],
-              ["figma", "Figma", "설정된 Figma 파일의 주요 화면 검사"],
-              ["android", "APK", "소액투자 · 6단계 투자 설정 흐름"],
-            ] as const
-          ).map(([kind, label, description]) => (
-            <div className="rounded-control border border-border bg-white p-4" key={kind}>
-              <p className="text-sm font-bold">{label}</p>
-              <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{description}</p>
-              <Button
-                className="mt-3 w-full"
-                type="button"
-                variant="outline"
-                disabled={pending || !demoInputs.data?.[kind].available}
-                onClick={() => void runDemo(kind)}
-              >
-                {loadingDemo === kind ? (
-                  <LoaderCircle className="animate-spin" size={16} />
-                ) : (
-                  <Play size={16} />
-                )}
-                {label} 데모 실행
-              </Button>
-              {kind !== "website" && demoInputs.data?.[kind].reason && (
-                <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
-              )}
-            </div>
-          ))}
-          <div className="rounded-control border border-border bg-white p-4">
-            <p className="text-sm font-bold">스크린샷</p>
-            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
-              반려동물 보험 · 6단계 보장 설계 화면
-            </p>
-            <Button
-              className="mt-3 w-full"
-              disabled={pending}
-              type="button"
-              variant="outline"
-              onClick={runSampleDemo}
-            >
-              {loadingSamples ? (
-                <LoaderCircle className="animate-spin" size={16} />
-              ) : (
-                <Play size={16} />
-              )}
-              스크린샷 데모 실행
-            </Button>
-          </div>
-        </div>
-        {demoInputs.isPending && (
-          <p className="mt-3 text-xs text-muted">데모 연결을 확인하고 있습니다.</p>
-        )}
-        {demoInputs.isError && (
-          <p className="mt-3 text-xs text-danger">
-            데모 연결을 확인하지 못했습니다.
-            <button
-              className="ml-2 underline"
-              type="button"
-              onClick={() => void demoInputs.refetch()}
-            >
-              다시 확인
-            </button>
-          </p>
-        )}
-        {sampleError && (
-          <p role="alert" className="mt-3 text-xs text-danger">
-            {sampleError}
-          </p>
-        )}
-      </Card>
       <form
         className="mt-8 grid gap-6 lg:grid-cols-[0.68fr_1.32fr]"
         onSubmit={(event) => void handleSubmit(submit)(event)}
@@ -557,6 +478,85 @@ export function AuditCreatePage() {
           </div>
         </div>
       </form>
+      <Card className="mt-10 border-border bg-surface p-5">
+        <p className="flex items-center gap-2 font-bold text-brand-900">
+          <Images size={19} /> 입력 유형별 데모 체험
+        </p>
+        <p className="mt-1 text-sm leading-6 text-muted">
+          자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {(
+            [
+              ["website", "URL", "환전 멤버십 · 6단계 여행 준비 흐름"],
+              ["figma", "Figma", "설정된 Figma 파일의 주요 화면 검사"],
+              ["android", "APK", "소액투자 · 6단계 투자 설정 흐름"],
+            ] as const
+          ).map(([kind, label, description]) => (
+            <div className="rounded-control border border-border bg-white p-4" key={kind}>
+              <p className="text-sm font-bold">{label}</p>
+              <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{description}</p>
+              <Button
+                className="mt-3 w-full"
+                type="button"
+                variant="outline"
+                disabled={pending || !demoInputs.data?.[kind].available}
+                onClick={() => void runDemo(kind)}
+              >
+                {loadingDemo === kind ? (
+                  <LoaderCircle className="animate-spin" size={16} />
+                ) : (
+                  <Play size={16} />
+                )}
+                {label} 데모 실행
+              </Button>
+              {kind !== "website" && demoInputs.data?.[kind].reason && (
+                <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
+              )}
+            </div>
+          ))}
+          <div className="rounded-control border border-border bg-white p-4">
+            <p className="text-sm font-bold">스크린샷</p>
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
+              반려동물 보험 · 6단계 보장 설계 화면
+            </p>
+            <Button
+              className="mt-3 w-full"
+              disabled={pending}
+              type="button"
+              variant="outline"
+              onClick={runSampleDemo}
+            >
+              {loadingSamples ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : (
+                <Play size={16} />
+              )}
+              스크린샷 데모 실행
+            </Button>
+          </div>
+        </div>
+        {demoInputs.isPending && (
+          <p className="mt-3 text-xs text-muted">데모 연결을 확인하고 있습니다.</p>
+        )}
+        {demoInputs.isError && (
+          <p className="mt-3 text-xs text-danger">
+            데모 연결을 확인하지 못했습니다.
+            <button
+              className="ml-2 underline"
+              type="button"
+              onClick={() => void demoInputs.refetch()}
+            >
+              다시 확인
+            </button>
+          </p>
+        )}
+        {sampleError && (
+          <p role="alert" className="mt-3 text-xs text-danger">
+            {sampleError}
+          </p>
+        )}
+      </Card>
     </div>
   );
 }

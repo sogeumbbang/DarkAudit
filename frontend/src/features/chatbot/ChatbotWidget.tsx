@@ -78,11 +78,12 @@ function ChatbotPanel() {
   if (!open) {
     return (
       <button
-        className="fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+        aria-label="다크패턴 챗봇"
+        className="fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-full bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
         onClick={() => setOpen(true)}
       >
         <MessageCircle aria-hidden="true" size={19} />
-        다크패턴 챗봇
+        <span className="hidden sm:inline">다크패턴 챗봇</span>
       </button>
     );
   }

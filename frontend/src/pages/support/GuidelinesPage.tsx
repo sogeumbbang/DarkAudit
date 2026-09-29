@@ -55,7 +55,7 @@ export function GuidelinesPage() {
                 });
               }}
               className={cn(
-                "min-w-0 rounded-lg border px-1 py-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:px-3 lg:rounded-xl lg:p-4 lg:text-left",
+                "min-w-0 rounded-control border px-1 py-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:px-3 lg:rounded-card lg:p-4 lg:text-left",
                 categoryIndex === index
                   ? "border-brand-600 bg-brand-600 text-white"
                   : "border-border bg-surface text-text hover:border-brand-300 hover:bg-brand-50",
@@ -91,7 +91,7 @@ export function GuidelinesPage() {
             </h2>
             <p className="mt-2 text-sm leading-6 text-muted">{category.description}</p>
           </div>
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="overflow-hidden rounded-card border border-border bg-surface">
             {category.types.map((type) => {
               const expanded = openId === type.id;
               return (
@@ -194,12 +194,6 @@ export function GuidelinesPage() {
           </div>
         </div>
       </aside>
-      <Link
-        className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline"
-        to="/app/audits/new"
-      >
-        새 진단 시작 <ArrowRight size={15} aria-hidden="true" />
-      </Link>
     </div>
   );
 }

@@ -1,26 +1,13 @@
-import {
-  ArrowRight,
-  ChevronDown,
-  ClipboardList,
-  FileCheck2,
-  ScanSearch,
-  Upload,
-  Menu,
-  X,
-} from "lucide-react";
+import { ArrowRight, ClipboardList, FileCheck2, ScanSearch, Upload, Menu, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { guidelineCategories } from "@/pages/support/guidelines";
 import { HeroGraphic } from "./HeroGraphic";
 
 import "./landing.css";
 
-// Current baseline scope: ai/pipeline/baseline.py::MVP_RULE_IDS.
-const automaticRuleIds = new Set(["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"]);
 const steps = [
   {
     icon: Upload,
@@ -180,20 +167,13 @@ export function LandingPage() {
             <a className="py-1 hover:text-brand-700" href="#product">
               서비스 소개
             </a>
-            <a className="py-1 hover:text-brand-700" href="#standards">
+            <Link className="py-1 hover:text-brand-700" to="/app/guidelines">
               검토 기준
-            </a>
+            </Link>
             <Link className="py-1 hover:text-brand-700" to="/app/dashboard">
               대시보드
             </Link>
           </nav>
-          <Button
-            asChild
-            variant="accent"
-            className="landing-action landing-header-cta px-4 text-xs sm:text-sm"
-          >
-            <Link to="/app/audits/new">진단 시작하기</Link>
-          </Button>
           <button
             ref={menuButtonRef}
             type="button"
@@ -227,30 +207,9 @@ export function LandingPage() {
                 내 화면 점검하기 <ArrowRight size={18} aria-hidden="true" />
               </Link>
             </Button>
-            <p className="mt-4 max-w-sm text-xs leading-6 text-muted">
-              준비한 자료가 없어도 데모를 선택해 바로 진단할 수 있습니다.
-            </p>
           </div>
           <HeroGraphic />
-          <div className="hero-inputs">
-            <span className="text-xs font-semibold text-muted">지원하는 입력</span>
-            <ul aria-label="지원하는 입력" className="flex flex-wrap gap-x-6 gap-y-3">
-              {["웹사이트 URL", "Figma 시안", "Android APK", "스크린샷"].map((label) => (
-                <li key={label} className="flex items-center gap-2 text-xs font-medium">
-                  <span aria-hidden="true" className="size-1 bg-brand-400" />
-                  {label}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#process"
-              className="flex items-center gap-2 text-xs font-medium text-brand-600"
-            >
-              검토 과정 살펴보기 <ChevronDown size={14} aria-hidden="true" />
-            </a>
-          </div>
         </section>
-
         <section
           className="page-container landing-section use-cases-section"
           aria-labelledby="use-cases-title"
@@ -341,94 +300,6 @@ export function LandingPage() {
               </div>
             ))}
           </dl>
-        </section>
-
-        <section
-          className="page-container landing-section scroll-mt-36"
-          id="standards"
-          aria-labelledby="standards-title"
-        >
-          <div className="section-heading">
-            <p className="section-index">검토 기준</p>
-            <h2
-              id="standards-title"
-              className="font-display mt-4 break-keep text-balance text-2xl font-bold leading-snug sm:text-3xl"
-            >
-              15개 기준을 모두 공개합니다.
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-muted">
-              금융위원회 가이드라인의 4개 범주를 바탕으로 검토합니다.
-              <br />
-              현재 MVP는 5개 유형을 자동 탐지하며, 나머지는 담당자가 직접 검토합니다.
-            </p>
-            <p className="mt-3 text-xs leading-6 text-muted">
-              자동 탐지 항목도 입력 화면과 근거에 따라 검사 범위가 달라집니다. 실제 검사 여부는 진단
-              결과에서 확인하세요.
-            </p>
-          </div>
-          <div className="standards-grid mt-12 grid items-start gap-x-10 gap-y-8 lg:grid-cols-2">
-            {guidelineCategories.map((category) => (
-              <Card
-                key={category.id}
-                className="overflow-hidden border-x-0 border-t-2 border-t-brand-950"
-              >
-                <div className="flex items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-7">
-                  <h3 className="text-lg font-semibold">{category.title}</h3>
-                  <span className="text-xs text-muted">{category.types.length}개 유형</span>
-                </div>
-                <ul className="divide-y divide-border">
-                  {category.types.map((rule) => (
-                    <li key={rule.id}>
-                      <details className="group">
-                        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 sm:px-7 [&::-webkit-details-marker]:hidden">
-                          <span className="shrink-0 text-xs tabular-nums text-muted">
-                            {rule.id.slice(3)}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block break-keep text-sm font-semibold leading-6">
-                              {rule.title}
-                            </span>
-                            <span
-                              className={`mt-1 block text-xs ${automaticRuleIds.has(rule.id) ? "font-semibold text-brand-600" : "text-muted"}`}
-                            >
-                              {automaticRuleIds.has(rule.id) ? "MVP 자동 탐지" : "담당자 검토"}
-                            </span>
-                          </span>
-                          <ChevronDown
-                            size={16}
-                            className="shrink-0 text-muted group-open:rotate-180"
-                            aria-hidden="true"
-                          />
-                        </summary>
-                        <div className="px-6 pb-6 sm:px-7">
-                          <p className="text-sm leading-7 text-muted">{rule.description}</p>
-                          <p className="mt-3 border-l-2 border-brand-300 pl-4 text-sm leading-7">
-                            {rule.checkpoint}
-                          </p>
-                          {"note" in rule && (
-                            <p className="mt-3 text-xs leading-6 text-muted">{rule.note}</p>
-                          )}
-                        </div>
-                      </details>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
-          </div>
-          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-brand-700">
-            <Link className="underline-offset-4 hover:underline" to="/app/guidelines">
-              검토 기준 자세히 보기 →
-            </Link>
-            <a
-              className="underline-offset-4 hover:underline"
-              href="https://www.fsc.go.kr/po010101/85942"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              금융위원회 공식 원문 <span className="sr-only">(새 탭)</span>↗
-            </a>
-          </div>
         </section>
       </main>
       <section className="landing-closing" aria-labelledby="closing-title">

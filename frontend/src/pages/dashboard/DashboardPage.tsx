@@ -16,9 +16,11 @@ export function DashboardPage() {
   const metrics = dashboardMetrics(audits);
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-end justify-between gap-6 border-b border-brand-600 pb-7">
+      <div className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-7">
         <div>
-          <p className="mb-4 text-[11px] tracking-[0.16em] text-muted">DARKAUDIT / WORKSPACE</p>
+          <p className="mb-4 font-mono text-xs tracking-[0.08em] text-muted">
+            DARKAUDIT / WORKSPACE
+          </p>
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             대시보드
           </h1>
@@ -64,12 +66,12 @@ export function DashboardPage() {
                   {value}
                   <span className="ml-1 text-sm font-normal text-muted">건</span>
                 </dd>
-                <p className="mt-3 text-xs leading-5 text-muted">{description}</p>
+                <dd className="mt-3 break-keep text-sm leading-6 text-muted">{description}</dd>
               </div>
             ))}
           </dl>
           <Card className="mt-10 overflow-hidden border-x-0 border-t-0">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-600 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-5">
               <h2 className="font-semibold">진단 목록</h2>
               <Link
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline"
@@ -89,62 +91,97 @@ export function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto" role="region" aria-label="진단 목록 표" tabIndex={0}>
-                <table className="w-full min-w-[680px] text-left text-sm">
-                  <thead className="bg-background text-muted">
-                    <tr>
-                      {["프로젝트", "상품 유형", "생성일", "위험 후보", "상태"].map((label) => (
-                        <th className="px-6 py-4 font-medium" scope="col" key={label}>
-                          {label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {audits.map((audit) => {
-                      const status = reviewStatus(audit);
-                      return (
-                        <tr key={audit.id} className="hover:bg-brand-50/40">
-                          <td className="max-w-80 px-6 py-5">
-                            <Link
-                              className="break-words font-semibold text-brand-700 hover:underline"
-                              to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
-                            >
-                              {audit.name}
-                            </Link>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-5">
-                            {audit.productType ? productLabels[audit.productType] : "미지정"}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-5">
-                            {audit.createdAt
-                              ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
-                                  new Date(audit.createdAt),
-                                )
-                              : "기록 없음"}
-                          </td>
-                          <td className="px-6 py-5 tabular-nums">{audit.findings.length}건</td>
-                          <td className="whitespace-nowrap px-6 py-5">
-                            <Badge
-                              variant={
-                                status === "검토 완료"
-                                  ? "success"
-                                  : status === "분석 실패"
-                                    ? "danger"
-                                    : ["검토 필요", "추가 확인 필요"].includes(status)
-                                      ? "warning"
-                                      : "neutral"
-                              }
-                            >
-                              {status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <ul className="divide-y divide-border sm:hidden" aria-label="진단 목록">
+                  {audits.map((audit) => (
+                    <li key={audit.id} className="py-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <Link
+                          className="min-w-0 break-words font-semibold underline-offset-4 hover:underline"
+                          to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
+                        >
+                          {audit.name}
+                        </Link>
+                        <span className="shrink-0 rounded-control bg-brand-50 px-2 py-1 text-xs">
+                          {reviewStatus(audit)}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm text-muted">
+                        {audit.productType ? productLabels[audit.productType] : "미지정"} · 위험
+                        후보 {audit.findings.length}건
+                      </p>
+                      <p className="mt-1 text-xs text-muted">
+                        {audit.createdAt
+                          ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
+                              new Date(audit.createdAt),
+                            )
+                          : "생성일 기록 없음"}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                <div
+                  className="hidden overflow-x-auto sm:block"
+                  role="region"
+                  aria-label="진단 목록 표"
+                  tabIndex={0}
+                >
+                  <table className="w-full min-w-[680px] text-left text-sm">
+                    <thead className="bg-background text-muted">
+                      <tr>
+                        {["프로젝트", "상품 유형", "생성일", "위험 후보", "상태"].map((label) => (
+                          <th className="px-6 py-4 font-medium" scope="col" key={label}>
+                            {label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {audits.map((audit) => {
+                        const status = reviewStatus(audit);
+                        return (
+                          <tr key={audit.id} className="hover:bg-brand-50/40">
+                            <td className="max-w-80 px-6 py-5">
+                              <Link
+                                className="break-words font-semibold text-brand-700 hover:underline"
+                                to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
+                              >
+                                {audit.name}
+                              </Link>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-5">
+                              {audit.productType ? productLabels[audit.productType] : "미지정"}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-5">
+                              {audit.createdAt
+                                ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
+                                    new Date(audit.createdAt),
+                                  )
+                                : "기록 없음"}
+                            </td>
+                            <td className="px-6 py-5 tabular-nums">{audit.findings.length}건</td>
+                            <td className="whitespace-nowrap px-6 py-5">
+                              <Badge
+                                variant={
+                                  status === "검토 완료"
+                                    ? "success"
+                                    : status === "분석 실패"
+                                      ? "danger"
+                                      : ["검토 필요", "추가 확인 필요"].includes(status)
+                                        ? "warning"
+                                        : "neutral"
+                                }
+                              >
+                                {status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </Card>
         </>

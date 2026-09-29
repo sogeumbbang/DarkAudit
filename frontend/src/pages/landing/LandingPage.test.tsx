@@ -27,18 +27,13 @@ describe("LandingPage", () => {
         .getAllByRole("heading", { level: 3 })
         .map((heading) => heading.textContent),
     ).toEqual(["화면 입력", "AI 진단", "담당자 검토", "결과 관리"]);
-    const standards = screen.getByRole("region", { name: "15개 기준을 모두 공개합니다." });
-    expect(within(standards).getAllByRole("listitem")).toHaveLength(15);
-    const automated = within(standards)
-      .getAllByRole("listitem")
-      .filter((item) => item.textContent?.includes("MVP 자동 탐지"));
-    expect(automated.map((item) => item.querySelector("summary > span")?.textContent)).toEqual([
-      "03",
-      "04",
-      "07",
-      "12",
-      "15",
-    ]);
-    expect(screen.getAllByRole("link", { name: /진단 시작하기|내 화면 점검하기/ })).toHaveLength(2);
+    expect(within(navigation).getByRole("link", { name: "검토 기준" })).toHaveAttribute(
+      "href",
+      "/app/guidelines",
+    );
+    expect(screen.getByRole("link", { name: /화면 등록하고 시작하기/ })).toHaveAttribute(
+      "href",
+      "/app/audits/new",
+    );
   });
 });

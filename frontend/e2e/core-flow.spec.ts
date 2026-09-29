@@ -46,21 +46,9 @@ test("landing keeps navigation visible and exposes all review criteria", async (
   await page.screenshot({ path: testInfo.outputPath("landing-hero.png") });
   if (isMobile) await page.getByRole("button", { name: "랜딩 메뉴 열기" }).click();
   await navigation.getByRole("link", { name: "검토 기준" }).click();
-  if (isMobile) await expect(navigation).toBeHidden();
-  else await expect(navigation).toBeInViewport();
-  const standards = page.getByRole("region", { name: "15개 기준을 모두 공개합니다." });
-  await expect(standards.getByRole("listitem")).toHaveCount(15);
-  await expect(standards.getByText("MVP 자동 탐지", { exact: true })).toHaveCount(5);
-  await expect(standards.getByRole("heading", { level: 2 })).toBeInViewport();
-  await standards.locator("summary").filter({ hasText: "특정옵션의 사전선택" }).click();
-  await expect(standards.getByText(/유료 서비스뿐 아니라 선택 동의와 기본값도/)).toBeVisible();
-  if (isMobile) await expect(page.getByRole("button", { name: "랜딩 메뉴 열기" })).toBeInViewport();
-  else await expect(navigation).toBeInViewport();
-  await page.screenshot({ path: testInfo.outputPath("landing-criteria.png") });
+  await expect(page).toHaveURL(/\/app\/guidelines$/);
+  await expect(page.getByRole("heading", { name: "금융 다크패턴 4개 범주" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  if (isMobile) await page.getByRole("button", { name: "랜딩 메뉴 열기" }).click();
-  await navigation.getByRole("link", { name: "대시보드" }).click();
-  await expect(page.getByRole("heading", { name: "대시보드", exact: true })).toBeVisible();
 });
 
 test("app opens the management dashboard by default", async ({ page }) => {

@@ -19,34 +19,35 @@
 @theme {
   --font-sans: "SUIT Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Wanted Sans Variable", "SUIT Variable", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  --color-brand-50: #eef2f8;
-  --color-brand-100: #e1e8f2;
-  --color-brand-300: #a6b6ce;
-  --color-brand-400: #7188ab;
-  --color-brand-500: #304e7c;
-  --color-brand-600: #233b63;
-  --color-brand-700: #1c3154;
-  --color-brand-800: #192b49;
-  --color-brand-900: #15253f;
-  --color-brand-950: #101d33;
+  --color-brand-50: #f1f1ee;
+  --color-brand-100: #e7e7e2;
+  --color-brand-300: #b5b7b1;
+  --color-brand-400: #797d76;
+  --color-brand-500: #454a45;
+  --color-brand-600: #303630;
+  --color-brand-700: #282d28;
+  --color-brand-800: #242824;
+  --color-brand-900: #1e221e;
+  --color-brand-950: #191c19;
 
   --color-accent: #ff795c;
   --color-accent-hover: #f5684a;
   --color-accent-soft: #fff0e9;
   --color-accent-ink: #a63d27;
 
-  --color-background: #f8f9fb;
+  --color-background: #fafaf8;
   --color-surface: #ffffff;
-  --color-border: #dce1e8;
-  --color-text: #202b3b;
-  --color-muted: #596577;
+  --color-border: #e2e2dc;
+  --color-text: #222520;
+  --color-muted: #62665f;
   --color-danger: #b4232c;
   --color-warning: #805500;
   --color-success: #146c50;
 
-  --radius-card: 0.125rem;
-  --radius-control: 0.125rem;
+  --radius-card: 0.375rem;
+  --radius-control: 0.25rem;
   --shadow-card: none;
 }
 
@@ -67,6 +68,7 @@
     color: var(--color-text);
     background: var(--color-background);
     font-family: var(--font-sans);
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -167,9 +169,8 @@
   }
 }
 
-/* Subtle aurora reserved for the landing introduction. */
-.landing-aurora {
-  background:
-    radial-gradient(ellipse at 78% 33%, #eee4cd60, transparent 48%),
-    radial-gradient(ellipse at 55% 78%, #dde6f360, transparent 47%), #fdfcf9;
+/* Page titles share one rhythm across the workspace. */
+.workspace h1 {
+  letter-spacing: -0.025em;
+  line-height: 1.25;
 }

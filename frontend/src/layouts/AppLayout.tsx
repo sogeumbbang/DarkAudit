@@ -96,7 +96,7 @@ export function AppLayout() {
   return (
     <div
       className={cn(
-        "min-h-screen bg-background transition-[padding]",
+        "workspace min-h-screen bg-background transition-[padding]",
         isCollapsed ? "lg:pl-[88px]" : "lg:pl-[280px]",
       )}
     >

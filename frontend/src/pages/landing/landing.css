@@ -1,11 +1,9 @@
 .landing-page {
-  --color-text: #222326;
-  --color-muted: #60636a;
   overflow-x: clip;
 }
 
 .landing-header {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .landing-header-inner {
@@ -19,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
-  margin-inline: auto;
+  margin-left: auto;
 }
 
 .landing-header .landing-header-cta {
@@ -43,16 +41,19 @@
 
 .landing-hero {
   position: relative;
-  padding-top: 88px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 56px;
+  padding-block: 80px;
+  border-bottom: 1px solid var(--color-border);
   scroll-margin-top: 90px;
 }
 
 .hero-copy {
   position: relative;
   z-index: 1;
-  width: 74%;
-  min-height: 600px;
-  padding-bottom: 72px;
+  min-width: 0;
 }
 
 .section-index {
@@ -106,59 +107,148 @@
 .hero-copy h1 {
   font-family: var(--font-display);
   margin-top: 38px;
-  font-size: clamp(48px, 5.3vw, 76px);
+  font-size: clamp(44px, 4.7vw, 68px);
   line-height: 1.25;
-  font-weight: 500;
-  letter-spacing: -0.045em;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   word-break: keep-all;
 }
 
 .hero-description {
   max-width: 520px;
   margin-top: 32px;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.8;
   color: var(--color-text);
   word-break: keep-all;
 }
 
+/* An inspection sheet uses the same visual language as the workspace. */
 .hero-graphic {
+  min-width: 0;
+  padding: 24px;
+  background: #f2f2ec;
+  border: 1px solid var(--color-border);
+}
+.inspection-heading,
+.inspection-screen-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.inspection-heading {
+  margin-bottom: 24px;
+  letter-spacing: 0.04em;
+}
+.inspection-screen {
+  padding: 28px;
+  background: var(--color-surface);
+  border: 1px solid #ddded6;
+}
+.inspection-screen-top {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.inspection-title {
+  margin-top: 28px;
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+}
+.inspection-subtitle {
+  margin-block: 12px 20px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.inspection-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 16px;
+  font-size: 14px;
+}
+.inspection-option > span:last-child {
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.inspection-check {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--color-brand-600);
+  color: white;
+}
+.inspection-finding {
+  position: relative;
+  margin-top: 24px;
+  padding: 8px 12px 14px;
+  border: 1px solid var(--color-accent-ink);
+  background: var(--color-accent-soft);
+}
+.inspection-marker {
   position: absolute;
-  pointer-events: none;
-  top: -140px;
-  right: -20%;
-  width: 76%;
-  height: 850px;
-  color: var(--color-accent);
+  top: -13px;
+  left: -1px;
+  padding: 3px 8px;
+  background: var(--color-accent-ink);
+  color: white;
+  font-size: 10px;
+  letter-spacing: 0.03em;
 }
-
-.hero-graphic svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.inspection-finding > p {
+  font-size: 12px;
+  color: var(--color-accent-ink);
+  line-height: 1.6;
+  word-break: keep-all;
 }
-
-.hero-ribbon {
-  animation: ribbon-arrive 1.8s ease-out both;
-  transform-origin: center;
+.inspection-next {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
 }
-
-@keyframes ribbon-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(18px) rotate(-4deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) rotate(0);
-  }
+.inspection-note {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-ribbon {
-    animation: none;
-  }
+.inspection-note > svg {
+  flex-shrink: 0;
+  color: var(--color-accent-ink);
+}
+.inspection-code {
+  color: var(--color-accent-ink);
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.inspection-note p:not(.inspection-code) {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.inspection-note span {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+  word-break: keep-all;
+}
+.hero-graphic figcaption {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #d8d9d0;
+  font-size: 11px;
+  color: var(--color-muted);
 }
 
 .results-section {
@@ -195,7 +285,7 @@
   padding: 20px 28px 35px;
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-background);
-  background-image: radial-gradient(#c8cfd9 0.6px, transparent 0.6px);
+  background-image: radial-gradient(#cdd0c7 0.6px, transparent 0.6px);
   background-size: 16px 16px;
 }
 
@@ -242,8 +332,8 @@
   position: absolute;
   bottom: 10px;
   right: 20px;
-  font-family: var(--font-sans);
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--color-muted);
 }
@@ -281,7 +371,7 @@
   font-size: clamp(30px, 3.2vw, 46px);
   font-weight: 500;
   line-height: 1.3;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.025em;
 }
 
 .use-cases-section .section-heading {
@@ -312,7 +402,7 @@
 
 .section-number {
   color: var(--color-accent-ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.08em;
 }
@@ -322,13 +412,13 @@
   font-size: clamp(23px, 2.1vw, 30px);
   line-height: 1.4;
   font-weight: 500;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.025em;
   word-break: keep-all;
 }
 
 .process-section {
   padding-block: 100px;
-  background: #191b20;
+  background: #222520;
   color: white;
   scroll-margin-top: 120px;
 }
@@ -339,12 +429,12 @@
 }
 
 .process-section .section-heading > p:last-child {
-  color: #b8c5d8;
+  color: #bfc2b9;
 }
 
 .process-list {
   margin-top: 64px;
-  border-top: 1px solid #35445c;
+  border-top: 1px solid #454940;
 }
 
 .process-row {
@@ -353,17 +443,17 @@
   align-items: center;
   gap: 28px;
   padding: 32px 0;
-  border-bottom: 1px solid #35445c;
+  border-bottom: 1px solid #454940;
 }
 
 .process-row h3 {
   font-size: clamp(25px, 2.6vw, 38px);
   font-weight: 500;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.025em;
 }
 
 .process-row p {
-  color: #d4dce8;
+  color: #d4d7ce;
   font-size: 15px;
   line-height: 1.9;
   word-break: keep-all;
@@ -395,17 +485,18 @@
   font-size: clamp(38px, 4vw, 58px);
   line-height: 1.2;
   font-weight: 500;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.025em;
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .hero-copy {
-    width: 88%;
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
   }
 
   .hero-graphic {
-    right: -36%;
-    opacity: 0.6;
+    max-width: 600px;
+    width: 100%;
   }
 
   .use-case-row {
@@ -462,11 +553,13 @@
   }
 
   .landing-hero {
-    padding-top: 44px;
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 44px;
+    gap: 40px;
   }
 
   .hero-copy h1 {
-    font-size: clamp(34px, 9.7vw, 60px);
+    font-size: clamp(30px, 9.4vw, 48px);
     margin-top: 32px;
     line-height: 1.32;
   }
@@ -474,19 +567,32 @@
   .hero-copy {
     width: 100%;
     min-height: 0;
-    padding-bottom: 56px;
+    padding-bottom: 0;
   }
 
   .hero-description {
-    font-size: 15px;
+    font-size: 16px;
+  }
+
+  .hero-description br {
+    display: none;
   }
 
   .hero-graphic {
-    top: 25px;
-    right: -360px;
-    width: 560px;
-    height: 590px;
-    opacity: 0.65;
+    padding: 16px;
+  }
+  .inspection-screen {
+    padding: 18px;
+  }
+  .inspection-title {
+    font-size: 24px;
+  }
+  .inspection-option {
+    gap: 7px;
+    font-size: 12px;
+  }
+  .inspection-option > span:last-child {
+    font-size: 11px;
   }
 
   .hero-eyebrow {
@@ -551,4 +657,10 @@
   .landing-section {
     padding-block: 56px;
   }
+}
+
+.section-heading > p:last-child,
+.use-case-row > div:last-child > p:last-child {
+  font-size: 16px;
+  line-height: 1.8;
 }
