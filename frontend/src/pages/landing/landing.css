@@ -127,7 +127,7 @@
 .hero-graphic {
   min-width: 0;
   padding: 24px;
-  background: #f2f2ec;
+  background: var(--color-brand-50);
   border: 1px solid var(--color-border);
 }
 .inspection-heading,
@@ -146,7 +146,7 @@
 .inspection-screen {
   padding: 28px;
   background: var(--color-surface);
-  border: 1px solid #ddded6;
+  border: 1px solid var(--color-border);
 }
 .inspection-screen-top {
   padding-bottom: 20px;
@@ -246,7 +246,7 @@
 .hero-graphic figcaption {
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid #d8d9d0;
+  border-top: 1px solid var(--color-border);
   font-size: 11px;
   color: var(--color-muted);
 }
@@ -285,7 +285,7 @@
   padding: 20px 28px 35px;
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-background);
-  background-image: radial-gradient(#cdd0c7 0.6px, transparent 0.6px);
+  background-image: radial-gradient(var(--color-brand-300) 0.6px, transparent 0.6px);
   background-size: 16px 16px;
 }
 
@@ -418,7 +418,7 @@
 
 .process-section {
   padding-block: 100px;
-  background: #222520;
+  background: var(--color-brand-900);
   color: white;
   scroll-margin-top: 120px;
 }
@@ -429,12 +429,12 @@
 }
 
 .process-section .section-heading > p:last-child {
-  color: #bfc2b9;
+  color: var(--color-brand-300);
 }
 
 .process-list {
   margin-top: 64px;
-  border-top: 1px solid #454940;
+  border-top: 1px solid var(--color-brand-500);
 }
 
 .process-row {
@@ -443,7 +443,7 @@
   align-items: center;
   gap: 28px;
   padding: 32px 0;
-  border-bottom: 1px solid #454940;
+  border-bottom: 1px solid var(--color-brand-500);
 }
 
 .process-row h3 {
@@ -453,7 +453,7 @@
 }
 
 .process-row p {
-  color: #d4d7ce;
+  color: var(--color-brand-100);
   font-size: 15px;
   line-height: 1.9;
   word-break: keep-all;
@@ -469,7 +469,7 @@
 
 .landing-closing {
   padding-block: 76px;
-  background: #f5f5f3;
+  background: var(--color-brand-50);
 }
 
 .landing-closing > div {

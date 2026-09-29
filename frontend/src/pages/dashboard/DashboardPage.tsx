@@ -28,7 +28,7 @@ export function DashboardPage() {
             여러 진단의 진행 상태와 검토 결과를 한곳에서 관리하세요.
           </p>
         </div>
-        <Button asChild variant="accent">
+        <Button asChild variant="primary">
           <Link to="/app/audits/new">
             <Plus size={16} aria-hidden="true" /> 새 진단 시작
           </Link>

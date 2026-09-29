@@ -57,7 +57,7 @@ export function GuidelinesPage() {
               className={cn(
                 "min-w-0 rounded-control border px-1 py-3 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:px-3 lg:rounded-card lg:p-4 lg:text-left",
                 categoryIndex === index
-                  ? "border-brand-600 bg-brand-600 text-white"
+                  ? "border-brand-600 bg-brand-50 text-brand-600"
                   : "border-border bg-surface text-text hover:border-brand-300 hover:bg-brand-50",
               )}
             >
@@ -70,7 +70,7 @@ export function GuidelinesPage() {
               <span
                 className={cn(
                   "mt-2 hidden text-xs leading-5 lg:block",
-                  categoryIndex === index ? "text-white/80" : "text-muted",
+                  categoryIndex === index ? "text-brand-700" : "text-muted",
                 )}
               >
                 {categoryHints[index]}

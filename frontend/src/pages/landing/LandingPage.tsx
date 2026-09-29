@@ -145,7 +145,7 @@ export function LandingPage() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="landing-page min-h-screen bg-surface text-text">
+    <div className="landing-page min-h-screen bg-background text-text">
       <header
         className="landing-header sticky top-0 z-30 bg-surface/95 backdrop-blur"
         onKeyDown={(event) => {
@@ -202,7 +202,7 @@ export function LandingPage() {
               <br />
               금융상품 가입 화면을 근거와 함께 검토하세요.
             </p>
-            <Button asChild variant="accent" className="landing-action mt-8 gap-10 px-7 py-4">
+            <Button asChild variant="primary" className="landing-action mt-8 gap-10 px-7 py-4">
               <Link to="/app/audits/new">
                 내 화면 점검하기 <ArrowRight size={18} aria-hidden="true" />
               </Link>
@@ -313,7 +313,7 @@ export function LandingPage() {
             </h2>
           </div>
           <div>
-            <Button asChild variant="accent" className="landing-action gap-10 px-7 py-4">
+            <Button asChild variant="primary" className="landing-action gap-10 px-7 py-4">
               <Link to="/app/audits/new">
                 화면 등록하고 시작하기 <ArrowRight size={18} aria-hidden="true" />
               </Link>

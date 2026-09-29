@@ -21,27 +21,27 @@
   --font-display: "Wanted Sans Variable", "SUIT Variable", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  --color-brand-50: #f1f1ee;
-  --color-brand-100: #e7e7e2;
-  --color-brand-300: #b5b7b1;
-  --color-brand-400: #797d76;
-  --color-brand-500: #454a45;
-  --color-brand-600: #303630;
-  --color-brand-700: #282d28;
-  --color-brand-800: #242824;
-  --color-brand-900: #1e221e;
-  --color-brand-950: #191c19;
+  --color-brand-50: #eef2f8;
+  --color-brand-100: #dce4f0;
+  --color-brand-300: #a3b4ce;
+  --color-brand-400: #7088ad;
+  --color-brand-500: #36527d;
+  --color-brand-600: #233b63;
+  --color-brand-700: #1e3356;
+  --color-brand-800: #192b49;
+  --color-brand-900: #15233c;
+  --color-brand-950: #101b2e;
 
-  --color-accent: #ff795c;
-  --color-accent-hover: #f5684a;
-  --color-accent-soft: #fff0e9;
-  --color-accent-ink: #a63d27;
+  --color-accent: #c4a35d;
+  --color-accent-hover: #b39350;
+  --color-accent-soft: #f7f2e7;
+  --color-accent-ink: #80652e;
 
-  --color-background: #fafaf8;
+  --color-background: #faf9f6;
   --color-surface: #ffffff;
-  --color-border: #e2e2dc;
-  --color-text: #222520;
-  --color-muted: #62665f;
+  --color-border: #dce1e8;
+  --color-text: #202b3b;
+  --color-muted: #606c7d;
   --color-danger: #b4232c;
   --color-warning: #805500;
   --color-success: #146c50;
