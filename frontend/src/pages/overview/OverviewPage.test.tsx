@@ -204,22 +204,53 @@ describe("OverviewPage", () => {
   it("advances only after saving and finishes with no remaining review items", async () => {
     const user = userEvent.setup();
     const fixture = structuredClone(dashboardFixture);
+    let finishSave!: () => void;
+    let startSave!: () => void;
+    const pendingSave = new Promise<void>((resolve) => {
+      finishSave = resolve;
+    });
+    const saveStarted = new Promise<void>((resolve) => {
+      startSave = resolve;
+    });
     server.use(
       http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)),
       http.patch("*/api/v1/findings/:findingId", async ({ params, request }) => {
         const finding = fixture.audits[0]!.findings.find((item) => item.id === params.findingId)!;
         const body = (await request.json()) as { status: typeof finding.status };
+        if (finding.id === "finding-preselected-option" && body.status === "resolved") {
+          startSave();
+          await pendingSave;
+        }
         finding.status = body.status;
         return HttpResponse.json({ id: finding.id, status: finding.status });
       }),
     );
     renderPage();
     await user.click(await screen.findByRole("button", { name: "해결하고 다음 미검토 항목" }));
+    await saveStarted;
+    const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
+    try {
+      expect(screen.getByRole("button", { name: "상태 저장 중…" })).toBeDisabled();
+      expect(list.getByRole("button", { name: /유료 옵션 사전 선택/ })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      expect(list.getByRole("button", { name: /감정적 압박/ })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+    } finally {
+      finishSave();
+    }
     const detail = within(screen.getByRole("region", { name: "선택한 항목 검토" }));
-    await waitFor(() =>
-      expect(detail.getByRole("heading", { name: "감정적 압박" })).toBeInTheDocument(),
-    );
-    expect(screen.getByRole("button", { name: "다음 미검토 항목" })).toBeDisabled();
+    // All list titles exist before saving; wait for the actual review transition.
+    await waitFor(() => {
+      expect(list.getByRole("button", { name: /감정적 압박/ })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      expect(screen.getByRole("button", { name: "다음 미검토 항목" })).toBeDisabled();
+    });
     await user.click(screen.getByRole("button", { name: "해결됨으로 표시" }));
     await waitFor(() =>
       expect(
