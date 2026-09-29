@@ -305,11 +305,10 @@ export function LandingPage() {
       <section className="landing-closing" aria-labelledby="closing-title">
         <div className="page-container">
           <div>
-            <p className="section-index">다음 화면을 위한 첫 점검</p>
             <h2 id="closing-title">
               이제, 내 화면을
               <br />
-              살펴볼 차례.
+              살펴볼 차례
             </h2>
           </div>
           <div>
@@ -318,7 +317,6 @@ export function LandingPage() {
                 화면 등록하고 시작하기 <ArrowRight size={18} aria-hidden="true" />
               </Link>
             </Button>
-            <p className="mt-4 text-sm text-muted">데모 화면으로도 시작할 수 있습니다.</p>
           </div>
         </div>
       </section>

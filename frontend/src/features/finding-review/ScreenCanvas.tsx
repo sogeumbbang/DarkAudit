@@ -1,4 +1,11 @@
-import { useLayoutEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+  type SyntheticEvent,
+} from "react";
 
 import type { AuditScreenDto, BBoxDto, FindingDto, FindingSeverity } from "@/entities/audit/types";
 import { cn } from "@/lib/cn";
@@ -86,13 +93,23 @@ export function ScreenCanvas({
   finding,
   alt,
   className,
+  findings,
+  onSelect,
+  viewportRef,
+  focusRequest = 0,
 }: {
   screen: AuditScreenDto;
   finding?: FindingDto;
   alt: string;
   className?: string;
+  findings?: { finding: FindingDto; number: number }[];
+  onSelect?: (finding: FindingDto) => void;
+  viewportRef?: RefObject<HTMLDivElement | null>;
+  focusRequest?: number;
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
+  const focusedRequest = useRef("");
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const [rect, setRect] = useState<{
     left: number;
     top: number;
@@ -106,12 +123,15 @@ export function ScreenCanvas({
     height: number;
   } | null>(null);
 
-  const natural =
-    screen.width && screen.height
-      ? { width: screen.width, height: screen.height }
-      : measured && measured.screenId === screen.id
-        ? { width: measured.width, height: measured.height }
-        : null;
+  const natural = useMemo(
+    () =>
+      screen.width && screen.height
+        ? { width: screen.width, height: screen.height }
+        : measured && measured.screenId === screen.id
+          ? { width: measured.width, height: measured.height }
+          : null,
+    [screen.width, screen.height, screen.id, measured],
+  );
 
   useLayoutEffect(() => {
     const img = imgRef.current;
@@ -134,12 +154,14 @@ export function ScreenCanvas({
     if (typeof ResizeObserver === "undefined") return undefined;
     const observer = new ResizeObserver(measure);
     observer.observe(img);
+    // Centering can move an intrinsic-size image without resizing the image itself.
+    if (img.parentElement) observer.observe(img.parentElement);
     return () => observer.disconnect();
   }, [screen.id, screen.imageUrl]);
 
   function handleLoad(event: SyntheticEvent<HTMLImageElement>) {
     const img = event.currentTarget;
-    if (!screen.width && !screen.height && img.naturalWidth && img.naturalHeight) {
+    if ((!screen.width || !screen.height) && img.naturalWidth && img.naturalHeight) {
       setMeasured({ screenId: screen.id, width: img.naturalWidth, height: img.naturalHeight });
     }
     if (!img.offsetWidth || !img.offsetHeight) return;
@@ -152,6 +174,45 @@ export function ScreenCanvas({
   }
 
   const highlights = collectHighlights(screen.id, finding);
+  const focusBox = highlights[0]?.bbox;
+  const focusKey = `${screen.id}:${screen.imageUrl}:${finding?.id ?? ""}:${focusRequest}:${rect?.width}:${rect?.height}:${rect?.left}:${rect?.top}`;
+  useLayoutEffect(() => {
+    const viewport = viewportRef?.current;
+    const img = imgRef.current;
+    if (!viewport || !img || !natural || !rect || !focusBox || focusedRequest.current === focusKey)
+      return;
+    const imageBounds = img.getBoundingClientRect();
+    if (!imageBounds.width || !imageBounds.height) return;
+    const viewportBounds = viewport.getBoundingClientRect();
+    const normalized = focusBox.coordinateSystem === "normalized";
+    const boxLeft = (imageBounds.width * focusBox.x) / (normalized ? 1 : natural.width);
+    const boxTop = (imageBounds.height * focusBox.y) / (normalized ? 1 : natural.height);
+    const boxWidth = (imageBounds.width * focusBox.width) / (normalized ? 1 : natural.width);
+    const boxHeight = (imageBounds.height * focusBox.height) / (normalized ? 1 : natural.height);
+    // Keep the number and leading edge visible when zoom makes the box larger than the viewport.
+    const targetX = boxLeft + Math.min(boxWidth / 2, viewport.clientWidth / 2 - 32);
+    const targetY = boxTop + Math.min(boxHeight / 2, viewport.clientHeight / 2 - 32);
+    viewport.scrollTo?.({
+      left:
+        viewport.scrollLeft +
+        imageBounds.left +
+        targetX -
+        viewportBounds.left -
+        viewport.clientWidth / 2,
+      top:
+        viewport.scrollTop +
+        imageBounds.top +
+        targetY -
+        viewportBounds.top -
+        viewport.clientHeight / 2,
+      behavior: "instant",
+    });
+    focusedRequest.current = focusKey;
+  }, [focusBox, focusKey, natural, rect, viewportRef]);
+
+  const interactiveHighlights = (findings ?? []).flatMap(({ finding: item, number }) =>
+    collectHighlights(screen.id, item).map((box) => ({ ...box, finding: item, number })),
+  );
 
   return (
     <>
@@ -164,7 +225,82 @@ export function ScreenCanvas({
         ref={imgRef}
         src={screen.imageUrl}
       />
-      {rect && natural && highlights.length > 0 && (
+      {rect && natural && onSelect && interactiveHighlights.length > 0 && (
+        <div
+          className="pointer-events-none absolute"
+          role="group"
+          aria-label="탐지 위치"
+          style={{ height: rect.height, left: rect.left, top: rect.top, width: rect.width }}
+        >
+          {interactiveHighlights.map((box) => {
+            const active = box.finding.id === finding?.id;
+            const compact = isCompactControl(box.bbox, natural);
+            return (
+              <button
+                key={box.key}
+                type="button"
+                aria-label={`${box.number}번 ${box.finding.title} ${box.tone === "primary" ? "탐지 영역" : "관련 영역"}`}
+                aria-pressed={active}
+                aria-controls="finding-detail-panel"
+                title={`${box.number}번 ${box.finding.title} 설명 보기`}
+                className={cn(
+                  "pointer-events-auto absolute cursor-pointer rounded-[3px] bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600",
+                  compact
+                    ? [
+                        "outline-[1.5px] outline-offset-2",
+                        OUTLINE[box.severity],
+                        box.tone === "related" ? "outline-dashed" : "outline-solid",
+                      ]
+                    : ["border-2", BORDER[box.severity], box.tone === "related" && "border-dashed"],
+                  active ? "z-10" : "z-0",
+                  active && !compact && box.tone === "primary" && FILL[box.severity],
+                )}
+                style={toPercentBox(box.bbox, natural, compact ? 0 : 2)}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  pointerStart.current = { x: event.clientX, y: event.clientY };
+                }}
+                onPointerCancel={() => {
+                  pointerStart.current = null;
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  const origin = pointerStart.current;
+                  pointerStart.current = null;
+                  if (
+                    event.detail > 0 &&
+                    origin &&
+                    Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 6
+                  )
+                    return;
+                  onSelect(box.finding);
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute -left-0.5 flex size-6 items-center justify-center rounded-sm border-2 bg-white text-xs font-bold text-text shadow-sm",
+                    BORDER[box.severity],
+                    active && "bg-brand-600 text-white border-brand-600",
+                  )}
+                  style={{
+                    top:
+                      (box.bbox.y /
+                        (box.bbox.coordinateSystem === "normalized" ? 1 : natural.height)) *
+                        rect.height >=
+                      26
+                        ? -26
+                        : 0,
+                  }}
+                >
+                  {box.number}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {rect && natural && !onSelect && highlights.length > 0 && (
         <div
           className="pointer-events-none absolute"
           style={{ height: rect.height, left: rect.left, top: rect.top, width: rect.width }}

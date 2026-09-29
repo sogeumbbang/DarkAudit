@@ -16,7 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/Badge";
@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
-import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
+import { ScreenCanvas } from "@/features/finding-review/ScreenCanvas";
 import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
@@ -42,6 +42,49 @@ const auditStatusPresentation: Record<
   completed: { label: "완료", variant: "success" },
   failed: { label: "실패", variant: "danger" },
 };
+
+type FindingFilter = "all" | "needs-review" | "resolved";
+const findingFilters: { value: FindingFilter; label: string }[] = [
+  { value: "all", label: "전체" },
+  { value: "needs-review", label: "검토 필요" },
+  { value: "resolved", label: "해결됨" },
+];
+
+function matchesFilter(finding: FindingDto, filter: FindingFilter) {
+  return (
+    filter === "all" ||
+    (filter === "resolved" ? finding.status === "resolved" : finding.status !== "resolved")
+  );
+}
+
+function FindingBadges({ finding }: { finding: FindingDto }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge
+        variant={
+          finding.severity === "HIGH"
+            ? "danger"
+            : finding.severity === "REVIEW"
+              ? "warning"
+              : "neutral"
+        }
+      >
+        심각도 {{ HIGH: "높음", REVIEW: "검토 필요", LOW: "낮음" }[finding.severity]}
+      </Badge>
+      <Badge
+        variant={
+          finding.status === "resolved"
+            ? "success"
+            : finding.status === "reviewing"
+              ? "progress"
+              : "neutral"
+        }
+      >
+        {{ open: "미검토", reviewing: "검토 중", resolved: "해결됨" }[finding.status]}
+      </Badge>
+    </div>
+  );
+}
 
 function FlowOverview({
   screens,
@@ -65,28 +108,42 @@ function FlowOverview({
           전체 흐름 보기 <ArrowRight size={13} />
         </button>
       </div>
-      <div className="mt-5 flex gap-3 overflow-x-auto py-2">
+      <div
+        className="mt-5 flex gap-3 overflow-x-auto py-2"
+        role="group"
+        aria-label="가입 흐름 단계"
+      >
         {screens.map((screen, index) => (
           <button
             className={cn(
-              "relative min-w-20 flex-1 rounded-control p-1 text-center",
+              "relative min-w-28 flex-1 rounded-control p-3 text-center transition-colors hover:bg-brand-50",
               selectedScreenId === screen.id && "bg-brand-50 ring-2 ring-inset ring-brand-500",
             )}
             key={screen.id}
+            aria-label={`${index + 1}단계 ${screen.flowStep}, 문제 ${screen.findingCount}건`}
+            aria-pressed={selectedScreenId === screen.id}
             onClick={() => onSelect(screen.id)}
           >
             {index < screens.length - 1 && (
-              <span className="absolute left-[60%] top-3 h-px w-[80%] border-t border-dashed border-muted/40" />
+              <span
+                aria-hidden="true"
+                className="absolute left-[60%] top-7 h-px w-[80%] border-t border-dashed border-muted/40"
+              />
             )}
-            <div className="relative mx-auto flex size-6 items-center justify-center rounded-full bg-brand-600 text-[9px] font-bold text-white">
+            <div className="relative mx-auto flex size-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold tabular-nums text-white">
               {index + 1}
-              {screen.findingCount > 0 && (
-                <span className="absolute -right-5 flex size-4 items-center justify-center rounded-full bg-danger text-[8px]">
-                  {screen.findingCount}
-                </span>
-              )}
             </div>
-            <div className="mx-auto mt-4 flex h-24 w-16 items-center justify-center overflow-hidden rounded border border-border bg-white shadow-sm">
+            <span
+              className={cn(
+                "mx-auto mt-2 flex min-h-6 w-fit items-center justify-center whitespace-nowrap rounded-full px-2.5 text-xs font-semibold tabular-nums",
+                screen.findingCount > 0
+                  ? "bg-danger text-white"
+                  : "bg-background text-muted ring-1 ring-inset ring-border",
+              )}
+            >
+              문제 {screen.findingCount}건
+            </span>
+            <div className="mx-auto mt-3 flex h-24 w-16 items-center justify-center overflow-hidden rounded border border-border bg-white shadow-sm">
               <img
                 alt={`${screen.flowStep} 캡처 화면`}
                 className="max-h-full max-w-full object-contain"
@@ -94,7 +151,7 @@ function FlowOverview({
                 src={screen.imageUrl}
               />
             </div>
-            <p className="mt-2 truncate text-[10px] font-medium">{screen.flowStep}</p>
+            <p className="mt-3 truncate text-xs font-semibold">{screen.flowStep}</p>
           </button>
         ))}
       </div>
@@ -102,7 +159,19 @@ function FlowOverview({
   );
 }
 
-function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: FindingDto }) {
+function ScreenPreview({
+  screen,
+  finding,
+  findings,
+  onSelect,
+  focusRequest,
+}: {
+  screen: AuditScreenDto;
+  finding?: FindingDto;
+  findings: { finding: FindingDto; number: number }[];
+  onSelect: (finding: FindingDto) => void;
+  focusRequest: number;
+}) {
   const [scale, setScale] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -147,7 +216,7 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
   }
 
   return (
-    <div className="min-w-0" ref={previewRef}>
+    <div id="finding-screen-preview" className="min-w-0" ref={previewRef}>
       <Card className="relative h-full min-h-[520px] overflow-hidden">
         <h2 className="flex min-h-16 items-center border-b border-border px-6 py-4 text-base font-semibold">
           화면 미리보기
@@ -173,7 +242,7 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
           렌더링되고 미리보기 영역을 넘쳐 잘린다.
         */}
           <div
-            className="flex min-h-full min-w-full items-center justify-center transition-[width,height]"
+            className="flex min-h-full min-w-full items-center justify-center"
             data-testid="screen-preview-scroll-area"
             style={
               scale > 1
@@ -189,6 +258,10 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
                 alt={`${screen.flowStep} 캡처 화면 미리보기`}
                 className="max-h-full max-w-full rounded border border-border bg-white object-contain shadow-sm"
                 finding={finding}
+                findings={findings}
+                onSelect={onSelect}
+                viewportRef={viewportRef}
+                focusRequest={focusRequest}
                 screen={screen}
               />
             </div>
@@ -230,8 +303,8 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
             <Expand size={15} />
           </button>
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-12 border-t border-border bg-surface px-6">
-          <ScreenCanvasLegend screenId={screen.id} finding={finding} />
+        <div className="absolute inset-x-0 bottom-0 flex h-12 items-center border-t border-border bg-surface px-4 text-xs leading-5 text-muted">
+          번호를 누르면 설명 · 실선: 탐지 · 점선: 관련 영역
         </div>
       </Card>
     </div>
@@ -240,22 +313,32 @@ function ScreenPreview({ screen, finding }: { screen: AuditScreenDto; finding?: 
 
 function FindingDetails({
   finding,
+  number,
   position,
   total,
   onStep,
+  onResolved,
+  hasNextReview,
+  emptyMessage,
 }: {
   finding?: FindingDto;
+  number: number;
   position: number;
   total: number;
   onStep: (delta: number) => void;
+  onResolved: () => void;
+  hasNextReview: boolean;
+  emptyMessage: string;
 }) {
   const findingStatus = useFindingStatus();
   const [showMetadata, setShowMetadata] = useState(false);
 
   return (
-    <Card className="min-w-0 overflow-hidden">
+    <Card id="finding-detail-panel" className="min-w-0 overflow-hidden">
       <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h2 className="text-base font-semibold">탐지 항목 상세</h2>
+        <h2 id="finding-detail-heading" tabIndex={-1} className="text-base font-semibold">
+          탐지 항목 상세
+        </h2>
         <div className="flex items-center gap-3 text-sm">
           <button
             aria-label="이전 탐지 항목"
@@ -285,11 +368,17 @@ function FindingDetails({
       </div>
       {finding ? (
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-base font-semibold text-brand-700">{finding.ruleId}</p>
-            <Badge variant={finding.status === "resolved" ? "success" : "danger"}>
-              ●&nbsp; {finding.status === "resolved" ? "해결됨" : "검토 필요"}
-            </Badge>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-base font-semibold text-brand-700">
+              <span
+                aria-label={`항목 ${number}번`}
+                className="flex size-7 items-center justify-center rounded bg-brand-600 text-sm font-bold text-white"
+              >
+                {number}
+              </span>
+              {finding.ruleId}
+            </p>
+            <FindingBadges finding={finding} />
           </div>
           <h3 className="font-display mt-3 text-2xl font-bold">{finding.title}</h3>
           <p className="mt-3 text-sm leading-6 text-muted">{finding.description}</p>
@@ -321,7 +410,7 @@ function FindingDetails({
           <FindingDecisionNote finding={finding} />
           {showMetadata && (
             <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
-              신뢰도 {Math.round(finding.confidence * 100)}% · 심각도 {finding.severity}
+              신뢰도 {Math.round(finding.confidence * 100)}%
             </div>
           )}
           <button
@@ -331,10 +420,17 @@ function FindingDetails({
             )}
             disabled={findingStatus.isPending}
             onClick={() =>
-              findingStatus.mutate({
-                findingId: finding.id,
-                status: finding.status === "resolved" ? "reviewing" : "resolved",
-              })
+              findingStatus.mutate(
+                {
+                  findingId: finding.id,
+                  status: finding.status === "resolved" ? "reviewing" : "resolved",
+                },
+                {
+                  onSuccess: () => {
+                    if (finding.status !== "resolved") onResolved();
+                  },
+                },
+              )
             }
           >
             {findingStatus.isPending ? (
@@ -342,16 +438,25 @@ function FindingDetails({
             ) : (
               <CheckCircle2 size={15} />
             )}
-            {finding.status === "resolved" ? "검토 상태로 되돌리기" : "해결됨으로 표시"}
+            {findingStatus.isPending
+              ? "상태 저장 중…"
+              : finding.status === "resolved"
+                ? "검토 상태로 되돌리기"
+                : hasNextReview
+                  ? "해결하고 다음 미검토 항목"
+                  : "해결됨으로 표시"}
           </button>
+          {findingStatus.isError && findingStatus.variables?.findingId === finding.id && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              상태를 저장하지 못했습니다. 다시 시도해주세요.
+            </p>
+          )}
         </div>
       ) : (
         <div className="flex min-h-96 flex-col items-center justify-center p-8 text-center">
-          <CheckCircle2 className="text-success" size={34} />
-          <h3 className="mt-4 font-bold">탐지된 항목이 없습니다</h3>
-          <p className="mt-2 text-sm text-muted">
-            이 진단에서는 검토가 필요한 UX 패턴이 발견되지 않았습니다.
-          </p>
+          <FileText className="text-muted" size={34} />
+          <h3 className="mt-4 font-bold">{emptyMessage}</h3>
+          <p className="mt-2 text-sm text-muted">다른 필터나 화면을 선택해 확인할 수 있습니다.</p>
         </div>
       )}
     </Card>
@@ -362,16 +467,60 @@ function FindingsList({
   findings,
   selectedFindingId,
   onSelect,
+  filter,
+  onFilter,
+  allFindings,
+  onNextReview,
+  hasNextReview,
 }: {
   findings: FindingDto[];
   selectedFindingId?: string;
   onSelect: (finding: FindingDto) => void;
+  filter: FindingFilter;
+  onFilter: (filter: FindingFilter) => void;
+  allFindings: FindingDto[];
+  onNextReview: () => void;
+  hasNextReview: boolean;
 }) {
   return (
     <Card className="min-w-0 overflow-hidden">
       <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
         <h2 className="text-base font-semibold">점검 항목</h2>
         <span className="text-xs tabular-nums text-muted">{findings.length}개</span>
+      </div>
+      <div className="space-y-3 border-b border-border p-4">
+        <div role="group" aria-label="점검 항목 필터" className="flex flex-wrap gap-2">
+          {findingFilters.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={filter === value}
+              onClick={() => onFilter(value)}
+              className={cn(
+                "rounded-control border px-2.5 py-2 text-xs font-semibold",
+                filter === value
+                  ? "border-brand-600 bg-brand-50 text-brand-700"
+                  : "border-border text-muted hover:bg-brand-50",
+              )}
+            >
+              {label}{" "}
+              <span className="tabular-nums">
+                {allFindings.filter((item) => matchesFilter(item, value)).length}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs leading-5 text-muted">
+          검토 필요에는 미검토·검토 중 항목이 포함됩니다.
+        </p>
+        <Button
+          variant="outline"
+          className="w-full px-3 py-2 text-xs"
+          disabled={!hasNextReview}
+          onClick={onNextReview}
+        >
+          다음 미검토 항목 <ArrowRight size={14} aria-hidden="true" />
+        </Button>
       </div>
       <nav aria-label="점검 항목" className="max-h-[640px] divide-y divide-border overflow-y-auto">
         {findings.map((finding) => (
@@ -385,20 +534,14 @@ function FindingsList({
               selectedFindingId === finding.id && "border-brand-600 bg-brand-50",
             )}
           >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-bold text-brand-700">{finding.ruleId}</p>
-              <Badge
-                className="shrink-0 whitespace-nowrap"
-                variant={
-                  finding.status === "resolved"
-                    ? "success"
-                    : finding.severity === "HIGH"
-                      ? "danger"
-                      : "warning"
-                }
-              >
-                {finding.status === "resolved" ? "해결됨" : "검토 필요"}
-              </Badge>
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 text-xs font-bold text-brand-700">
+                <span className="flex size-6 items-center justify-center rounded bg-brand-600 text-white">
+                  {allFindings.findIndex((item) => item.id === finding.id) + 1}
+                </span>
+                {finding.ruleId}
+              </p>
+              <FindingBadges finding={finding} />
             </div>
             <div className="mt-3 min-w-0">
               <h3 className="break-keep text-sm font-semibold leading-6 [overflow-wrap:anywhere]">
@@ -411,7 +554,13 @@ function FindingsList({
           </button>
         ))}
         {!findings.length && (
-          <p className="p-4 text-sm leading-6 text-muted">검토할 점검 항목이 없습니다.</p>
+          <p className="p-4 text-sm leading-6 text-muted" role="status">
+            {filter === "resolved"
+              ? "해결된 항목이 없습니다."
+              : filter === "needs-review"
+                ? "검토가 필요한 항목이 없습니다."
+                : "탐지된 항목이 없습니다."}
+          </p>
         )}
       </nav>
     </Card>
@@ -441,7 +590,14 @@ function DashboardLoading() {
 export function OverviewPage() {
   const { data, isPending, isError, error, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [focusRequest, setFocusRequest] = useState(0);
+  const selectionSnapshot = searchParams.toString();
+  const latestSelection = useRef(selectionSnapshot);
+  useEffect(() => {
+    latestSelection.current = selectionSnapshot;
+  }, [selectionSnapshot]);
   const [showFlow, setShowFlow] = useState(false);
+  const flowBackdropPointerDown = useRef(false);
   const [showReport, setShowReport] = useState(false);
   const reportButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -508,33 +664,65 @@ export function OverviewPage() {
       </Card>
     );
   }
+  const filterParam = searchParams.get("filter");
+  const filter: FindingFilter =
+    filterParam === "needs-review" || filterParam === "resolved" ? filterParam : "all";
+  const filteredFindings = audit.findings.filter((item) => matchesFilter(item, filter));
+  const requestedScreen = searchParams.get("screen");
+  const requestedFinding = searchParams.get("finding");
+  const selectedFinding = filteredFindings.find((item) => item.id === requestedFinding);
   const finding =
-    audit.findings.find((item) => item.id === searchParams.get("finding")) ?? audit.findings[0];
+    selectedFinding ??
+    (requestedScreen && !requestedFinding
+      ? filteredFindings.find((item) => item.screenIds.includes(requestedScreen))
+      : filteredFindings[0]);
   // 화면을 명시하지 않았다면 선택된 항목이 있는 화면을 띄운다. 둘을 각각 고르면
   // 첫 진입에서 "1번 화면 + 2번 화면의 탐지 항목"처럼 어긋나 위치 강조가 안 보인다.
   const screen =
-    audit.screens.find((item) => item.id === searchParams.get("screen")) ??
+    (selectedFinding || !requestedFinding
+      ? audit.screens.find((item) => item.id === requestedScreen)
+      : undefined) ??
     audit.screens.find((item) => item.id === finding?.bbox?.screenId) ??
     audit.screens.find((item) => item.id === finding?.screenIds[0]) ??
     audit.screens[0]!;
-  const findingPosition = finding ? audit.findings.findIndex((item) => item.id === finding.id) : 0;
+  const findingPosition = finding
+    ? filteredFindings.findIndex((item) => item.id === finding.id)
+    : -1;
+  const originalPosition = audit.findings.findIndex((item) => item.id === finding?.id);
+  const reviewOrder = [
+    ...audit.findings.slice(originalPosition + 1),
+    ...audit.findings.slice(0, originalPosition + 1),
+  ];
+  const nextReview = reviewOrder.find(
+    (item) => item.id !== finding?.id && item.status !== "resolved",
+  );
+  const emptyMessage = !audit.findings.length
+    ? "탐지된 항목이 없습니다"
+    : !filteredFindings.length
+      ? filter === "resolved"
+        ? "해결된 항목이 없습니다"
+        : "검토가 필요한 항목이 없습니다"
+      : "이 화면에 해당하는 점검 항목이 없습니다";
   const needsReview = audit.findings.filter((item) => item.status !== "resolved").length;
   const resolved = audit.findings.filter((item) => item.status === "resolved").length;
   const auditStatus = auditStatusPresentation[audit.status];
   const metrics = [
     {
+      filter: "all" as const,
       label: "탐지된 항목",
       value: audit.findings.length,
       action: "전체 보기",
       color: "text-brand-600",
     },
     {
+      filter: "needs-review" as const,
       label: "검토 필요",
       value: needsReview,
       action: "지금 검토",
       color: "text-warning",
     },
     {
+      filter: "resolved" as const,
       label: "해결됨",
       value: resolved,
       action: "해결 항목 보기",
@@ -543,40 +731,85 @@ export function OverviewPage() {
   ];
 
   function selectScreen(screenId: string) {
-    const relatedFinding = audit.findings.find((item) => item.screenIds.includes(screenId));
+    const relatedFinding = filteredFindings.find((item) => item.screenIds.includes(screenId));
     setSearchParams((current) => {
-      current.set("audit", audit.id);
-      current.set("screen", screenId);
-      if (relatedFinding) current.set("finding", relatedFinding.id);
-      else current.delete("finding");
-      return current;
+      const params = new URLSearchParams(current);
+      params.set("audit", audit.id);
+      params.set("screen", screenId);
+      if (relatedFinding) params.set("finding", relatedFinding.id);
+      else params.delete("finding");
+      return params;
     });
+  }
+
+  function findingParams(
+    current: URLSearchParams,
+    nextFinding: FindingDto | undefined,
+    nextFilter: FindingFilter,
+  ) {
+    const params = new URLSearchParams(current);
+    params.set("audit", audit.id);
+    params.set("filter", nextFilter);
+    if (nextFinding) {
+      params.set("finding", nextFinding.id);
+      params.set("screen", nextFinding.bbox?.screenId ?? nextFinding.screenIds[0] ?? screen.id);
+    } else {
+      params.delete("finding");
+      params.delete("screen");
+    }
+    return params;
   }
 
   function selectFinding(nextFinding: FindingDto) {
-    setSearchParams({
-      audit: audit.id,
-      // 위치 강조가 보이도록 bbox 가 있는 화면을 우선한다. DA-15 처럼 여러 화면에
-      // 걸친 항목은 screenIds[0](최초 화면)과 bbox 화면(마지막 근거)이 다르다.
-      screen: nextFinding.bbox?.screenId ?? nextFinding.screenIds[0] ?? screen.id,
-      finding: nextFinding.id,
+    setFocusRequest((value) => value + 1);
+    setSearchParams((current) => findingParams(current, nextFinding, filter));
+  }
+
+  function selectListFinding(nextFinding: FindingDto) {
+    selectFinding(nextFinding);
+    requestAnimationFrame(() => {
+      document.getElementById("finding-screen-preview")?.scrollIntoView?.({ block: "nearest" });
     });
   }
 
-  function selectMetric(label: string) {
+  function selectImageFinding(nextFinding: FindingDto) {
+    setSearchParams((current) => {
+      const params = findingParams(current, nextFinding, filter);
+      params.set("screen", screen.id);
+      return params;
+    });
+    requestAnimationFrame(() => {
+      const heading = document.getElementById("finding-detail-heading");
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView?.({ block: "nearest" });
+    });
+  }
+
+  function selectFilter(nextFilter: FindingFilter) {
     const next =
-      label === "해결됨"
-        ? audit.findings.find((item) => item.status === "resolved")
-        : label === "검토 필요"
-          ? audit.findings.find((item) => item.status !== "resolved")
-          : audit.findings[0];
-    if (next) selectFinding(next);
+      finding && matchesFilter(finding, nextFilter)
+        ? finding
+        : audit.findings.find((item) => matchesFilter(item, nextFilter));
+    setSearchParams((current) => findingParams(current, next, nextFilter));
+  }
+
+  function selectNextReview() {
+    if (nextReview)
+      setSearchParams((current) => findingParams(current, nextReview, "needs-review"));
+  }
+
+  function afterResolved() {
+    // Do not move the user if they navigated elsewhere while the save was pending.
+    if (latestSelection.current !== selectionSnapshot) return;
+    setSearchParams((current) => findingParams(current, nextReview, "needs-review"));
   }
 
   function stepFinding(delta: number) {
-    if (audit.findings.length < 2) return;
-    const total = audit.findings.length;
-    const next = audit.findings[(findingPosition + delta + total) % total]!;
+    if (filteredFindings.length < 2) return;
+    const total = filteredFindings.length;
+    const nextIndex =
+      findingPosition < 0 ? (delta > 0 ? 0 : total - 1) : (findingPosition + delta + total) % total;
+    const next = filteredFindings[nextIndex]!;
     selectFinding(next);
   }
 
@@ -672,12 +905,16 @@ export function OverviewPage() {
             </span>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border pt-5">
-            {metrics.map(({ label, value, action, color }) => (
+            {metrics.map(({ label, value, action, color, filter: metricFilter }) => (
               <button
-                className="inline-flex items-center gap-2 rounded py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 enabled:hover:underline enabled:hover:underline-offset-4 disabled:cursor-default"
-                disabled={value === 0}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 hover:bg-brand-50",
+                  filter === metricFilter && "bg-brand-50 ring-1 ring-inset ring-brand-300",
+                )}
+                aria-label={`${label} ${value}건`}
+                aria-pressed={filter === metricFilter}
                 key={label}
-                onClick={() => selectMetric(label)}
+                onClick={() => selectFilter(metricFilter)}
                 title={action}
                 type="button"
               >
@@ -696,21 +933,39 @@ export function OverviewPage() {
       />
       <div className="overview-review">
         <FindingsList
-          findings={audit.findings}
+          findings={filteredFindings}
+          allFindings={audit.findings}
+          filter={filter}
+          onFilter={selectFilter}
+          onNextReview={selectNextReview}
+          hasNextReview={Boolean(nextReview)}
           selectedFindingId={finding?.id}
-          onSelect={selectFinding}
+          onSelect={selectListFinding}
         />
         <section
           id="finding-review-detail"
           aria-label="선택한 항목 검토"
           className="overview-detail"
         >
-          <ScreenPreview key={screen.id} finding={finding} screen={screen} />
+          <ScreenPreview
+            key={screen.id}
+            finding={finding}
+            screen={screen}
+            findings={audit.findings.flatMap((item, index) =>
+              matchesFilter(item, filter) ? [{ finding: item, number: index + 1 }] : [],
+            )}
+            onSelect={selectImageFinding}
+            focusRequest={focusRequest}
+          />
           <FindingDetails
             finding={finding}
+            number={originalPosition + 1}
             onStep={stepFinding}
             position={findingPosition}
-            total={audit.findings.length}
+            total={filteredFindings.length}
+            onResolved={afterResolved}
+            hasNextReview={Boolean(nextReview)}
+            emptyMessage={emptyMessage}
           />
         </section>
       </div>
@@ -720,6 +975,19 @@ export function OverviewPage() {
           role="dialog"
           aria-modal="true"
           aria-label="전체 가입 흐름"
+          onPointerDown={(event) => {
+            flowBackdropPointerDown.current =
+              event.button === 0 && event.target === event.currentTarget;
+          }}
+          onPointerCancel={() => {
+            flowBackdropPointerDown.current = false;
+          }}
+          onClick={(event) => {
+            const shouldClose =
+              flowBackdropPointerDown.current && event.target === event.currentTarget;
+            flowBackdropPointerDown.current = false;
+            if (shouldClose) setShowFlow(false);
+          }}
         >
           <Card className="max-h-[90vh] w-full max-w-5xl overflow-auto p-6">
             <div className="flex items-center justify-between">

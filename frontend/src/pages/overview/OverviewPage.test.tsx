@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/mocks/server";
@@ -21,6 +21,179 @@ function renderPage(path = "/app/overview") {
 }
 
 describe("OverviewPage", () => {
+  it("links related image marks to details without changing screens and preserves report numbers in filters", async () => {
+    renderPage();
+    const image = await screen.findByRole("img", { name: "옵션 선택 캡처 화면 미리보기" });
+    Object.defineProperties(image, { offsetWidth: { value: 390 }, offsetHeight: { value: 844 } });
+    fireEvent.load(image);
+    await userEvent.click(screen.getByRole("button", { name: "3번 순차적 가격 공개 관련 영역" }));
+    expect(screen.getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" })).toBe(image);
+    const detail = within(screen.getByRole("region", { name: "선택한 항목 검토" }));
+    expect(detail.getByRole("heading", { name: "순차적 가격 공개" })).toBeInTheDocument();
+    expect(detail.getByLabelText("항목 3번")).toHaveTextContent("3");
+    const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
+    expect(list.getByRole("button", { name: /순차적 가격 공개/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    await userEvent.click(list.getByRole("button", { name: /순차적 가격 공개/ }));
+    expect(screen.getByRole("img", { name: "최종 확인 캡처 화면 미리보기" })).toBeInTheDocument();
+    await userEvent.click(
+      within(screen.getByRole("group", { name: "점검 항목 필터" })).getByRole("button", {
+        name: "해결됨 1",
+      }),
+    );
+    expect(list.getAllByRole("button")).toHaveLength(1);
+    expect(within(list.getByRole("button")).getByText("3")).toBeInTheDocument();
+    expect(detail.getByLabelText("항목 3번")).toBeInTheDocument();
+  });
+
+  it("shows severity separately from reviewing and resolved status", async () => {
+    const fixture = structuredClone(dashboardFixture);
+    fixture.audits[0]!.findings[2]!.severity = "HIGH";
+    server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
+    renderPage();
+    const list = within(await screen.findByRole("navigation", { name: "점검 항목" }));
+    const reviewing = within(list.getByRole("button", { name: /유료 옵션 사전 선택/ }));
+    expect(reviewing.getByText("심각도 높음")).toBeInTheDocument();
+    expect(reviewing.getByText("검토 중")).toBeInTheDocument();
+    const resolved = within(list.getByRole("button", { name: /순차적 가격 공개/ }));
+    expect(resolved.getByText("심각도 높음")).toBeInTheDocument();
+    expect(resolved.getByText("해결됨")).toBeInTheDocument();
+  });
+
+  it("keeps summary filters, list filters and detail arrows in sync", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const summary = within(await screen.findByRole("region", { name: "진단 요약" }));
+    const filters = within(screen.getByRole("group", { name: "점검 항목 필터" }));
+    const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
+    await user.click(summary.getByRole("button", { name: "검토 필요 2건" }));
+    expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(list.getAllByRole("button")).toHaveLength(2);
+    expect(list.queryByRole("button", { name: /순차적 가격 공개/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "다음 탐지 항목" }));
+    expect(screen.getByText("2 / 2")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "다음 탐지 항목" }));
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+    await user.click(filters.getByRole("button", { name: "해결됨 1" }));
+    expect(summary.getByRole("button", { name: "해결됨 1건" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(list.getAllByRole("button")).toHaveLength(1);
+    expect(screen.getByText("1 / 1")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "다음 미검토 항목" }));
+    expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(list.getByRole("button", { name: /유료 옵션 사전 선택/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+  });
+
+  it("restores the URL filter and shows an empty state without an unrelated finding", async () => {
+    const fixture = structuredClone(dashboardFixture);
+    fixture.audits[0]!.findings.forEach((finding) => {
+      finding.status = "open";
+    });
+    server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
+    renderPage("/app/overview?filter=resolved&finding=finding-preselected-option");
+    const list = await screen.findByRole("navigation", { name: "점검 항목" });
+    expect(within(list).queryAllByRole("button")).toHaveLength(0);
+    expect(screen.getByRole("heading", { name: "해결된 항목이 없습니다" })).toBeInTheDocument();
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /해결하고 다음/ })).not.toBeInTheDocument();
+  });
+
+  it("advances only after saving and finishes with no remaining review items", async () => {
+    const user = userEvent.setup();
+    const fixture = structuredClone(dashboardFixture);
+    server.use(
+      http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)),
+      http.patch("*/api/v1/findings/:findingId", async ({ params, request }) => {
+        const finding = fixture.audits[0]!.findings.find((item) => item.id === params.findingId)!;
+        const body = (await request.json()) as { status: typeof finding.status };
+        finding.status = body.status;
+        return HttpResponse.json({ id: finding.id, status: finding.status });
+      }),
+    );
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "해결하고 다음 미검토 항목" }));
+    const detail = within(screen.getByRole("region", { name: "선택한 항목 검토" }));
+    await waitFor(() =>
+      expect(detail.getByRole("heading", { name: "감정적 압박" })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "다음 미검토 항목" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "해결됨으로 표시" }));
+    await waitFor(() =>
+      expect(
+        detail.getByRole("heading", { name: "검토가 필요한 항목이 없습니다" }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      within(screen.getByRole("navigation", { name: "점검 항목" })).queryAllByRole("button"),
+    ).toHaveLength(0);
+    const filters = within(screen.getByRole("group", { name: "점검 항목 필터" }));
+    await user.click(filters.getByRole("button", { name: "해결됨 3" }));
+    await user.click(screen.getByRole("button", { name: "검토 상태로 되돌리기" }));
+    await waitFor(() =>
+      expect(filters.getByRole("button", { name: "검토 필요 1" })).toBeInTheDocument(),
+    );
+    await user.click(filters.getByRole("button", { name: "검토 필요 1" }));
+    expect(detail.getByText("검토 중")).toBeInTheDocument();
+  });
+
+  it("keeps the current item and count when saving its status fails", async () => {
+    server.use(
+      http.patch("*/api/v1/findings/:findingId", () =>
+        HttpResponse.json({ message: "failed" }, { status: 500 }),
+      ),
+    );
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "해결하고 다음 미검토 항목" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("상태를 저장하지 못했습니다");
+    const detail = within(screen.getByRole("region", { name: "선택한 항목 검토" }));
+    expect(detail.getByRole("heading", { name: "유료 옵션 사전 선택" })).toBeInTheDocument();
+    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+  });
+
+  it("does not change selection when a pending save finishes after navigation", async () => {
+    const fixture = structuredClone(dashboardFixture);
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    server.use(
+      http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)),
+      http.patch("*/api/v1/findings/:findingId", async () => {
+        await pending;
+        fixture.audits[0]!.findings[0]!.status = "resolved";
+        return HttpResponse.json({ id: fixture.audits[0]!.findings[0]!.id, status: "resolved" });
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "해결하고 다음 미검토 항목" }));
+    const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
+    await user.click(list.getByRole("button", { name: /순차적 가격 공개/ }));
+    finish();
+    const filters = within(screen.getByRole("group", { name: "점검 항목 필터" }));
+    await waitFor(() =>
+      expect(filters.getByRole("button", { name: "해결됨 2" })).toBeInTheDocument(),
+    );
+    expect(list.getByRole("button", { name: /순차적 가격 공개/ })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+    expect(filters.getByRole("button", { name: "전체 3" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("selects an item from the master list and updates its screen and evidence", async () => {
     const user = userEvent.setup();
     const fixture = structuredClone(dashboardFixture);

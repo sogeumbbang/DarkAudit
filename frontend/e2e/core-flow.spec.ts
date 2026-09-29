@@ -73,8 +73,21 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
 
   await page.getByRole("button", { name: /전체 흐름 보기/ }).click();
-  await expect(page.getByRole("dialog", { name: "전체 가입 흐름" })).toBeVisible();
+  const flow = page.getByRole("dialog", { name: "전체 가입 흐름" });
+  await expect(flow).toBeVisible();
   await page.getByRole("button", { name: "닫기" }).click();
+  await page.getByRole("button", { name: /전체 흐름 보기/ }).click();
+  const heading = flow.getByRole("heading", { name: "전체 가입 흐름" });
+  await heading.click();
+  await expect(flow).toBeVisible();
+  const headingBounds = (await heading.boundingBox())!;
+  await page.mouse.move(headingBounds.x + 4, headingBounds.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(4, 4);
+  await page.mouse.up();
+  await expect(flow).toBeVisible();
+  await page.mouse.click(4, 4);
+  await expect(flow).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "개선 권고안" })).toBeVisible();
   await expect(page.getByText(/추가 비용이 발생하는 옵션의 기본 선택을 해제/)).toBeVisible();
@@ -120,7 +133,10 @@ test("zoomed preview can be dragged and scrolled to every image edge", async ({
   const imageBox = await page
     .getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" })
     .boundingBox();
-  const highlight = viewport.getByRole("img", { name: "DA-04 탐지 영역", exact: true });
+  const highlight = viewport.getByRole("button", {
+    name: "1번 유료 옵션 사전 선택 탐지 영역",
+    exact: true,
+  });
   await expect(highlight).toBeVisible();
   const highlightBox = await highlight.boundingBox();
   expect(imageBox).not.toBeNull();
@@ -184,6 +200,69 @@ test("zoomed preview can be dragged and scrolled to every image edge", async ({
   expect(reachedEnd).toEqual({ x: true, y: true });
 });
 
+test("numbered image marks and findings select each other and recenter the preview", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/app/overview");
+  const viewport = page.getByTestId("screen-preview-viewport");
+  const related = viewport.getByRole("button", { name: "3번 순차적 가격 공개 관련 영역" });
+  // The number badge, including the area outside the outline, is clickable.
+  await related.locator("span").click();
+  const details = page.locator("#finding-detail-panel");
+  await expect(details.getByRole("heading", { name: "순차적 가격 공개" })).toBeVisible();
+  await expect(details.getByRole("heading", { name: "탐지 항목 상세" })).toBeFocused();
+  await expect(page).toHaveURL(/screen=screen-option/);
+  await expect(related).toHaveAttribute("aria-pressed", "true");
+  const list = page.getByRole("navigation", { name: "점검 항목" });
+  await expect(list.getByRole("button", { name: /순차적 가격 공개/ })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  await list.getByRole("button", { name: /순차적 가격 공개/ }).click();
+  await expect(page).toHaveURL(/screen=screen-review/);
+  await expect(
+    viewport.getByRole("button", { name: "3번 순차적 가격 공개 탐지 영역" }),
+  ).toBeVisible();
+  await page
+    .getByRole("group", { name: "점검 항목 필터" })
+    .getByRole("button", { name: "해결됨 1" })
+    .click();
+  await expect(details.getByLabel("항목 3번")).toHaveText("3");
+  await expect(list.getByRole("button")).toHaveCount(1);
+  await expect(list.getByRole("button")).toContainText("3");
+  await page
+    .getByRole("group", { name: "점검 항목 필터" })
+    .getByRole("button", { name: "전체 3" })
+    .click();
+  await list.getByRole("button", { name: /유료 옵션 사전 선택/ }).click();
+  for (let index = 0; index < 5; index++)
+    await page.getByRole("button", { name: "확대", exact: true }).click();
+  await expect
+    .poll(() => viewport.evaluate((el) => el.scrollHeight / el.clientHeight))
+    .toBeGreaterThan(1.8);
+  await viewport.evaluate((el) => el.scrollTo({ top: 0, left: 0 }));
+  // Reselecting after panning brings the evidence back, even for the same finding.
+  await list.getByRole("button", { name: /유료 옵션 사전 선택/ }).click();
+  const primary = viewport.getByRole("button", { name: "1번 유료 옵션 사전 선택 탐지 영역" });
+  await expect
+    .poll(async () => {
+      const region = (await viewport.boundingBox())!;
+      const mark = (await primary.boundingBox())!;
+      return mark.y >= region.y && mark.y + mark.height <= region.y + region.height;
+    })
+    .toBe(true);
+  expect(await viewport.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  const region = (await viewport.boundingBox())!;
+  const number = (await primary.locator("span").boundingBox())!;
+  expect(number.x).toBeGreaterThanOrEqual(region.x);
+  expect(number.y).toBeGreaterThanOrEqual(region.y);
+  expect(number.x + number.width).toBeLessThanOrEqual(region.x + region.width);
+  await page.screenshot({ path: testInfo.outputPath("numbered-preview.png"), fullPage: true });
+  await primary.focus();
+  await page.keyboard.press("Enter");
+  await expect(details.getByRole("heading", { name: "탐지 항목 상세" })).toBeFocused();
+});
+
 test("user creates an audit and completes analysis", async ({ page }) => {
   await page.goto("/app/audits/new");
   await page.getByLabel("진단 이름").fill("Playwright 가입 흐름");
@@ -202,11 +281,42 @@ test("user creates an audit and completes analysis", async ({ page }) => {
   });
 });
 
-test("finding can be marked as resolved", async ({ page }) => {
+test("review filters separate severity and status and advance after resolving", async ({
+  page,
+}, testInfo) => {
   await page.goto("/app/overview?finding=finding-preselected-option");
-  await expect(page.getByText("검토 필요").first()).toBeVisible();
+  const list = page.getByRole("navigation", { name: "점검 항목" });
+  const filters = page.getByRole("group", { name: "점검 항목 필터" });
+  const summary = page.getByRole("region", { name: "진단 요약" });
+  const detail = page.getByRole("region", { name: "선택한 항목 검토" });
+  await expect(detail.getByText("심각도 높음", { exact: true })).toBeVisible();
+  await expect(detail.getByText("검토 중", { exact: true })).toBeVisible();
+  await list.locator("..").screenshot({ path: testInfo.outputPath("finding-filters.png") });
+  await summary.getByRole("button", { name: "검토 필요 2건" }).click();
+  await expect(list.getByRole("button")).toHaveCount(2);
+  await expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.reload();
+  await expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "해결하고 다음 미검토 항목" }).click();
+  await expect(detail.getByRole("heading", { name: "감정적 압박" })).toBeVisible();
+  await expect(list.getByRole("button")).toHaveCount(1);
   await page.getByRole("button", { name: "해결됨으로 표시" }).click();
-  await expect(page.getByText("해결됨").first()).toBeVisible();
+  await expect(
+    detail.getByRole("heading", { name: "검토가 필요한 항목이 없습니다" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "다음 미검토 항목", exact: true })).toBeDisabled();
+  await filters.getByRole("button", { name: "해결됨 3" }).click();
+  await expect(list.getByRole("button")).toHaveCount(3);
+  await expect(detail.getByText("심각도 높음", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "검토 상태로 되돌리기" }).click();
+  await filters.getByRole("button", { name: "검토 필요 1" }).click();
+  await expect(detail.getByText("검토 중", { exact: true })).toBeVisible();
 });
 
 test("audit can be deleted from the management page", async ({ page }) => {

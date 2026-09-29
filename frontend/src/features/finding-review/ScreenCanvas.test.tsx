@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { ScreenCanvas, ScreenCanvasLegend } from "@/features/finding-review/ScreenCanvas";
 import type { AuditScreenDto, FindingDto } from "@/entities/audit/types";
@@ -51,6 +52,78 @@ const finding: FindingDto = {
 };
 
 describe("ScreenCanvas", () => {
+  it("selects primary and related marks by click or keyboard using the supplied report number", async () => {
+    const onSelect = vi.fn();
+    const onPan = vi.fn();
+    render(
+      <div onPointerDown={onPan}>
+        <ScreenCanvas
+          alt="화면"
+          finding={finding}
+          findings={[{ finding, number: 7 }]}
+          onSelect={onSelect}
+          screen={auditScreen}
+        />
+      </div>,
+    );
+    const image = screen.getByRole("img", { name: "화면" });
+    Object.defineProperties(image, { offsetWidth: { value: 390 }, offsetHeight: { value: 844 } });
+    fireEvent.load(image);
+    const primary = screen.getByRole("button", { name: "7번 유료 옵션 사전 선택 탐지 영역" });
+    const related = screen.getByRole("button", { name: "7번 유료 옵션 사전 선택 관련 영역" });
+    expect(primary).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(primary);
+    expect(onSelect).toHaveBeenLastCalledWith(finding);
+    expect(onPan).not.toHaveBeenCalled();
+    related.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    fireEvent.pointerDown(primary, { clientX: 10, clientY: 10 });
+    fireEvent.click(primary, { clientX: 50, clientY: 50, detail: 1 });
+    expect(onSelect).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(["image", "normalized"] as const)(
+    "centers %s coordinates once and recenters when requested",
+    (coordinateSystem) => {
+      const viewport = document.createElement("div");
+      Object.defineProperties(viewport, {
+        clientWidth: { value: 300 },
+        clientHeight: { value: 400 },
+      });
+      viewport.getBoundingClientRect = () => ({ left: 20, top: 30 }) as DOMRect;
+      viewport.scrollTo = vi.fn();
+      const selected = {
+        ...finding,
+        bbox: {
+          ...finding.bbox!,
+          coordinateSystem,
+          x: coordinateSystem === "normalized" ? 0.5 : 195,
+          y: coordinateSystem === "normalized" ? 0.5 : 422,
+          width: coordinateSystem === "normalized" ? 0.2 : 78,
+          height: coordinateSystem === "normalized" ? 0.2 : 168.8,
+        },
+      };
+      const props = {
+        alt: "화면",
+        finding: selected,
+        screen: auditScreen,
+        viewportRef: { current: viewport },
+      };
+      const { rerender } = render(<ScreenCanvas {...props} />);
+      const image = screen.getByRole("img", { name: "화면" });
+      Object.defineProperties(image, { offsetWidth: { value: 390 }, offsetHeight: { value: 844 } });
+      image.getBoundingClientRect = () =>
+        ({ left: 20, top: 30, width: 390, height: 844 }) as DOMRect;
+      fireEvent.load(image);
+      expect(viewport.scrollTo).toHaveBeenCalledWith({ left: 84, top: 306.4, behavior: "instant" });
+      rerender(<ScreenCanvas {...props} />);
+      expect(viewport.scrollTo).toHaveBeenCalledTimes(1);
+      rerender(<ScreenCanvas {...props} focusRequest={1} />);
+      expect(viewport.scrollTo).toHaveBeenCalledTimes(2);
+    },
+  );
+
   it("draws compact control marks outside the evidence pixels", () => {
     render(<ScreenCanvas alt="화면" finding={finding} screen={auditScreen} />);
     const image = screen.getByRole("img", { name: "화면" });
