@@ -97,6 +97,8 @@ export function ScreenCanvas({
   onSelect,
   viewportRef,
   focusRequest = 0,
+  markersOnly = false,
+  onDimensions,
 }: {
   screen: AuditScreenDto;
   finding?: FindingDto;
@@ -106,10 +108,18 @@ export function ScreenCanvas({
   onSelect?: (finding: FindingDto) => void;
   viewportRef?: RefObject<HTMLDivElement | null>;
   focusRequest?: number;
+  markersOnly?: boolean;
+  onDimensions?: (size: { width: number; height: number }) => void;
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const focusedRequest = useRef("");
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerStart = useRef<{
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+    dragged: boolean;
+  } | null>(null);
   const [rect, setRect] = useState<{
     left: number;
     top: number;
@@ -161,6 +171,8 @@ export function ScreenCanvas({
 
   function handleLoad(event: SyntheticEvent<HTMLImageElement>) {
     const img = event.currentTarget;
+    if (img.naturalWidth && img.naturalHeight)
+      onDimensions?.({ width: img.naturalWidth, height: img.naturalHeight });
     if ((!screen.width || !screen.height) && img.naturalWidth && img.naturalHeight) {
       setMeasured({ screenId: screen.id, width: img.naturalWidth, height: img.naturalHeight });
     }
@@ -235,30 +247,60 @@ export function ScreenCanvas({
           {interactiveHighlights.map((box) => {
             const active = box.finding.id === finding?.id;
             const compact = isCompactControl(box.bbox, natural);
+            const pin = markersOnly && !active;
             return (
               <button
                 key={box.key}
                 type="button"
                 aria-label={`${box.number}번 ${box.finding.title} ${box.tone === "primary" ? "탐지 영역" : "관련 영역"}`}
                 aria-pressed={active}
-                aria-controls="finding-detail-panel"
+                aria-controls={finding ? "finding-detail-panel" : undefined}
                 title={`${box.number}번 ${box.finding.title} 설명 보기`}
                 className={cn(
                   "pointer-events-auto absolute cursor-pointer rounded-[3px] bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600",
-                  compact
-                    ? [
-                        "outline-[1.5px] outline-offset-2",
-                        OUTLINE[box.severity],
-                        box.tone === "related" ? "outline-dashed" : "outline-solid",
-                      ]
-                    : ["border-2", BORDER[box.severity], box.tone === "related" && "border-dashed"],
+                  pin
+                    ? "border-0"
+                    : compact
+                      ? [
+                          "outline-[1.5px] outline-offset-2",
+                          OUTLINE[box.severity],
+                          box.tone === "related" ? "outline-dashed" : "outline-solid",
+                        ]
+                      : [
+                          "border-2",
+                          BORDER[box.severity],
+                          box.tone === "related" && "border-dashed",
+                        ],
                   active ? "z-10" : "z-0",
                   active && !compact && box.tone === "primary" && FILL[box.severity],
                 )}
-                style={toPercentBox(box.bbox, natural, compact ? 0 : 2)}
+                style={
+                  pin
+                    ? { ...toPercentBox(box.bbox, natural), width: 30, height: 30 }
+                    : toPercentBox(box.bbox, natural, compact ? 0 : 2)
+                }
                 onPointerDown={(event) => {
                   event.stopPropagation();
-                  pointerStart.current = { x: event.clientX, y: event.clientY };
+                  pointerStart.current = {
+                    x: event.clientX,
+                    y: event.clientY,
+                    left: viewportRef?.current?.scrollLeft ?? 0,
+                    top: viewportRef?.current?.scrollTop ?? 0,
+                    dragged: false,
+                  };
+                  event.currentTarget.setPointerCapture?.(event.pointerId);
+                }}
+                onPointerMove={(event) => {
+                  const origin = pointerStart.current;
+                  const viewport = viewportRef?.current;
+                  if (!origin || !viewport) return;
+                  const dx = event.clientX - origin.x;
+                  const dy = event.clientY - origin.y;
+                  if (Math.hypot(dx, dy) > 6) origin.dragged = true;
+                  if (origin.dragged) {
+                    viewport.scrollLeft = origin.left - dx;
+                    viewport.scrollTop = origin.top - dy;
+                  }
                 }}
                 onPointerCancel={() => {
                   pointerStart.current = null;
@@ -270,7 +312,8 @@ export function ScreenCanvas({
                   if (
                     event.detail > 0 &&
                     origin &&
-                    Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 6
+                    (origin.dragged ||
+                      Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 6)
                   )
                     return;
                   onSelect(box.finding);
@@ -279,16 +322,17 @@ export function ScreenCanvas({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "absolute -left-0.5 flex size-6 items-center justify-center rounded-sm border-2 bg-white text-xs font-bold text-text shadow-sm",
+                    "absolute -left-0.5 flex size-7 items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-text shadow-sm",
                     BORDER[box.severity],
                     active && "bg-brand-600 text-white border-brand-600",
                   )}
                   style={{
-                    top:
-                      (box.bbox.y /
-                        (box.bbox.coordinateSystem === "normalized" ? 1 : natural.height)) *
-                        rect.height >=
-                      26
+                    top: pin
+                      ? 0
+                      : (box.bbox.y /
+                            (box.bbox.coordinateSystem === "normalized" ? 1 : natural.height)) *
+                            rect.height >=
+                          26
                         ? -26
                         : 0,
                   }}

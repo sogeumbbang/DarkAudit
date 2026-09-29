@@ -9,7 +9,8 @@ import { MemoryRouter } from "react-router-dom";
 
 import { OverviewPage } from "@/pages/overview/OverviewPage";
 
-function renderPage(path = "/app/overview") {
+function renderPage(path = "/app/overview?finding=finding-preselected-option", showList = true) {
+  if (showList) path += `${path.includes("?") ? "&" : "?"}list=1`;
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -21,6 +22,47 @@ function renderPage(path = "/app/overview") {
 }
 
 describe("OverviewPage", () => {
+  it("starts with the map and opens only the selected explanation", async () => {
+    renderPage("/app/overview", false);
+    const image = await screen.findByRole("img", { name: "옵션 선택 캡처 화면 미리보기" });
+    expect(screen.queryByRole("navigation", { name: "점검 항목" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "탐지 항목 상세" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("미리보기 배율")).toHaveTextContent("100%");
+    Object.defineProperties(image, { offsetWidth: { value: 390 }, offsetHeight: { value: 844 } });
+    fireEvent.load(image);
+    const marker = screen.getByRole("button", { name: "1번 유료 옵션 사전 선택 탐지 영역" });
+    expect(marker).toHaveStyle({ width: "30px", height: "30px" });
+    await userEvent.click(marker);
+    expect(screen.getByRole("heading", { name: "유료 옵션 사전 선택" })).toBeInTheDocument();
+    expect(marker).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("미리보기 배율")).not.toHaveTextContent("100%");
+    await userEvent.click(screen.getByRole("button", { name: "상세 설명 닫기" }));
+    expect(screen.queryByRole("heading", { name: "탐지 항목 상세" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("미리보기 배율")).toHaveTextContent("100%");
+    await userEvent.click(screen.getByRole("button", { name: "다음 미검토 항목" }));
+    expect(screen.getByRole("heading", { name: "유료 옵션 사전 선택" })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("heading", { name: "탐지 항목 상세" })).not.toBeInTheDocument();
+  });
+
+  it("keeps findings without coordinates accessible from the collapsed list", async () => {
+    const fixture = structuredClone(dashboardFixture);
+    fixture.audits[0]!.findings[0]!.bbox = null;
+    server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
+    renderPage("/app/overview", false);
+    await userEvent.click(await screen.findByRole("button", { name: "문제 목록" }));
+    const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
+    await userEvent.click(list.getByRole("button", { name: /유료 옵션 사전 선택/ }));
+    expect(
+      screen.getByText("위치 정보가 없는 항목입니다. 상세 설명을 확인해주세요."),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "선택한 항목 검토" })).getByRole("heading", {
+        name: "유료 옵션 사전 선택",
+      }),
+    ).toBeInTheDocument();
+  });
+
   it("links related image marks to details without changing screens and preserves report numbers in filters", async () => {
     renderPage();
     const image = await screen.findByRole("img", { name: "옵션 선택 캡처 화면 미리보기" });
@@ -68,7 +110,7 @@ describe("OverviewPage", () => {
     const summary = within(await screen.findByRole("region", { name: "진단 요약" }));
     const filters = within(screen.getByRole("group", { name: "점검 항목 필터" }));
     const list = within(screen.getByRole("navigation", { name: "점검 항목" }));
-    await user.click(summary.getByRole("button", { name: "검토 필요 2건" }));
+    await user.click(summary.getByRole("button", { name: "검토 필요 2" }));
     expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -80,7 +122,7 @@ describe("OverviewPage", () => {
     await user.click(screen.getByRole("button", { name: "다음 탐지 항목" }));
     expect(screen.getByText("1 / 2")).toBeInTheDocument();
     await user.click(filters.getByRole("button", { name: "해결됨 1" }));
-    expect(summary.getByRole("button", { name: "해결됨 1건" })).toHaveAttribute(
+    expect(summary.getByRole("button", { name: "해결됨 1" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -234,6 +276,7 @@ describe("OverviewPage", () => {
     server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
     renderPage();
     expect(await screen.findByRole("region", { name: "분석 범위" })).toBeInTheDocument();
+    await userEvent.click(screen.getByText("일부 검사에 추가 확인이 필요합니다"));
     expect(screen.getByText("검사 범위와 추가 확인 사항")).toBeInTheDocument();
     expect(screen.getByText("일부 Figma 화면을 가져오지 못했습니다.")).toBeInTheDocument();
     expect(screen.getByText("DA-15: 근거 부족")).toBeInTheDocument();
@@ -275,7 +318,7 @@ describe("OverviewPage", () => {
 
     const previewImage = screen.getByRole("img", { name: /캡처 화면 미리보기/ });
     const previewViewport = screen.getByTestId("screen-preview-viewport");
-    const previewScrollArea = screen.getByTestId("screen-preview-scroll-area");
+
     expect(previewViewport).toHaveClass("overflow-auto", "scrollbar-hidden", "cursor-grab");
     fireEvent.pointerDown(previewViewport, { button: 0, clientX: 100, clientY: 100, pointerId: 1 });
     expect(previewViewport).toHaveClass("cursor-grabbing");
@@ -292,7 +335,7 @@ describe("OverviewPage", () => {
     await user.click(screen.getByRole("button", { name: "확대" }));
     expect(previewViewport).toHaveClass("overflow-auto");
     expect(previewViewport).toHaveClass("cursor-grab");
-    expect(previewScrollArea).toHaveStyle({ height: "120%", width: "120%" });
+    expect(screen.getByLabelText("미리보기 배율")).not.toHaveTextContent("100%");
     expect(previewImage.parentElement).not.toHaveStyle({ transform: "scale(1.2)" });
     fireEvent.pointerDown(previewViewport, { button: 0, clientX: 100, clientY: 100, pointerId: 1 });
     fireEvent.pointerMove(previewViewport, { clientX: 70, clientY: 60, pointerId: 1 });
@@ -301,9 +344,14 @@ describe("OverviewPage", () => {
     expect(previewViewport).toHaveClass("cursor-grabbing");
     fireEvent.pointerUp(previewViewport, { pointerId: 1 });
     expect(previewViewport).toHaveClass("cursor-grab");
-    await user.click(screen.getByRole("button", { name: "배율 초기화" }));
+    await user.click(screen.getByRole("button", { name: "화면 전체 보기" }));
     expect(previewViewport).toHaveClass("overflow-auto", "scrollbar-hidden");
-    expect(previewScrollArea).toHaveStyle({ height: "100%", width: "100%" });
+    expect(screen.getByLabelText("미리보기 배율")).toHaveTextContent("100%");
+    await user.click(
+      within(screen.getByRole("navigation", { name: "점검 항목" })).getByRole("button", {
+        name: /유료 옵션 사전 선택/,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /전체 흐름 보기/ }));
     expect(screen.getByRole("dialog", { name: "전체 가입 흐름" })).toBeInTheDocument();

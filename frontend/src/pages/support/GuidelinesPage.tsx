@@ -1,6 +1,5 @@
-import { ArrowRight, ChevronDown, ExternalLink, FileText } from "lucide-react";
+import { ChevronDown, ExternalLink, FileText } from "lucide-react";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/cn";
 import { guidelineCategories } from "./guidelines";

@@ -6,6 +6,7 @@ from pathlib import Path
 from ai.evaluation import Evaluator
 from ai.pipeline.baseline import BaselineAuditPipeline
 from ai.schemas.audit_schema import AuditScreen, LLMAuditOutput, LLMAuditRequest, SCHEMA_VERSION
+from ai.tests.grounding_fixtures import write_grounding_screens
 from ai.vision.ocr import NullOCR
 
 
@@ -266,7 +267,9 @@ class AuditSchemaTest(unittest.TestCase):
             self.assertIn("현재 입력 모드: 이미지 및 보조 증거", provider.audit_prompt)
 
     def test_screenshot_da03_bbox_snaps_to_prominent_cta(self):
-        image = Path(__file__).resolve().parents[2] / "frontend/public/sample-audit/03-consent-pressure.png"
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        _, image = write_grounding_screens(Path(directory.name))
         request = LLMAuditRequest(
             "audit_1", (AuditScreen("screen_01", "약관 동의", image),)
         )

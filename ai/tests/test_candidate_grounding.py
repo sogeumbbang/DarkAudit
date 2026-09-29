@@ -6,14 +6,12 @@ from unittest.mock import patch
 
 from PIL import Image
 
+from ai.tests.grounding_fixtures import write_grounding_screens
 from ai.vision.candidate_grounding import (
     generate_control_candidates,
     ground_selected_control_bbox,
 )
 from ai.vision.ocr import TesseractOCR
-
-
-SAMPLE = Path(__file__).resolve().parents[2] / "frontend/public/sample-audit/02-preselected-addon.png"
 
 
 class TesseractOCRTests(unittest.TestCase):
@@ -36,8 +34,13 @@ class TesseractOCRTests(unittest.TestCase):
 
 
 class CandidateGroundingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.sample, self.cta = write_grounding_screens(Path(directory.name))
+
     def test_coarse_option_card_keeps_compact_control_in_top_candidates(self) -> None:
-        with Image.open(SAMPLE) as image:
+        with Image.open(self.sample) as image:
             candidates, _ = generate_control_candidates(
                 image,
                 (0.06, 0.29, 0.88, 0.27),
@@ -52,8 +55,7 @@ class CandidateGroundingTests(unittest.TestCase):
         self.assertGreaterEqual(len(candidates[0].sources), 2)
 
     def test_coarse_da03_box_snaps_to_full_cta(self) -> None:
-        sample = SAMPLE.with_name("03-consent-pressure.png")
-        with Image.open(sample) as image:
+        with Image.open(self.cta) as image:
             candidates, _ = generate_control_candidates(
                 image,
                 (0.05, 0.84, 0.9, 0.08),
@@ -66,6 +68,23 @@ class CandidateGroundingTests(unittest.TestCase):
         self.assertAlmostEqual(width, 342 / 390, delta=0.01)
         self.assertAlmostEqual(height, 64 / 844, delta=0.01)
         self.assertGreaterEqual(len(candidates[0].sources), 2)
+
+    def test_double_resolution_preserves_normalized_control_geometry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            option, cta = write_grounding_screens(Path(directory), scale=2)
+            cases = (
+                (option, "compact_control", (0.06, 0.29, 0.88, 0.27),
+                 (44 / 390, 292 / 844, 28 / 390, 28 / 844)),
+                (cta, "prominent_cta", (0.05, 0.84, 0.9, 0.08),
+                 (24 / 390, 688 / 844, 342 / 390, 64 / 844)),
+            )
+            for path, kind, approximate, expected in cases:
+                with self.subTest(kind=kind), Image.open(path) as image:
+                    candidates, _ = generate_control_candidates(image, approximate, kind=kind)
+                    self.assertTrue(candidates)
+                    for actual, target in zip(candidates[0].bbox, expected):
+                        self.assertAlmostEqual(actual, target, delta=0.01)
+                    self.assertGreaterEqual(len(candidates[0].sources), 2)
 
     def test_set_of_mark_selection_uses_candidate_bbox_and_hides_coordinates(self) -> None:
         seen_payload = []
@@ -80,7 +99,7 @@ class CandidateGroundingTests(unittest.TestCase):
 
         approximate = (0.06, 0.29, 0.88, 0.27)
         result = ground_selected_control_bbox(
-            SAMPLE,
+            self.sample,
             approximate,
             "안심케어 플러스",
             selector=selector,
@@ -96,7 +115,7 @@ class CandidateGroundingTests(unittest.TestCase):
     def test_set_of_mark_none_preserves_model_evidence_box(self) -> None:
         approximate = (0.06, 0.29, 0.88, 0.27)
         result = ground_selected_control_bbox(
-            SAMPLE,
+            self.sample,
             approximate,
             "안심케어 플러스",
             selector=lambda *_: {
