@@ -99,6 +99,7 @@ export function ScreenCanvas({
   focusRequest = 0,
   markersOnly = false,
   onDimensions,
+  autoCenter = true,
 }: {
   screen: AuditScreenDto;
   finding?: FindingDto;
@@ -110,6 +111,7 @@ export function ScreenCanvas({
   focusRequest?: number;
   markersOnly?: boolean;
   onDimensions?: (size: { width: number; height: number }) => void;
+  autoCenter?: boolean;
 }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const focusedRequest = useRef("");
@@ -189,6 +191,7 @@ export function ScreenCanvas({
   const focusBox = highlights[0]?.bbox;
   const focusKey = `${screen.id}:${screen.imageUrl}:${finding?.id ?? ""}:${focusRequest}:${rect?.width}:${rect?.height}:${rect?.left}:${rect?.top}`;
   useLayoutEffect(() => {
+    if (!autoCenter) return;
     const viewport = viewportRef?.current;
     const img = imgRef.current;
     if (!viewport || !img || !natural || !rect || !focusBox || focusedRequest.current === focusKey)
@@ -220,7 +223,7 @@ export function ScreenCanvas({
       behavior: "instant",
     });
     focusedRequest.current = focusKey;
-  }, [focusBox, focusKey, natural, rect, viewportRef]);
+  }, [autoCenter, focusBox, focusKey, natural, rect, viewportRef]);
 
   const interactiveHighlights = (findings ?? []).flatMap(({ finding: item, number }) =>
     collectHighlights(screen.id, item).map((box) => ({ ...box, finding: item, number })),

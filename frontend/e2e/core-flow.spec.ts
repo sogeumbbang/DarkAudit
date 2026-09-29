@@ -97,7 +97,6 @@ test("dashboard controls expose real content and navigation", async ({ page }) =
   await expect(page.getByRole("heading", { name: "감정적 압박" }).first()).toBeVisible();
 
   await expect(page.getByRole("button", { name: "알림" })).toHaveCount(0);
-  await page.getByRole("button", { name: "상세 설명 닫기" }).click();
   if (await page.getByRole("button", { name: "메뉴 열기" }).isVisible()) {
     await page.getByRole("button", { name: "메뉴 열기" }).click();
   }
@@ -133,78 +132,75 @@ test("map preview zooms real image pixels and supports panning and reset", async
   await expect.poll(() => viewport.evaluate((el) => el.scrollTop)).toBe(0);
 });
 
-test("map pins open a focused explanation and keep PDF numbering", async ({
+test("image marks expand inline explanations without moving or zooming the image", async ({
   page,
   isMobile,
 }, testInfo) => {
   await page.goto("/app/overview");
   const viewport = page.getByTestId("screen-preview-viewport");
   const related = viewport.getByRole("button", { name: "3번 순차적 가격 공개 관련 영역" });
-  await expect(related).toBeVisible();
-  await expect(page.locator("#finding-detail-panel")).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "점검 항목" })).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath("map-overview.png"), fullPage: true });
-  await related.click();
+  const list = page.getByRole("navigation", { name: "점검 항목" });
+  const items = list.locator("button[aria-expanded]");
   const panel = page.locator("#finding-detail-panel");
-  await expect(panel.getByRole("heading", { name: "순차적 가격 공개" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "탐지 항목 상세" })).toBeFocused();
+  await expect(related).toBeVisible();
+  await expect(panel).toHaveCount(0);
+  await expect(items).toHaveCount(3);
+  await page.screenshot({ path: testInfo.outputPath("review-overview.png"), fullPage: true });
+  await related.scrollIntoViewIfNeeded();
+  const selectedImage = viewport.getByRole("img", { name: /캡처 화면 미리보기/ });
+  const before = (await selectedImage.boundingBox())!;
+  const scrollBefore = await viewport.evaluate((el) => [el.scrollLeft, el.scrollTop]);
+  await related.click();
+  await expect(panel).toHaveCount(1);
+  await expect(list.getByRole("button", { name: /순차적 가격 공개/ })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
   await expect(page).toHaveURL(/screen=screen-option/);
   await expect(related).toHaveAttribute("aria-pressed", "true");
-  await expect
-    .poll(async () => parseInt((await page.getByLabel("미리보기 배율").textContent())!))
-    .toBeGreaterThan(100);
-  await expect(panel.getByLabel("항목 3번")).toHaveText("3");
-  const selectedImage = viewport.getByRole("img", { name: /캡처 화면 미리보기/ });
-  const imageBounds = (await selectedImage.boundingBox())!;
+  await expect(page.getByLabel("미리보기 배율")).toHaveText("100%");
+  const after = (await selectedImage.boundingBox())!;
+  expect(after.width).toBeCloseTo(before.width, 0);
+  expect(after.height).toBeCloseTo(before.height, 0);
+  expect(after.x).toBeCloseTo(before.x, 0);
+  expect(after.y).toBeCloseTo(before.y, 0);
+  expect(await viewport.evaluate((el) => [el.scrollLeft, el.scrollTop])).toEqual(scrollBefore);
+  await expect(list.getByLabel("항목 3번")).toHaveText("3");
   const markBounds = (await related.boundingBox())!;
-  expect(markBounds.x).toBeCloseTo(imageBounds.x + (imageBounds.width * 24) / 390 - 2, 0);
-  expect(markBounds.y).toBeCloseTo(imageBounds.y + (imageBounds.height * 760) / 844 - 2, 0);
-  if (isMobile) {
-    await expect
-      .poll(async () => {
-        const marker = (await related.boundingBox())!;
-        const pane = (await panel.boundingBox())!;
-        return marker.y >= 0 && marker.y + marker.height <= pane.y;
-      })
-      .toBe(true);
-  }
-  if (!isMobile) {
-    const pane = (await panel.boundingBox())!;
-    const map = (await viewport.boundingBox())!;
-    expect(pane.x).toBeGreaterThanOrEqual(map.x + map.width - 1);
-  }
-  await page.screenshot({ path: testInfo.outputPath("map-selected.png"), fullPage: !isMobile });
+  expect(markBounds.x).toBeCloseTo(after.x + (after.width * 24) / 390 - 2, 0);
+  expect(markBounds.y).toBeCloseTo(after.y + (after.height * 760) / 844 - 2, 0);
+  const pane = (await list.boundingBox())!;
+  const preview = (await viewport.boundingBox())!;
+  if (isMobile) expect(pane.y).toBeGreaterThan(preview.y + preview.height);
+  else expect(pane.x).toBeGreaterThanOrEqual(preview.x + preview.width - 1);
+  await page.screenshot({ path: testInfo.outputPath("review-selected.png"), fullPage: true });
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(
     accessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
   ).toEqual([]);
-  if (isMobile) {
-    await page.keyboard.press("Shift+Tab");
-    await expect(panel.locator(":focus")).toHaveCount(1);
-  }
-  if (isMobile)
-    await page
-      .getByRole("button", { name: "상세 설명 바깥 여백" })
-      .click({ position: { x: 5, y: 5 } });
-  else await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "확대", exact: true }).click();
+  await viewport.getByRole("button", { name: "1번 유료 옵션 사전 선택 탐지 영역" }).click();
+  await expect(page.getByLabel("미리보기 배율")).toHaveText("125%");
+  await expect(panel).toHaveCount(1);
+  await list.getByRole("button", { name: /유료 옵션 사전 선택/ }).click();
   await expect(panel).toHaveCount(0);
-  await expect(page.getByLabel("미리보기 배율")).toHaveText("100%");
-  await page.getByRole("button", { name: "문제 목록", exact: true }).click();
-  const list = page.getByRole("navigation", { name: "점검 항목" });
+  await expect(items).toHaveCount(3);
+  await expect(page.getByLabel("미리보기 배율")).toHaveText("125%");
   await page
     .getByRole("group", { name: "점검 항목 필터" })
     .getByRole("button", { name: "해결됨 1" })
     .click();
-  await expect(list.getByRole("button")).toHaveCount(1);
-  await expect(list.getByRole("button")).toContainText("3");
-  await list.getByRole("button").click();
+  await expect(items).toHaveCount(1);
+  await expect(items).toContainText("3");
+  await items.click();
   await expect(page).toHaveURL(/screen=screen-review/);
-  await expect(panel.getByLabel("항목 3번")).toHaveText("3");
-  await page.getByRole("button", { name: "상세 설명 닫기" }).click();
+  await expect(list.getByLabel("항목 3번")).toHaveText("3");
+  await items.click();
   const primary = viewport.getByRole("button", { name: "3번 순차적 가격 공개 탐지 영역" });
   await primary.focus();
   await page.keyboard.press("Enter");
-  await expect(panel.getByRole("heading", { name: "탐지 항목 상세" })).toBeFocused();
+  await expect(panel).toHaveCount(1);
+  await expect(items).toHaveAttribute("aria-expanded", "true");
 });
 
 test("user creates an audit and completes analysis", async ({ page }) => {
@@ -227,35 +223,31 @@ test("user creates an audit and completes analysis", async ({ page }) => {
 
 test("review filters separate severity and status and advance after resolving", async ({
   page,
-  isMobile,
 }) => {
-  await page.goto("/app/overview?list=1&filter=needs-review&finding=finding-preselected-option");
+  await page.goto("/app/overview?filter=needs-review&finding=finding-preselected-option");
   const list = page.getByRole("navigation", { name: "점검 항목" });
+  const items = list.locator("button[aria-expanded]");
+  const selected = list.locator('button[aria-expanded="true"]');
   const filters = page.getByRole("group", { name: "점검 항목 필터" });
-  const panel = page.locator("#finding-detail-panel");
-  await expect(panel.getByText("심각도 높음", { exact: true })).toBeVisible();
-  await expect(panel.getByText("검토 중", { exact: true })).toBeVisible();
-  await expect(list.getByRole("button")).toHaveCount(2);
+  await expect(selected.getByText("심각도 높음", { exact: true })).toBeVisible();
+  await expect(selected.getByText("검토 중", { exact: true })).toBeVisible();
+  await expect(items).toHaveCount(2);
   await page.reload();
   await expect(filters.getByRole("button", { name: "검토 필요 2" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
   await page.getByRole("button", { name: "해결하고 다음 미검토 항목" }).click();
-  await expect(panel.getByRole("heading", { name: "감정적 압박" })).toBeVisible();
-  await expect(list.getByRole("button")).toHaveCount(1);
+  await expect(selected.getByRole("heading", { name: "감정적 압박" })).toBeVisible();
+  await expect(items).toHaveCount(1);
   await page.getByRole("button", { name: "해결됨으로 표시" }).click();
-  await expect(panel.getByRole("heading", { name: "검토가 필요한 항목이 없습니다" })).toBeVisible();
+  await expect(list.getByRole("heading", { name: "검토가 필요한 항목이 없습니다" })).toBeVisible();
   await expect(page.getByRole("button", { name: "다음 미검토 항목", exact: true })).toBeDisabled();
-  if (isMobile) await page.getByRole("button", { name: "상세 설명 닫기" }).click();
   await filters.getByRole("button", { name: "해결됨 3" }).click();
-  await expect(list.getByRole("button")).toHaveCount(3);
-  if (isMobile) await list.getByRole("button", { name: /유료 옵션 사전 선택/ }).click();
+  await expect(items).toHaveCount(3);
   await page.getByRole("button", { name: "검토 상태로 되돌리기" }).click();
-  if (isMobile) await page.getByRole("button", { name: "상세 설명 닫기" }).click();
   await filters.getByRole("button", { name: "검토 필요 1" }).click();
-  if (isMobile) await list.getByRole("button", { name: /유료 옵션 사전 선택/ }).click();
-  await expect(panel.getByText("검토 중", { exact: true })).toBeVisible();
+  await expect(selected.getByText("검토 중", { exact: true })).toBeVisible();
 });
 
 test("audit can be deleted from the management page", async ({ page }) => {

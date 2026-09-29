@@ -4,8 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleAlert,
-  ListFilter,
-  X,
+  ChevronDown,
   FileText,
   MoreVertical,
   RefreshCw,
@@ -141,286 +140,232 @@ function FlowOverview({
 
 function FindingDetails({
   finding,
-  number,
-  position,
-  total,
-  onStep,
   onResolved,
   hasNextReview,
-  emptyMessage,
-  onClose,
 }: {
-  finding?: FindingDto;
-  number: number;
-  position: number;
-  total: number;
-  onStep: (delta: number) => void;
+  finding: FindingDto;
   onResolved: () => void;
   hasNextReview: boolean;
-  emptyMessage: string;
-  onClose: () => void;
 }) {
   const findingStatus = useFindingStatus();
   const [showMetadata, setShowMetadata] = useState(false);
-  const [mobile, setMobile] = useState(
-    () => window.matchMedia?.("(max-width: 767px)").matches ?? false,
-  );
-  useEffect(() => {
-    const media = window.matchMedia?.("(max-width: 767px)");
-    const update = () => setMobile(media?.matches ?? false);
-    media?.addEventListener?.("change", update);
-    return () => media?.removeEventListener?.("change", update);
-  }, []);
-  useEffect(() => {
-    if (!mobile) return;
-    const panel = document.getElementById("finding-detail-panel");
-    function trapFocus(event: KeyboardEvent) {
-      if (event.key !== "Tab" || !panel) return;
-      const controls = [
-        ...panel.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input, textarea, summary, a[href]",
-        ),
-      ].filter((item) => item.getClientRects().length);
-      const first = controls[0];
-      const last = controls.at(-1);
-      if (
-        event.shiftKey &&
-        (document.activeElement === first ||
-          document.activeElement?.id === "finding-detail-heading")
-      ) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
-    document.addEventListener("keydown", trapFocus);
-    return () => document.removeEventListener("keydown", trapFocus);
-  }, [mobile]);
-  useEffect(() => {
-    const panel = document.getElementById("finding-detail-panel");
-    if (panel) panel.scrollTop = 0;
-    document.getElementById("finding-detail-heading")?.focus({ preventScroll: true });
-    if (window.matchMedia?.("(max-width: 767px)").matches) {
-      document.getElementById("finding-screen-preview")?.scrollIntoView?.({ block: "start" });
-    }
-  }, [finding?.id]);
-
   return (
-    <Card
+    <div
       id="finding-detail-panel"
-      className="map-finding-panel"
-      role={mobile ? "dialog" : undefined}
-      aria-modal={mobile || undefined}
-      aria-labelledby="finding-detail-heading"
+      role="region"
+      aria-label={`${finding.title} 설명`}
+      className="finding-inline-detail"
     >
-      <div className="sticky top-0 z-10 flex min-h-14 items-center justify-between gap-2 border-b border-border bg-white px-4 py-3">
-        <h2 id="finding-detail-heading" tabIndex={-1} className="text-base font-semibold">
-          탐지 항목 상세
-        </h2>
-        <div className="flex items-center gap-3 text-sm">
-          <button
-            aria-label="이전 탐지 항목"
-            className="disabled:opacity-30"
-            disabled={total < 2}
-            onClick={() => onStep(-1)}
-            type="button"
-          >
-            <ChevronLeft size={15} />
-          </button>
-          <span>
-            {total ? position + 1 : 0} / {total}
-          </span>
-          <button
-            aria-label="다음 탐지 항목"
-            className="disabled:opacity-30"
-            disabled={total < 2}
-            onClick={() => onStep(1)}
-            type="button"
-          >
-            <ChevronRight size={15} />
-          </button>
-          <button aria-label="탐지 메타데이터" onClick={() => setShowMetadata((value) => !value)}>
-            <MoreVertical size={16} />
-          </button>
-          <button
-            aria-label="상세 설명 닫기"
-            onClick={onClose}
-            className="rounded p-1 hover:bg-brand-50"
-          >
-            <X size={18} />
-          </button>
+      <h4 id="finding-detail-heading" tabIndex={-1} className="sr-only">
+        탐지 항목 상세
+      </h4>
+      <div className="px-4 pb-4">
+        <p className="mt-3 text-sm leading-6 text-muted">{finding.description}</p>
+
+        <div className="mt-5 border-l-2 border-brand-600 bg-brand-50 p-5 text-sm leading-6 text-brand-950">
+          <h4 className="font-bold">개선 권고안</h4>
+          <p className="mt-2">{finding.recommendation}</p>
         </div>
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
+            판단 근거 및 가이드라인
+          </summary>
+          <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
+            <div className="grid grid-cols-2 py-3">
+              <dt className="text-muted">대상 요소</dt>
+              <dd>{finding.element}</dd>
+            </div>
+            <div className="grid grid-cols-2 py-3">
+              <dt className="text-muted">기본 상태</dt>
+              <dd className="font-semibold text-danger">{finding.defaultState ?? "-"}</dd>
+            </div>
+            <div className="grid grid-cols-2 py-3">
+              <dt className="text-muted">추가 비용</dt>
+              <dd className="font-semibold text-danger">{finding.costImpact ?? "-"}</dd>
+            </div>
+          </dl>
+          <div className="mt-6 flex gap-4 rounded-card border border-border p-5">
+            <FileText className="shrink-0 text-brand-600" size={25} />
+            <div>
+              <p className="text-base font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
+              <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
+            </div>
+          </div>
+        </details>
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
+            수정 결정 기록
+          </summary>
+          <FindingDecisionNote finding={finding} />
+        </details>
+        <button
+          aria-label="탐지 메타데이터"
+          className="mt-3 flex items-center gap-1 text-xs text-muted"
+          onClick={() => setShowMetadata((value) => !value)}
+        >
+          <MoreVertical size={14} />
+          분석 정보
+        </button>
+        {showMetadata && (
+          <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
+            신뢰도 {Math.round(finding.confidence * 100)}%
+          </div>
+        )}
+        <button
+          className={cn(
+            "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-3 text-sm font-semibold text-white disabled:opacity-50",
+            finding.status === "resolved" ? "bg-muted" : "bg-brand-600",
+          )}
+          disabled={findingStatus.isPending}
+          onClick={() =>
+            findingStatus.mutate(
+              {
+                findingId: finding.id,
+                status: finding.status === "resolved" ? "reviewing" : "resolved",
+              },
+              {
+                onSuccess: () => {
+                  if (finding.status !== "resolved") onResolved();
+                },
+              },
+            )
+          }
+        >
+          {findingStatus.isPending ? (
+            <RefreshCw className="animate-spin" size={15} />
+          ) : (
+            <CheckCircle2 size={15} />
+          )}
+          {findingStatus.isPending
+            ? "상태 저장 중…"
+            : finding.status === "resolved"
+              ? "검토 상태로 되돌리기"
+              : hasNextReview
+                ? "해결하고 다음 미검토 항목"
+                : "해결됨으로 표시"}
+        </button>
+        {findingStatus.isError && findingStatus.variables?.findingId === finding.id && (
+          <p role="alert" className="mt-2 text-sm text-danger">
+            상태를 저장하지 못했습니다. 다시 시도해주세요.
+          </p>
+        )}
       </div>
-      {finding ? (
-        <div className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="flex items-center gap-2 text-base font-semibold text-brand-700">
-              <span
-                aria-label={`항목 ${number}번`}
-                className="flex size-7 items-center justify-center rounded bg-brand-600 text-sm font-bold text-white"
-              >
-                {number}
-              </span>
-              {finding.ruleId}
-            </p>
-            <FindingBadges finding={finding} />
-          </div>
-          <h3 className="font-display mt-3 text-xl font-bold">{finding.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">{finding.description}</p>
-          <div className="mt-5 border-l-2 border-brand-600 bg-brand-50 p-5 text-sm leading-6 text-brand-950">
-            <h4 className="font-bold">개선 권고안</h4>
-            <p className="mt-2">{finding.recommendation}</p>
-          </div>
-          <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-semibold text-muted">
-              판단 근거 및 가이드라인
-            </summary>
-            <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
-              <div className="grid grid-cols-2 py-3">
-                <dt className="text-muted">대상 요소</dt>
-                <dd>{finding.element}</dd>
-              </div>
-              <div className="grid grid-cols-2 py-3">
-                <dt className="text-muted">기본 상태</dt>
-                <dd className="font-semibold text-danger">{finding.defaultState ?? "-"}</dd>
-              </div>
-              <div className="grid grid-cols-2 py-3">
-                <dt className="text-muted">추가 비용</dt>
-                <dd className="font-semibold text-danger">{finding.costImpact ?? "-"}</dd>
-              </div>
-            </dl>
-            <div className="mt-6 flex gap-4 rounded-card border border-border p-5">
-              <FileText className="shrink-0 text-brand-600" size={25} />
-              <div>
-                <p className="text-base font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
-                <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
-              </div>
-            </div>
-          </details>
-          <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-semibold text-muted">
-              수정 결정 기록
-            </summary>
-            <FindingDecisionNote finding={finding} />
-          </details>
-          {showMetadata && (
-            <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
-              신뢰도 {Math.round(finding.confidence * 100)}%
-            </div>
-          )}
-          <button
-            className={cn(
-              "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-3 text-sm font-semibold text-white disabled:opacity-50",
-              finding.status === "resolved" ? "bg-muted" : "bg-brand-600",
-            )}
-            disabled={findingStatus.isPending}
-            onClick={() =>
-              findingStatus.mutate(
-                {
-                  findingId: finding.id,
-                  status: finding.status === "resolved" ? "reviewing" : "resolved",
-                },
-                {
-                  onSuccess: () => {
-                    if (finding.status !== "resolved") onResolved();
-                  },
-                },
-              )
-            }
-          >
-            {findingStatus.isPending ? (
-              <RefreshCw className="animate-spin" size={15} />
-            ) : (
-              <CheckCircle2 size={15} />
-            )}
-            {findingStatus.isPending
-              ? "상태 저장 중…"
-              : finding.status === "resolved"
-                ? "검토 상태로 되돌리기"
-                : hasNextReview
-                  ? "해결하고 다음 미검토 항목"
-                  : "해결됨으로 표시"}
-          </button>
-          {findingStatus.isError && findingStatus.variables?.findingId === finding.id && (
-            <p role="alert" className="mt-2 text-sm text-danger">
-              상태를 저장하지 못했습니다. 다시 시도해주세요.
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="flex min-h-96 flex-col items-center justify-center p-8 text-center">
-          <FileText className="text-muted" size={34} />
-          <h3 className="mt-4 font-bold">{emptyMessage}</h3>
-          <p className="mt-2 text-sm text-muted">다른 필터나 화면을 선택해 확인할 수 있습니다.</p>
-        </div>
-      )}
-    </Card>
+    </div>
   );
 }
 
 function FindingsList({
   findings,
+  allFindings,
   selectedFindingId,
   onSelect,
-  allFindings,
-  filter,
+  onStep,
+  onResolved,
+  hasNextReview,
+  emptyMessage,
 }: {
   findings: FindingDto[];
+  allFindings: FindingDto[];
   selectedFindingId?: string;
   onSelect: (finding: FindingDto) => void;
-  allFindings: FindingDto[];
-  filter: FindingFilter;
+  onStep: (delta: number) => void;
+  onResolved: () => void;
+  hasNextReview: boolean;
+  emptyMessage: string;
 }) {
+  const position = findings.findIndex((item) => item.id === selectedFindingId);
+  const listRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!selectedFindingId) return;
+    const list = listRef.current;
+    const trigger = document.getElementById(`finding-trigger-${selectedFindingId}`);
+    if (!list || !trigger || list.scrollHeight <= list.clientHeight) return;
+    const bounds = list.getBoundingClientRect();
+    const item = trigger.getBoundingClientRect();
+    if (item.top < bounds.top || bounds.bottom - item.top < Math.min(360, list.clientHeight)) {
+      list.scrollTop += item.top - bounds.top;
+    }
+  }, [selectedFindingId]);
   return (
-    <Card className="min-w-0 overflow-hidden">
-      <div className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h2 className="text-base font-semibold">점검 항목</h2>
-        <span className="text-xs tabular-nums text-muted">{findings.length}개</span>
-      </div>
-      <nav aria-label="점검 항목" className="map-findings-list divide-y divide-border">
-        {findings.map((finding) => (
+    <section className="review-findings" aria-label="문제 목록">
+      <div className="review-findings-heading">
+        <h2 className="text-sm font-semibold">
+          점검 항목 <span className="ml-1 text-muted">{findings.length}개</span>
+        </h2>
+        <div className="flex items-center gap-2 text-xs tabular-nums text-muted">
           <button
-            aria-current={selectedFindingId === finding.id ? "true" : undefined}
-            aria-controls="finding-review-detail"
-            key={finding.id}
-            onClick={() => onSelect(finding)}
-            className={cn(
-              "w-full border-l-2 border-transparent p-5 text-left transition-colors hover:bg-brand-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500",
-              selectedFindingId === finding.id && "border-brand-600 bg-brand-50",
-            )}
+            aria-label="이전 탐지 항목"
+            disabled={findings.length < 2}
+            onClick={() => onStep(-1)}
+            className="rounded p-1 disabled:opacity-30"
           >
-            <div className="space-y-2">
-              <p className="flex items-center gap-2 text-xs font-bold text-brand-700">
-                <span className="flex size-6 items-center justify-center rounded bg-brand-600 text-white">
-                  {allFindings.findIndex((item) => item.id === finding.id) + 1}
-                </span>
-                {finding.ruleId}
-              </p>
-              <FindingBadges finding={finding} />
-            </div>
-            <div className="mt-3 min-w-0">
-              <h3 className="break-keep text-sm font-semibold leading-6 [overflow-wrap:anywhere]">
-                {finding.title}
-              </h3>
-              <p className="mt-1 line-clamp-2 break-keep text-xs leading-5 text-muted [overflow-wrap:anywhere]">
-                {finding.description}
-              </p>
-            </div>
+            <ChevronLeft size={16} />
           </button>
-        ))}
+          <span>
+            {position + 1} / {findings.length}
+          </span>
+          <button
+            aria-label="다음 탐지 항목"
+            disabled={findings.length < 2}
+            onClick={() => onStep(1)}
+            className="rounded p-1 disabled:opacity-30"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+      <nav ref={listRef} aria-label="점검 항목" className="review-findings-list">
+        {findings.map((finding) => {
+          const selected = selectedFindingId === finding.id;
+          const number = allFindings.findIndex((item) => item.id === finding.id) + 1;
+          return (
+            <article key={finding.id} className={cn("review-finding", selected && "is-selected")}>
+              <button
+                id={`finding-trigger-${finding.id}`}
+                className="w-full p-4 text-left hover:bg-brand-50/60"
+                aria-expanded={selected}
+                aria-current={selected ? "true" : undefined}
+                aria-controls={selected ? "finding-detail-panel" : undefined}
+                onClick={() => onSelect(finding)}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-label={`항목 ${number}번`}
+                    className="flex size-7 shrink-0 items-center justify-center rounded bg-brand-600 text-xs font-bold text-white"
+                  >
+                    {number}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-muted">{finding.ruleId}</p>
+                    <h3 className="mt-1 text-sm font-semibold leading-6">{finding.title}</h3>
+                    <div className="mt-2">
+                      <FindingBadges finding={finding} />
+                    </div>
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    className={cn("mt-1 shrink-0 text-muted", selected && "rotate-180")}
+                  />
+                </div>
+              </button>
+              {selected && (
+                <FindingDetails
+                  finding={finding}
+                  onResolved={onResolved}
+                  hasNextReview={hasNextReview}
+                />
+              )}
+            </article>
+          );
+        })}
         {!findings.length && (
-          <p className="p-4 text-sm leading-6 text-muted" role="status">
-            {filter === "resolved"
-              ? "해결된 항목이 없습니다."
-              : filter === "needs-review"
-                ? "검토가 필요한 항목이 없습니다."
-                : "탐지된 항목이 없습니다."}
-          </p>
+          <div className="p-6 text-center" role="status">
+            <h3 className="text-sm font-semibold">{emptyMessage}</h3>
+            <p className="mt-2 text-xs text-muted">다른 필터나 화면을 선택해 확인할 수 있습니다.</p>
+          </div>
         )}
       </nav>
-    </Card>
+    </section>
   );
 }
 
@@ -447,33 +392,16 @@ function DashboardLoading() {
 export function OverviewPage() {
   const { data, isPending, isError, error, refetch } = useDashboardSummary();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [focusRequest, setFocusRequest] = useState(0);
   const selectionSnapshot = searchParams.toString();
   const latestSelection = useRef(selectionSnapshot);
   useEffect(() => {
     latestSelection.current = selectionSnapshot;
   }, [selectionSnapshot]);
-  const [showList, setShowList] = useState(searchParams.get("list") === "1");
   const [showFlow, setShowFlow] = useState(false);
   const flowBackdropPointerDown = useRef(false);
   const [showReport, setShowReport] = useState(false);
   const reportButtonRef = useRef<HTMLButtonElement>(null);
   const detailOpen = Boolean(searchParams.get("finding") || searchParams.get("panel"));
-  useEffect(() => {
-    if (!detailOpen || showFlow || showReport) return;
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("finding");
-        next.delete("panel");
-        return next;
-      });
-      document.getElementById("finding-screen-preview")?.focus();
-    }
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [detailOpen, showFlow, showReport, setSearchParams]);
 
   if (isPending) {
     return <DashboardLoading />;
@@ -559,9 +487,8 @@ export function OverviewPage() {
     audit.screens.find((item) => item.id === finding?.bbox?.screenId) ??
     audit.screens.find((item) => item.id === finding?.screenIds[0]) ??
     audit.screens[0]!;
-  const findingPosition = finding
-    ? filteredFindings.findIndex((item) => item.id === finding.id)
-    : -1;
+  const findingPosition =
+    detailOpen && finding ? filteredFindings.findIndex((item) => item.id === finding.id) : -1;
   const originalPosition = audit.findings.findIndex((item) => item.id === finding?.id);
   const reviewOrder = !detailOpen
     ? audit.findings
@@ -590,7 +517,6 @@ export function OverviewPage() {
       next.delete("panel");
       return next;
     });
-    requestAnimationFrame(() => document.getElementById("finding-screen-preview")?.focus());
   }
 
   function selectScreen(screenId: string) {
@@ -624,30 +550,22 @@ export function OverviewPage() {
   }
 
   function selectFinding(nextFinding: FindingDto) {
-    setFocusRequest((value) => value + 1);
     setSearchParams((current) => findingParams(current, nextFinding, filter));
   }
 
   function selectListFinding(nextFinding: FindingDto) {
+    if (detailOpen && finding?.id === nextFinding.id) {
+      closeDetail();
+      return;
+    }
     selectFinding(nextFinding);
-    requestAnimationFrame(() => {
-      document.getElementById("finding-screen-preview")?.scrollIntoView?.({ block: "nearest" });
-    });
   }
 
   function selectImageFinding(nextFinding: FindingDto) {
-    setFocusRequest((value) => value + 1);
     setSearchParams((current) => {
       const params = findingParams(current, nextFinding, filter);
       params.set("screen", screen.id);
       return params;
-    });
-    requestAnimationFrame(() => {
-      const heading = document.getElementById("finding-detail-heading");
-      heading?.focus({ preventScroll: true });
-      if (window.matchMedia?.("(max-width: 767px)").matches) {
-        document.getElementById("finding-screen-preview")?.scrollIntoView?.({ block: "start" });
-      }
     });
   }
 
@@ -688,7 +606,7 @@ export function OverviewPage() {
   }
 
   return (
-    <div className={cn("overview-page mx-auto max-w-[1800px]", detailOpen && "map-detail-open")}>
+    <div className="overview-page mx-auto max-w-[1800px]">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link
@@ -787,15 +705,6 @@ export function OverviewPage() {
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            className="flex items-center gap-2 rounded-control border border-border px-3 py-2 text-xs font-semibold"
-            aria-expanded={showList}
-            aria-controls="finding-list-tray"
-            onClick={() => setShowList((value) => !value)}
-          >
-            <ListFilter size={15} />
-            문제 목록
-          </button>
           <Button
             variant="outline"
             className="px-3 py-2 text-xs"
@@ -806,18 +715,7 @@ export function OverviewPage() {
           </Button>
         </div>
       </section>
-      {showList && (
-        <div id="finding-list-tray">
-          <FindingsList
-            findings={filteredFindings}
-            allFindings={audit.findings}
-            filter={filter}
-            selectedFindingId={detailOpen ? finding?.id : undefined}
-            onSelect={selectListFinding}
-          />
-        </div>
-      )}
-      <div className="overview-map">
+      <div className="overview-review">
         <FlowOverview
           screens={audit.screens}
           selectedScreenId={screen.id}
@@ -827,7 +725,7 @@ export function OverviewPage() {
         <section
           id="finding-review-detail"
           aria-label="선택한 항목 검토"
-          className={cn("map-workspace", detailOpen && "has-detail")}
+          className="review-workspace"
         >
           <ScreenPreview
             key={screen.id}
@@ -837,31 +735,17 @@ export function OverviewPage() {
               matchesFilter(item, filter) ? [{ finding: item, number: index + 1 }] : [],
             )}
             onSelect={selectImageFinding}
-            focusRequest={focusRequest}
-            onReset={closeDetail}
-            emptyMessage={!detailOpen && !filteredFindings.length ? emptyMessage : undefined}
           />
-          {detailOpen && (
-            <>
-              <button
-                className="map-detail-dismiss"
-                tabIndex={-1}
-                aria-label="상세 설명 바깥 여백"
-                onClick={closeDetail}
-              />
-              <FindingDetails
-                finding={finding}
-                number={originalPosition + 1}
-                onStep={stepFinding}
-                position={findingPosition}
-                total={filteredFindings.length}
-                onResolved={afterResolved}
-                hasNextReview={Boolean(nextReview)}
-                emptyMessage={emptyMessage}
-                onClose={closeDetail}
-              />
-            </>
-          )}
+          <FindingsList
+            findings={filteredFindings}
+            allFindings={audit.findings}
+            selectedFindingId={detailOpen ? finding?.id : undefined}
+            onSelect={selectListFinding}
+            onStep={stepFinding}
+            onResolved={afterResolved}
+            hasNextReview={Boolean(nextReview)}
+            emptyMessage={emptyMessage}
+          />
         </section>
       </div>
       {showFlow && (

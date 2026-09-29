@@ -9,17 +9,11 @@ export function ScreenPreview({
   finding,
   findings,
   onSelect,
-  focusRequest,
-  onReset,
-  emptyMessage,
 }: {
   screen: AuditScreenDto;
   finding?: FindingDto;
   findings: { finding: FindingDto; number: number }[];
   onSelect: (finding: FindingDto) => void;
-  focusRequest: number;
-  onReset: () => void;
-  emptyMessage?: string;
 }) {
   const previewRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -28,8 +22,7 @@ export function ScreenPreview({
     width: screen.width || 390,
     height: screen.height || 844,
   });
-  const selection = `${finding?.id ?? "overview"}:${focusRequest}`;
-  const [manualZoom, setManualZoom] = useState<{ selection: string; scale: number }>();
+  const [scale, setScale] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const panOrigin = useRef<{
     pointerId: number;
@@ -62,28 +55,6 @@ export function ScreenPreview({
     finding?.bbox?.screenId === screen.id
       ? finding.bbox
       : finding?.relatedElements?.find((item) => item.bbox?.screenId === screen.id)?.bbox;
-  const boxWidth = box
-    ? box.width * (box.coordinateSystem === "normalized" ? imageSize.width : 1)
-    : 0;
-  const boxHeight = box
-    ? box.height * (box.coordinateSystem === "normalized" ? imageSize.height : 1)
-    : 0;
-  // Include surrounding context and cap zoom for very small controls.
-  const selectedScale =
-    boxWidth > 0 && boxHeight > 0
-      ? Math.max(
-          1.4,
-          Math.min(
-            3,
-            (viewportSize.width - 96) / (boxWidth * fit),
-            (viewportSize.height - 112) / (boxHeight * fit),
-          ),
-        )
-      : 1;
-  const scale =
-    manualZoom?.selection === selection ? manualZoom.scale : finding ? selectedScale : 1;
-  const setScale = (value: number) =>
-    setManualZoom({ selection, scale: Math.max(0.5, Math.min(5, value)) });
   function startPan(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     panOrigin.current = {
@@ -111,14 +82,13 @@ export function ScreenPreview({
             {screen.order}. {screen.flowStep}
           </h2>
           <p className="mt-1 text-xs text-muted">
-            {finding ? "선택한 문제의 위치를 보고 있습니다" : "문제 번호를 눌러 자세히 살펴보세요"}
+            {finding ? "선택한 문제의 위치를 표시했습니다" : "문제 번호를 눌러 자세히 살펴보세요"}
           </p>
         </div>
         <button
           className="flex items-center gap-1.5 rounded-control border border-border bg-white px-3 py-2 text-xs font-semibold"
           onClick={() => {
-            setManualZoom(undefined);
-            onReset();
+            setScale(1);
             viewportRef.current?.scrollTo?.({ top: 0, left: 0 });
           }}
         >
@@ -170,7 +140,7 @@ export function ScreenPreview({
                 else onSelect(next);
               }}
               viewportRef={viewportRef}
-              focusRequest={focusRequest}
+              autoCenter={false}
               markersOnly
               onDimensions={(size) => {
                 if (!screen.width || !screen.height) setImageSize(size);
@@ -180,13 +150,13 @@ export function ScreenPreview({
         </div>
       </div>
       <div className="map-zoom-controls">
-        <button aria-label="확대" onClick={() => setScale(scale + 0.25)}>
+        <button aria-label="확대" onClick={() => setScale(Math.min(5, scale + 0.25))}>
           <ZoomIn size={18} />
         </button>
         <output aria-label="미리보기 배율" className="text-xs tabular-nums">
           {Math.round(scale * 100)}%
         </output>
-        <button aria-label="축소" onClick={() => setScale(scale - 0.25)}>
+        <button aria-label="축소" onClick={() => setScale(Math.max(0.5, scale - 0.25))}>
           <ZoomOut size={18} />
         </button>
         <button
@@ -200,10 +170,9 @@ export function ScreenPreview({
         </button>
       </div>
       <div className="map-preview-caption" role="status">
-        {emptyMessage ??
-          (finding && !box
-            ? "위치 정보가 없는 항목입니다. 상세 설명을 확인해주세요."
-            : "드래그로 이동 · 번호를 선택하면 확대 및 설명")}
+        {finding && !box
+          ? "위치 정보가 없는 항목입니다. 상세 설명을 확인해주세요."
+          : "번호를 선택하면 위치와 설명을 함께 확인할 수 있습니다"}
       </div>
     </div>
   );
