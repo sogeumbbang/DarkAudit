@@ -7,7 +7,7 @@ import {
   type SyntheticEvent,
 } from "react";
 
-import type { AuditScreenDto, BBoxDto, FindingDto, FindingSeverity } from "@/entities/audit/types";
+import type { AuditScreenDto, BBoxDto, FindingDto } from "@/entities/audit/types";
 import { cn } from "@/lib/cn";
 
 type HighlightBox = {
@@ -15,25 +15,6 @@ type HighlightBox = {
   bbox: BBoxDto;
   tone: "primary" | "related";
   label: string;
-  severity: FindingSeverity;
-};
-
-const BORDER: Record<FindingSeverity, string> = {
-  HIGH: "border-danger",
-  REVIEW: "border-warning",
-  LOW: "border-brand-500",
-};
-
-const OUTLINE: Record<FindingSeverity, string> = {
-  HIGH: "outline-danger",
-  REVIEW: "outline-warning",
-  LOW: "outline-brand-500",
-};
-
-const FILL: Record<FindingSeverity, string> = {
-  HIGH: "bg-danger/10",
-  REVIEW: "bg-warning/10",
-  LOW: "bg-brand-500/10",
 };
 
 function collectHighlights(screenId: string, finding?: FindingDto): HighlightBox[] {
@@ -45,7 +26,6 @@ function collectHighlights(screenId: string, finding?: FindingDto): HighlightBox
       bbox: finding.bbox,
       tone: "primary",
       label: finding.ruleId,
-      severity: finding.severity,
     });
   }
   (finding.relatedElements ?? []).forEach((related, index) => {
@@ -55,7 +35,6 @@ function collectHighlights(screenId: string, finding?: FindingDto): HighlightBox
         bbox: related.bbox,
         tone: "related",
         label: "관련",
-        severity: finding.severity,
       });
     }
   });
@@ -266,16 +245,12 @@ export function ScreenCanvas({
                     : compact
                       ? [
                           "outline-[1.5px] outline-offset-2",
-                          OUTLINE[box.severity],
+                          "outline-danger",
                           box.tone === "related" ? "outline-dashed" : "outline-solid",
                         ]
-                      : [
-                          "border-2",
-                          BORDER[box.severity],
-                          box.tone === "related" && "border-dashed",
-                        ],
+                      : ["border-2", "border-danger", box.tone === "related" && "border-dashed"],
                   active ? "z-10" : "z-0",
-                  active && !compact && box.tone === "primary" && FILL[box.severity],
+                  active && !compact && box.tone === "primary" && "bg-danger/10",
                 )}
                 style={
                   pin
@@ -326,7 +301,7 @@ export function ScreenCanvas({
                   aria-hidden="true"
                   className={cn(
                     "absolute -left-0.5 flex size-7 items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-text shadow-sm",
-                    BORDER[box.severity],
+                    "border-danger",
                     active && "bg-brand-600 text-white border-brand-600",
                   )}
                   style={{
@@ -364,10 +339,10 @@ export function ScreenCanvas({
                     ? [
                         "outline-[1.5px] outline-offset-2",
                         box.tone === "related" ? "outline-dashed" : "outline-solid",
-                        OUTLINE[box.severity],
+                        "outline-danger",
                       ]
-                    : ["border-[1.5px]", BORDER[box.severity]],
-                  !compact && box.tone === "primary" && FILL[box.severity],
+                    : ["border-[1.5px]", "border-danger"],
+                  !compact && box.tone === "primary" && "bg-danger/10",
                   box.tone === "related" && !compact && "border-dashed",
                 )}
                 key={box.key}
@@ -401,7 +376,7 @@ export function ScreenCanvasLegend({
         <span className="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
-            className={cn("h-3 w-4 rounded-sm border-[1.5px]", BORDER[finding.severity])}
+            className={cn("h-3 w-4 rounded-sm border-[1.5px]", "border-danger")}
           />
           {finding.ruleId} 탐지 영역
         </span>
@@ -410,10 +385,7 @@ export function ScreenCanvasLegend({
         <span className="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
-            className={cn(
-              "h-3 w-4 rounded-sm border-[1.5px] border-dashed",
-              BORDER[finding.severity],
-            )}
+            className={cn("h-3 w-4 rounded-sm border-[1.5px] border-dashed", "border-danger")}
           />
           관련 영역
         </span>

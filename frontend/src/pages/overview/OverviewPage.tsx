@@ -18,6 +18,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
+import { orderFindings } from "@/entities/audit/orderFindings";
+import { isFindingOnScreen } from "@/entities/audit/findingScreens";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { ScreenPreview } from "./ScreenPreview";
 import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
@@ -51,32 +53,19 @@ function matchesFilter(finding: FindingDto, filter: FindingFilter) {
   );
 }
 
-function FindingBadges({ finding }: { finding: FindingDto }) {
+function FindingStatusBadge({ finding }: { finding: FindingDto }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Badge
-        variant={
-          finding.severity === "HIGH"
-            ? "danger"
-            : finding.severity === "REVIEW"
-              ? "warning"
-              : "neutral"
-        }
-      >
-        심각도 {{ HIGH: "높음", REVIEW: "검토 필요", LOW: "낮음" }[finding.severity]}
-      </Badge>
-      <Badge
-        variant={
-          finding.status === "resolved"
-            ? "success"
-            : finding.status === "reviewing"
-              ? "progress"
-              : "neutral"
-        }
-      >
-        {{ open: "미검토", reviewing: "검토 중", resolved: "해결됨" }[finding.status]}
-      </Badge>
-    </div>
+    <Badge
+      variant={
+        finding.status === "resolved"
+          ? "success"
+          : finding.status === "reviewing"
+            ? "progress"
+            : "neutral"
+      }
+    >
+      {{ open: "미검토", reviewing: "검토 중", resolved: "해결됨" }[finding.status]}
+    </Badge>
   );
 }
 
@@ -110,6 +99,7 @@ function FlowOverview({
             key={screen.id}
             className={cn("map-screen", selectedScreenId === screen.id && "is-selected")}
             aria-label={`${index + 1}단계 ${screen.flowStep}, 문제 ${screen.findingCount}건`}
+            title="이 화면과 관련된 문제 수 (여러 영역에 표시된 같은 문제는 1건)"
             aria-pressed={selectedScreenId === screen.id}
             onClick={() => onSelect(screen.id)}
           >
@@ -159,40 +149,36 @@ function FindingDetails({
       <h4 id="finding-detail-heading" tabIndex={-1} className="sr-only">
         탐지 항목 상세
       </h4>
-      <div className="px-4 pb-4">
-        <p className="mt-3 text-sm leading-6 text-muted">{finding.description}</p>
+      <div className="px-3 pb-3">
+        <p className="mt-2 text-sm leading-6 text-muted">{finding.description}</p>
 
-        <div className="mt-5 border-l-2 border-brand-600 bg-brand-50 p-5 text-sm leading-6 text-brand-950">
+        <div className="mt-3 border-l-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm leading-6 text-brand-950">
           <h4 className="font-bold">개선 권고안</h4>
-          <p className="mt-2">{finding.recommendation}</p>
+          <p className="mt-1">{finding.recommendation}</p>
         </div>
-        <details className="mt-4">
+        <details className="mt-3">
           <summary className="cursor-pointer text-sm font-semibold text-muted">
             판단 근거 및 가이드라인
           </summary>
-          <dl className="mt-6 divide-y divide-border border-y border-border text-sm">
-            <div className="grid grid-cols-2 py-3">
+          <dl className="mt-3 divide-y divide-border border-y border-border text-sm">
+            <div className="grid grid-cols-[80px_1fr] gap-3 py-2">
+              <dt className="text-muted">규칙 코드</dt>
+              <dd>{finding.ruleId}</dd>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-3 py-2">
               <dt className="text-muted">대상 요소</dt>
               <dd>{finding.element}</dd>
             </div>
-            <div className="grid grid-cols-2 py-3">
-              <dt className="text-muted">기본 상태</dt>
-              <dd className="font-semibold text-danger">{finding.defaultState ?? "-"}</dd>
-            </div>
-            <div className="grid grid-cols-2 py-3">
-              <dt className="text-muted">추가 비용</dt>
-              <dd className="font-semibold text-danger">{finding.costImpact ?? "-"}</dd>
-            </div>
           </dl>
-          <div className="mt-6 flex gap-4 rounded-card border border-border p-5">
-            <FileText className="shrink-0 text-brand-600" size={25} />
+          <div className="mt-3 flex gap-3 rounded-card border border-border p-3">
+            <FileText className="shrink-0 text-brand-600" size={18} />
             <div>
-              <p className="text-base font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
+              <p className="text-sm font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
               <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
             </div>
           </div>
         </details>
-        <details className="mt-4">
+        <details className="mt-3">
           <summary className="cursor-pointer text-sm font-semibold text-muted">
             수정 결정 기록
           </summary>
@@ -213,7 +199,7 @@ function FindingDetails({
         )}
         <button
           className={cn(
-            "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-3 text-sm font-semibold text-white disabled:opacity-50",
+            "mt-3 flex w-full items-center justify-center gap-2 rounded-control py-2 text-sm font-semibold text-white disabled:opacity-50",
             finding.status === "resolved" ? "bg-muted" : "bg-brand-600",
           )}
           disabled={findingStatus.isPending}
@@ -290,7 +276,12 @@ function FindingsList({
     <section className="review-findings" aria-label="문제 목록">
       <div className="review-findings-heading">
         <h2 className="text-sm font-semibold">
-          점검 항목 <span className="ml-1 text-muted">{findings.length}개</span>
+          전체 진단 문제{" "}
+          <span className="ml-1 text-muted">
+            {findings.length === allFindings.length
+              ? `${allFindings.length}건`
+              : `${findings.length} / ${allFindings.length}건`}
+          </span>
         </h2>
         <div className="flex items-center gap-2 text-xs tabular-nums text-muted">
           <button
@@ -322,7 +313,7 @@ function FindingsList({
             <article key={finding.id} className={cn("review-finding", selected && "is-selected")}>
               <button
                 id={`finding-trigger-${finding.id}`}
-                className="w-full p-4 text-left hover:bg-brand-50/60"
+                className="w-full px-3 py-2.5 text-left hover:bg-brand-50/60"
                 aria-expanded={selected}
                 aria-current={selected ? "true" : undefined}
                 aria-controls={selected ? "finding-detail-panel" : undefined}
@@ -335,12 +326,13 @@ function FindingsList({
                   >
                     {number}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-muted">{finding.ruleId}</p>
-                    <h3 className="mt-1 text-sm font-semibold leading-6">{finding.title}</h3>
-                    <div className="mt-2">
-                      <FindingBadges finding={finding} />
-                    </div>
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                    <h3 className="min-w-0 flex-1 text-sm font-semibold leading-7">
+                      {finding.title}
+                    </h3>
+                    <span className="shrink-0">
+                      <FindingStatusBadge finding={finding} />
+                    </span>
                   </div>
                   <ChevronDown
                     size={16}
@@ -466,48 +458,55 @@ export function OverviewPage() {
       </Card>
     );
   }
+  const orderedFindings = orderFindings(audit);
+  const orderedScreens = [...audit.screens]
+    .sort((a, b) => a.order - b.order)
+    .map((screen) => ({
+      ...screen,
+      findingCount: orderedFindings.filter((item) => isFindingOnScreen(item, screen.id)).length,
+    }));
   const filterParam = searchParams.get("filter");
   const filter: FindingFilter =
     filterParam === "needs-review" || filterParam === "resolved" ? filterParam : "all";
-  const filteredFindings = audit.findings.filter((item) => matchesFilter(item, filter));
+  const filteredFindings = orderedFindings.filter((item) => matchesFilter(item, filter));
   const requestedScreen = searchParams.get("screen");
   const requestedFinding = searchParams.get("finding");
   const selectedFinding = filteredFindings.find((item) => item.id === requestedFinding);
   const finding =
     selectedFinding ??
     (requestedScreen && !requestedFinding
-      ? filteredFindings.find((item) => item.screenIds.includes(requestedScreen))
+      ? filteredFindings.find((item) => isFindingOnScreen(item, requestedScreen))
       : filteredFindings[0]);
   // 화면을 명시하지 않았다면 선택된 항목이 있는 화면을 띄운다. 둘을 각각 고르면
   // 첫 진입에서 "1번 화면 + 2번 화면의 탐지 항목"처럼 어긋나 위치 강조가 안 보인다.
   const screen =
     (selectedFinding || !requestedFinding
-      ? audit.screens.find((item) => item.id === requestedScreen)
+      ? orderedScreens.find((item) => item.id === requestedScreen)
       : undefined) ??
-    audit.screens.find((item) => item.id === finding?.bbox?.screenId) ??
-    audit.screens.find((item) => item.id === finding?.screenIds[0]) ??
-    audit.screens[0]!;
+    orderedScreens.find((item) => item.id === finding?.bbox?.screenId) ??
+    orderedScreens.find((item) => item.id === finding?.screenIds[0]) ??
+    orderedScreens[0]!;
   const findingPosition =
     detailOpen && finding ? filteredFindings.findIndex((item) => item.id === finding.id) : -1;
-  const originalPosition = audit.findings.findIndex((item) => item.id === finding?.id);
+  const originalPosition = orderedFindings.findIndex((item) => item.id === finding?.id);
   const reviewOrder = !detailOpen
-    ? audit.findings
+    ? orderedFindings
     : [
-        ...audit.findings.slice(originalPosition + 1),
-        ...audit.findings.slice(0, originalPosition + 1),
+        ...orderedFindings.slice(originalPosition + 1),
+        ...orderedFindings.slice(0, originalPosition + 1),
       ];
   const nextReview = reviewOrder.find(
     (item) => (!detailOpen || item.id !== finding?.id) && item.status !== "resolved",
   );
-  const emptyMessage = !audit.findings.length
+  const emptyMessage = !orderedFindings.length
     ? "탐지된 항목이 없습니다"
     : !filteredFindings.length
       ? filter === "resolved"
         ? "해결된 항목이 없습니다"
         : "검토가 필요한 항목이 없습니다"
       : "이 화면에 해당하는 점검 항목이 없습니다";
-  const needsReview = audit.findings.filter((item) => item.status !== "resolved").length;
-  const resolved = audit.findings.filter((item) => item.status === "resolved").length;
+  const needsReview = orderedFindings.filter((item) => item.status !== "resolved").length;
+  const resolved = orderedFindings.filter((item) => item.status === "resolved").length;
   const auditStatus = auditStatusPresentation[audit.status];
   function closeDetail() {
     setSearchParams((current) => {
@@ -573,7 +572,7 @@ export function OverviewPage() {
     const next =
       finding && matchesFilter(finding, nextFilter)
         ? finding
-        : audit.findings.find((item) => matchesFilter(item, nextFilter));
+        : orderedFindings.find((item) => matchesFilter(item, nextFilter));
     setSearchParams((current) => {
       const params = findingParams(current, next, nextFilter);
       if (!detailOpen) {
@@ -682,7 +681,8 @@ export function OverviewPage() {
         </section>
       )}
       <section aria-label="진단 요약" className="map-toolbar">
-        <div role="group" aria-label="점검 항목 필터" className="flex flex-wrap gap-1">
+        <div role="group" aria-label="점검 항목 필터" className="flex flex-wrap items-center gap-1">
+          <span className="mr-2 text-xs font-semibold text-muted">전체 진단</span>
           {findingFilters.map(({ value, label }) => (
             <button
               key={value}
@@ -697,7 +697,7 @@ export function OverviewPage() {
             >
               {label}{" "}
               {value === "all"
-                ? audit.findings.length
+                ? orderedFindings.length
                 : value === "needs-review"
                   ? needsReview
                   : resolved}
@@ -717,7 +717,7 @@ export function OverviewPage() {
       </section>
       <div className="overview-review">
         <FlowOverview
-          screens={audit.screens}
+          screens={orderedScreens}
           selectedScreenId={screen.id}
           onSelect={selectScreen}
           onShowAll={() => setShowFlow(true)}
@@ -731,14 +731,17 @@ export function OverviewPage() {
             key={screen.id}
             finding={detailOpen ? finding : undefined}
             screen={screen}
-            findings={audit.findings.flatMap((item, index) =>
+            visibleFindingCount={
+              filteredFindings.filter((item) => isFindingOnScreen(item, screen.id)).length
+            }
+            findings={orderedFindings.flatMap((item, index) =>
               matchesFilter(item, filter) ? [{ finding: item, number: index + 1 }] : [],
             )}
             onSelect={selectImageFinding}
           />
           <FindingsList
             findings={filteredFindings}
-            allFindings={audit.findings}
+            allFindings={orderedFindings}
             selectedFindingId={detailOpen ? finding?.id : undefined}
             onSelect={selectListFinding}
             onStep={stepFinding}
@@ -779,7 +782,7 @@ export function OverviewPage() {
               </button>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {audit.screens.map((item) => (
+              {orderedScreens.map((item) => (
                 <button
                   className="rounded-card border border-border p-4 text-left hover:border-brand-500"
                   key={item.id}

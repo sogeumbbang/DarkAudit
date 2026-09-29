@@ -138,13 +138,17 @@ test("image marks expand inline explanations without moving or zooming the image
 }, testInfo) => {
   await page.goto("/app/overview");
   const viewport = page.getByTestId("screen-preview-viewport");
-  const related = viewport.getByRole("button", { name: "3번 순차적 가격 공개 관련 영역" });
+  const related = viewport.getByRole("button", { name: "2번 순차적 가격 공개 관련 영역" });
   const list = page.getByRole("navigation", { name: "점검 항목" });
   const items = list.locator("button[aria-expanded]");
   const panel = page.locator("#finding-detail-panel");
   await expect(related).toBeVisible();
   await expect(panel).toHaveCount(0);
   await expect(items).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "2단계 옵션 선택, 문제 2건" })).toBeVisible();
+  await expect(page.getByLabel(/현재 화면 문제 수/)).toHaveText("이 화면 2건");
+  await expect(page.getByRole("heading", { name: "전체 진단 문제 3건" })).toBeVisible();
+  await expect(items.first()).not.toContainText("DA-04");
   await page.screenshot({ path: testInfo.outputPath("review-overview.png"), fullPage: true });
   await related.scrollIntoViewIfNeeded();
   const selectedImage = viewport.getByRole("img", { name: /캡처 화면 미리보기/ });
@@ -165,7 +169,7 @@ test("image marks expand inline explanations without moving or zooming the image
   expect(after.x).toBeCloseTo(before.x, 0);
   expect(after.y).toBeCloseTo(before.y, 0);
   expect(await viewport.evaluate((el) => [el.scrollLeft, el.scrollTop])).toEqual(scrollBefore);
-  await expect(list.getByLabel("항목 3번")).toHaveText("3");
+  await expect(list.getByLabel("항목 2번")).toHaveText("2");
   const markBounds = (await related.boundingBox())!;
   expect(markBounds.x).toBeCloseTo(after.x + (after.width * 24) / 390 - 2, 0);
   expect(markBounds.y).toBeCloseTo(after.y + (after.height * 760) / 844 - 2, 0);
@@ -173,6 +177,7 @@ test("image marks expand inline explanations without moving or zooming the image
   const preview = (await viewport.boundingBox())!;
   if (isMobile) expect(pane.y).toBeGreaterThan(preview.y + preview.height);
   else expect(pane.x).toBeGreaterThanOrEqual(preview.x + preview.width - 1);
+  if (!isMobile) await expect(items.last()).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath("review-selected.png"), fullPage: true });
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(
@@ -191,12 +196,12 @@ test("image marks expand inline explanations without moving or zooming the image
     .getByRole("button", { name: "해결됨 1" })
     .click();
   await expect(items).toHaveCount(1);
-  await expect(items).toContainText("3");
+  await expect(items).toContainText("2");
   await items.click();
   await expect(page).toHaveURL(/screen=screen-review/);
-  await expect(list.getByLabel("항목 3번")).toHaveText("3");
+  await expect(list.getByLabel("항목 2번")).toHaveText("2");
   await items.click();
-  const primary = viewport.getByRole("button", { name: "3번 순차적 가격 공개 탐지 영역" });
+  const primary = viewport.getByRole("button", { name: "2번 순차적 가격 공개 탐지 영역" });
   await primary.focus();
   await page.keyboard.press("Enter");
   await expect(panel).toHaveCount(1);
@@ -221,7 +226,7 @@ test("user creates an audit and completes analysis", async ({ page }) => {
   });
 });
 
-test("review filters separate severity and status and advance after resolving", async ({
+test("review filters show status without severity and advance after resolving", async ({
   page,
 }) => {
   await page.goto("/app/overview?filter=needs-review&finding=finding-preselected-option");
@@ -229,7 +234,7 @@ test("review filters separate severity and status and advance after resolving", 
   const items = list.locator("button[aria-expanded]");
   const selected = list.locator('button[aria-expanded="true"]');
   const filters = page.getByRole("group", { name: "점검 항목 필터" });
-  await expect(selected.getByText("심각도 높음", { exact: true })).toBeVisible();
+  await expect(page.getByText(/심각도/)).toHaveCount(0);
   await expect(selected.getByText("검토 중", { exact: true })).toBeVisible();
   await expect(items).toHaveCount(2);
   await page.reload();

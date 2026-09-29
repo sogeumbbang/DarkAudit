@@ -3,12 +3,12 @@ import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/Button";
 import type { AuditDto, FindingDto } from "@/entities/audit/types";
+import { orderFindings } from "@/entities/audit/orderFindings";
 import { ReportScreen } from "./ReportScreen";
 
 import "./audit-report.css";
 
 const statuses = { open: "검토 필요", reviewing: "검토 중", resolved: "해결됨" };
-const severities = { HIGH: "높음", REVIEW: "검토 필요", LOW: "낮음" };
 const assessments = {
   detected: "탐지됨",
   not_detected: "미탐지",
@@ -42,8 +42,7 @@ function ReportFinding({
         {number}. {finding.title} ({finding.ruleId})
       </h3>
       <p className="audit-report-finding-meta">
-        심각도: {severities[finding.severity]} · 상태: {statuses[finding.status]} · 신뢰도:{" "}
-        {Math.round(finding.confidence * 100)}%
+        상태: {statuses[finding.status]} · 신뢰도: {Math.round(finding.confidence * 100)}%
       </p>
       <p className="audit-report-finding-meta">
         대상 화면:{" "}
@@ -62,18 +61,6 @@ function ReportFinding({
         <strong>대상 요소: </strong>
         {finding.element}
       </p>
-      {finding.defaultState && (
-        <p>
-          <strong>기본 상태: </strong>
-          {finding.defaultState}
-        </p>
-      )}
-      {finding.costImpact && (
-        <p>
-          <strong>추가 비용: </strong>
-          {finding.costImpact}
-        </p>
-      )}
       <p>
         <strong>검토 기준: </strong>
         {finding.guideline}
@@ -97,7 +84,10 @@ export function AuditReport({ audit, onClose }: { audit: AuditDto; onClose: () =
   const [error, setError] = useState("");
   const summary = audit.analysisSummary;
   const screens = [...audit.screens].sort((a, b) => a.order - b.order);
-  const numberedFindings = audit.findings.map((finding, index) => ({ finding, number: index + 1 }));
+  const numberedFindings = orderFindings(audit).map((finding, index) => ({
+    finding,
+    number: index + 1,
+  }));
   const unassignedFindings = numberedFindings.filter(
     ({ finding }) => !screens.some((screen) => finding.screenIds.includes(screen.id)),
   );

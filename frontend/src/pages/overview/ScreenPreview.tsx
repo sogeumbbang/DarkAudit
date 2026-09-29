@@ -8,10 +8,12 @@ export function ScreenPreview({
   screen,
   finding,
   findings,
+  visibleFindingCount,
   onSelect,
 }: {
   screen: AuditScreenDto;
   finding?: FindingDto;
+  visibleFindingCount: number;
   findings: { finding: FindingDto; number: number }[];
   onSelect: (finding: FindingDto) => void;
 }) {
@@ -78,11 +80,23 @@ export function ScreenPreview({
     <div id="finding-screen-preview" className="map-preview" ref={previewRef} tabIndex={-1}>
       <div className="map-preview-heading">
         <div>
-          <h2 className="text-sm font-semibold">
-            {screen.order}. {screen.flowStep}
+          <h2 className="flex flex-wrap items-center gap-x-2 text-sm font-semibold">
+            <span>
+              {screen.order}. {screen.flowStep}
+            </span>
+            <span
+              className="text-xs font-normal text-muted"
+              aria-label={`현재 화면 문제 수: ${screen.findingCount}건`}
+            >
+              이 화면 {screen.findingCount}건
+            </span>
           </h2>
           <p className="mt-1 text-xs text-muted">
-            {finding ? "선택한 문제의 위치를 표시했습니다" : "문제 번호를 눌러 자세히 살펴보세요"}
+            {visibleFindingCount !== screen.findingCount
+              ? `필터 적용: 이 화면의 ${screen.findingCount}건 중 ${visibleFindingCount}건 표시`
+              : finding
+                ? "선택한 문제의 위치를 표시했습니다"
+                : "문제 번호를 눌러 자세히 살펴보세요"}
           </p>
         </div>
         <button

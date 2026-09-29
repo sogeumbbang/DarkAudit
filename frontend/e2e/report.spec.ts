@@ -51,7 +51,7 @@ test("exports only the selected audit with a printable A4 report", async ({
   await evidenceImage.evaluate((image) => (image as HTMLImageElement).decode());
   await expect(evidenceImage).toHaveCSS("filter", "none");
   await expect(optionScreen.getByLabel("1. 유료 옵션 사전 선택 탐지 영역")).toHaveText("1");
-  await expect(optionScreen.getByLabel("3. 순차적 가격 공개 관련 영역")).toHaveText("3");
+  await expect(optionScreen.getByLabel("2. 순차적 가격 공개 관련 영역")).toHaveText("2");
   async function checkEvidenceAlignment() {
     const image = (await evidenceImage.boundingBox())!;
     const box = (await optionScreen

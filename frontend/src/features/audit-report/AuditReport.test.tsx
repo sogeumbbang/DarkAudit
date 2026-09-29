@@ -45,11 +45,13 @@ it("includes all findings, saved decisions and incomplete analysis in the report
   expect(screen.getByText("최종 결제 화면 누락")).toBeInTheDocument();
   expect(screen.getByText(/DA-15: 근거 부족/)).toBeInTheDocument();
   expect(screen.getAllByRole("img")).toHaveLength(audit.screens.length);
+  expect(screen.queryByText(/심각도/)).not.toBeInTheDocument();
 });
 
 it("pairs findings with their screens in flow order, retaining shared finding numbers", () => {
   const audit = structuredClone(dashboardFixture.audits[0]!);
   audit.screens.reverse();
+  audit.findings.reverse();
   render(<AuditReport audit={audit} onClose={vi.fn()} />);
   expect(
     screen
@@ -70,7 +72,7 @@ it("pairs findings with their screens in flow order, retaining shared finding nu
   ).toBeInTheDocument();
   expect(option.queryByRole("heading", { name: /감정적 압박/ })).not.toBeInTheDocument();
   for (const group of [option, review]) {
-    expect(group.getByRole("heading", { name: "3. 순차적 가격 공개 (DA-15)" })).toBeInTheDocument();
+    expect(group.getByRole("heading", { name: "2. 순차적 가격 공개 (DA-15)" })).toBeInTheDocument();
   }
   expect(
     within(screen.getByRole("region", { name: "화면 1. 상품 안내" })).getByText(
