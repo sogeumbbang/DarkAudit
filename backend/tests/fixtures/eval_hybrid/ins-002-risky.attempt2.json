@@ -1,0 +1,244 @@
+{
+ "flow_id": "ins-002-risky",
+ "screen_ids": [
+  "screen-01",
+  "screen-02",
+  "screen-03",
+  "screen-04",
+  "screen-05"
+ ],
+ "model": "gpt-5.6-luna",
+ "note": "capture of first/second schema attempt; candidate_id remapped to production format",
+ "raw": {
+  "audit_id": "ins-002-risky",
+  "schema_version": "1.3",
+  "screens": [
+   {
+    "screen_id": "screen-01",
+    "flow_step": "화면 1"
+   },
+   {
+    "screen_id": "screen-02",
+    "flow_step": "화면 2"
+   },
+   {
+    "screen_id": "screen-03",
+    "flow_step": "화면 3"
+   },
+   {
+    "screen_id": "screen-04",
+    "flow_step": "화면 4"
+   },
+   {
+    "screen_id": "screen-05",
+    "flow_step": "화면 5"
+   }
+  ],
+  "candidate_decisions": [
+   {
+    "candidate_id": "DA-03:screen-05:button-vibrtf",
+    "decision": "KEEP",
+    "reason": "화면 5에서 강조된 큰 파란색 ‘가입 완료하기’ 버튼과 실제 반대 행동인 ‘가입하지 않기’가 함께 확인된다. 가입 완료 버튼은 면적비 2.23 및 높은 대비로 시각적으로 강조되고, 거절 행동은 작고 연한 텍스트로 표시되어 실제 opposing actions 간 계층구조 왜곡 근거가 있다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-04:screen-02:div-t8ahig",
+    "decision": "REJECT",
+    "reason": "화면 2에서 ‘상해입원의료비’가 체크된 상태로 보이지만 해당 항목은 ‘필수 가입 항목’ 및 ‘포함’으로 표시되어 선택 가능한 유료 옵션이나 사업자에게 유리한 추가 선택으로 확인되지 않는다. 따라서 DA-04의 사전선택 대상에서 제외한다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   }
+  ],
+  "semantic_findings": [],
+  "rule_assessments": [
+   {
+    "rule_id": "DA-03",
+    "status": "detected",
+    "reason": "화면 5의 ‘가입 완료하기’와 ‘가입하지 않기’는 실제 가입 수락과 거절에 해당하는 opposing actions로 확인된다. 가입 완료하기는 큰 파란색 버튼으로 강조되고 가입하지 않기는 작고 연한 텍스트로 배치되어 시각적 계층구조 차이가 관찰된다. semantic finding은 후보 근거를 중복하지 않기 위해 별도로 생성하지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "visual_hierarchy"
+    ],
+    "choice_pairs": [
+     {
+      "screen_id": "screen-05",
+      "accept_text": "가입 완료하기",
+      "decline_text": "가입하지 않기",
+      "decline_is_action": true,
+      "pair_kind": "opposing_choices"
+     }
+    ],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-04",
+    "status": "not_detected",
+    "reason": "화면 2의 체크 상태 후보를 확인했으나 ‘상해입원의료비’와 ‘질병입원의료비’는 모두 ‘필수 가입 항목’으로 표시된다. 화면 3의 부가서비스와 화면 2의 비급여 도수치료는 미선택 상태이며, 선택 가능한 유료 옵션이 사전 선택된 근거는 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "default_checked",
+     "selected_paid_option"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-07",
+    "status": "insufficient_evidence",
+    "reason": "화면 1과 화면 5에 해지·청약철회 및 보험금 지급 제한 관련 문구가 보이지만, 수집된 evidence만으로 주변 혜택·본문 대비의 정확한 글자 크기 및 대비 기준을 산출하기 어렵다. 접힘 상태, 클릭 뒤 상세 표시 여부, 확인 없이 진행 가능한 상호작용 evidence도 수집되지 않아 deterministic candidate 없이 탐지할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "small_important_text",
+     "low_contrast_important_text",
+     "hidden_important_details"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-12",
+    "status": "not_detected",
+    "reason": "전체 화면에서 거절 시 혜택을 잃는다는 표현이나 비용·위험·의무를 축소하는 표현은 확인되지 않았다. 화면 5의 ‘가입하지 않기’는 손실 프레이밍이 아닌 중립적인 거절 행동으로 표시되며, 화면 2와 3의 유료 옵션도 항목명과 추가 금액이 함께 제시된다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "loss_framed_decline",
+     "trivializing_expression"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-15",
+    "status": "not_detected",
+    "reason": "화면 1은 월 9,900~12,900원의 범위를 표시하고 부가서비스에 따라 최종 보험료가 달라질 수 있음을 사전 고지한다. 화면 2와 3의 추가 비용은 각각 +1,200원, +3,000원, +1,500원으로 선택 항목 옆에 공개되어 있고, 화면 4의 최종 합계는 월 9,900원으로 화면 1의 최저 표시값과 동일하다. 동일 상품의 후반 필수 비용 증가나 초기에 공개되지 않은 필수 수수료는 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "late_mandatory_cost",
+     "rate_deterioration"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "candidate_id": "DA-03:screen-05:button-vibrtf",
+   "rule_id": "DA-03",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-vibrtf",
+   "related_element_ids": [
+    "button-2w0xzv"
+   ],
+   "triggered_checks": [
+    "DA-03.area_ratio",
+    "DA-03.color_prominence_gap"
+   ],
+   "measurements": {
+    "area_ratio": 2.23,
+    "threshold": 1.5,
+    "accept_contrast": 6.63,
+    "decline_contrast": 1.88,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-vibrtf",
+      "text": "가입 완료하기",
+      "bbox": [
+       0.3434,
+       0.9064,
+       0.6105,
+       0.0628
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-2w0xzv",
+      "text": "가입하지 않기",
+      "bbox": [
+       0.0462,
+       0.9064,
+       0.2742,
+       0.0628
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-04:screen-02:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-02",
+   "screen_index": 2,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "상해입원의료비 필수 가입 항목 포함",
+    "has_additional_cost": false,
+    "evidence": [
+     {
+      "screen_id": "screen-02",
+      "state_id": "screen-02",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.376,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

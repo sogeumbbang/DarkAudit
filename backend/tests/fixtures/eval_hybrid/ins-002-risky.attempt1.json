@@ -1,0 +1,247 @@
+{
+ "flow_id": "ins-002-risky",
+ "screen_ids": [
+  "screen-01",
+  "screen-02",
+  "screen-03",
+  "screen-04",
+  "screen-05"
+ ],
+ "model": "gpt-5.6-luna",
+ "note": "capture of first/second schema attempt; candidate_id remapped to production format",
+ "raw": {
+  "audit_id": "ins-002-risky",
+  "schema_version": "1.3",
+  "screens": [
+   {
+    "screen_id": "screen-01",
+    "flow_step": "화면 1"
+   },
+   {
+    "screen_id": "screen-02",
+    "flow_step": "화면 2"
+   },
+   {
+    "screen_id": "screen-03",
+    "flow_step": "화면 3"
+   },
+   {
+    "screen_id": "screen-04",
+    "flow_step": "화면 4"
+   },
+   {
+    "screen_id": "screen-05",
+    "flow_step": "화면 5"
+   }
+  ],
+  "candidate_decisions": [
+   {
+    "candidate_id": "DA-03:screen-05:button-vibrtf",
+    "decision": "KEEP",
+    "reason": "화면 5에서 사업자에게 유리한 가입 완료 버튼은 짙은 파란색의 큰 CTA로 표시되고, 반대 선택지인 '가입하지 않기'는 작고 연한 텍스트로 배치되어 있다. 후보 측정값도 면적비 2.23, 수락 선택지 대비 높은 대비 6.63, 거절 선택지 대비 낮은 대비 1.88로 시각적 비대칭을 뒷받침한다. 두 요소는 가입 완료와 가입 거절이라는 실제 대립 선택지이다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-04:screen-02:div-t8ahig",
+    "decision": "REJECT",
+    "reason": "화면 2의 '상해입원의료비'는 체크 상태로 보이지만 '필수 가입 항목'으로 명시되어 있고 추가 비용이 없다. 입력 정책상 필수 항목은 사업자에게 유리한 선택사항의 사전선택에서 제외되므로 DA-04 후보로 확정하지 않는다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   }
+  ],
+  "semantic_findings": [],
+  "rule_assessments": [
+   {
+    "rule_id": "DA-03",
+    "status": "detected",
+    "reason": "화면 5의 '가입 완료하기'와 '가입하지 않기'는 실제 opposing choices이다. 전자는 큰 파란색 버튼으로 강조되고 후자는 연한 텍스트로 표시되며, 제공된 후보 측정값은 면적비 2.23과 대비 차이를 보여 잘못된 계층구조를 뒷받침한다. 화면에 표시된 상태만 검토했으며 사용자 클릭 이력은 확인할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "visual_hierarchy"
+    ],
+    "choice_pairs": [
+     {
+      "screen_id": "screen-05",
+      "accept_text": "가입 완료하기",
+      "decline_text": "가입하지 않기",
+      "decline_is_action": true,
+      "pair_kind": "opposing_choices"
+     }
+    ],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-04",
+    "status": "not_detected",
+    "reason": "제공된 유일한 DA-04 후보는 화면 2의 '상해입원의료비' 체크 상태였으나 필수 가입 항목으로 명시되어 있어 REJECT했다. 화면 2의 선택 가능한 '비급여 도수치료'는 미선택 상태이고, 화면 3의 부가서비스도 체크박스가 미선택 상태다. 선택 동의, 긍정 답변, 프리미엄 플랜 또는 유료 옵션이 기본 선택된 추가 근거는 관찰되지 않았다. 정지 화면이므로 최초 렌더링 이력 자체는 확인할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "default_checked",
+     "default_affirmative_answer",
+     "optional_consent_prechecked",
+     "premium_option_default",
+     "selected_paid_option"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-07",
+    "status": "insufficient_evidence",
+    "reason": "화면 1과 화면 5에는 중도 해지 시 환급금이 납입 보험료보다 적거나 없을 수 있다는 위험 및 청약철회·보험금 지급 제한 문구가 보이지만, 해당 문구의 computed style, 주변 혜택 대비 실제 글자 크기·대비 계산, 접힘 상태, 다음 단계 진행 조건에 대한 결정적 후보 evidence가 제공되지 않았다. 따라서 중요 정보가 작은 글씨·저대비·접힘으로 숨겨졌다고 확정할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "small_important_text",
+     "low_contrast_important_text",
+     "hidden_important_details"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-12",
+    "status": "not_detected",
+    "reason": "전체 화면에서 '포기', '손해', '후회', '놓치다'와 같은 거절 손실 프레이밍이나 유료·위험 의무를 가볍게 표현하는 명확한 문구는 관찰되지 않았다. 화면 5의 '가입하지 않기'는 중립적인 거절 라벨이지만 DA-03의 시각적 비대칭과는 별개의 감정적 언어 근거가 없다. OCR 일부가 불명확한 부분은 해당 규칙의 탐지 근거로 사용하지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "loss_framed_decline",
+     "trivializing_expression"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-15",
+    "status": "insufficient_evidence",
+    "reason": "화면 1에는 월 9,900~12,900원 범위와 선택 특약·부가서비스에 따라 최종 보험료가 달라질 수 있다는 사전 고지가 있고, 화면 4에는 월 9,900원이 표시된다. 화면 2와 3의 추가금은 각각 선택 가능한 항목으로 표시되어 사용자 선택으로 설명될 수 있다. 그러나 입력 모드에서 DA-15의 deterministic candidate가 제공되지 않았고, 동일 상품의 필수 비용 항목에 대한 초기·최종 금액 및 후반 필수 수수료의 시간상 증가를 확정할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "late_mandatory_cost",
+     "rate_deterioration"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "candidate_id": "DA-03:screen-05:button-vibrtf",
+   "rule_id": "DA-03",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-vibrtf",
+   "related_element_ids": [
+    "button-2w0xzv"
+   ],
+   "triggered_checks": [
+    "DA-03.area_ratio",
+    "DA-03.color_prominence_gap"
+   ],
+   "measurements": {
+    "area_ratio": 2.23,
+    "threshold": 1.5,
+    "accept_contrast": 6.63,
+    "decline_contrast": 1.88,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-vibrtf",
+      "text": "가입 완료하기",
+      "bbox": [
+       0.3434,
+       0.9064,
+       0.6105,
+       0.0628
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-2w0xzv",
+      "text": "가입하지 않기",
+      "bbox": [
+       0.0462,
+       0.9064,
+       0.2742,
+       0.0628
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-04:screen-02:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-02",
+   "screen_index": 2,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "상해입원의료비 필수 가입 항목 포함",
+    "has_additional_cost": false,
+    "evidence": [
+     {
+      "screen_id": "screen-02",
+      "state_id": "screen-02",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.376,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

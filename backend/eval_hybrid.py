@@ -32,9 +32,8 @@ for _path in (_REPO_ROOT, _REPO_ROOT / "backend"):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-from app.rule_engine import checks  # noqa: E402,F401  — 데코레이터 등록을 위해 필요
-from app.rule_engine.core import RuleBase, load_flow, run
-from app.rule_engine.severity import drop_incomplete, merge, score
+from ai.browser.models import CaptureArtifact  # noqa: E402
+from ai.pipeline.rule_candidates import candidate_payload, run_artifact_rules  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 SYNTHETIC = REPO / "data" / "synthetic"
@@ -55,44 +54,58 @@ def load_env() -> None:
             os.environ.setdefault(key.strip(), value.strip())
 
 
-def candidates_for(flow_id: str) -> tuple[list[dict], dict[str, dict]]:
-    """Rule Engine 을 돌려 후보와 요소 사전을 만든다."""
-    doc = json.loads((UI / f"{flow_id}.json").read_text(encoding="utf-8"))
-    flow = load_flow(doc)
-    rule_base = RuleBase()
-    findings = score(drop_incomplete(merge(run(flow, rule_base, only=TARGET), rule_base), rule_base), rule_base)
+def candidates_from_ui(flow_id: str, doc: dict) -> tuple[list[dict], dict[tuple[int, str], dict]]:
+    """
+    extract_ui.py 가 만든 UI JSON 에서 후보와 요소 사전을 만든다.
 
-    elements: dict[str, dict] = {}
-    for screen in flow.screens:
-        for element in screen.elements:
-            elements[element.element_id] = {
-                "screen_index": screen.screen_index,
-                "bbox": list(element.bbox),
+    후보는 운영 경로(URL 감사)와 같은 run_artifact_rules / candidate_payload 로 만든다.
+    증거 계약(assessment_contract)은 후보의 measurements.evidence 와 모델 답변을
+    대조하므로, 이 필드가 비면 DA-03·DA-15 KEEP 은 항상 계약에서 탈락한다.
+    """
+    indices, artifacts = [], []
+    for screen in doc["screens"]:
+        index = screen["screen_index"]
+        screen_id = f"screen-{index:02d}"
+        viewport = screen.get("viewport") or {}
+        indices.append(index)
+        artifacts.append(CaptureArtifact(
+            screen_id=screen_id,
+            flow_step=f"화면 {index}",
+            profile="mobile",
+            url="",
+            title="",
+            image_path=SHOTS / flow_id / f"{index:02d}.png",
+            viewport_width=viewport.get("width", 0),
+            viewport_height=viewport.get("height", 0),
+            dom_elements=tuple(screen["elements"]),
+            state_id=screen_id,
+        ))
+
+    # primary 요소가 없는 후보는 평가 대상에서 뺀다(이전 평가와 같은 기준).
+    findings = [f for f in run_artifact_rules(flow_id, indices, tuple(artifacts)) if f.primary_id]
+    payload = candidate_payload(findings, indices, tuple(artifacts))
+    for candidate in payload:
+        # 같은 요소가 여러 화면에 반복되면 같은 체크가 두 번 기록된다. 스키마는 유일성을 요구한다.
+        candidate["triggered_checks"] = list(dict.fromkeys(candidate["triggered_checks"]))
+
+    # 같은 element_id 가 여러 화면에 나오므로(예: 반복 노출되는 동의 문구) 화면까지 키에 넣는다.
+    elements: dict[tuple[int, str], dict] = {}
+    for screen in doc["screens"]:
+        for element in screen["elements"]:
+            elements[(screen["screen_index"], element["element_id"])] = {
+                "screen_index": screen["screen_index"],
+                "bbox": list(element["bbox"]),
             }
-
-    payload = []
-    for index, finding in enumerate(findings):
-        if finding.rule_id not in TARGET or not finding.primary_id:
-            continue
-        primary = elements.get(finding.primary_id)
-        payload.append({
-            # 같은 규칙·요소 조합이 두 번 나오는 경우가 있다. 스키마가 candidate_id
-            # 유일성을 요구하므로 순번을 붙여 구분한다.
-            "candidate_id": f"{finding.rule_id}:{finding.primary_id}:{index}",
-            "rule_id": finding.rule_id,
-            "screen_id": f"screen-{(primary or {}).get('screen_index', 1):02d}",
-            "screen_index": (primary or {}).get("screen_index", 1),
-            "primary_element_id": finding.primary_id,
-            # 같은 체크가 두 번 기록되는 경우가 있는데 스키마는 유일성을 요구한다.
-            # 평가 목적상 중복은 의미가 없으므로 여기서 접는다.
-            "triggered_checks": sorted(set(finding.triggered_checks or [])),
-            "measurements": dict(finding.measurements or {}),
-            "related_element_ids": list(finding.related_ids or []),
-        })
     return payload, elements
 
 
-def to_detections(output, candidates: list[dict], elements: dict[str, dict]) -> list[dict]:
+def candidates_for(flow_id: str) -> tuple[list[dict], dict[tuple[int, str], dict]]:
+    """Rule Engine 을 돌려 후보와 요소 사전을 만든다."""
+    doc = json.loads((UI / f"{flow_id}.json").read_text(encoding="utf-8"))
+    return candidates_from_ui(flow_id, doc)
+
+
+def to_detections(output, candidates: list[dict], elements: dict[tuple[int, str], dict]) -> list[dict]:
     """
     하이브리드 출력을 평가기가 아는 detections 형태로 옮긴다.
 
@@ -108,7 +121,7 @@ def to_detections(output, candidates: list[dict], elements: dict[str, dict]) -> 
         candidate = by_id.get(decision.candidate_id)
         if candidate is None:
             continue
-        element = elements.get(candidate["primary_element_id"]) or {}
+        element = elements.get((candidate["screen_index"], candidate["primary_element_id"])) or {}
         detections.append({
             "rule_id": candidate["rule_id"],
             "bbox": element.get("bbox") or [0.0, 0.0, 0.0, 0.0],
