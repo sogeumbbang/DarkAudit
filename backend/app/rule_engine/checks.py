@@ -32,12 +32,33 @@ _TRIVIALIZE = ["체험", "가볍게", "부담없이", "잠깐"]
 _DECLINE_HINT = ["않기", "안함", "취소", "나가기", "다음에", "거절", "포기", "닫기"]
 
 
+# 위아래로 쌓인 선택지(모바일 CTA 배치)를 쌍으로 볼 때의 기준
+_STACK_MIN_OVERLAP = 0.8   # 가로 겹침 / 더 좁은 버튼 너비
+_STACK_MAX_GAP = 0.05      # 수락 버튼 아래쪽 ~ 거절 버튼 위쪽 간격(화면 높이 비율)
+
+
+def _is_stacked_below(accept: Element, decline: Element) -> bool:
+    """거절 버튼이 수락 버튼 바로 아래에 더 작게 쌓여 있는가."""
+    ax, ay, aw, ah = accept.bbox
+    dx, dy, dw, dh = decline.bbox
+    narrower = min(aw, dw)
+    if narrower <= 0:
+        return False
+    overlap = max(0.0, min(ax + aw, dx + dw) - max(ax, dx)) / narrower
+    gap = dy - (ay + ah)
+    return (
+        overlap >= _STACK_MIN_OVERLAP
+        and 0 <= gap <= _STACK_MAX_GAP
+        and dw * dh < aw * ah
+    )
+
+
 def _pair_of_options(screen: Screen) -> tuple[Element, Element] | None:
     """
     같은 화면에서 대립하는 선택지 쌍(수락 / 거절)을 찾는다.
 
     표현식으로는 쓸 수 없고 코드가 필요한 대표적인 체크다.
-    나란히 배치된 버튼 두 개 중 한쪽 라벨이 거절 의미면 쌍으로 본다.
+    나란히 배치되거나 위아래로 쌓인 버튼 두 개 중 한쪽 라벨이 거절 의미면 쌍으로 본다.
     """
     buttons = [e for e in screen.of_type("button") if e.text]
     if len(buttons) < 2:
@@ -47,8 +68,9 @@ def _pair_of_options(screen: Screen) -> tuple[Element, Element] | None:
         for b in buttons:
             if a is b:
                 continue
-            # 세로 위치가 비슷해야 나란한 선택지다
-            if abs(a.center[1] - b.center[1]) > 0.05:
+            # 나란한 선택지(세로 위치가 비슷)이거나 모바일처럼 수락 아래에 쌓인 선택지여야 한다
+            side_by_side = abs(a.center[1] - b.center[1]) <= 0.05
+            if not (side_by_side or _is_stacked_below(a, b)):
                 continue
             if any(h in (b.text or "") for h in _DECLINE_HINT):
                 return a, b        # a = 수락, b = 거절
