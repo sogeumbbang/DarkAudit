@@ -26,7 +26,7 @@
 DA-15를 KEEP하거나 semantic finding으로 반환할 때 price_comparisons에 product, initial_screen_id,
 final_screen_id, initial_amount, final_amount, unit(KRW/percent_return/percent_cost; 기존 percent는 예적금 수익률과 동일), same_product,
 explained_by_user_choice, initially_disclosed를 기록한다. 같은 상품인지, 비용 증가가 사용자 선택으로 설명되는지,
-초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 사용자 선택으로 설명되는 옵션 금액과 그 외 후반 필수 수수료를 구분한다. 비교하는 필수 비용 항목 자체의 초기/최종 금액과 고지 여부를 확인한다. 예적금 수익률 하락(percent_return), 대출 등 비용 이율 상승(percent_cost)은 모두 불리한 변화다. 방향을 상품 역할 없이 추측하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
+초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 사용자 선택으로 설명되는 옵션 금액과 그 외 후반 필수 수수료를 구분한다. 비교 금액은 필수 비용 기준으로 통일한다: '선택' 표기가 있거나 사용자가 추가한 옵션·특약 금액은 initial_amount/final_amount에 넣지 않는다. 최종 화면의 총액에 선택 항목이 섞여 있으면 선택 항목을 뺀 필수 비용 합계(기본료+필수 수수료)를 final_amount로 쓰고, 화면에 선택 제외 총액이 따로 적혀 있으면 그 값을 쓴다. initial_amount는 초기 화면의 같은 기준 금액이다. product에는 비교한 기준(예: '기본 보험료+필수 계약 관리비')을 적는다. 비교하는 필수 비용 항목 자체의 초기/최종 금액과 고지 여부를 확인한다. 예적금 수익률 하락(percent_return), 대출 등 비용 이율 상승(percent_cost)은 모두 불리한 변화다. 방향을 상품 역할 없이 추측하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
 related_elements에는 초기 가격 근거를 포함한다.
 
 ## 출력 불변식
