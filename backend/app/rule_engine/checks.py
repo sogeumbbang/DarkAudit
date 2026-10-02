@@ -299,6 +299,15 @@ def da15_price(flow: Flow, rb: RuleBase) -> list[Detection]:
     )]
 
 
+def _rate_display(screen: Screen) -> tuple[str, bool] | None:
+    """화면에서 처음 나오는 이율(%) 가격 요소의 문구와 범위 표시 여부."""
+    for e in screen.of_type("price"):
+        if not e.text or "%" not in e.text:
+            continue
+        return e.text, ("~" in e.text or "-" in e.text)
+    return None
+
+
 @flow_check("DA-15", "rate_deterioration_across_screens")
 def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     """
@@ -323,11 +332,22 @@ def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     if last_rate >= first_rate:
         return []
 
+    measurements = {"initial_rate": first_rate, "final_rate": last_rate,
+                    "drop": round(first_rate - last_rate, 2)}
+    # 초기(이율이 처음 표시되는) 화면이 단일 수치인지 범위인지. 원문이 인정한 완화(범위 표시)는
+    # 그 화면에 있을 때만 의미가 있으므로 모델이 사실로 참조하게 넘긴다.
+    shown = _rate_display(next(s for s in flow.screens if s.screen_index == first_idx))
+    if shown:
+        text, is_range = shown
+        measurements.update({
+            "initial_rate_screen_index": first_idx,
+            "initial_rate_text": text,
+            "initial_rate_display": "range" if is_range else "single_point",
+        })
     return [Detection(
         "", "", primary=last_element, related=[first_element],
         screen_indices=[first_idx, last_idx],
-        measurements={"initial_rate": first_rate, "final_rate": last_rate,
-                      "drop": round(first_rate - last_rate, 2)},
+        measurements=measurements,
     )]
 
 
@@ -340,11 +360,12 @@ def da15_single_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     if not flow.screens:
         return []
     first = flow.screens[0]
-    for e in first.of_type("price"):
-        if not e.text or "%" not in e.text:
-            continue
-        if "~" in e.text or "-" in e.text:
-            return []                      # 범위로 표시됨 → 해당 없음
-        return [Detection("", "", primary=e, screen_indices=[first.screen_index],
-                          measurements={"displayed": e.text})]
-    return []
+    shown = _rate_display(first)
+    if shown is None:
+        return []
+    text, is_range = shown
+    if is_range:
+        return []                          # 범위로 표시됨 → 해당 없음
+    element = next(e for e in first.of_type("price") if e.text == text)
+    return [Detection("", "", primary=element, screen_indices=[first.screen_index],
+                      measurements={"displayed": text})]
