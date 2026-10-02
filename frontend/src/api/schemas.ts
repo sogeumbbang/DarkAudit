@@ -123,3 +123,22 @@ export const analysisJobSchema = z.object({
   runId: z.string().nullable().optional(),
   error: z.string().nullable().optional(),
 });
+
+const regressionChangeSchema = z.object({
+  ruleId: z.string(),
+  findingId: z.string().nullable().optional(),
+  before: z.enum(["HIGH", "REVIEW", "LOW"]).nullable().optional(),
+  after: z.enum(["HIGH", "REVIEW", "LOW"]).nullable().optional(),
+});
+
+export const regressionSchema = z.object({
+  auditId: z.string(),
+  fromVersion: z.number().int().positive(),
+  toVersion: z.number().int().positive(),
+  resolved: z.array(regressionChangeSchema),
+  improved: z.array(regressionChangeSchema),
+  persisted: z.array(regressionChangeSchema),
+  new: z.array(regressionChangeSchema),
+  regressed: z.array(regressionChangeSchema),
+  resolvedRatio: z.number().min(0).max(1),
+});

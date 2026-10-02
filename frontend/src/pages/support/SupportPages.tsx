@@ -1,4 +1,4 @@
-import { ArrowRight, ChartNoAxesColumn, Settings, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowRight, Settings, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -10,27 +10,6 @@ import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSumm
 import { useDeleteAudit } from "@/features/audit-dashboard/useDeleteAudit";
 
 export { GuidelinesPage } from "./GuidelinesPage";
-
-export function BenchmarkPage() {
-  return (
-    <div className="mx-auto max-w-4xl">
-      <ChartNoAxesColumn className="text-brand-600" size={30} />
-      <h1 className="font-display mt-4 text-3xl font-bold">비교 분석</h1>
-      <Card className="mt-7 p-7">
-        <h2 className="font-bold">수정 전·후 결과 비교</h2>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          동일 진단에서 화면을 다시 등록하면 회차별 탐지 항목의 해결·유지·재발 여부를 비교할 수
-          있습니다.
-        </p>
-        <Button asChild className="mt-6" variant="outline">
-          <Link to="/app/overview">
-            진단 결과 선택 <ArrowRight size={16} />
-          </Link>
-        </Button>
-      </Card>
-    </div>
-  );
-}
 
 export function SettingsPage() {
   return (

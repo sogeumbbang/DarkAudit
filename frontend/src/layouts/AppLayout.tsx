@@ -1,4 +1,12 @@
-import { BookOpen, ClipboardList, LayoutDashboard, Plus, Menu, X } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  GitCompareArrows,
+  LayoutDashboard,
+  Plus,
+  Menu,
+  X,
+} from "lucide-react";
 import { Fragment, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -10,6 +18,7 @@ const navigation = [
   { label: "대시보드", icon: LayoutDashboard, to: "/app/dashboard", nested: false },
   { label: "새 진단", icon: Plus, to: "/app/audits/new", nested: true },
   { label: "진단 기록", icon: ClipboardList, to: "/app/audits", nested: true },
+  { label: "비교 분석", icon: GitCompareArrows, to: "/app/benchmark", nested: true },
   { label: "검토 기준", icon: BookOpen, to: "/app/guidelines", nested: false },
 ];
 

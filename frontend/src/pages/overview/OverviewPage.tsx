@@ -9,6 +9,7 @@ import {
   MoreVertical,
   RefreshCw,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -24,6 +25,7 @@ import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSumm
 import { ScreenPreview } from "./ScreenPreview";
 import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
+import { ReuploadDialog } from "@/features/regression/ReuploadDialog";
 import { cn } from "@/lib/cn";
 
 import "./overview.css";
@@ -392,6 +394,7 @@ export function OverviewPage() {
   const [showFlow, setShowFlow] = useState(false);
   const flowBackdropPointerDown = useRef(false);
   const [showReport, setShowReport] = useState(false);
+  const [showReupload, setShowReupload] = useState(false);
   const reportButtonRef = useRef<HTMLButtonElement>(null);
   const detailOpen = Boolean(searchParams.get("finding") || searchParams.get("panel"));
 
@@ -621,10 +624,16 @@ export function OverviewPage() {
             <h2 className="font-display text-xl font-bold">{audit.name}</h2>
           </div>
         </div>
-        <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
-          <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowReupload(true)}>
+            <Upload size={16} aria-hidden="true" /> 수정본 다시 올리기
+          </Button>
+          <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
+            <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+          </Button>
+        </div>
       </header>
+      {showReupload && <ReuploadDialog audit={audit} onClose={() => setShowReupload(false)} />}
       {showReport && (
         <AuditReport
           audit={audit}

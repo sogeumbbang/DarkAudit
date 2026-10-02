@@ -2,6 +2,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { chatbotHandlers } from "@/features/chatbot/mocks";
 import { dashboardFixture } from "@/mocks/fixtures/dashboard";
+import { regressionFixture } from "@/mocks/fixtures/regression";
 import type {
   AnalysisJobDto,
   CreateAuditDto,
@@ -10,6 +11,8 @@ import type {
 } from "@/entities/audit/types";
 
 const jobs = new Map<string, AnalysisJobDto>();
+// 이미 결과가 있는 진단에 화면을 다시 올린 진단 id (두 번째 회차가 생긴 것으로 본다).
+const reuploaded = new Set<string>();
 
 export const handlers = [
   ...chatbotHandlers,
@@ -73,6 +76,7 @@ export const handlers = [
   http.post("*/api/v1/audits/:auditId/screens", async ({ params, request }) => {
     const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
     if (!audit) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    if (audit.findings.length > 0) reuploaded.add(audit.id);
     const encodedMetadata = request.headers.get("X-DarkAudit-Screen-Metadata") ?? "%5B%5D";
     const metadata = JSON.parse(decodeURIComponent(encodedMetadata)) as Array<{
       id: string;
@@ -89,6 +93,17 @@ export const handlers = [
       findingCount: 0,
     }));
     return HttpResponse.json(audit);
+  }),
+  http.get("*/api/v1/audits/:auditId/regression", ({ params }) => {
+    const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
+    if (!audit) return HttpResponse.json({ detail: "Audit not found" }, { status: 404 });
+    if (!reuploaded.has(audit.id) && (audit.runs?.length ?? 0) < 2) {
+      return HttpResponse.json(
+        { detail: "비교할 이전 회차가 없습니다. 재진단 후 다시 시도해주세요." },
+        { status: 409 },
+      );
+    }
+    return HttpResponse.json({ ...regressionFixture, auditId: audit.id });
   }),
   http.post("*/api/v1/audits/:auditId/analyze", async ({ params }) => {
     const auditId = String(params.auditId);

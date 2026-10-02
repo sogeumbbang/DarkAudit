@@ -145,3 +145,22 @@ export type AnalysisJobDto = {
   runId?: string | null;
   error?: string | null;
 };
+
+export type RegressionChangeDto = {
+  ruleId: string;
+  findingId?: string | null;
+  before?: FindingSeverity | null;
+  after?: FindingSeverity | null;
+};
+
+export type RegressionDto = {
+  auditId: string;
+  fromVersion: number;
+  toVersion: number;
+  resolved: RegressionChangeDto[];
+  improved: RegressionChangeDto[];
+  persisted: RegressionChangeDto[];
+  new: RegressionChangeDto[];
+  regressed: RegressionChangeDto[];
+  resolvedRatio: number;
+};

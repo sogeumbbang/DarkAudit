@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
       {
         path: "benchmark",
         lazy: async () => ({
-          Component: (await import("@/pages/support/SupportPages")).BenchmarkPage,
+          Component: (await import("@/pages/regression/RegressionPage")).RegressionPage,
         }),
       },
       {

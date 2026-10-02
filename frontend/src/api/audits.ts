@@ -1,5 +1,5 @@
 import { apiRequest, warmUpApi } from "@/api/client";
-import { analysisJobSchema, auditSchema } from "@/api/schemas";
+import { analysisJobSchema, auditSchema, regressionSchema } from "@/api/schemas";
 import type {
   AnalyzeAndroidAppDto,
   AuditDto,
@@ -107,4 +107,9 @@ export function saveFindingDecision(findingId: string, decisionNote: string) {
     `/api/v1/findings/${findingId}/decision`,
     { method: "PUT", body: JSON.stringify({ decisionNote }) },
   );
+}
+
+/** 마지막 두 완료 회차를 비교한다. 이전 회차가 없으면 409(ApiError)가 난다. */
+export async function getRegression(auditId: string) {
+  return regressionSchema.parse(await apiRequest<unknown>(`/api/v1/audits/${auditId}/regression`));
 }
