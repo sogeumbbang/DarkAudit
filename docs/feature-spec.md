@@ -128,9 +128,9 @@ cd frontend && npm install && npm run dev                       # 프론트 (517
 | F-18 | 규칙별 상태 4종 | 결과 | ● | **완료** | `assessment_contract.py`, `quality.py` |
 | F-19 | 화면 위 위험 위치 표시 | 결과 | ● | 부분 구현('위치 미검증' 없음) | `ai/vision/`, `ScreenCanvas.tsx` |
 | F-20 | 개선안 생성 | 결과 | ● | 부분 구현 | `Detection.fix`, `suggestion.py` |
-| F-21 | 수정본 Before/After | 재검증 | ● | 부분 구현(API만) | `regression.py`, `main.py:134` |
+| F-21 | 수정본 Before/After | 재검증 | ● | **완료**(브랜치 `feat/regression-ui`, 상세 `docs/regression-demo.md`) | `regression.py`, `main.py:134`, `features/regression/`, `pages/regression/` |
 | F-22 | fingerprint 판정(재발 포함) | 재검증 | ● | **완료**(재발 테스트 없음) | `fingerprint.py`, `regression.py` |
-| F-23 | Resolved Finding Ratio | 재검증 | ● | 부분 구현(UI 없음) | `regression.py:55-62` |
+| F-23 | Resolved Finding Ratio | 재검증 | ● | **완료**(비교 카드에 표시, `feat/regression-ui`) | `regression.py:55-62`, `RegressionCard.tsx` |
 | F-24 | Synthetic Financial UI Dataset | 데이터·평가 | ● | 부분 구현(보험·예적금만) | `data/generator/` |
 | F-25 | Counterfactual Pair | 데이터·평가 | ● | **완료** | `data/generator/configs`, `evaluator.py` |
 | F-26 | Precision/Recall/Macro F1/FPR | 데이터·평가 | ● | 부분 구현(FPR 없음) | `ai/evaluation/metrics.py` |
@@ -142,7 +142,7 @@ cd frontend && npm install && npm run dev                       # 프론트 (517
 | F-32 | 배포(Render/Vercel) | 서비스 | ● | **완료**(설정 기준) | `render.yaml`, `vercel.json` |
 | F-33 | 장기 확장(Figma·E2E·CI/CD) | 서비스 | ● | 부분 구현 | 아래 F-33 |
 
-**집계: 33개 중 완료 13 / 부분 구현 18 / 미구현 2 / 목업만 존재 0.**
+**집계: 33개 중 완료 13 / 부분 구현 18 / 미구현 2 / 목업만 존재 0.** (브랜치 `feat/regression-ui` 반영 시 F-21·F-23이 완료로 바뀌어 **완료 15 / 부분 구현 16**)
 (완료 = F-01,02,03,04,09,11,13,18,22,25,27,29,32. 미구현 = F-28, F-31.)
 
 ### 추가 구현 (기획서에 없거나 초안 이후 생긴 기능)
@@ -384,7 +384,7 @@ cd frontend && npm install && npm run dev                       # 프론트 (517
 | --- | --- | --- | --- | --- |
 | 1 | DA-13 활성화·DA-14 신규(MVP 우선인데 미탐지) | 기획서 MVP 7종 중 3종 누락. DA-13은 체크가 이미 있어 제외 해제+평가 정렬 | DA-13 S, DA-14 M | `rule_candidates.py:10,46`, `audit_schema.py:57-63`, `assessment_contract.py`, `dark_pattern_rules.yaml` |
 | 2 | ~~하이브리드 DA-03/DA-15 재현율 0 개선~~ → **평가 스크립트 결함으로 확인·수정(브랜치 `fix/da03-da15-contract`)**. 수정 후 DA-03 R 1.00 / DA-15 R 0.89, 상세는 `docs/eval-results.md` §8. 남은 과제: DA-03 clean 오탐(6%), 운영 `candidate_payload` 중복 처리 | S | `backend/eval_hybrid.py`, `ai/pipeline/rule_candidates.py` |
-| 3 | 프론트 Before/After + Resolved Ratio 화면 | 재검증이 핵심 가치인데 API만 있음 | M | `frontend/src/api/audits.ts`, `AuditReport.tsx`, `main.py:134` |
+| 3 | ~~프론트 Before/After + Resolved Ratio 화면~~ → **완료(`feat/regression-ui`)** | 재업로드 모달·비교 카드·메뉴 연결, `docs/regression-demo.md` | M | `frontend/src/api/audits.ts`, `AuditReport.tsx`, `main.py:134` |
 | 4 | 외부 모델 전송 고지/동의 + 최소 마스킹 | 금융 화면 외부 전송 정책 부재(F-31) | M | `openai_provider.py`, `AuditCreatePage.tsx` |
 | 5 | FPR 지표 추가 + 기획서 수치 갱신 | 기획서 7-2 수치가 현재 JSON과 불일치, FPR 목표 지표 미산출 | S | `ai/evaluation/evaluator.py`, 기획서 §7-2 |
 

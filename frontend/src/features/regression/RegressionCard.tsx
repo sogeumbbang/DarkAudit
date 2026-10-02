@@ -32,6 +32,18 @@ function severityText(change: RegressionChangeDto) {
   return before ?? after ?? "";
 }
 
+/** 같은 규칙·같은 위험도 변화의 항목은 한 줄로 묶어 개수를 붙인다(모델이 같은 문제를 여러 건으로 낸 경우). */
+function groupChanges(changes: RegressionChangeDto[]) {
+  const groups = new Map<string, { change: RegressionChangeDto; count: number }>();
+  for (const change of changes) {
+    const key = `${change.ruleId}|${change.before ?? ""}|${change.after ?? ""}`;
+    const group = groups.get(key);
+    if (group) group.count += 1;
+    else groups.set(key, { change, count: 1 });
+  }
+  return [...groups.values()];
+}
+
 export function RegressionCard({ regression }: { regression: RegressionDto }) {
   const [selected, setSelected] = useState<Category | null>(null);
   const comparable =
@@ -110,14 +122,15 @@ export function RegressionCard({ regression }: { regression: RegressionDto }) {
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-border rounded-control border border-border">
-              {items.map((change, index) => (
+              {groupChanges(items).map(({ change, count }, index) => (
                 <li
                   className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-                  key={`${change.ruleId}-${change.findingId ?? index}`}
+                  key={`${change.ruleId}-${severityText(change)}-${index}`}
                 >
                   <span>
                     <span className="font-semibold">{change.ruleId}</span>{" "}
                     <span className="text-muted">{ruleTitle(change.ruleId)}</span>
+                    {count > 1 && <span className="ml-1 text-xs text-muted">× {count}</span>}
                   </span>
                   <span className="text-xs text-muted">{severityText(change)}</span>
                 </li>
