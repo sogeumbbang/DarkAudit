@@ -55,10 +55,12 @@ class TesseractOCR:
         command: str | None = None,
         languages: str | None = None,
         timeout_seconds: float = 20,
+        psm: int = 11,
     ) -> None:
         self.command = command or os.getenv("DARKAUDIT_TESSERACT_COMMAND", "tesseract")
         self.languages = languages or os.getenv("DARKAUDIT_TESSERACT_LANG", "kor+eng")
         self.timeout_seconds = timeout_seconds
+        self.psm = psm
 
     def extract(self, image_path: Path) -> OCRResult:
         path = Path(image_path)
@@ -77,7 +79,7 @@ class TesseractOCR:
                     "-l",
                     self.languages,
                     "--psm",
-                    "11",
+                    str(self.psm),
                     "tsv",
                 ],
                 check=False,

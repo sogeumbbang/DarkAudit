@@ -107,7 +107,12 @@ def candidates_for(flow_id: str) -> tuple[list[dict], dict[tuple[int, str], dict
     return candidates_from_ui(flow_id, doc)
 
 
-def to_detections(output, candidates: list[dict], elements: dict[tuple[int, str], dict]) -> list[dict]:
+def to_detections(
+    output,
+    candidates: list[dict],
+    elements: dict[tuple[int, str], dict],
+    localizations: list[dict] | None = None,
+) -> list[dict]:
     """
     하이브리드 출력을 평가기가 아는 detections 형태로 옮긴다.
 
@@ -133,12 +138,30 @@ def to_detections(output, candidates: list[dict], elements: dict[tuple[int, str]
         })
 
     for finding in output.semantic_findings:
-        detections.append({
+        # DA-07·DA-12 는 근거 문장으로 위치를 다시 찾는다. 어느 경로를 탔는지 남겨 둔다.
+        localization = next(
+            (
+                item
+                for item in (localizations or [])
+                if item.get("rule_id") == finding.rule_id
+                and item.get("screen_id") == finding.where.screen_ids[-1]
+                and item.get("role") == "primary"
+                and item.get("grounding_method")
+            ),
+            {},
+        )
+        method = localization.get("grounding_method")
+        detection = {
             "rule_id": finding.rule_id,
             "bbox": list(finding.bbox),
             "where": {"screen_ids": list(finding.where.screen_ids)},
             "source": "llm_semantic",
-        })
+        }
+        if method:
+            detection["grounding_method"] = method
+            # 보정 전 모델 좌표도 남겨 같은 표본에서 전후를 비교할 수 있게 한다.
+            detection["model_bbox"] = localization.get("model_bbox")
+        detections.append(detection)
     return detections
 
 
@@ -160,7 +183,9 @@ def analyze_flow(flow_id: str, pipeline, visual: bool = False) -> dict:
     telemetry["candidate_count"] = len(candidates)
     return {
         "flow_id": flow_id,
-        "output": {"detections": to_detections(output, candidates, elements)},
+        "output": {"detections": to_detections(
+            output, candidates, elements, telemetry.get("bbox_localizations")
+        )},
         "telemetry": telemetry,
     }
 

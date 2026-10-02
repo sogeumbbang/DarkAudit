@@ -20,6 +20,13 @@ from ai.vision.candidate_grounding import (
     ground_text_bbox,
 )
 from ai.vision.ocr import OCRProvider, create_ocr_provider
+from ai.vision.text_grounding import (
+    TEXT_GROUNDING_RULE_IDS,
+    TextGroundingConfig,
+    extract_text_anchors,
+    finding_quotes,
+    ground_text_finding,
+)
 from .assessment_contract import EvidenceContractError, _label_matches
 from .response_parser import drop_disallowed_semantic_findings, parse_hybrid_response
 
@@ -42,6 +49,7 @@ class BaselineAuditPipeline:
             VISUAL_FALLBACK_RULE_IDS if allow_visual_fallback else SEMANTIC_ONLY_RULE_IDS
         )
         self.ocr_provider = ocr_provider or create_ocr_provider()
+        self.text_grounding_config = TextGroundingConfig.from_env()
         self.last_run_telemetry: dict[str, Any] = {}
         self._grounding_usage: list[dict[str, int]] = []
 
@@ -185,7 +193,13 @@ class BaselineAuditPipeline:
         findings = []
         telemetry: list[dict[str, Any]] = []
         anchor_cache: dict[Path, list] = {}
+        text_anchor_cache: dict[Path, list] = {}
         for finding in output.semantic_findings:
+            if finding.rule_id in TEXT_GROUNDING_RULE_IDS:
+                findings.append(self._ground_text_finding(
+                    finding, screens, text_anchor_cache, selector, telemetry,
+                ))
+                continue
             if finding.rule_id not in {"DA-03", "DA-04"}:
                 findings.append(finding)
                 continue
@@ -267,6 +281,61 @@ class BaselineAuditPipeline:
         if tuple(findings) == output.semantic_findings:
             return output, telemetry
         return replace(output, semantic_findings=tuple(findings)), telemetry
+
+    def _ground_text_finding(
+        self,
+        finding,
+        screens: dict[str, Any],
+        anchor_cache: dict[Path, list],
+        selector,
+        telemetry: list[dict[str, Any]],
+    ):
+        """DA-07·DA-12: 모델 좌표 대신 근거 문장으로 위치를 찾는다(OCR 퍼지 매칭 → T 후보 선택 → 모델 좌표)."""
+
+        screen = screens.get(finding.where.screen_ids[-1])
+        if screen is None:
+            return finding
+        if screen.image_path not in anchor_cache:
+            base = [
+                OCRAnchor(e["text"], tuple(e["bbox"]), float(e.get("confidence", 1.0)))
+                for e in screen.evidence if e.get("text") and e.get("bbox")
+            ]
+            anchor_cache[screen.image_path] = extract_text_anchors(
+                screen.image_path, self.ocr_provider, base=base or None
+            )
+        anchors = anchor_cache[screen.image_path]
+        config = self.text_grounding_config
+        result = ground_text_finding(
+            screen.image_path,
+            finding.bbox,
+            quotes=finding_quotes(finding.observation, finding.what, finding.where.element),
+            evidence_text=" | ".join(
+                value.strip() for value in (finding.where.element, finding.observation) if value.strip()
+            ),
+            anchors=anchors,
+            rule_id=finding.rule_id,
+            selector=selector,
+            config=config,
+        )
+        applied = (
+            result.usable
+            and result.confidence >= config.apply_confidence
+            and result.bbox != finding.bbox
+        )
+        telemetry.append({
+            "rule_id": finding.rule_id,
+            "screen_id": screen.screen_id,
+            "role": "primary",
+            "candidate_id": result.candidate_id,
+            "source": result.method,
+            "grounding_method": result.method,
+            "model_bbox": list(finding.bbox),
+            "confidence": result.confidence,
+            "ocr_anchor_count": len(anchors),
+            "applied": applied,
+            "warning": result.warning,
+        })
+        return replace(finding, bbox=result.bbox) if applied else finding
 
     @staticmethod
     def _deduplicate_raw(raw: dict[str, Any]) -> None:

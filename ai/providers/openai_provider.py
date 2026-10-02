@@ -152,14 +152,23 @@ class OpenAIResponsesProvider:
             return None
         rule_id = str(candidates[0].get("rule_id") or "DA-04")
         candidate_kind = str(candidates[0].get("kind") or "compact_control")
-        target_instruction = (
-            "Select the one marked candidate that tightly bounds the prominent filled CTA button. "
-            "Do not select its text alone, a surrounding card, or the weaker counterpart link."
-            if candidate_kind == "prominent_cta"
-            else "Select the one marked candidate that tightly bounds the actual checkbox, radio, "
-            "or toggle showing the selected state. Do not select an option card, text, price, "
-            "badge, or decorative icon."
-        )
+        if candidate_kind == "text_paragraph":
+            target_instruction = (
+                "Select the one marked candidate (T labels) that tightly bounds the text block, "
+                "caption, or button label containing the cited evidence text. Do not select an "
+                "unrelated heading, a neighbouring button, or a block that only shares a few words."
+            )
+        elif candidate_kind == "prominent_cta":
+            target_instruction = (
+                "Select the one marked candidate that tightly bounds the prominent filled CTA button. "
+                "Do not select its text alone, a surrounding card, or the weaker counterpart link."
+            )
+        else:
+            target_instruction = (
+                "Select the one marked candidate that tightly bounds the actual checkbox, radio, "
+                "or toggle showing the selected state. Do not select an option card, text, price, "
+                "badge, or decorative icon."
+            )
         schema = {
             "type": "object",
             "additionalProperties": False,
@@ -182,7 +191,7 @@ class OpenAIResponsesProvider:
                 "You are a GUI grounding verifier. "
                 + target_instruction
                 + " "
-                "Return NONE when no candidate is the control itself. Never calculate coordinates."
+                "Return NONE when no candidate is the target itself. Never calculate coordinates."
             ),
             input=[{
                 "role": "user",
@@ -191,7 +200,7 @@ class OpenAIResponsesProvider:
                         "type": "input_text",
                         "text": (
                             f"Target evidence: {element_text}\n"
-                            "The image is an enlarged crop; red boxes and C labels are candidate regions. "
+                            "The image is an enlarged crop; red boxes and C/T labels are candidate regions. "
                             f"{target_instruction}\n"
                             f"Candidates: {json.dumps(candidates, ensure_ascii=False)}"
                         ),
