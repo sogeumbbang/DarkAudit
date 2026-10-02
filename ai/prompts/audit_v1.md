@@ -19,14 +19,14 @@
 - DA-04: 추가 비용은 필수 조건이 아니다. default_checked(사업자에게 유리한 선택 옵션의 기본 선택), optional_consent_prechecked(선택 개인정보·광고·마케팅 동의), default_affirmative_answer(이해 확인·재투자 등의 '예/찬성'), premium_option_default(상위·고가 플랜)를 각각 확인한다. 자동이체·재투자·부가서비스도 포함한다. 가격이 없는 동의를 제외하지 않는다. selected_paid_option은 유료 옵션에만 쓰는 호환 별칭이다. 필수 동의, 사용자가 직접 선택한 사실이 입력에 명확히 표시된 항목, 사업자 유리성이 확인되지 않는 일반 설정은 제외한다. 정지 화면에서는 현재 선택 상태·선택 항목·사업자 유리성이라는 관찰 근거를 판정하고 최초 선택 이력을 단정하지 않는다. bbox는 전체 카드가 아닌 실제 선택 컨트롤이다.
 - DA-07: 의사결정에 중요한 비용·위험·조건·권리 정보가 작은 글씨(small_important_text), 저대비(low_contrast_important_text), 접힌 상세(hidden_important_details)로 숨겨졌는지 검사한다. 청약철회·해지 안내도 검토한다. 작아도 확대해서 읽을 수 있다는 이유만으로 제외하지 않는다. 주변 혜택·본문 대비 크기와 대비의 비대칭을 평가한다. 청약철회·해지·원금 손실 문구는 footer에 있어도 주요 권리·위험 정보일 수 있다. 단순 저작권·사업자 주소 등 일반 footer는 제외한다. 나중에 가격이 올라간 사실만으로 DA-07을 만들지 않는다.
 - DA-12: loss_framed_decline(거절하면 혜택이 사라진다는 압박, 혜택 포기 표현) 또는 trivializing_expression(비용·위험·의무의 축소). 큰 CTA가 DA-03에 해당해도 주변 문구의 DA-12 검사를 별도로 한다. 독립 발견은 REVIEW이며 다른 규칙과의 결합 판정은 Backend가 한다.
-- DA-15: late_mandatory_cost 또는 rate_deterioration. 같은 상품·단위·기기·실제 사용자 경로의 서로 다른 상태에서 초기와 후반 가격/이율을 비교한다. 같은 페이지의 crop이나 데스크톱/모바일 차이는 시간상 변화가 아니다. 다른 상품, 사용자 선택으로 설명되는 추가금, 초기에 이미 명확하게 공개된 조건은 제외한다. 초기 화면의 '별도 비용' 문구만 있고 추가 항목/총액이 불명확한지와, 실제 수치까지 공개됐는지를 구분한다.
+- DA-15: late_mandatory_cost 또는 rate_deterioration. 같은 상품·단위·기기·실제 사용자 경로의 서로 다른 상태에서 초기와 후반 가격/이율을 비교한다. 같은 페이지의 crop이나 데스크톱/모바일 차이는 시간상 변화가 아니다. 다른 상품, 사용자 선택으로 설명되는 추가금, 초기에 이미 명확하게 공개된 조건은 제외한다. 여기서 초기는 흐름에서 가격·이율이 처음 표시되는 화면이다. 원문이 인정한 완화는 그 초기 화면에서 신용점수·선택사항 등에 따라 비용·수익이 변경될 수 있다는 사실을 고지하거나 최소 이율부터 최고 이율까지 범위로 표시한 경우뿐이다. 둘째 화면 이후에 범위·조건이 공개되는 것은 완화가 아니라 순차 공개로 본다. 후보 measurements의 initial_rate_display가 single_point이면 초기 화면이 단일 수치만 표시한 것이고 range이면 범위를 표시한 것이다(initial_rate_screen_index, initial_rate_text는 그 화면과 문구). 초기 화면의 '별도 비용' 문구만 있고 추가 항목/총액이 불명확한지와, 실제 수치까지 공개됐는지를 구분한다.
 
 ## 가격 근거
 
 DA-15를 KEEP하거나 semantic finding으로 반환할 때 price_comparisons에 product, initial_screen_id,
 final_screen_id, initial_amount, final_amount, unit(KRW/percent_return/percent_cost; 기존 percent는 예적금 수익률과 동일), same_product,
 explained_by_user_choice, initially_disclosed를 기록한다. 같은 상품인지, 비용 증가가 사용자 선택으로 설명되는지,
-초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 사용자 선택으로 설명되는 옵션 금액과 그 외 후반 필수 수수료를 구분한다. 비교하는 필수 비용 항목 자체의 초기/최종 금액과 고지 여부를 확인한다. 예적금 수익률 하락(percent_return), 대출 등 비용 이율 상승(percent_cost)은 모두 불리한 변화다. 방향을 상품 역할 없이 추측하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
+초기에 고지됐는지 확인할 근거가 부족하면 insufficient_evidence로 분류한다. 사용자 선택으로 설명되는 옵션 금액과 그 외 후반 필수 수수료를 구분한다. 비교 금액은 필수 비용 기준으로 통일한다: '선택' 표기가 있거나 사용자가 추가한 옵션·특약 금액은 initial_amount/final_amount에 넣지 않는다. 최종 화면의 총액에 선택 항목이 섞여 있으면 선택 항목을 뺀 필수 비용 합계(기본료+필수 수수료)를 final_amount로 쓰고, 화면에 선택 제외 총액이 따로 적혀 있으면 그 값을 쓴다. initial_amount는 초기 화면의 같은 기준 금액이다. product에는 비교한 기준(예: '기본 보험료+필수 계약 관리비')을 적는다. 비교하는 필수 비용 항목 자체의 초기/최종 금액과 고지 여부를 확인한다. 예적금 수익률 하락(percent_return), 대출 등 비용 이율 상승(percent_cost)은 모두 불리한 변화다. 방향을 상품 역할 없이 추측하지 않는다. where.screen_ids는 초기→최종 순서이며 bbox는 최종 가격,
 related_elements에는 초기 가격 근거를 포함한다.
 
 ## 출력 불변식

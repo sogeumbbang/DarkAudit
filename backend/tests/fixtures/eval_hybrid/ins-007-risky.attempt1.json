@@ -1,0 +1,250 @@
+{
+ "flow_id": "ins-007-risky",
+ "screen_ids": [
+  "screen-01",
+  "screen-02",
+  "screen-03",
+  "screen-04",
+  "screen-05"
+ ],
+ "model": "gpt-5.6-luna",
+ "note": "capture of first/second schema attempt; candidate_id remapped to production format",
+ "raw": {
+  "audit_id": "ins-007-risky",
+  "schema_version": "1.3",
+  "screens": [
+   {
+    "screen_id": "screen-01",
+    "flow_step": "화면 1"
+   },
+   {
+    "screen_id": "screen-02",
+    "flow_step": "화면 2"
+   },
+   {
+    "screen_id": "screen-03",
+    "flow_step": "화면 3"
+   },
+   {
+    "screen_id": "screen-04",
+    "flow_step": "화면 4"
+   },
+   {
+    "screen_id": "screen-05",
+    "flow_step": "화면 5"
+   }
+  ],
+  "candidate_decisions": [
+   {
+    "candidate_id": "DA-04:screen-02:div-t8ahig",
+    "decision": "REJECT",
+    "reason": "화면 2에서 ‘상해입원의료비’는 체크되어 있으나 ‘필수 가입 항목’으로 표시되어 있다. 입력 정책상 필수 항목은 사업자에게 유리한 선택 옵션의 사전선택으로 보지 않으므로 DA-04 근거로 유지하지 않는다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-15:screen-04:div-105k68u",
+    "decision": "KEEP",
+    "reason": "화면 1의 동일 실손의료비 상품 기본 보험료는 월 9,900원으로 표시되고, 화면 4에서 후반부에 계약 관리비 3,000원이 추가되어 합계 월 12,900원으로 표시된다. 화면 3의 선택형 부가서비스는 체크되지 않았고, 화면 4의 3,000원은 별도 계약 관리비로 표시되어 사용자 선택으로 설명되지 않는다. 화면 1에는 계약 관리비 또는 최종 합계가 표시되지 않는다.",
+    "confidence": 0.95,
+    "base_severity": "HIGH"
+   }
+  ],
+  "semantic_findings": [],
+  "rule_assessments": [
+   {
+    "rule_id": "DA-03",
+    "status": "not_detected",
+    "reason": "전체 화면을 검토했으나 선택 동의나 선택형 플랜을 필수처럼 표시한 근거는 확인되지 않았다. 화면 2의 체크된 질병·상해 입원의료비 항목은 모두 ‘필수 가입 항목’으로 명시되어 있어 선택 항목을 필수처럼 표시한 사례로 볼 수 없다. 화면 5의 ‘가입하지 않기’와 ‘가입 완료하기’ 버튼은 시각적 차이가 있으나, 현재 입력 모드에서는 opposing choice에 대한 후보가 없어 새 semantic finding을 생성하지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "visual_hierarchy",
+     "optional_looks_mandatory"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-04",
+    "status": "not_detected",
+    "reason": "전체 화면을 검토했다. 화면 2에서 질병·상해 입원의료비가 선택된 상태로 보이지만 두 항목 모두 ‘필수 가입 항목’으로 표시된다. 화면 3의 유료 부가서비스 두 항목은 체크되지 않은 상태다. 사업자에게 유리한 선택형 옵션, 선택 동의, 긍정 답변 또는 프리미엄 플랜의 사전선택 근거는 확인되지 않았다. 이에 따라 필수 항목을 대상으로 한 후보는 REJECT했다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "default_checked",
+     "default_affirmative_answer",
+     "optional_consent_prechecked",
+     "premium_option_default",
+     "selected_paid_option"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-07",
+    "status": "insufficient_evidence",
+    "reason": "화면 1과 화면 5에서 중도 해지 시 환급금이 납입 보험료보다 적거나 없을 수 있다는 문구, 예금자보호 대상이 아니라는 문구, 청약철회 및 보험금 지급 제한 관련 문구가 혜택·주요 가격 정보보다 작고 옅게 보이는 정황은 관찰된다. 그러나 현재 입력 모드에서는 DA-07 deterministic candidate가 없으므로 해당 요소의 computed style, 정확한 대비·폰트 비교, 접힘 상태 또는 실제 진행 가능성에 대한 확정 근거가 수집되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "small_important_text",
+     "low_contrast_important_text",
+     "hidden_important_details"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-12",
+    "status": "not_detected",
+    "reason": "전체 화면에서 거절 시 혜택을 잃는다는 손실 프레이밍이나 유료·위험·의무를 가볍게 표현하는 문구의 근거를 확인하지 못했다. ‘부가서비스’, ‘안심케어 서비스’ 등의 명칭만으로 trivializing_expression을 단정하지 않았으며, 별도의 loss-framed decline 문구도 관찰되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "loss_framed_decline",
+     "trivializing_expression"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-15",
+    "status": "detected",
+    "reason": "동일한 실손의료비 상품의 실제 순서 화면에서 초기 월 기본 보험료 9,900원(화면 1)이 표시된 뒤, 최종 확인 화면에서 계약 관리비 3,000원이 후반부에 처음 제시되고 합계 월 12,900원(화면 4)으로 증가한다. 화면 3의 선택형 부가서비스는 미선택이며, 최종 증가분은 사용자 선택으로 설명되지 않는다. 화면 1에는 계약 관리비 또는 월 12,900원의 최종 합계가 명확히 공개되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "late_mandatory_cost",
+     "rate_deterioration"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": [
+     {
+      "product": "든든안심 실손의료비 보험",
+      "initial_screen_id": "screen-01",
+      "final_screen_id": "screen-04",
+      "unit": "KRW",
+      "initial_amount": 9900,
+      "final_amount": 12900,
+      "same_product": true,
+      "explained_by_user_choice": false,
+      "initially_disclosed": false
+     }
+    ]
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "candidate_id": "DA-04:screen-02:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-02",
+   "screen_index": 2,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "상해입원의료비 필수 가입 항목 포함",
+    "has_additional_cost": false,
+    "evidence": [
+     {
+      "screen_id": "screen-02",
+      "state_id": "screen-02",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.376,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-15:screen-04:div-105k68u",
+   "rule_id": "DA-15",
+   "screen_id": "screen-04",
+   "screen_index": 4,
+   "primary_element_id": "div-105k68u",
+   "related_element_ids": [
+    "div-1q5hmha"
+   ],
+   "triggered_checks": [
+    "DA-15.price_increase_across_screens"
+   ],
+   "measurements": {
+    "initial": 9900.0,
+    "final": 12900.0,
+    "delta": 3000.0,
+    "evidence": [
+     {
+      "screen_id": "screen-04",
+      "state_id": "screen-04",
+      "element_id": "div-105k68u",
+      "text": "월 12,900원",
+      "bbox": [
+       0.0897,
+       0.2723,
+       0.8205,
+       0.0462
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-01",
+      "state_id": "screen-01",
+      "element_id": "div-1q5hmha",
+      "text": "월 9,900원",
+      "bbox": [
+       0.0897,
+       0.3141,
+       0.8205,
+       0.0462
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

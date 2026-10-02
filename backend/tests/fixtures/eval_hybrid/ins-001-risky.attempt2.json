@@ -1,0 +1,476 @@
+{
+ "flow_id": "ins-001-risky",
+ "screen_ids": [
+  "screen-01",
+  "screen-02",
+  "screen-03",
+  "screen-04",
+  "screen-05"
+ ],
+ "model": "gpt-5.6-luna",
+ "note": "capture of first/second schema attempt; candidate_id remapped to production format",
+ "raw": {
+  "audit_id": "ins-001-risky",
+  "schema_version": "1.3",
+  "screens": [
+   {
+    "screen_id": "screen-01",
+    "flow_step": "화면 1"
+   },
+   {
+    "screen_id": "screen-02",
+    "flow_step": "화면 2"
+   },
+   {
+    "screen_id": "screen-03",
+    "flow_step": "화면 3"
+   },
+   {
+    "screen_id": "screen-04",
+    "flow_step": "화면 4"
+   },
+   {
+    "screen_id": "screen-05",
+    "flow_step": "화면 5"
+   }
+  ],
+  "candidate_decisions": [
+   {
+    "candidate_id": "DA-03:screen-05:button-vibrtf",
+    "decision": "KEEP",
+    "reason": "화면 5에서 사업자에게 유리한 가입 완료 버튼은 짙은 파란색의 큰 버튼으로 표시되고, 실제 반대 행동인 '혜택을 포기하고 나가기'는 작고 연한 텍스트 형태로 화면 하단에 배치되어 있다. 두 요소는 가입 진행과 가입 이탈이라는 실제 대립 행동이다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-04:screen-02:div-t8ahig",
+    "decision": "REJECT",
+    "reason": "후보 메타데이터는 screen-03을 가리키지만, 제공된 screen-03에는 '상해입원의료비 필수 가입 항목 포함'이 표시되지 않는다. 또한 해당 항목은 후보 설명상 필수 가입 항목이므로 선택 가능한 유료 옵션의 사전선택 근거로 사용할 수 없다.",
+    "confidence": 0.99,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-04:screen-03:div-t8ahig",
+    "decision": "KEEP",
+    "reason": "화면 3에서 '+3,000원'의 안심케어 서비스 체크박스가 선택된 상태로 표시된다. 해당 서비스는 필수 항목이 아닌 추가 서비스이고 별도 비용이 표시되어 사업자에게 유리한 유료 옵션의 현재 사전선택 상태가 확인된다.",
+    "confidence": 0.97,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-07:screen-01:div-10r5zg1",
+    "decision": "KEEP",
+    "reason": "화면 1 하단의 '중도 해지 시 환급금이 납입한 보험료보다 적거나 없을 수 있습니다'라는 중요한 불이익 정보가 본문과 비교해 작은 글씨와 낮은 대비로 표시되어 있다. 후보 측정값은 font_size_ratio 0.68, contrast_ratio 1.56이다.",
+    "confidence": 0.96,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-07:screen-05:div-160xdz7",
+    "decision": "KEEP",
+    "reason": "화면 5 하단의 '청약 후 15일 이내 청약철회가 가능하며, 보험금 지급사유 발생 시 약관에 따라 지급이 제한될 수 있습니다'라는 권리·제한 정보가 주요 가입 내용보다 작고 흐리게 표시되어 있다. 후보 측정값은 font_size_ratio 0.68, contrast_ratio 1.56이다.",
+    "confidence": 0.96,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-12:screen-05:button-15eznqn",
+    "decision": "KEEP",
+    "reason": "화면 5의 실제 가입 이탈 행동 버튼이 '혜택을 포기하고 나가기'로 표시되어 거절을 혜택 상실로 프레이밍한다. 이는 단순한 감정 어휘 매칭을 넘어 가입 완료와 대립하는 실제 거절 행동에 연결되어 있다.",
+    "confidence": 0.96,
+    "base_severity": "REVIEW"
+   },
+   {
+    "candidate_id": "DA-15:screen-04:div-11kp1ff",
+    "decision": "KEEP",
+    "reason": "같은 보험상품의 흐름에서 화면 1에는 기본 보험료 월 9,900원이 표시되고 화면 4에서는 후반에 최초 등장한 '계약 관리비' 월 3,000원이 추가되어 최종 합계가 월 15,900원이 된다. 안심케어 서비스 3,000원은 화면 3에서 사용자가 선택한 항목이지만 계약 관리비는 별도 후반 비용으로 사용자 선택으로 설명되지 않는다.",
+    "confidence": 0.94,
+    "base_severity": "HIGH"
+   }
+  ],
+  "semantic_findings": [],
+  "rule_assessments": [
+   {
+    "rule_id": "DA-03",
+    "status": "detected",
+    "reason": "화면 5에서 실제 opposing actions인 '가입 완료하기'와 '혜택을 포기하고 나가기'를 확인했다. 가입 완료 행동은 큰 파란색 버튼으로 강조되고, 이탈 행동은 작고 연한 텍스트로 표시되어 시각적 계층구조가 비대칭적이다. 다만 화면 5 외의 다른 가입유형·플랜 대안은 제공된 화면에서 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "visual_hierarchy"
+    ],
+    "choice_pairs": [
+     {
+      "screen_id": "screen-05",
+      "accept_text": "가입 완료하기",
+      "decline_text": "혜택을 포기하고 나가기",
+      "decline_is_action": true,
+      "pair_kind": "opposing_choices"
+     }
+    ],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-04",
+    "status": "detected",
+    "reason": "화면 3에서 선택 가능한 유료 부가서비스인 '안심케어 서비스'의 체크박스가 선택 상태이고 '+3,000원'이 표시된다. 필수 가입 항목인 상해입원의료비 후보는 screen-03에서 관찰되지 않고 필수 항목이므로 탐지 근거에서 제외했다. 화면 5에서는 별도의 추가 선택 컨트롤이나 동의 항목을 확인할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "default_checked",
+     "selected_paid_option"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-07",
+    "status": "detected",
+    "reason": "화면 1의 중도 해지 환급금 관련 불이익 정보와 화면 5의 청약철회·보험금 지급 제한 관련 권리·제한 정보가 각각 주요 본문보다 작고 낮은 대비로 표시된다. 후보 측정값으로 두 영역 모두 font_size_ratio 0.68, contrast_ratio 1.56이 제공되었다. 제공된 화면에서는 접힌 상세나 설명 확인 없이 진행 가능한 상호작용 여부는 확인할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "small_important_text",
+     "low_contrast_important_text"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-12",
+    "status": "detected",
+    "reason": "화면 5의 실제 이탈 행동 라벨 '혜택을 포기하고 나가기'가 가입하지 않으면 혜택을 잃는다는 손실 프레이밍을 사용한다. 별도의 '체험' 등 비용·위험을 축소하는 표현은 제공된 화면에서 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "loss_framed_decline"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-15",
+    "status": "detected",
+    "reason": "같은 상품의 초기 기본 보험료와 후반 최종 비용을 비교했다. 화면 1의 기본 보험료는 월 9,900원이고 화면 4에서 계약 관리비 월 3,000원이 후반에 최초 공개되어 최종 합계 월 15,900원이 된다. 화면 3에서 선택한 안심케어 서비스 비용은 사용자 선택으로 설명되므로 계약 관리비와 구분했다. 초기 화면에는 계약 관리비 금액이 공개되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "late_mandatory_cost"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": [
+     {
+      "product": "든든안심 실손의료비 계약 관리비",
+      "initial_screen_id": "screen-01",
+      "final_screen_id": "screen-04",
+      "unit": "KRW",
+      "initial_amount": 0,
+      "final_amount": 3000,
+      "same_product": true,
+      "explained_by_user_choice": false,
+      "initially_disclosed": false
+     }
+    ]
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "candidate_id": "DA-03:screen-05:button-vibrtf",
+   "rule_id": "DA-03",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-vibrtf",
+   "related_element_ids": [
+    "button-15eznqn"
+   ],
+   "triggered_checks": [
+    "DA-03.area_ratio",
+    "DA-03.color_prominence_gap"
+   ],
+   "measurements": {
+    "area_ratio": 2.23,
+    "threshold": 1.5,
+    "accept_contrast": 6.63,
+    "decline_contrast": 1.88,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-vibrtf",
+      "text": "가입 완료하기",
+      "bbox": [
+       0.3434,
+       0.891,
+       0.6105,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-15eznqn",
+      "text": "혜택을 포기하고 나가기",
+      "bbox": [
+       0.0462,
+       0.891,
+       0.2742,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-04:screen-02:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-02",
+   "screen_index": 2,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "상해입원의료비 필수 가입 항목 포함",
+    "has_additional_cost": false,
+    "evidence": [
+     {
+      "screen_id": "screen-03",
+      "state_id": "screen-03",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.2901,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-04:screen-03:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-03",
+   "screen_index": 3,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "안심케어 서비스 24시간 건강상담 · 병원 예약대행 +3,000원",
+    "has_additional_cost": true,
+    "evidence": [
+     {
+      "screen_id": "screen-03",
+      "state_id": "screen-03",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.2901,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-07:screen-01:div-10r5zg1",
+   "rule_id": "DA-07",
+   "screen_id": "screen-01",
+   "screen_index": 1,
+   "primary_element_id": "div-10r5zg1",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-07.benefit_risk_asymmetry"
+   ],
+   "measurements": {
+    "font_size_ratio": 0.68,
+    "contrast_ratio": 1.56,
+    "body_font_size": 14,
+    "evidence": [
+     {
+      "screen_id": "screen-01",
+      "state_id": "screen-01",
+      "element_id": "div-10r5zg1",
+      "text": "본 보험은 예금자보호법에 따라 보호되지 않는 상품이며, 중도 해지 시 해약환급금이 납입한 보험료보다 적거나 없을 수 있습니다. 자세한 사항은 약관을 확인하시기 바랍니다.",
+      "bbox": [
+       0.0462,
+       0.6714,
+       0.9077,
+       0.0455
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-07:screen-05:div-160xdz7",
+   "rule_id": "DA-07",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "div-160xdz7",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-07.benefit_risk_asymmetry"
+   ],
+   "measurements": {
+    "font_size_ratio": 0.68,
+    "contrast_ratio": 1.56,
+    "body_font_size": 14,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "div-160xdz7",
+      "text": "청약 후 15일 이내 청약철회가 가능하며, 보험금 지급사유 발생 시 약관에 따라 지급이 제한될 수 있습니다.",
+      "bbox": [
+       0.0462,
+       0.4951,
+       0.9077,
+       0.0304
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-12:screen-05:button-15eznqn",
+   "rule_id": "DA-12",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-15eznqn",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-12.emotive_lexicon_hit"
+   ],
+   "measurements": {
+    "matched": [
+     "포기"
+    ],
+    "text": "혜택을 포기하고 나가기",
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-15eznqn",
+      "text": "혜택을 포기하고 나가기",
+      "bbox": [
+       0.0462,
+       0.891,
+       0.2742,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-15:screen-04:div-11kp1ff",
+   "rule_id": "DA-15",
+   "screen_id": "screen-04",
+   "screen_index": 4,
+   "primary_element_id": "div-11kp1ff",
+   "related_element_ids": [
+    "div-1q5hmha"
+   ],
+   "triggered_checks": [
+    "DA-15.price_increase_across_screens"
+   ],
+   "measurements": {
+    "initial": 9900.0,
+    "final": 15900.0,
+    "delta": 6000.0,
+    "evidence": [
+     {
+      "screen_id": "screen-04",
+      "state_id": "screen-04",
+      "element_id": "div-11kp1ff",
+      "text": "월 15,900원",
+      "bbox": [
+       0.0897,
+       0.2723,
+       0.8205,
+       0.0462
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-01",
+      "state_id": "screen-01",
+      "element_id": "div-1q5hmha",
+      "text": "월 9,900원",
+      "bbox": [
+       0.0897,
+       0.3141,
+       0.8205,
+       0.0462
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

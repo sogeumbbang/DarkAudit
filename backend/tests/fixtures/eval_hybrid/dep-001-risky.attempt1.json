@@ -1,0 +1,466 @@
+{
+ "flow_id": "dep-001-risky",
+ "screen_ids": [
+  "screen-01",
+  "screen-02",
+  "screen-03",
+  "screen-04",
+  "screen-05"
+ ],
+ "model": "gpt-5.6-luna",
+ "note": "capture of first/second schema attempt; candidate_id remapped to production format",
+ "raw": {
+  "audit_id": "dep-001-risky",
+  "schema_version": "1.3",
+  "screens": [
+   {
+    "screen_id": "screen-01",
+    "flow_step": "화면 1"
+   },
+   {
+    "screen_id": "screen-02",
+    "flow_step": "화면 2"
+   },
+   {
+    "screen_id": "screen-03",
+    "flow_step": "화면 3"
+   },
+   {
+    "screen_id": "screen-04",
+    "flow_step": "화면 4"
+   },
+   {
+    "screen_id": "screen-05",
+    "flow_step": "화면 5"
+   }
+  ],
+  "candidate_decisions": [
+   {
+    "candidate_id": "DA-03:screen-05:button-vibrtf",
+    "decision": "KEEP",
+    "reason": "화면 5에서 ‘가입 완료하기’는 큰 파란색 실선 버튼으로 표시되고, ‘우대금리를 포기할게요’는 더 작고 연한 텍스트 형태로 배치되어 실제 가입 완료와 거절 선택지의 시각적 계층이 비대칭이다. 측정된 면적비 2.23 및 대조도 차이가 화면과 부합한다.",
+    "confidence": 0.97,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-04:screen-03:div-t8ahig",
+    "decision": "KEEP",
+    "reason": "화면 3에서 ‘마케팅 정보 수신 동의’ 항목의 체크박스가 선택 상태로 보이며, 항목에는 ‘상품·이벤트 안내 (선택)’ 및 ‘우대 +0.5%p’가 함께 표시된다. 선택 개인정보·마케팅 동의의 현재 선택 상태와 사업자에게 유리한 우대 조건이 화면에 관찰된다.",
+    "confidence": 0.98,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-07:screen-01:div-yhs5rs",
+    "decision": "KEEP",
+    "reason": "화면 1 하단의 예금자보호 및 원금·이자 관련 문구가 주요 금리·상품 정보보다 작고 매우 옅은 색으로 표시되어 있다. 측정된 글자 크기비 0.68과 대비 1.56이 후보 조건과 일치한다.",
+    "confidence": 0.96,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-07:screen-05:div-vpq4pi",
+    "decision": "KEEP",
+    "reason": "화면 5 하단의 중도해지 시 적용 이율 및 이자 감소 가능성 안내가 주요 가입 내용과 가입 완료 버튼보다 작고 옅게 표시되어 있다. 중도해지 조건과 불이익은 가입 의사결정에 중요한 정보이며, 측정된 글자 크기비 0.68과 대비 1.56이 관찰된다.",
+    "confidence": 0.96,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-07:screen-02:div-nz61xy",
+    "decision": "KEEP",
+    "reason": "화면 2에서 우대금리의 구체적 요건이 ‘우대조건 자세히 보기’ 클릭 뒤에 제공되는 구조다. 기본금리와 최고금리의 차이를 판단하는 중요한 조건이 초기 화면에 모두 노출되지는 않았으므로 hidden_important_details 후보를 유지한다.",
+    "confidence": 0.86,
+    "base_severity": "HIGH"
+   },
+   {
+    "candidate_id": "DA-12:screen-05:button-ex329a",
+    "decision": "KEEP",
+    "reason": "화면 5의 거절 선택지 원문이 ‘우대금리를 포기할게요’로 표시되어 중립적인 거절 표현보다 혜택 상실을 강조한다. 이는 loss-framed decline에 해당할 수 있는 감정적·손실 프레이밍 표현이다.",
+    "confidence": 0.96,
+    "base_severity": "REVIEW"
+   },
+   {
+    "candidate_id": "DA-15:screen-04:div-1brx8pf",
+    "decision": "REJECT",
+    "reason": "화면 1의 연 4.5%는 세전 이자율 기준으로 제시되지만, 화면 2에서 기본금리 연 2.0%와 최고금리 연 4.5%를 함께 표시하고 조건 충족 여부에 따라 금리가 달라진다고 고지한다. 화면 4의 적용금리 연 2.5%는 화면 2에서 이미 공개된 우대조건 미충족 및 마케팅 동의 우대와 관련된 것으로 보이며, 후반에 처음 등장한 필수 비용이나 미고지 가격 인상으로 확인되지 않는다.",
+    "confidence": 0.94,
+    "base_severity": "HIGH"
+   }
+  ],
+  "semantic_findings": [],
+  "rule_assessments": [
+   {
+    "rule_id": "DA-03",
+    "status": "detected",
+    "reason": "화면 5에서 수락 선택지 ‘가입 완료하기’는 큰 파란색 실선 버튼으로 강조되고, 실제 거절·보류 선택지인 ‘우대금리를 포기할게요’는 작고 옅은 텍스트로 표시된다. 후보의 시각 측정값과 원문 선택지 관계를 화면에서 확인했다. 다른 가입유형·플랜 선택지는 제공 화면에서 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "visual_hierarchy"
+    ],
+    "choice_pairs": [
+     {
+      "screen_id": "screen-05",
+      "accept_text": "가입 완료하기",
+      "decline_text": "우대금리를 포기할게요",
+      "decline_is_action": true,
+      "pair_kind": "opposing_choices"
+     }
+    ],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-04",
+    "status": "detected",
+    "reason": "화면 3의 마케팅 정보 수신 동의 체크박스가 현재 선택 상태이며, 해당 항목은 ‘선택’ 동의이고 ‘우대 +0.5%p’가 연결되어 있다. 화면의 정지 상태는 확인했지만 최초 렌더 이후 사용자가 직접 선택했는지 여부는 확인할 수 없다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "default_checked",
+     "optional_consent_prechecked"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-07",
+    "status": "detected",
+    "reason": "화면 1의 예금자보호·원금 관련 문구와 화면 5의 중도해지 불이익 문구가 주변 주요 정보보다 작고 옅게 표시된다. 또한 화면 2의 우대금리 조건 세부사항은 ‘우대조건 자세히 보기’ 뒤에 있다. 화면에서 실제 클릭 없이 다음 단계로 진행 가능한지에 대한 interaction evidence는 제공되지 않아 skippable_without_confirm은 판단하지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "small_important_text",
+     "low_contrast_important_text",
+     "hidden_important_details"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-12",
+    "status": "detected",
+    "reason": "화면 5의 거절 선택지 ‘우대금리를 포기할게요’는 거절 시 혜택을 잃는다는 손실 프레이밍을 사용한다. 이는 DA-03의 시각적 계층 판단과 별도로 원문 표현 자체에서 확인한 것이다. ‘체험’ 등 비용·위험을 축소하는 별도 표현은 확인되지 않았다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "loss_framed_decline"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   },
+   {
+    "rule_id": "DA-15",
+    "status": "not_detected",
+    "reason": "화면 1의 최고 표시금리 연 4.5%와 화면 4의 적용금리 연 2.5%는 수치상 차이가 있으나, 화면 2에서 기본금리 연 2.0%·최고금리 연 4.5%와 조건에 따른 변동 사실이 이미 공개되어 있다. 화면 4의 2.5%도 마케팅 동의 우대 및 미충족 우대조건으로 설명된다. 후반에 새로 등장한 필수 수수료 또는 동일 조건에서의 불리한 가격·수익률 변경은 확인되지 않았다. 따라서 후보는 REJECT했으며, 가격 비교 근거는 기록하지 않는다.",
+    "screen_ids": [
+     "screen-01",
+     "screen-02",
+     "screen-03",
+     "screen-04",
+     "screen-05"
+    ],
+    "checks": [
+     "rate_deterioration"
+    ],
+    "choice_pairs": [],
+    "price_comparisons": []
+   }
+  ]
+ },
+ "candidates": [
+  {
+   "candidate_id": "DA-03:screen-05:button-vibrtf",
+   "rule_id": "DA-03",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-vibrtf",
+   "related_element_ids": [
+    "button-ex329a"
+   ],
+   "triggered_checks": [
+    "DA-03.area_ratio",
+    "DA-03.color_prominence_gap"
+   ],
+   "measurements": {
+    "area_ratio": 2.23,
+    "threshold": 1.5,
+    "accept_contrast": 6.63,
+    "decline_contrast": 1.88,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-vibrtf",
+      "text": "가입 완료하기",
+      "bbox": [
+       0.3434,
+       0.891,
+       0.6105,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-ex329a",
+      "text": "우대금리를 포기할게요",
+      "bbox": [
+       0.0462,
+       0.891,
+       0.2742,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-04:screen-03:div-t8ahig",
+   "rule_id": "DA-04",
+   "screen_id": "screen-03",
+   "screen_index": 3,
+   "primary_element_id": "div-t8ahig",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-04.default_checked"
+   ],
+   "measurements": {
+    "context": "마케팅 정보 수신 동의 상품·이벤트 안내 (선택) 우대 +0.5%p",
+    "has_additional_cost": false,
+    "evidence": [
+     {
+      "screen_id": "screen-03",
+      "state_id": "screen-03",
+      "element_id": "div-t8ahig",
+      "text": null,
+      "bbox": [
+       0.0897,
+       0.2901,
+       0.0538,
+       0.0249
+      ],
+      "state": {
+       "checked": true,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-07:screen-01:div-yhs5rs",
+   "rule_id": "DA-07",
+   "screen_id": "screen-01",
+   "screen_index": 1,
+   "primary_element_id": "div-yhs5rs",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-07.benefit_risk_asymmetry"
+   ],
+   "measurements": {
+    "font_size_ratio": 0.68,
+    "contrast_ratio": 1.56,
+    "body_font_size": 14,
+    "evidence": [
+     {
+      "screen_id": "screen-01",
+      "state_id": "screen-01",
+      "element_id": "div-yhs5rs",
+      "text": "이 예금은 예금자보호법에 따라 예금보험공사가 보호하되, 보호 한도는 본 은행에 있는 모든 예금보호대상 금융상품의 원금과 소정의 이자를 합하여 1인당 최고 5천만원입니다.",
+      "bbox": [
+       0.0462,
+       0.6785,
+       0.9077,
+       0.0455
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-07:screen-05:div-vpq4pi",
+   "rule_id": "DA-07",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "div-vpq4pi",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-07.benefit_risk_asymmetry"
+   ],
+   "measurements": {
+    "font_size_ratio": 0.68,
+    "contrast_ratio": 1.56,
+    "body_font_size": 14,
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "div-vpq4pi",
+      "text": "만기 전 중도해지 시 약정 금리가 아닌 중도해지이율이 적용되어 이자가 크게 줄어들 수 있습니다.",
+      "bbox": [
+       0.0462,
+       0.4951,
+       0.9077,
+       0.0304
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-07:screen-02:div-nz61xy",
+   "rule_id": "DA-07",
+   "screen_id": "screen-02",
+   "screen_index": 2,
+   "primary_element_id": "div-nz61xy",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-07.detail_behind_click"
+   ],
+   "measurements": {
+    "label": "우대조건 자세히 보기 ›",
+    "evidence": [
+     {
+      "screen_id": "screen-02",
+      "state_id": "screen-02",
+      "element_id": "div-nz61xy",
+      "text": "우대조건 자세히 보기 ›",
+      "bbox": [
+       0.0462,
+       0.424,
+       0.9077,
+       0.0741
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-12:screen-05:button-ex329a",
+   "rule_id": "DA-12",
+   "screen_id": "screen-05",
+   "screen_index": 5,
+   "primary_element_id": "button-ex329a",
+   "related_element_ids": [],
+   "triggered_checks": [
+    "DA-12.emotive_lexicon_hit"
+   ],
+   "measurements": {
+    "matched": [
+     "포기"
+    ],
+    "text": "우대금리를 포기할게요",
+    "evidence": [
+     {
+      "screen_id": "screen-05",
+      "state_id": "screen-05",
+      "element_id": "button-ex329a",
+      "text": "우대금리를 포기할게요",
+      "bbox": [
+       0.0462,
+       0.891,
+       0.2742,
+       0.0782
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "candidate_id": "DA-15:screen-04:div-1brx8pf",
+   "rule_id": "DA-15",
+   "screen_id": "screen-04",
+   "screen_index": 4,
+   "primary_element_id": "div-1brx8pf",
+   "related_element_ids": [
+    "div-1bryioh"
+   ],
+   "triggered_checks": [
+    "DA-15.rate_deterioration_across_screens",
+    "DA-15.single_point_rate_display"
+   ],
+   "measurements": {
+    "initial_rate": 4.5,
+    "final_rate": 2.5,
+    "drop": 2.0,
+    "displayed": "연 4.5%",
+    "evidence": [
+     {
+      "screen_id": "screen-04",
+      "state_id": "screen-04",
+      "element_id": "div-1brx8pf",
+      "text": "연 2.5%",
+      "bbox": [
+       0.0897,
+       0.2723,
+       0.8205,
+       0.0533
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     },
+     {
+      "screen_id": "screen-01",
+      "state_id": "screen-01",
+      "element_id": "div-1bryioh",
+      "text": "연 4.5%",
+      "bbox": [
+       0.0897,
+       0.3141,
+       0.8205,
+       0.0533
+      ],
+      "state": {
+       "checked": null,
+       "disabled": null
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

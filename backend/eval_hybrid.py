@@ -12,6 +12,11 @@ LLM 은 같은 입력에도 매번 다르게 답한다. 1회 측정값은 우연
 
     python eval_hybrid.py --runs 3
     python eval_hybrid.py --runs 1 --flows ins-001-risky,ins-002-risky   # 빠른 확인
+    python eval_hybrid.py --runs 1 --visual    # 후보 없이 스크린샷만으로 분석(위치 정확도 측정용)
+
+--visual 은 스크린샷·Figma 업로드와 같은 경로다. Rule Engine 후보 없이 LLM 이 직접 낸 finding 의
+bbox 를 OCR/CV 로 보정한 값으로 IoU 를 잰다. 기본 모드의 IoU 는 후보 요소 bbox 를 그대로 쓰므로
+스크린샷 입력의 위치 정확도를 대표하지 않는다. 결과는 hybrid_report.visual.{model}.json 에 따로 남는다.
 """
 
 from __future__ import annotations
@@ -32,9 +37,8 @@ for _path in (_REPO_ROOT, _REPO_ROOT / "backend"):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-from app.rule_engine import checks  # noqa: E402,F401  — 데코레이터 등록을 위해 필요
-from app.rule_engine.core import RuleBase, load_flow, run
-from app.rule_engine.severity import drop_incomplete, merge, score
+from ai.browser.models import CaptureArtifact  # noqa: E402
+from ai.pipeline.rule_candidates import candidate_payload, run_artifact_rules  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 SYNTHETIC = REPO / "data" / "synthetic"
@@ -55,44 +59,55 @@ def load_env() -> None:
             os.environ.setdefault(key.strip(), value.strip())
 
 
-def candidates_for(flow_id: str) -> tuple[list[dict], dict[str, dict]]:
-    """Rule Engine 을 돌려 후보와 요소 사전을 만든다."""
-    doc = json.loads((UI / f"{flow_id}.json").read_text(encoding="utf-8"))
-    flow = load_flow(doc)
-    rule_base = RuleBase()
-    findings = score(drop_incomplete(merge(run(flow, rule_base, only=TARGET), rule_base), rule_base), rule_base)
+def candidates_from_ui(flow_id: str, doc: dict) -> tuple[list[dict], dict[tuple[int, str], dict]]:
+    """
+    extract_ui.py 가 만든 UI JSON 에서 후보와 요소 사전을 만든다.
 
-    elements: dict[str, dict] = {}
-    for screen in flow.screens:
-        for element in screen.elements:
-            elements[element.element_id] = {
-                "screen_index": screen.screen_index,
-                "bbox": list(element.bbox),
+    후보는 운영 경로(URL 감사)와 같은 run_artifact_rules / candidate_payload 로 만든다.
+    증거 계약(assessment_contract)은 후보의 measurements.evidence 와 모델 답변을
+    대조하므로, 이 필드가 비면 DA-03·DA-15 KEEP 은 항상 계약에서 탈락한다.
+    """
+    indices, artifacts = [], []
+    for screen in doc["screens"]:
+        index = screen["screen_index"]
+        screen_id = f"screen-{index:02d}"
+        viewport = screen.get("viewport") or {}
+        indices.append(index)
+        artifacts.append(CaptureArtifact(
+            screen_id=screen_id,
+            flow_step=f"화면 {index}",
+            profile="mobile",
+            url="",
+            title="",
+            image_path=SHOTS / flow_id / f"{index:02d}.png",
+            viewport_width=viewport.get("width", 0),
+            viewport_height=viewport.get("height", 0),
+            dom_elements=tuple(screen["elements"]),
+            state_id=screen_id,
+        ))
+
+    # primary 요소가 없는 후보는 평가 대상에서 뺀다(이전 평가와 같은 기준).
+    findings = [f for f in run_artifact_rules(flow_id, indices, tuple(artifacts)) if f.primary_id]
+    payload = candidate_payload(findings, indices, tuple(artifacts))
+
+    # 같은 element_id 가 여러 화면에 나오므로(예: 반복 노출되는 동의 문구) 화면까지 키에 넣는다.
+    elements: dict[tuple[int, str], dict] = {}
+    for screen in doc["screens"]:
+        for element in screen["elements"]:
+            elements[(screen["screen_index"], element["element_id"])] = {
+                "screen_index": screen["screen_index"],
+                "bbox": list(element["bbox"]),
             }
-
-    payload = []
-    for index, finding in enumerate(findings):
-        if finding.rule_id not in TARGET or not finding.primary_id:
-            continue
-        primary = elements.get(finding.primary_id)
-        payload.append({
-            # 같은 규칙·요소 조합이 두 번 나오는 경우가 있다. 스키마가 candidate_id
-            # 유일성을 요구하므로 순번을 붙여 구분한다.
-            "candidate_id": f"{finding.rule_id}:{finding.primary_id}:{index}",
-            "rule_id": finding.rule_id,
-            "screen_id": f"screen-{(primary or {}).get('screen_index', 1):02d}",
-            "screen_index": (primary or {}).get("screen_index", 1),
-            "primary_element_id": finding.primary_id,
-            # 같은 체크가 두 번 기록되는 경우가 있는데 스키마는 유일성을 요구한다.
-            # 평가 목적상 중복은 의미가 없으므로 여기서 접는다.
-            "triggered_checks": sorted(set(finding.triggered_checks or [])),
-            "measurements": dict(finding.measurements or {}),
-            "related_element_ids": list(finding.related_ids or []),
-        })
     return payload, elements
 
 
-def to_detections(output, candidates: list[dict], elements: dict[str, dict]) -> list[dict]:
+def candidates_for(flow_id: str) -> tuple[list[dict], dict[tuple[int, str], dict]]:
+    """Rule Engine 을 돌려 후보와 요소 사전을 만든다."""
+    doc = json.loads((UI / f"{flow_id}.json").read_text(encoding="utf-8"))
+    return candidates_from_ui(flow_id, doc)
+
+
+def to_detections(output, candidates: list[dict], elements: dict[tuple[int, str], dict]) -> list[dict]:
     """
     하이브리드 출력을 평가기가 아는 detections 형태로 옮긴다.
 
@@ -108,7 +123,7 @@ def to_detections(output, candidates: list[dict], elements: dict[str, dict]) -> 
         candidate = by_id.get(decision.candidate_id)
         if candidate is None:
             continue
-        element = elements.get(candidate["primary_element_id"]) or {}
+        element = elements.get((candidate["screen_index"], candidate["primary_element_id"])) or {}
         detections.append({
             "rule_id": candidate["rule_id"],
             "bbox": element.get("bbox") or [0.0, 0.0, 0.0, 0.0],
@@ -127,7 +142,7 @@ def to_detections(output, candidates: list[dict], elements: dict[str, dict]) -> 
     return detections
 
 
-def analyze_flow(flow_id: str, pipeline) -> dict:
+def analyze_flow(flow_id: str, pipeline, visual: bool = False) -> dict:
     from ai.schemas.audit_schema import AuditScreen, LLMAuditRequest
 
     images = sorted((SHOTS / flow_id).glob("*.png"))
@@ -137,7 +152,7 @@ def analyze_flow(flow_id: str, pipeline) -> dict:
         flow_id,
         tuple(AuditScreen(f"screen-{i:02d}", f"화면 {i}", path) for i, path in enumerate(images, 1)),
     )
-    candidates, elements = candidates_for(flow_id)
+    candidates, elements = ([], {}) if visual else candidates_for(flow_id)
     started = time.perf_counter()
     output = pipeline.analyze(request, candidates)
     telemetry = dict(pipeline.last_run_telemetry)
@@ -150,12 +165,12 @@ def analyze_flow(flow_id: str, pipeline) -> dict:
     }
 
 
-def run_once(flow_ids: list[str], run_index: int, out_dir: Path) -> dict:
+def run_once(flow_ids: list[str], run_index: int, out_dir: Path, visual: bool = False) -> dict:
     from ai.evaluation import Evaluator
     from ai.pipeline.baseline import BaselineAuditPipeline
     from ai.providers.factory import create_provider
 
-    pipeline = BaselineAuditPipeline(create_provider())
+    pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=visual)
     predictions_dir = out_dir / f"run-{run_index}"
     predictions_dir.mkdir(parents=True, exist_ok=True)
 
@@ -165,7 +180,7 @@ def run_once(flow_ids: list[str], run_index: int, out_dir: Path) -> dict:
             print(f"  [{position}/{len(flow_ids)}] {flow_id} (이미 있음, 건너뜀)")
             continue
         try:
-            result = analyze_flow(flow_id, pipeline)
+            result = analyze_flow(flow_id, pipeline, visual)
             target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
             found = len(result["output"]["detections"])
             print(f"  [{position}/{len(flow_ids)}] {flow_id}  탐지 {found}건"
@@ -183,6 +198,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--flows", default="", help="쉼표로 구분. 비우면 전체")
+    parser.add_argument("--visual", action="store_true",
+                        help="Rule Engine 후보 없이 스크린샷만으로 분석한다(업로드 경로와 같은 설정)")
     args = parser.parse_args()
 
     load_env()
@@ -194,17 +211,18 @@ def main() -> None:
                 or sorted(p.stem for p in UI.glob("*.json")))
     print(f"대상 {len(flow_ids)}개 flow, {args.runs}회 측정\n")
 
-    out_dir = OUT / "hybrid"
+    out_dir = OUT / ("hybrid_visual" if args.visual else "hybrid")
     reports = []
     for index in range(1, args.runs + 1):
         print(f"── run {index}/{args.runs} ──")
-        reports.append(run_once(flow_ids, index, out_dir))
+        reports.append(run_once(flow_ids, index, out_dir, args.visual))
         micro = reports[-1]["micro"]
         print(f"  micro P={micro['precision']:.2f} R={micro['recall']:.2f} F1={micro['f1']:.2f}\n")
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "scope": "hybrid pipeline (rule engine candidates + multimodal LLM verification)",
+        "scope": ("visual-only pipeline (no rule engine candidates; screenshot path)" if args.visual
+                  else "hybrid pipeline (rule engine candidates + multimodal LLM verification)"),
         "model": os.getenv("DARKAUDIT_MODEL"),
         "runs": args.runs,
         "flows": len(flow_ids),
@@ -222,12 +240,13 @@ def main() -> None:
     }
     OUT.mkdir(parents=True, exist_ok=True)
     body = json.dumps(summary, ensure_ascii=False, indent=2)
-    path = OUT / "hybrid_report.json"
+    infix = ".visual" if args.visual else ""
+    path = OUT / f"hybrid_report{infix}.json"
     path.write_text(body, encoding="utf-8")
     # 모델을 바꿔 다시 재면 이전 값이 덮여 비교할 수 없다. 모델명을 붙인 사본을
     # 함께 남겨 두고, 문서가 인용하는 경로(hybrid_report.json)는 최신을 가리킨다.
     model_slug = (summary["model"] or "unknown").replace("/", "-")
-    (OUT / f"hybrid_report.{model_slug}.json").write_text(body, encoding="utf-8")
+    (OUT / f"hybrid_report{infix}.{model_slug}.json").write_text(body, encoding="utf-8")
 
     print("=" * 46)
     for metric, stats in summary["variation"].items():

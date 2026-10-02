@@ -32,12 +32,33 @@ _TRIVIALIZE = ["체험", "가볍게", "부담없이", "잠깐"]
 _DECLINE_HINT = ["않기", "안함", "취소", "나가기", "다음에", "거절", "포기", "닫기"]
 
 
+# 위아래로 쌓인 선택지(모바일 CTA 배치)를 쌍으로 볼 때의 기준
+_STACK_MIN_OVERLAP = 0.8   # 가로 겹침 / 더 좁은 버튼 너비
+_STACK_MAX_GAP = 0.05      # 수락 버튼 아래쪽 ~ 거절 버튼 위쪽 간격(화면 높이 비율)
+
+
+def _is_stacked_below(accept: Element, decline: Element) -> bool:
+    """거절 버튼이 수락 버튼 바로 아래에 더 작게 쌓여 있는가."""
+    ax, ay, aw, ah = accept.bbox
+    dx, dy, dw, dh = decline.bbox
+    narrower = min(aw, dw)
+    if narrower <= 0:
+        return False
+    overlap = max(0.0, min(ax + aw, dx + dw) - max(ax, dx)) / narrower
+    gap = dy - (ay + ah)
+    return (
+        overlap >= _STACK_MIN_OVERLAP
+        and 0 <= gap <= _STACK_MAX_GAP
+        and dw * dh < aw * ah
+    )
+
+
 def _pair_of_options(screen: Screen) -> tuple[Element, Element] | None:
     """
     같은 화면에서 대립하는 선택지 쌍(수락 / 거절)을 찾는다.
 
     표현식으로는 쓸 수 없고 코드가 필요한 대표적인 체크다.
-    나란히 배치된 버튼 두 개 중 한쪽 라벨이 거절 의미면 쌍으로 본다.
+    나란히 배치되거나 위아래로 쌓인 버튼 두 개 중 한쪽 라벨이 거절 의미면 쌍으로 본다.
     """
     buttons = [e for e in screen.of_type("button") if e.text]
     if len(buttons) < 2:
@@ -47,8 +68,9 @@ def _pair_of_options(screen: Screen) -> tuple[Element, Element] | None:
         for b in buttons:
             if a is b:
                 continue
-            # 세로 위치가 비슷해야 나란한 선택지다
-            if abs(a.center[1] - b.center[1]) > 0.05:
+            # 나란한 선택지(세로 위치가 비슷)이거나 모바일처럼 수락 아래에 쌓인 선택지여야 한다
+            side_by_side = abs(a.center[1] - b.center[1]) <= 0.05
+            if not (side_by_side or _is_stacked_below(a, b)):
                 continue
             if any(h in (b.text or "") for h in _DECLINE_HINT):
                 return a, b        # a = 수락, b = 거절
@@ -277,6 +299,15 @@ def da15_price(flow: Flow, rb: RuleBase) -> list[Detection]:
     )]
 
 
+def _rate_display(screen: Screen) -> tuple[str, bool] | None:
+    """화면에서 처음 나오는 이율(%) 가격 요소의 문구와 범위 표시 여부."""
+    for e in screen.of_type("price"):
+        if not e.text or "%" not in e.text:
+            continue
+        return e.text, ("~" in e.text or "-" in e.text)
+    return None
+
+
 @flow_check("DA-15", "rate_deterioration_across_screens")
 def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     """
@@ -301,11 +332,22 @@ def da15_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     if last_rate >= first_rate:
         return []
 
+    measurements = {"initial_rate": first_rate, "final_rate": last_rate,
+                    "drop": round(first_rate - last_rate, 2)}
+    # 초기(이율이 처음 표시되는) 화면이 단일 수치인지 범위인지. 원문이 인정한 완화(범위 표시)는
+    # 그 화면에 있을 때만 의미가 있으므로 모델이 사실로 참조하게 넘긴다.
+    shown = _rate_display(next(s for s in flow.screens if s.screen_index == first_idx))
+    if shown:
+        text, is_range = shown
+        measurements.update({
+            "initial_rate_screen_index": first_idx,
+            "initial_rate_text": text,
+            "initial_rate_display": "range" if is_range else "single_point",
+        })
     return [Detection(
         "", "", primary=last_element, related=[first_element],
         screen_indices=[first_idx, last_idx],
-        measurements={"initial_rate": first_rate, "final_rate": last_rate,
-                      "drop": round(first_rate - last_rate, 2)},
+        measurements=measurements,
     )]
 
 
@@ -318,11 +360,12 @@ def da15_single_rate(flow: Flow, rb: RuleBase) -> list[Detection]:
     if not flow.screens:
         return []
     first = flow.screens[0]
-    for e in first.of_type("price"):
-        if not e.text or "%" not in e.text:
-            continue
-        if "~" in e.text or "-" in e.text:
-            return []                      # 범위로 표시됨 → 해당 없음
-        return [Detection("", "", primary=e, screen_indices=[first.screen_index],
-                          measurements={"displayed": e.text})]
-    return []
+    shown = _rate_display(first)
+    if shown is None:
+        return []
+    text, is_range = shown
+    if is_range:
+        return []                          # 범위로 표시됨 → 해당 없음
+    element = next(e for e in first.of_type("price") if e.text == text)
+    return [Detection("", "", primary=element, screen_indices=[first.screen_index],
+                      measurements={"displayed": text})]
