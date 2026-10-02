@@ -1,0 +1,56 @@
+{
+  "auditId": "audit-3",
+  "fromVersion": 1,
+  "toVersion": 2,
+  "resolved": [
+    {
+      "ruleId": "DA-04",
+      "findingId": "finding-15",
+      "before": "HIGH",
+      "after": null
+    },
+    {
+      "ruleId": "DA-04",
+      "findingId": "finding-16",
+      "before": "HIGH",
+      "after": null
+    },
+    {
+      "ruleId": "DA-04",
+      "findingId": "finding-17",
+      "before": "HIGH",
+      "after": null
+    },
+    {
+      "ruleId": "DA-07",
+      "findingId": "finding-20",
+      "before": "HIGH",
+      "after": null
+    },
+    {
+      "ruleId": "DA-15",
+      "findingId": "finding-22",
+      "before": "HIGH",
+      "after": null
+    }
+  ],
+  "improved": [
+    {
+      "ruleId": "DA-12",
+      "findingId": "finding-24",
+      "before": "HIGH",
+      "after": "REVIEW"
+    }
+  ],
+  "persisted": [
+    {
+      "ruleId": "DA-07",
+      "findingId": "finding-23",
+      "before": "HIGH",
+      "after": "HIGH"
+    }
+  ],
+  "new": [],
+  "regressed": [],
+  "resolvedRatio": 0.714
+}
