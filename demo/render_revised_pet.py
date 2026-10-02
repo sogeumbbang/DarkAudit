@@ -8,6 +8,8 @@
            선택 상태에 따라 계산한다(기본 보험료 12,900 + 필수 계약 관리비 1,100 = 14,000).
   - DA-15: 필수 계약 관리비 1,100원을 1단계 금액(월 이용료 총액)에 처음부터 포함해 14,000원으로
            표시하고, 혜택 목록의 세 번째 항목(모바일 간편 청구)을 "필수 계약 관리비 1,100원 포함"으로 바꾼다.
+  - DA-04(3단계): 개인정보·광고 수신 동의 화면의 혜택 목록 체크 모양(✓)이 "선택된 동의 항목"으로 읽혀
+           (모델이 사전선택으로 판정) 점(•)으로 바꾼다. 동의는 어느 것도 선택된 상태가 아니다.
   - 일관성: 5단계의 "선택한 특약 2개 포함"은 특약이 없으므로 "선택한 특약 없음 (기본형)"으로 바꾼다.
   - DA-03·DA-07·DA-12 연출(버튼 위계, 작은 면책 문구, 죄책감 문구)은 원본과 같게 둔다.
 
@@ -86,6 +88,8 @@ def main() -> None:
                     "({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight})"
                 )
                 assert geometry == {"width": 393, "height": 852}, (step, geometry)
+                if step == 3:
+                    page.evaluate("document.querySelectorAll('.tick').forEach((el) => { el.textContent = '•'; })")
                 page.screenshot(path=str(OUT / f"{NAMES[step - 1]}.png"))
                 if step == 2:
                     checked = page.locator("[data-option]:checked").count()
