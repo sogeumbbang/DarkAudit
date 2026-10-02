@@ -12,6 +12,11 @@ LLM 은 같은 입력에도 매번 다르게 답한다. 1회 측정값은 우연
 
     python eval_hybrid.py --runs 3
     python eval_hybrid.py --runs 1 --flows ins-001-risky,ins-002-risky   # 빠른 확인
+    python eval_hybrid.py --runs 1 --visual    # 후보 없이 스크린샷만으로 분석(위치 정확도 측정용)
+
+--visual 은 스크린샷·Figma 업로드와 같은 경로다. Rule Engine 후보 없이 LLM 이 직접 낸 finding 의
+bbox 를 OCR/CV 로 보정한 값으로 IoU 를 잰다. 기본 모드의 IoU 는 후보 요소 bbox 를 그대로 쓰므로
+스크린샷 입력의 위치 정확도를 대표하지 않는다. 결과는 hybrid_report.visual.{model}.json 에 따로 남는다.
 """
 
 from __future__ import annotations
@@ -137,7 +142,7 @@ def to_detections(output, candidates: list[dict], elements: dict[tuple[int, str]
     return detections
 
 
-def analyze_flow(flow_id: str, pipeline) -> dict:
+def analyze_flow(flow_id: str, pipeline, visual: bool = False) -> dict:
     from ai.schemas.audit_schema import AuditScreen, LLMAuditRequest
 
     images = sorted((SHOTS / flow_id).glob("*.png"))
@@ -147,7 +152,7 @@ def analyze_flow(flow_id: str, pipeline) -> dict:
         flow_id,
         tuple(AuditScreen(f"screen-{i:02d}", f"화면 {i}", path) for i, path in enumerate(images, 1)),
     )
-    candidates, elements = candidates_for(flow_id)
+    candidates, elements = ([], {}) if visual else candidates_for(flow_id)
     started = time.perf_counter()
     output = pipeline.analyze(request, candidates)
     telemetry = dict(pipeline.last_run_telemetry)
@@ -160,12 +165,12 @@ def analyze_flow(flow_id: str, pipeline) -> dict:
     }
 
 
-def run_once(flow_ids: list[str], run_index: int, out_dir: Path) -> dict:
+def run_once(flow_ids: list[str], run_index: int, out_dir: Path, visual: bool = False) -> dict:
     from ai.evaluation import Evaluator
     from ai.pipeline.baseline import BaselineAuditPipeline
     from ai.providers.factory import create_provider
 
-    pipeline = BaselineAuditPipeline(create_provider())
+    pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=visual)
     predictions_dir = out_dir / f"run-{run_index}"
     predictions_dir.mkdir(parents=True, exist_ok=True)
 
@@ -175,7 +180,7 @@ def run_once(flow_ids: list[str], run_index: int, out_dir: Path) -> dict:
             print(f"  [{position}/{len(flow_ids)}] {flow_id} (이미 있음, 건너뜀)")
             continue
         try:
-            result = analyze_flow(flow_id, pipeline)
+            result = analyze_flow(flow_id, pipeline, visual)
             target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
             found = len(result["output"]["detections"])
             print(f"  [{position}/{len(flow_ids)}] {flow_id}  탐지 {found}건"
@@ -193,6 +198,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--flows", default="", help="쉼표로 구분. 비우면 전체")
+    parser.add_argument("--visual", action="store_true",
+                        help="Rule Engine 후보 없이 스크린샷만으로 분석한다(업로드 경로와 같은 설정)")
     args = parser.parse_args()
 
     load_env()
@@ -204,17 +211,18 @@ def main() -> None:
                 or sorted(p.stem for p in UI.glob("*.json")))
     print(f"대상 {len(flow_ids)}개 flow, {args.runs}회 측정\n")
 
-    out_dir = OUT / "hybrid"
+    out_dir = OUT / ("hybrid_visual" if args.visual else "hybrid")
     reports = []
     for index in range(1, args.runs + 1):
         print(f"── run {index}/{args.runs} ──")
-        reports.append(run_once(flow_ids, index, out_dir))
+        reports.append(run_once(flow_ids, index, out_dir, args.visual))
         micro = reports[-1]["micro"]
         print(f"  micro P={micro['precision']:.2f} R={micro['recall']:.2f} F1={micro['f1']:.2f}\n")
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "scope": "hybrid pipeline (rule engine candidates + multimodal LLM verification)",
+        "scope": ("visual-only pipeline (no rule engine candidates; screenshot path)" if args.visual
+                  else "hybrid pipeline (rule engine candidates + multimodal LLM verification)"),
         "model": os.getenv("DARKAUDIT_MODEL"),
         "runs": args.runs,
         "flows": len(flow_ids),
@@ -232,12 +240,13 @@ def main() -> None:
     }
     OUT.mkdir(parents=True, exist_ok=True)
     body = json.dumps(summary, ensure_ascii=False, indent=2)
-    path = OUT / "hybrid_report.json"
+    infix = ".visual" if args.visual else ""
+    path = OUT / f"hybrid_report{infix}.json"
     path.write_text(body, encoding="utf-8")
     # 모델을 바꿔 다시 재면 이전 값이 덮여 비교할 수 없다. 모델명을 붙인 사본을
     # 함께 남겨 두고, 문서가 인용하는 경로(hybrid_report.json)는 최신을 가리킨다.
     model_slug = (summary["model"] or "unknown").replace("/", "-")
-    (OUT / f"hybrid_report.{model_slug}.json").write_text(body, encoding="utf-8")
+    (OUT / f"hybrid_report{infix}.{model_slug}.json").write_text(body, encoding="utf-8")
 
     print("=" * 46)
     for metric, stats in summary["variation"].items():
