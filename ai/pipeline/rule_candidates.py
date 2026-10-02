@@ -93,12 +93,14 @@ def candidate_payload(
                 "screen_index": index,
                 "primary_element_id": finding.primary_id,
                 "related_element_ids": list(finding.related_ids),
-                "triggered_checks": [
+                # 같은 요소가 여러 화면에 반복되면 merge 가 같은 체크를 두 번 기록한다.
+                # RuleCandidate 는 유일성을 요구하므로 순서를 지키며 중복을 제거한다.
+                "triggered_checks": list(dict.fromkeys(
                     c
                     if c.startswith(f"{finding.rule_id}.")
                     else f"{finding.rule_id}.{c}"
                     for c in finding.triggered_checks
-                ],
+                )),
                 "measurements": {**finding.measurements, "evidence": evidence},
             }
         )

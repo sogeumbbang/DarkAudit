@@ -84,9 +84,6 @@ def candidates_from_ui(flow_id: str, doc: dict) -> tuple[list[dict], dict[tuple[
     # primary 요소가 없는 후보는 평가 대상에서 뺀다(이전 평가와 같은 기준).
     findings = [f for f in run_artifact_rules(flow_id, indices, tuple(artifacts)) if f.primary_id]
     payload = candidate_payload(findings, indices, tuple(artifacts))
-    for candidate in payload:
-        # 같은 요소가 여러 화면에 반복되면 같은 체크가 두 번 기록된다. 스키마는 유일성을 요구한다.
-        candidate["triggered_checks"] = list(dict.fromkeys(candidate["triggered_checks"]))
 
     # 같은 element_id 가 여러 화면에 나오므로(예: 반복 노출되는 동의 문구) 화면까지 키에 넣는다.
     elements: dict[tuple[int, str], dict] = {}
