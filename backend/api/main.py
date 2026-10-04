@@ -33,6 +33,7 @@ from .schemas import (
     CreateAuditRequest,
     DashboardSummaryDto,
     FindingStatusRequest,
+    DemoVariant,
     FindingDecisionRequest,
     FindingDecisionDto,
     ImportFigmaRequest,
@@ -55,7 +56,7 @@ from .service import (
     public_image_path,
     rules_by_id,
 )
-from .store import utcnow, SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto
+from .store import utcnow, SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto, touch_audit
 
 app = FastAPI(title="DarkAudit API", version="1.1.0")
 app.include_router(demo_router)
@@ -93,7 +94,8 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/audits", response_model=AuditDto, status_code=status.HTTP_201_CREATED)
 def create_audit(payload: CreateAuditRequest) -> AuditDto:
     with SessionLocal() as session:
-        audit = Audit(name=payload.name.strip(), product_name=payload.platform, sector=payload.productType)
+        audit = Audit(name=payload.name.strip(), product_name=payload.platform, sector=payload.productType,
+                      demo_preset=payload.demoPreset.model_dump() if payload.demoPreset else None)
         session.add(audit)
         session.commit()
         return to_audit_dto(session, audit, rules_by_id())
@@ -156,15 +158,9 @@ def get_regression(
         if from_version not in done_versions or to_version not in done_versions:
             raise HTTPException(404, "지정한 회차를 찾을 수 없거나 아직 완료되지 않았습니다.")
 
-        # compare() 는 Finding.status(RESOLVED/REGRESSED)를 갱신하는 부작용이 있다.
-        # 최신 두 회차 비교라면 분석 완료 시 이미 한 번 실행된 것과 동일한 결과를
-        # 재계산해 재기록할 뿐이라 안전하다(결정적). from/to 를 임의로 지정해 건너뛴
-        # 회차가 있는 경우에는 "지금까지 한 번이라도 해소된 적 있는지" 판정이 그
-        # 임의 비교 기준으로 다시 쓰인다 — 순차 비교와 다른 결과가 나올 수 있음을
-        # 알고 있어야 한다(문서 11절 범위 밖 edge case).
+        # 조회는 과거 회차의 상태를 변경하지 않는다. 상태 갱신은 분석 완료 시에만 한다.
         try:
             report = compare(session, audit.id, from_version, to_version)
-            session.commit()
         except ValueError as exc:
             raise HTTPException(404, str(exc))
 
@@ -177,6 +173,7 @@ async def upload_screens(
     files: list[UploadFile] = File(...),
     screen_ids: list[str] = Form(default=[]),
     flow_steps: list[str] = Form(default=[]),
+    demo_variant: DemoVariant | None = Form(default=None),
     x_darkaudit_screen_metadata: str | None = Header(default=None),
 ) -> AuditDto:
     if not 1 <= len(files) <= 6:
@@ -194,6 +191,8 @@ async def upload_screens(
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, "uploaded screenshots")
+        if demo_variant and audit.demo_preset:
+            run.analysis_summary = {"demoVariant": demo_variant}
         target = UPLOAD_DIR / audit_id / f"run-{run.version}"
         target.mkdir(parents=True, exist_ok=True)
         for index, upload in enumerate(files, 1):
@@ -261,6 +260,8 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, f"URL: {payload.url}")
+        if payload.demoVariant and audit.demo_preset:
+            run.analysis_summary = {"demoVariant": payload.demoVariant}
         session.commit()
         job = create_job(audit_id, run.id)
         background.add_task(
@@ -379,7 +380,8 @@ def update_finding(finding_id: str, payload: FindingStatusRequest) -> dict[str, 
         finding = session.get(Finding, pk)
         if finding is None:
             raise HTTPException(404, "Finding not found")
-        finding.status = FindingStatus.RESOLVED if payload.status == "resolved" else FindingStatus.OPEN
+        finding.status = FindingStatus(payload.status.upper())
+        touch_audit(session, finding.run.audit_id)
         session.commit()
     return {"id": finding_id, "status": payload.status}
 
@@ -397,6 +399,7 @@ def save_finding_decision(finding_id: str, payload: FindingDecisionRequest) -> F
         updated_at = utcnow()
         finding.decision_note = payload.decisionNote.strip()
         finding.decision_updated_at = updated_at
+        touch_audit(session, finding.run.audit_id)
         session.commit()
         return FindingDecisionDto(
             id=finding_id,

@@ -1,15 +1,44 @@
-import { delay, http, HttpResponse } from "msw";
+import { bypass, delay, http, HttpResponse } from "msw";
+import demoCatalog from "./fixtures/demo-cases.json";
 
 import { chatbotHandlers } from "@/features/chatbot/mocks";
 import { dashboardFixture } from "@/mocks/fixtures/dashboard";
 import type {
   AnalysisJobDto,
+  AuditDto,
   CreateAuditDto,
   FindingStatus,
   ImportFigmaAuditDto,
+  DemoVariant,
 } from "@/entities/audit/types";
 
 const jobs = new Map<string, AnalysisJobDto>();
+
+function addMockRun(audit: AuditDto) {
+  if (!audit.runs?.length && audit.status === "completed") {
+    audit.runs = [
+      {
+        id: `${audit.id}-run-1`,
+        version: 1,
+        status: "completed",
+        createdAt: audit.updatedAt,
+        findingCount: audit.findings.length,
+      },
+    ];
+  }
+  const version = Math.max(0, ...(audit.runs ?? []).map((run) => run.version)) + 1;
+  const run = {
+    id: `${audit.id}-run-${version}`,
+    version,
+    status: "queued" as const,
+    createdAt: new Date().toISOString(),
+    findingCount: 0,
+  };
+  audit.runs = [...(audit.runs ?? []), run];
+  audit.status = "queued";
+  audit.updatedAt = run.createdAt;
+  return run;
+}
 
 export const handlers = [
   ...chatbotHandlers,
@@ -24,6 +53,8 @@ export const handlers = [
     if (!finding) return HttpResponse.json({ detail: "Finding not found" }, { status: 404 });
     finding.decisionNote = decisionNote.trim();
     finding.decisionUpdatedAt = new Date().toISOString();
+    const audit = dashboardFixture.audits.find((item) => item.findings.includes(finding));
+    if (audit) audit.updatedAt = finding.decisionUpdatedAt;
     return HttpResponse.json({
       id: finding.id,
       decisionNote: finding.decisionNote,
@@ -33,6 +64,7 @@ export const handlers = [
   http.get("*/health", () => HttpResponse.json({ status: "ok" })),
   http.get("*/api/v1/demo-inputs", () => {
     return HttpResponse.json({
+      cases: demoCatalog.cases,
       website: { url: "/demo/web/index.html?step=1", available: true },
       figma: {
         fileUrl: "https://www.figma.com/design/demo-file/Banking-Demo",
@@ -41,6 +73,23 @@ export const handlers = [
       },
       android: { downloadUrl: "/demo/darkaudit-demo.apk", available: true, reason: null },
     });
+  }),
+  http.get("*/demo/cases/:scenario/:variant/:filename", ({ params, request }) => {
+    if (import.meta.env.MODE === "test")
+      return new HttpResponse(
+        Uint8Array.from(
+          atob(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+          ),
+          (char) => char.charCodeAt(0),
+        ),
+        { headers: { "Content-Type": "image/png" } },
+      );
+    return fetch(
+      bypass(
+        new URL(`/demo-cases/${params.scenario}/${params.variant}/${params.filename}`, request.url),
+      ),
+    );
   }),
   http.get(
     "*/demo/darkaudit-demo.apk",
@@ -61,6 +110,7 @@ export const handlers = [
       name: input.name,
       platform: input.platform,
       productType: input.productType ?? null,
+      demoPreset: input.demoPreset,
       createdAt: new Date().toISOString(),
       status: "draft" as const,
       updatedAt: new Date().toISOString(),
@@ -73,19 +123,25 @@ export const handlers = [
   http.post("*/api/v1/audits/:auditId/screens", async ({ params, request }) => {
     const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
     if (!audit) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    addMockRun(audit);
     const encodedMetadata = request.headers.get("X-DarkAudit-Screen-Metadata") ?? "%5B%5D";
     const metadata = JSON.parse(decodeURIComponent(encodedMetadata)) as Array<{
       id: string;
       flowStep: string;
       fileName: string;
+      demoVariant?: DemoVariant;
     }>;
+    audit.demoVariant = metadata[0]?.demoVariant ?? null;
     audit.screens = metadata.map((screen, index) => ({
       id: screen.id,
       order: index + 1,
       flowStep: screen.flowStep,
-      imageUrl: screen.fileName.match(/^0[1-5]-/)
-        ? `/sample-audit/${screen.fileName}`
-        : `/mock/${screen.fileName}`,
+      imageUrl:
+        audit.demoPreset && audit.demoVariant
+          ? `/demo-cases/${audit.demoPreset.scenario}/${audit.demoVariant}/${String(index + 1).padStart(2, "0")}.png`
+          : screen.fileName.match(/^0[1-6]-/)
+            ? `/sample-audit/${screen.fileName}`
+            : `/mock/${screen.fileName}`,
       findingCount: 0,
     }));
     return HttpResponse.json(audit);
@@ -100,7 +156,10 @@ export const handlers = [
     };
     jobs.set(job.jobId, job);
     const audit = dashboardFixture.audits.find((item) => item.id === auditId);
-    if (audit) audit.status = "queued";
+    if (audit) {
+      audit.status = "queued";
+      job.runId = audit.runs?.at(-1)?.id;
+    }
     return HttpResponse.json(job, { status: 202 });
   }),
   http.post("*/api/v1/audits/:auditId/capture", async ({ params, request }) => {
@@ -109,9 +168,12 @@ export const handlers = [
       url: string;
       mode: "quick" | "smart";
       profiles: Array<"desktop" | "mobile">;
+      demoVariant?: DemoVariant;
     };
     const audit = dashboardFixture.audits.find((item) => item.id === auditId);
     if (!audit) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    const run = addMockRun(audit);
+    audit.demoVariant = input.demoVariant;
     audit.screens = input.profiles.map((profile, index) => ({
       id: `screen-${index + 1}`,
       order: index + 1,
@@ -122,7 +184,7 @@ export const handlers = [
     const job: AnalysisJobDto = {
       jobId: `job-${crypto.randomUUID()}`,
       auditId,
-      runId: `run-${crypto.randomUUID()}`,
+      runId: run.id,
       status: "queued",
       progress: 5,
     };
@@ -184,7 +246,16 @@ export const handlers = [
     job.progress = Math.min(100, job.progress + 24);
     job.status = job.progress >= 100 ? "completed" : "analyzing";
     const audit = dashboardFixture.audits.find((item) => item.id === job.auditId);
-    if (audit) audit.status = job.status === "completed" ? "completed" : "analyzing";
+    if (audit) {
+      audit.status = job.status === "completed" ? "completed" : "analyzing";
+      audit.updatedAt = new Date().toISOString();
+      const run = audit.runs?.find((item) => item.id === job.runId);
+      if (run) {
+        run.status = audit.status;
+        run.findingCount = audit.findings.length;
+        if (run.status === "completed") audit.latestRunId = run.id;
+      }
+    }
     return HttpResponse.json(job);
   }),
   http.delete("*/api/v1/audits/:auditId", async ({ params }) => {
@@ -203,6 +274,35 @@ export const handlers = [
       .find((item) => item.id === params.findingId);
     if (!finding) return HttpResponse.json({ message: "Finding not found" }, { status: 404 });
     finding.status = status;
+    const audit = dashboardFixture.audits.find((item) => item.findings.includes(finding));
+    if (audit) audit.updatedAt = new Date().toISOString();
     return HttpResponse.json({ id: finding.id, status });
+  }),
+  http.get("*/api/v1/audits/:auditId/regression", ({ params, request }) => {
+    const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
+    if (!audit) return HttpResponse.json({ detail: "Audit not found" }, { status: 404 });
+    const completed = (audit.runs ?? []).filter((run) => run.status === "completed");
+    if (completed.length < 2)
+      return HttpResponse.json({ detail: "비교할 이전 회차가 없습니다." }, { status: 409 });
+    const query = new URL(request.url).searchParams;
+    return HttpResponse.json({
+      auditId: audit.id,
+      fromVersion: Number(query.get("from") ?? completed.at(-2)!.version),
+      toVersion: Number(query.get("to") ?? completed.at(-1)!.version),
+      comparisonStatus: "incomplete",
+      limitations: ["모의 분석 결과이므로 실제 해결 여부를 확인할 수 없습니다."],
+      resolvedRatio: null,
+      resolved: [],
+      improved: [],
+      new: [],
+      regressed: [],
+      pending: [],
+      persisted: audit.findings.map((finding) => ({
+        ruleId: finding.ruleId,
+        findingId: finding.id,
+        before: finding.severity,
+        after: finding.severity,
+      })),
+    });
   }),
 ];

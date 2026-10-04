@@ -1,0 +1,326 @@
+[
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "risky",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "partial",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 1,
+    "height": 864
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "pet",
+    "variant": "revised",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "risky",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "partial",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 1,
+    "height": 864
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "travel",
+    "variant": "revised",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "risky",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 1,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "partial",
+    "step": 6,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 1,
+    "height": 885
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 2,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 3,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 4,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 5,
+    "height": 852
+  },
+  {
+    "scenario": "credit",
+    "variant": "revised",
+    "step": 6,
+    "height": 852
+  }
+]

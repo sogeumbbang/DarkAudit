@@ -143,6 +143,7 @@ class BaselineAuditPipeline:
                     "rule_assessments": list(result.rule_assessments),
                     "rejected_evidence": rejected_evidence,
                     "provider": type(self.provider).__name__,
+                    "analysis_mode": "visual" if mode_prompt == "visual.md" else "structured",
                     "model": getattr(self.provider, "model", None),
                     "warnings": evidence_warnings + (["mock_analysis"] if type(self.provider).__name__ == "FakeMultimodalProvider" else [])
                         + (["rule_assessments_missing"] if not result.rule_assessments else [])

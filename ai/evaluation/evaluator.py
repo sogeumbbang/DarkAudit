@@ -53,13 +53,16 @@ class Evaluator:
         for file in files:
             doc = json.loads(file.read_text(encoding="utf-8")); output = doc.get("output") or doc.get("analysis") or doc
             flow_id = doc.get("flow_id") or output.get("audit_id") or file.stem
-            predictions[flow_id] = {"output": output, "telemetry": doc.get("telemetry") or {}}
+            predictions[flow_id] = {"output": output, "telemetry": doc.get("telemetry") or {},
+                                    "error": doc.get("error"), "status": doc.get("status")}
         return predictions
 
     def evaluate_dataset(self, cases, predictions, *, iou_threshold: float = 0.5,
                          input_usd_per_million: float | None = None,
                          output_usd_per_million: float | None = None,
                          rule_ids: set[str] | None = None) -> dict[str, Any]:
+        from .clean_regression import summarize_clean_cases
+
         if not 0 <= iou_threshold <= 1: raise ValueError("iou_threshold must be between 0 and 1")
         missing = sorted(case.flow_id for case in cases if case.flow_id not in predictions)
         rules = sorted(DEFAULT_EVALUATION_RULE_IDS if rule_ids is None else rule_ids)
@@ -109,6 +112,7 @@ class Evaluator:
         return {
             "dataset_cases": len(cases), "evaluated_cases": len(cases) - len(missing), "missing_predictions": missing,
             "per_rule": per_rule, "micro": micro, "macro": macro,
+            "clean_regression": summarize_clean_cases(cases, predictions, rules),
             "instance_detection": self._instance_detection(cases, predictions, rules, iou_threshold),
             "counterfactual_consistency": self._counterfactual(cases, predictions, rules),
             "localization": {"iou_threshold": iou_threshold, "mean_iou": sum(ious) / len(ious) if ious else None,

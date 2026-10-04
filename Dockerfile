@@ -13,6 +13,7 @@ COPY ai/ ai/
 COPY backend/ backend/
 COPY rules/ rules/
 COPY frontend/public/dark-pattern-demo/ frontend/public/dark-pattern-demo/
+COPY frontend/public/demo-cases/ frontend/public/demo-cases/
 COPY demo/assets/ demo/assets/
 
 EXPOSE 8000

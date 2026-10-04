@@ -45,7 +45,7 @@ from backend.app.rule_engine.severity import ScoredFinding
 from backend.app.rule_engine.severity import score as score_rule_findings
 
 from .schemas import JobDto
-from .store import SessionLocal, new_id
+from .store import SessionLocal, new_id, touch_audit
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
@@ -91,6 +91,7 @@ def recover_interrupted_runs() -> int:
         for run in runs:
             run.status = RunStatus.FAILED
             run.note = "서버 재시작으로 진단 작업이 중단되었습니다. 다시 진단해 주세요."
+            touch_audit(session, run.audit_id)
         session.commit()
         return len(runs)
 
@@ -122,6 +123,7 @@ def next_run(session, audit_id: int, note: str | None = None) -> AuditRun:
     )
     run = AuditRun(audit_id=audit_id, version=(latest or 0) + 1, status=RunStatus.PENDING, note=note)
     session.add(run)
+    touch_audit(session, audit_id)
     session.flush()
     return run
 
@@ -238,7 +240,7 @@ def capture_and_analyze_url(
             # Without this commit, a missing/invalid model setting rolled the screenshots
             # back together with the analysis transaction, leaving the UI with no evidence.
             session.commit()
-            run.analysis_summary = {"source": "url", "warnings": [
+            run.analysis_summary = {**(run.analysis_summary or {}), "source": "url", "warnings": [
                 f"{p.profile}: {p.stop_reason}" for p in capture.profiles
                 if p.stop_reason != "Computer Use completed exploration"
             ]}
@@ -280,6 +282,7 @@ def _audit_screen(screen: Screen, path: Path) -> AuditScreen:
 def _record_analysis(run: AuditRun, pipeline: BaselineAuditPipeline, request: LLMAuditRequest,
                      warnings: list[str] | None = None) -> None:
     summary = dict(run.analysis_summary or {})
+    summary.setdefault("source", "upload")
     telemetry = pipeline.last_run_telemetry
     all_warnings = list(summary.get("warnings", [])) + (warnings or [])
     all_warnings.extend(item["warning"] for item in telemetry.get("bbox_localizations", []) if item.get("warning"))
@@ -298,6 +301,7 @@ def _mark_running(job_id: str, run_id: int, progress: float) -> None:
         if run is None:
             raise ValueError("Analysis run no longer exists")
         run.status = RunStatus.RUNNING
+        touch_audit(session, run.audit_id)
         session.commit()
     _update_job(job_id, status="analyzing", progress=progress)
 
@@ -307,6 +311,7 @@ def _fail_job(job_id: str, run_id: int, exc: Exception) -> None:
         run = session.get(AuditRun, run_id)
         if run is not None:
             run.status = RunStatus.FAILED
+            touch_audit(session, run.audit_id)
             run.note = str(exc)[:1000]
             run.analysis_summary = summarize({**(run.analysis_summary or {}), "warnings":
                 [*(run.analysis_summary or {}).get("warnings", []), "analysis_failed"]})
@@ -565,6 +570,7 @@ def _store_output(
         run.findings.append(finding)
 
     run.status = RunStatus.DONE
+    touch_audit(session, run.audit_id)
 
 
 def _apply_regression(session, run: AuditRun) -> None:
@@ -578,4 +584,10 @@ def _apply_regression(session, run: AuditRun) -> None:
         .order_by(AuditRun.version.desc())
     )
     if previous is not None:
-        compare(session, run.audit_id, previous.version, run.version)
+        report = compare(session, run.audit_id, previous.version, run.version, update_statuses=True)
+        run.analysis_summary = {**(run.analysis_summary or {}), "regression": {
+            "comparisonStatus": "incomplete" if report.limitations else "complete",
+            "limitations": report.limitations,
+            "pendingCount": len(report.pending),
+            "resolvedRatio": report.resolved_ratio,
+        }}

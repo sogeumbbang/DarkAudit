@@ -1,0 +1,422 @@
+{
+  "version": "demo-v3",
+  "cases": [
+    {
+      "id": "pet",
+      "productType": "insurance",
+      "variants": [
+        {
+          "id": "risky",
+          "label": "문제 포함 원본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "보장 소개",
+              "url": "/demo/cases/pet/risky/01.png",
+              "sha256": "02ca0215092086c7a12e5610aca8daf8cbd9974da6f4eccc87ef0f2f1853358c"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "특약 선택",
+              "url": "/demo/cases/pet/risky/02.png",
+              "sha256": "74cf4a10936878d089a0870019cb96e94e135cae7038d7087f96860f4c403da9"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "개인정보 동의",
+              "url": "/demo/cases/pet/risky/03.png",
+              "sha256": "6ef8cef8cdf380c7b99cecd18136fd2bf17b70f02a52afce960512dca22e5a21"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "특약 재권유",
+              "url": "/demo/cases/pet/risky/04.png",
+              "sha256": "1eeea4562c27d67d48c9f0a7731d312d52bee61893a17c4be68a9f514b55a421"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "면책 조건",
+              "url": "/demo/cases/pet/risky/05.png",
+              "sha256": "c73f47ad02c5e23b596c71550384cb61b8b05f8177ec7b26f88446911f2e5f2b"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 보험료",
+              "url": "/demo/cases/pet/risky/06.png",
+              "sha256": "4f3daf85a35d809cc1552a6063b17e47f2142a66ba5dcb4dfa680fc927711d87"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=pet&variant=risky&step=1",
+          "expectedRules": ["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"]
+        },
+        {
+          "id": "partial",
+          "label": "일부 수정본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "보장 소개",
+              "url": "/demo/cases/pet/partial/01.png",
+              "sha256": "2b38349869d9a7149374604f27922ad11d722a87f5bac474c20a03e8129fd564"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "특약 선택",
+              "url": "/demo/cases/pet/partial/02.png",
+              "sha256": "692602716c3a6096b4438aebcc656cbde12feba9fb454c1fe201954799fcc4aa"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "개인정보 동의",
+              "url": "/demo/cases/pet/partial/03.png",
+              "sha256": "a9e6c13a4506e49ac010451e05170a2548edad20e82476996176a94a44697ab6"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "특약 재권유",
+              "url": "/demo/cases/pet/partial/04.png",
+              "sha256": "1eeea4562c27d67d48c9f0a7731d312d52bee61893a17c4be68a9f514b55a421"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "면책 조건",
+              "url": "/demo/cases/pet/partial/05.png",
+              "sha256": "10bc2d6efa9718af449f38b7346daf4d15d64e030620bc53437783fb4663cbf1"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 보험료",
+              "url": "/demo/cases/pet/partial/06.png",
+              "sha256": "795658adc719d001b859ddf6d8f77a154294a46cb298b78c3e01684b725c58e7"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=pet&variant=partial&step=1",
+          "expectedRules": ["DA-03", "DA-07", "DA-12"]
+        },
+        {
+          "id": "revised",
+          "label": "전체 개선본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "보장 소개",
+              "url": "/demo/cases/pet/revised/01.png",
+              "sha256": "46230ee491eba0fbc91a2f789524f0ebb2673916b7d7ad3e9b3c6a5d0ce8aa07"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "특약 선택",
+              "url": "/demo/cases/pet/revised/02.png",
+              "sha256": "692602716c3a6096b4438aebcc656cbde12feba9fb454c1fe201954799fcc4aa"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "개인정보 동의",
+              "url": "/demo/cases/pet/revised/03.png",
+              "sha256": "13b76b64836da967bcb25f9c4d78bdbd2eca4148b9b572e9d8564459b2baf056"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "특약 재권유",
+              "url": "/demo/cases/pet/revised/04.png",
+              "sha256": "82d2cc88a98c4197ab73754ea97ebecf7bf5afc903bad4cd1b6b4cd9f9df8ee0"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "면책 조건",
+              "url": "/demo/cases/pet/revised/05.png",
+              "sha256": "a2247a5740b26c9b86d3873c078dd43d63a811922f337bfdfc5ce2bea17f7bbd"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 보험료",
+              "url": "/demo/cases/pet/revised/06.png",
+              "sha256": "795658adc719d001b859ddf6d8f77a154294a46cb298b78c3e01684b725c58e7"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=pet&variant=revised&step=1",
+          "expectedRules": []
+        }
+      ],
+      "name": "모루 펫케어"
+    },
+    {
+      "id": "travel",
+      "productType": "other",
+      "variants": [
+        {
+          "id": "risky",
+          "label": "문제 포함 원본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "멤버십 안내",
+              "url": "/demo/cases/travel/risky/01.png",
+              "sha256": "dac8196e1ebd25b41f127f09e6f53f810bfd881bc06ca299224738994018db15"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "여행 옵션",
+              "url": "/demo/cases/travel/risky/02.png",
+              "sha256": "8a9b5c55d0e7cf86006fde512572d837a0f646e79274d555f4b528421e61d23c"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "혜택 알림",
+              "url": "/demo/cases/travel/risky/03.png",
+              "sha256": "7f53b717203145dc5c1be322ac953940c383a021257ad2c6236b45497c3245f2"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "혜택 포기 확인",
+              "url": "/demo/cases/travel/risky/04.png",
+              "sha256": "438b449082476fee8fd1f7265cf4ba98408da9e4322bca081efbaf9725a01c64"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "알림 재권유",
+              "url": "/demo/cases/travel/risky/05.png",
+              "sha256": "331e45e5f023f991347f646310cb91a3dc8c95f2aa02798d6d8f42ab72b3d516"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 이용료",
+              "url": "/demo/cases/travel/risky/06.png",
+              "sha256": "d4a00aa9f58369276bb000c1d93f4f50112d7056d54ee4cd4826410a94417a1b"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=travel&variant=risky&step=1",
+          "expectedRules": ["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"]
+        },
+        {
+          "id": "partial",
+          "label": "일부 수정본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "멤버십 안내",
+              "url": "/demo/cases/travel/partial/01.png",
+              "sha256": "338945af7821ea0f037db283efbbffda90606b07a179b6cbf62a0789b21aaaa6"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "여행 옵션",
+              "url": "/demo/cases/travel/partial/02.png",
+              "sha256": "1c537b4a0fe4575061cad8b48fe304ae9cd48612e302395d37d5d45d268a7af4"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "혜택 알림",
+              "url": "/demo/cases/travel/partial/03.png",
+              "sha256": "9fd791894899b78b778eb68f529e9d39aaa3d78f36c34f6b8a4f532331533173"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "혜택 포기 확인",
+              "url": "/demo/cases/travel/partial/04.png",
+              "sha256": "438b449082476fee8fd1f7265cf4ba98408da9e4322bca081efbaf9725a01c64"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "알림 재권유",
+              "url": "/demo/cases/travel/partial/05.png",
+              "sha256": "201b8576251e10a56e7f52566ca0a6af6ccb81e6d7284f8f53fdd406a88cd9d8"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 이용료",
+              "url": "/demo/cases/travel/partial/06.png",
+              "sha256": "e4252da9ddf92cc1ca83a96f1a58705394cc99a9797076758d64b8da993eeca9"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=travel&variant=partial&step=1",
+          "expectedRules": ["DA-03", "DA-07", "DA-12"]
+        },
+        {
+          "id": "revised",
+          "label": "전체 개선본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "멤버십 안내",
+              "url": "/demo/cases/travel/revised/01.png",
+              "sha256": "3c4033a3dcf20f2e395c5115a6b025732d369ae4c45e454cc287007619d82594"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "여행 옵션",
+              "url": "/demo/cases/travel/revised/02.png",
+              "sha256": "1c537b4a0fe4575061cad8b48fe304ae9cd48612e302395d37d5d45d268a7af4"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "혜택 알림",
+              "url": "/demo/cases/travel/revised/03.png",
+              "sha256": "ee0155d7fcfe01d5ff6482ab4e408ec79bab528c14cbc3214d3195dfe85d270d"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "혜택 포기 확인",
+              "url": "/demo/cases/travel/revised/04.png",
+              "sha256": "2230f3258ad39b2ec7ba837e1a78602fe65c67ca8e11c13257f2d20ef847810d"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "알림 재권유",
+              "url": "/demo/cases/travel/revised/05.png",
+              "sha256": "a8531bbfc89a196c44570d175795b2e7d61bf10b5bee644fa86abc89becd8343"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "최종 이용료",
+              "url": "/demo/cases/travel/revised/06.png",
+              "sha256": "e4252da9ddf92cc1ca83a96f1a58705394cc99a9797076758d64b8da993eeca9"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=travel&variant=revised&step=1",
+          "expectedRules": []
+        }
+      ],
+      "name": "로밍 패스"
+    },
+    {
+      "id": "credit",
+      "productType": "other",
+      "variants": [
+        {
+          "id": "risky",
+          "label": "문제 포함 원본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "무료 체험 안내",
+              "url": "/demo/cases/credit/risky/01.png",
+              "sha256": "6880582911af949bf389a790edead4db0ab1c786e7b97cf629fbe4752c4cac96"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "구독 설정",
+              "url": "/demo/cases/credit/risky/02.png",
+              "sha256": "e389d8a9079160054c0a817396f443fed3acadcfd821b7ff8681e69f1bd309fd"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "정보 활용 선택",
+              "url": "/demo/cases/credit/risky/03.png",
+              "sha256": "ee75d7883e188c117c2c643db6a7cb4f92a097f6aa7b488d86ce1167eb06446b"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "해지 만류",
+              "url": "/demo/cases/credit/risky/04.png",
+              "sha256": "7914e06f84526f6395d3ebc24f39f183ff1dce8e228da7723df60c6ed6540d42"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "해지 절차",
+              "url": "/demo/cases/credit/risky/05.png",
+              "sha256": "359bcbf7b0d987314d10d2675bc63e1f84f22981d6f69dfa51cd059611b58b78"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "갱신 금액",
+              "url": "/demo/cases/credit/risky/06.png",
+              "sha256": "e3e909891f97d71b56121165910bc36d8829a9ca7069549f607feccfaae2f369"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=credit&variant=risky&step=1",
+          "expectedRules": ["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"]
+        },
+        {
+          "id": "partial",
+          "label": "일부 수정본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "무료 체험 안내",
+              "url": "/demo/cases/credit/partial/01.png",
+              "sha256": "a35040417a2e5b093efc36c739653bf5e71a1193448e571a713d2f68a955ca40"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "구독 설정",
+              "url": "/demo/cases/credit/partial/02.png",
+              "sha256": "f85790b3996bf6ad9d4ae4cc6e2281248de3f78691dec584d0b0b989feac8088"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "정보 활용 선택",
+              "url": "/demo/cases/credit/partial/03.png",
+              "sha256": "e0a3c3a6ec67a23a60fc03d1e87bbfff114a69bf740bfca531f696f7503c7260"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "해지 만류",
+              "url": "/demo/cases/credit/partial/04.png",
+              "sha256": "7914e06f84526f6395d3ebc24f39f183ff1dce8e228da7723df60c6ed6540d42"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "해지 절차",
+              "url": "/demo/cases/credit/partial/05.png",
+              "sha256": "1d2b7cd5a9fd20b1b783345a9a3803a49acd8129bc80eb53f1bcdd570bb46321"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "갱신 금액",
+              "url": "/demo/cases/credit/partial/06.png",
+              "sha256": "6f1fd283801f52a531618c7f7579b96902f9aa5ab78e998e1ac40a79c46a792e"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=credit&variant=partial&step=1",
+          "expectedRules": ["DA-03", "DA-07", "DA-12"]
+        },
+        {
+          "id": "revised",
+          "label": "전체 개선본",
+          "screens": [
+            {
+              "fileName": "01.png",
+              "flowStep": "무료 체험 안내",
+              "url": "/demo/cases/credit/revised/01.png",
+              "sha256": "debb587d7055f3efef0282676e1bd29b888d645bbf0c524f78b2c604c4e38624"
+            },
+            {
+              "fileName": "02.png",
+              "flowStep": "구독 설정",
+              "url": "/demo/cases/credit/revised/02.png",
+              "sha256": "f85790b3996bf6ad9d4ae4cc6e2281248de3f78691dec584d0b0b989feac8088"
+            },
+            {
+              "fileName": "03.png",
+              "flowStep": "정보 활용 선택",
+              "url": "/demo/cases/credit/revised/03.png",
+              "sha256": "a63786457254c3a8f779c1b378793f0470a4cede975906f86c740ef35af6dead"
+            },
+            {
+              "fileName": "04.png",
+              "flowStep": "해지 만류",
+              "url": "/demo/cases/credit/revised/04.png",
+              "sha256": "e0d0046a44de9ec1325ea4d3f258d34647d17c1f2477733818293421194b5677"
+            },
+            {
+              "fileName": "05.png",
+              "flowStep": "해지 절차",
+              "url": "/demo/cases/credit/revised/05.png",
+              "sha256": "0ec274d3b9a4294f74d82481eff9508905883ce37e3fca067d1d8253a93b6afd"
+            },
+            {
+              "fileName": "06.png",
+              "flowStep": "갱신 금액",
+              "url": "/demo/cases/credit/revised/06.png",
+              "sha256": "6f1fd283801f52a531618c7f7579b96902f9aa5ab78e998e1ac40a79c46a792e"
+            }
+          ],
+          "websiteUrl": "/demo/web/index.html?scenario=credit&variant=revised&step=1",
+          "expectedRules": []
+        }
+      ],
+      "name": "릿 크레딧"
+    }
+  ]
+}

@@ -35,6 +35,25 @@ def assessments(ids):
 
 
 class AssessmentContractTest(unittest.TestCase):
+    def test_summary_exposes_visual_review_and_all_unsupported_rules(self):
+        from ai.pipeline.quality import summarize
+
+        summary = summarize({"batches": [{"screens": ["a"], "telemetry": {
+            "analysis_mode": "visual", "rule_assessments": assessments(["a"]),
+        }}]})
+        self.assertTrue(summary["reviewRequired"])
+        self.assertEqual(len(summary["unsupportedRules"]), 10)
+        self.assertIn("DA-13", summary["unsupportedRules"])
+        self.assertTrue(summary["complete"])
+
+    def test_structured_summary_does_not_label_all_results_as_visual(self):
+        from ai.pipeline.quality import summarize
+
+        summary = summarize({"source": "url", "batches": [{"screens": ["a"], "telemetry": {
+            "analysis_mode": "structured", "rule_assessments": assessments(["a"]),
+        }}]})
+        self.assertFalse(summary["reviewRequired"])
+
     def test_current_golden_empty_result_has_complete_rule_coverage(self):
         from dataclasses import replace
 

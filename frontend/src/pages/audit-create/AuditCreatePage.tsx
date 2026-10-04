@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Images, LoaderCircle, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,8 +13,9 @@ import "./audit-create.css";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { warmUpApi } from "@/api/client";
-import { getDemoApk, getDemoInputs } from "@/api/demo";
-import type { AuditDto } from "@/entities/audit/types";
+import { dashboardKeys } from "@/features/audit-dashboard/useDashboardSummary";
+import { demoVariantLabels, getDemoApk, getDemoInputs, getDemoScreens } from "@/api/demo";
+import type { AuditDto, DemoPreset, DemoVariant } from "@/entities/audit/types";
 import {
   useAnalysisStatus,
   useAnalyzeAndroidApp,
@@ -42,6 +43,10 @@ const auditSchema = z.object({
 type AuditForm = z.infer<typeof auditSchema>;
 
 export function AuditCreatePage() {
+  const queryClient = useQueryClient();
+  const [demoScenario, setDemoScenario] = useState<DemoPreset["scenario"]>("pet");
+  const [demoVariant, setDemoVariant] = useState<DemoVariant>("risky");
+  const [activeDemo, setActiveDemo] = useState<DemoPreset>();
   const [source, setSource] = useState<AuditSource>("website");
   const [url, setUrl] = useState("");
   const [scanMode, setScanMode] = useState<"quick" | "smart">("quick");
@@ -63,6 +68,8 @@ export function AuditCreatePage() {
   const [loadingDemo, setLoadingDemo] = useState<AuditSource>();
   const executionLock = useRef(false);
   const demoInputs = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
+  const selectedDemo = demoInputs.data?.cases.find((item) => item.id === demoScenario);
+  const selectedVariant = selectedDemo?.variants.find((item) => item.id === demoVariant);
   const [jobId, setJobId] = useState<string>();
   const [auditId, setAuditId] = useState<string>();
   const screenInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +86,11 @@ export function AuditCreatePage() {
   const uploadScreens = useUploadAuditScreens();
   const startAnalysis = useStartAnalysis();
   const analysis = useAnalysisStatus(jobId);
+  useEffect(() => {
+    if (analysis.data?.status === "completed" || analysis.data?.status === "failed") {
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+    }
+  }, [analysis.data?.status, queryClient]);
   const {
     register,
     handleSubmit,
@@ -105,37 +117,48 @@ export function AuditCreatePage() {
     setSampleError(undefined);
 
     try {
-      const loaded = await Promise.all(
-        samples.map(async ([fileName, flowStep]) => {
-          const response = await fetch(`/sample-audit/${fileName}`);
-          if (!response.ok) throw new Error(`${fileName}을 불러오지 못했습니다.`);
-          const blob = await response.blob();
-          const file = new File([blob], fileName, { type: blob.type || "image/png" });
-          return {
-            id: crypto.randomUUID(),
-            file,
-            previewUrl: URL.createObjectURL(file),
-            flowStep,
-          };
-        }),
-      );
+      if (!selectedVariant && (demoScenario !== "pet" || demoVariant !== "risky")) {
+        throw new Error("선택한 데모 목록을 불러오지 못했습니다. 잠시 후 다시 실행해 주세요.");
+      }
+      const loaded = selectedVariant
+        ? (await getDemoScreens(selectedVariant)).map((screen) => ({
+            ...screen,
+            previewUrl: URL.createObjectURL(screen.file),
+          }))
+        : await Promise.all(
+            samples.map(async ([fileName, flowStep]) => {
+              const response = await fetch(`/sample-audit/${fileName}`);
+              if (!response.ok) throw new Error(`${fileName}을 불러오지 못했습니다.`);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: blob.type || "image/png" });
+              return {
+                id: crypto.randomUUID(),
+                file,
+                previewUrl: URL.createObjectURL(file),
+                flowStep,
+              };
+            }),
+          );
       setScreens((current) => {
         current.forEach((screen) => URL.revokeObjectURL(screen.previewUrl));
         return loaded;
       });
       setSource("screenshots");
       setUploadPlatform("mobile-web");
-      const name = "스크린샷 데모 · 모루 반려동물 보험";
+      const name = `스크린샷 데모 · ${selectedDemo?.name ?? "모루 반려동물 보험"} · ${demoVariantLabels[demoVariant]}`;
       setValue("name", name, { shouldValidate: true });
-      setValue("productType", "insurance");
+      const productType = selectedDemo?.productType ?? "insurance";
+      setValue("productType", productType);
       await runAudit(
-        { name, productType: "insurance" },
+        { name, productType },
         {
           ...currentInput(),
           source: "screenshots",
           uploadPlatform: "mobile-web",
           screens: loaded,
         },
+        { scenario: demoScenario, source: "screenshots" },
+        demoVariant,
       );
     } catch (error) {
       setSampleError(error instanceof Error ? error.message : "샘플 화면을 불러오지 못했습니다.");
@@ -156,14 +179,18 @@ export function AuditCreatePage() {
       const input = { ...currentInput(), source: kind };
       let name: string;
       if (kind === "website") {
-        setUrl(config.website.url);
+        if (!selectedVariant && (demoScenario !== "pet" || demoVariant !== "risky")) {
+          throw new Error("선택한 데모 목록을 불러오지 못했습니다. 잠시 후 다시 실행해 주세요.");
+        }
+        const demoUrl = selectedVariant?.websiteUrl ?? config.website.url;
+        setUrl(demoUrl);
         setScanMode("smart");
         setProfiles(["mobile"]);
         setWebsiteGoal(
           "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.",
         );
-        name = "URL 데모 · 로밍 패스 환전 멤버십";
-        input.url = config.website.url;
+        name = `URL 데모 · ${selectedDemo?.name ?? "로밍 패스 환전 멤버십"} · ${demoVariantLabels[demoVariant]}`;
+        input.url = demoUrl;
         input.scanMode = "smart";
         input.profiles = ["mobile"];
         input.websiteGoal =
@@ -188,9 +215,21 @@ export function AuditCreatePage() {
       }
       setSource(kind);
       setValue("name", name, { shouldValidate: true });
-      const productType = kind === "android" ? "investment" : "";
+      const productType =
+        kind === "android"
+          ? "investment"
+          : kind === "website"
+            ? (selectedDemo?.productType ?? "other")
+            : "";
       setValue("productType", productType);
-      await runAudit({ name, productType }, input);
+      await runAudit(
+        { name, productType },
+        input,
+        kind === "website"
+          ? { scenario: selectedDemo?.id ?? "travel", source: "website" }
+          : undefined,
+        kind === "website" ? demoVariant : undefined,
+      );
     } catch (error) {
       setSampleError(error instanceof Error ? error.message : "데모를 실행하지 못했습니다.");
     } finally {
@@ -263,7 +302,13 @@ export function AuditCreatePage() {
     }
   }
 
-  async function runAudit(values: AuditForm, input: ReturnType<typeof currentInput>) {
+  async function runAudit(
+    values: AuditForm,
+    input: ReturnType<typeof currentInput>,
+    demoPreset?: DemoPreset,
+    variant?: DemoVariant,
+  ) {
+    setActiveDemo(demoPreset);
     const {
       source,
       url,
@@ -294,12 +339,14 @@ export function AuditCreatePage() {
       name: values.name,
       platform,
       productType: values.productType || null,
+      demoPreset,
     });
     setAuditId(audit.id);
     if (source === "website") {
       const job = await captureUrl.mutateAsync({
         auditId: audit.id,
         url: url.trim(),
+        demoVariant: variant,
         mode: scanMode,
         profiles,
         goal: websiteGoal.trim() || undefined,
@@ -325,6 +372,7 @@ export function AuditCreatePage() {
       await uploadScreens.mutateAsync({
         auditId: audit.id,
         screens: screens.map(({ id, flowStep, file }) => ({ id, flowStep, file })),
+        demoVariant: variant,
       });
       setJobId((await startAnalysis.mutateAsync(audit.id)).jobId);
     }
@@ -355,6 +403,7 @@ export function AuditCreatePage() {
       <AnalysisProgress
         key={jobId}
         source={source}
+        demo={Boolean(activeDemo)}
         auditId={auditId}
         progress={analysis.data?.progress ?? 5}
         completed={analysis.data?.status === "completed"}
@@ -488,10 +537,49 @@ export function AuditCreatePage() {
         <p className="mt-1 text-sm leading-6 text-muted">
           자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
         </p>
+        {demoInputs.data?.cases.length ? (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold">
+              스크린샷·URL 데모 시나리오
+              <select
+                className="mt-2 w-full rounded-control border border-border bg-surface p-3"
+                value={demoScenario}
+                disabled={pending}
+                onChange={(event) => setDemoScenario(event.target.value as DemoPreset["scenario"])}
+              >
+                {demoInputs.data.cases.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm font-semibold">
+              실행할 데모 버전
+              <select
+                className="mt-2 w-full rounded-control border border-border bg-surface p-3"
+                value={demoVariant}
+                disabled={pending}
+                onChange={(event) => setDemoVariant(event.target.value as DemoVariant)}
+              >
+                {Object.entries(demoVariantLabels).map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-xs leading-5 text-muted sm:col-span-2">
+              원본에는 사전 선택·숨겨진 조건·버튼 위계·감정적 압박·비용 후공개가 포함됩니다. 일부
+              수정본은 사전 선택과 비용 공개를 개선하고, 전체 개선본은 나머지 문구와 선택 구조도
+              수정합니다. 실제 탐지 결과는 분석으로 확인합니다.
+            </p>
+          </div>
+        ) : null}
         <div className="audit-demo-options">
           {(
             [
-              ["website", "URL", "환전 멤버십 · 6단계 여행 준비 흐름"],
+              ["website", "URL", "선택한 시나리오·버전의 6단계 웹 흐름"],
               ["figma", "Figma", "설정된 Figma 파일의 주요 화면 검사"],
               ["android", "APK", "소액투자 · 6단계 투자 설정 흐름"],
             ] as const
@@ -521,7 +609,7 @@ export function AuditCreatePage() {
           <div className="rounded-control border border-border bg-white p-4">
             <p className="text-sm font-bold">스크린샷</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
-              반려동물 보험 · 6단계 보장 설계 화면
+              {selectedDemo?.name ?? "반려동물 보험"} · {demoVariantLabels[demoVariant]} · 6단계
             </p>
             <Button
               className="mt-3 w-full"

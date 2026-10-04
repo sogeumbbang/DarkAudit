@@ -223,9 +223,17 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--flows", default="", help="쉼표로 구분. 비우면 전체")
+    parser.add_argument("--clean-only", action="store_true", help="고정 정상 흐름 11개만 평가")
+    parser.add_argument("--output-dir", type=Path, help="예측과 보고서를 저장할 새 디렉터리")
     parser.add_argument("--visual", action="store_true",
                         help="Rule Engine 후보 없이 스크린샷만으로 분석한다(업로드 경로와 같은 설정)")
     args = parser.parse_args()
+    if args.clean_only and args.flows:
+        parser.error("--clean-only와 --flows는 함께 사용할 수 없습니다.")
+    if args.runs < 1:
+        parser.error("--runs는 1 이상이어야 합니다.")
+    if args.output_dir and args.output_dir.exists() and any(args.output_dir.iterdir()):
+        parser.error("--output-dir은 이전 예측이 섞이지 않도록 비어 있어야 합니다.")
 
     load_env()
     if not os.getenv("OPENAI_API_KEY"):
@@ -234,15 +242,25 @@ def main() -> None:
 
     flow_ids = ([f.strip() for f in args.flows.split(",") if f.strip()]
                 or sorted(p.stem for p in UI.glob("*.json")))
+    if args.clean_only:
+        from ai.evaluation.clean_regression import load_fixed_cases
+        _, cases = load_fixed_cases()
+        flow_ids = [case.flow_id for case in cases]
     print(f"대상 {len(flow_ids)}개 flow, {args.runs}회 측정\n")
 
-    out_dir = OUT / ("hybrid_visual" if args.visual else "hybrid")
+    out_dir = args.output_dir or OUT / ("hybrid_visual" if args.visual else "hybrid")
+    if args.clean_only and args.output_dir is None:
+        out_dir = OUT / ("clean_visual_" if args.visual else "clean_structured_")
+        out_dir = out_dir.with_name(out_dir.name + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f"))
     reports = []
     for index in range(1, args.runs + 1):
         print(f"── run {index}/{args.runs} ──")
         reports.append(run_once(flow_ids, index, out_dir, args.visual))
         micro = reports[-1]["micro"]
         print(f"  micro P={micro['precision']:.2f} R={micro['recall']:.2f} F1={micro['f1']:.2f}\n")
+        clean = reports[-1]["clean_regression"]
+        print(f"  정상 화면 오탐 {clean['false_positive_findings']}건 / "
+              f"분석 실패 {clean['analysis_failure_count']}개 / 검사 미완료 {clean['incomplete_count']}개")
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -263,20 +281,21 @@ def main() -> None:
         },
         "per_run": reports,
     }
-    OUT.mkdir(parents=True, exist_ok=True)
+    report_dir = out_dir if args.clean_only or args.output_dir else OUT
+    report_dir.mkdir(parents=True, exist_ok=True)
     body = json.dumps(summary, ensure_ascii=False, indent=2)
     infix = ".visual" if args.visual else ""
-    path = OUT / f"hybrid_report{infix}.json"
+    path = report_dir / f"hybrid_report{infix}.json"
     path.write_text(body, encoding="utf-8")
     # 모델을 바꿔 다시 재면 이전 값이 덮여 비교할 수 없다. 모델명을 붙인 사본을
     # 함께 남겨 두고, 문서가 인용하는 경로(hybrid_report.json)는 최신을 가리킨다.
     model_slug = (summary["model"] or "unknown").replace("/", "-")
-    (OUT / f"hybrid_report{infix}.{model_slug}.json").write_text(body, encoding="utf-8")
+    (report_dir / f"hybrid_report{infix}.{model_slug}.json").write_text(body, encoding="utf-8")
 
     print("=" * 46)
     for metric, stats in summary["variation"].items():
         print(f"{metric:<10} 평균 {stats['mean']:.2f}  범위 {stats['min']:.2f}~{stats['max']:.2f}")
-    print(f"\n리포트 저장: {path.relative_to(REPO)}")
+    print(f"\n리포트 저장: {path}")
 
 
 if __name__ == "__main__":

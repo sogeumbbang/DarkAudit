@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -13,15 +14,26 @@ router = APIRouter()
 ROOT = Path(__file__).resolve().parents[2]
 WEB_DIR = ROOT / "frontend/public/dark-pattern-demo"
 APK_PATH = ROOT / "demo/assets/darkaudit-demo.apk"
+CASES_DIR = ROOT / "frontend/public/demo-cases"
 DEFAULT_FIGMA_URL = "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/DarkAudit-Mobile-Banking-Mockup"
 DEFAULT_FIGMA_FLOW = "릿 크레딧 · 6단계"
 
 
 @router.get("/demo/web/{filename}", name="demo_web")
 def demo_web(filename: str) -> FileResponse:
-    if filename not in {"index.html", "style.css", "demo.js", "scenarios.js"}:
+    if filename not in {"index.html", "style.css", "demo.js", "scenarios.js", "variants.js"}:
         raise HTTPException(404, "Demo asset not found")
     return FileResponse(WEB_DIR / filename)
+
+
+@router.get("/demo/cases/{scenario}/{variant}/{filename}")
+def demo_case_image(scenario: str, variant: str, filename: str) -> FileResponse:
+    if scenario not in {"pet", "travel", "credit"} or variant not in {"risky", "partial", "revised"} or filename not in {f"{i:02d}.png" for i in range(1, 7)}:
+        raise HTTPException(404, "Demo asset not found")
+    path = CASES_DIR / scenario / variant / filename
+    if not path.is_file():
+        raise HTTPException(404, "Demo asset not installed")
+    return FileResponse(path, media_type="image/png")
 
 
 @router.get("/demo/darkaudit-demo.apk", name="demo_apk")
@@ -51,6 +63,7 @@ def demo_inputs() -> dict:
         APK_PATH.is_file() and os.getenv("BROWSERSTACK_USERNAME") and os.getenv("BROWSERSTACK_ACCESS_KEY")
     )
     return {
+        "cases": json.loads((CASES_DIR / "manifest.json").read_text())["cases"] if (CASES_DIR / "manifest.json").is_file() else [],
         "website": {
             "url": str(router.url_path_for("demo_web", filename="index.html")) + "?step=1",
             "available": True,

@@ -345,6 +345,14 @@ describe("OverviewPage", () => {
     fixture.audits[0]!.findings = [];
     fixture.audits[0]!.analysisSummary = {
       complete: false,
+      reviewRequired: true,
+      unsupportedRules: ["DA-01", "DA-02"],
+      regression: {
+        comparisonStatus: "incomplete",
+        pendingCount: 1,
+        resolvedRatio: null,
+        limitations: ["두 회차의 화면 구성이 다릅니다."],
+      },
       supportedRules: ["DA-03", "DA-04", "DA-07", "DA-12", "DA-15"],
       analyzedScreenCount: 2,
       limitations: ["일부 Figma 화면을 가져오지 못했습니다."],
@@ -355,10 +363,13 @@ describe("OverviewPage", () => {
     server.use(http.get("*/api/v1/dashboard/summary", () => HttpResponse.json(fixture)));
     renderPage();
     expect(await screen.findByRole("region", { name: "분석 범위" })).toBeInTheDocument();
-    await userEvent.click(screen.getByText("일부 검사에 추가 확인이 필요합니다"));
     expect(screen.getByText("검사 범위와 추가 확인 사항")).toBeInTheDocument();
     expect(screen.getByText("일부 Figma 화면을 가져오지 못했습니다.")).toBeInTheDocument();
-    expect(screen.getByText("DA-15: 근거 부족")).toBeInTheDocument();
+    expect(screen.getByText(/DA-15: 근거 부족/)).toBeVisible();
+    expect(screen.getByText(/검토 후보 · 이미지 중심/)).toBeVisible();
+    expect(screen.getByText(/미지원 규칙 2개: DA-01, DA-02/)).toBeVisible();
+    expect(screen.getByText(/재검증 판정 보류 · 해결률을 계산하지 않았습니다/)).toBeVisible();
+    expect(screen.getByText("두 회차의 화면 구성이 다릅니다.")).toBeVisible();
   });
 
   it("loads the active audit without listing other audits", async () => {

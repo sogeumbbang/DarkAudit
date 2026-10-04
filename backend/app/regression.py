@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import AuditRun, Finding, FindingStatus, Severity
+from .models import AuditRun, Finding, FindingStatus, RunStatus, Severity
 
 SEVERITY_ORDER = {Severity.LOW: 0, Severity.REVIEW: 1, Severity.HIGH: 2}
 
@@ -50,13 +50,17 @@ class RegressionReport:
     improved: list[Change] = field(default_factory=list)     # 남아 있으나 위험도 하락
     new: list[Change] = field(default_factory=list)          # 신규
     regressed: list[Change] = field(default_factory=list)    # 재발
+    pending: list[Change] = field(default_factory=list)      # 재검증 근거 부족
+    limitations: list[str] = field(default_factory=list)
 
     @property
-    def resolved_ratio(self) -> float:
+    def resolved_ratio(self) -> float | None:
         """
         Resolved Finding Ratio — 기획서의 핵심 검증 지표.
         이전 회차 Finding 중 해소된 비율.
         """
+        if self.limitations:
+            return None
         total = len(self.resolved) + len(self.persisted) + len(self.improved)
         return len(self.resolved) / total if total else 0.0
 
@@ -70,7 +74,9 @@ class RegressionReport:
             "persisted": len(self.persisted),
             "new": len(self.new),
             "regressed": len(self.regressed),
-            "resolved_ratio": round(self.resolved_ratio, 3),
+            "pending": len(self.pending),
+            "limitations": self.limitations,
+            "resolved_ratio": round(self.resolved_ratio, 3) if self.resolved_ratio is not None else None,
         }
 
 
@@ -94,7 +100,39 @@ def _previously_resolved(session: Session, audit_id: int, before_version: int) -
     return out
 
 
-def compare(session: Session, audit_id: int, from_version: int, to_version: int) -> RegressionReport:
+def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
+    """A missing detection is only a resolution after comparable, complete inspections."""
+    limitations = []
+    for run in (previous, current):
+        summary = run.analysis_summary or {}
+        if run.status != RunStatus.DONE or summary.get("complete") is not True or summary.get("warnings"):
+            limitations.append(f"v{run.version}: 검사 미완료 또는 근거 부족으로 해결 여부를 확인할 수 없습니다.")
+        if not run.screens or summary.get("analyzedScreenCount") != len(run.screens):
+            limitations.append(f"v{run.version}: 전체 화면의 분석 완료를 확인할 수 없습니다.")
+
+    def screen_scope(run: AuditRun) -> list[tuple]:
+        return [
+            (screen.screen_index, screen.flow_type, screen.flow_step,
+             (screen.analysis_context or {}).get("profile"),
+             (screen.analysis_context or {}).get("path_id"))
+            for screen in run.screens
+        ]
+
+    if screen_scope(previous) != screen_scope(current):
+        limitations.append("두 회차의 화면 수·순서·단계 또는 탐색 경로가 달라 동일 범위의 재검증을 확인할 수 없습니다.")
+    if set((previous.analysis_summary or {}).get("supportedRules", [])) != set(
+        (current.analysis_summary or {}).get("supportedRules", [])
+    ):
+        limitations.append("두 회차의 지원 규칙이 달라 해결 여부를 확인할 수 없습니다.")
+    return list(dict.fromkeys(limitations))
+
+
+def compare(
+    session: Session, audit_id: int, from_version: int, to_version: int,
+    *, update_statuses: bool = False,
+) -> RegressionReport:
+    if from_version > to_version:
+        raise ValueError("이전 회차는 이후 회차보다 클 수 없습니다.")
     prev_run = session.scalar(
         select(AuditRun).where(
             AuditRun.audit_id == audit_id, AuditRun.version == from_version
@@ -113,6 +151,7 @@ def compare(session: Session, audit_id: int, from_version: int, to_version: int)
     ever_resolved = _previously_resolved(session, audit_id, to_version)
 
     report = RegressionReport(audit_id, from_version, to_version)
+    report.limitations = _comparison_limitations(prev_run, curr_run)
 
     for fp, pf in prev.items():
         if fp in curr:
@@ -120,7 +159,8 @@ def compare(session: Session, audit_id: int, from_version: int, to_version: int)
             ch = Change(fp, pf.rule_id, pf.severity, cf.severity)
             (report.improved if ch.improved else report.persisted).append(ch)
         else:
-            report.resolved.append(Change(fp, pf.rule_id, before=pf.severity))
+            target = report.pending if report.limitations else report.resolved
+            target.append(Change(fp, pf.rule_id, before=pf.severity))
 
     for fp, cf in curr.items():
         if fp in prev:
@@ -128,15 +168,20 @@ def compare(session: Session, audit_id: int, from_version: int, to_version: int)
         ch = Change(fp, cf.rule_id, after=cf.severity)
         if fp in ever_resolved:
             report.regressed.append(ch)
-            cf.status = FindingStatus.REGRESSED
+            if update_statuses and not report.limitations:
+                cf.status = FindingStatus.REGRESSED
         else:
             report.new.append(ch)
 
     # 이전 회차 Finding 의 상태를 갱신한다.
     # 다음 비교에서 재발 여부를 판단하려면 이 기록이 남아 있어야 한다.
-    resolved_fps = {c.fingerprint for c in report.resolved}
-    for fp, pf in prev.items():
-        pf.status = FindingStatus.RESOLVED if fp in resolved_fps else FindingStatus.OPEN
+    if update_statuses and not report.limitations:
+        resolved_fps = {c.fingerprint for c in report.resolved}
+        for fp, pf in prev.items():
+            if fp in resolved_fps:
+                pf.status = FindingStatus.RESOLVED
+            elif pf.status != FindingStatus.REVIEWING:
+                pf.status = FindingStatus.OPEN
 
-    session.flush()
+        session.flush()
     return report

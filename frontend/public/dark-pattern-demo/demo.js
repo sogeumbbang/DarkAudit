@@ -2,7 +2,11 @@ const query = new URLSearchParams(location.search);
 const scenarioId = Object.hasOwn(window.DEMO_SCENARIOS, query.get("scenario"))
   ? query.get("scenario")
   : "travel";
-const scenario = window.DEMO_SCENARIOS[scenarioId];
+const variant = Object.hasOwn(window.DEMO_VARIANTS, query.get("variant"))
+  ? query.get("variant")
+  : "risky";
+const scenario = window.DEMO_VARIANTS[variant][scenarioId];
+const optionsKey = `demo-${scenarioId}-${variant}-options`;
 const rawStep = Number(query.get("step") || 1);
 const step =
   Number.isInteger(rawStep) && rawStep >= 1 && rawStep <= scenario.steps.length ? rawStep : 1;
@@ -14,15 +18,19 @@ const escapeHtml = (value) =>
   );
 const copy = (value) => escapeHtml(value).replace(/\n/g, "<br>");
 const list = (items) =>
-  `<ul class="features">${items.map((item) => `<li><span class="tick">✓</span>${copy(item)}</li>`).join("")}</ul>`;
+  `<ul class="features">${items.map((item) => `<li><span class="tick">${variant === "risky" ? "✓" : "•"}</span>${copy(item)}</li>`).join("")}</ul>`;
 function readOptions() {
   try {
-    return JSON.parse(sessionStorage.getItem(`demo-${scenarioId}-options`) || "null");
+    return (
+      JSON.parse(sessionStorage.getItem(optionsKey) || "null") ??
+      scenario.steps[1].options.map((option) => option[2])
+    );
   } catch {
     return null;
   }
 }
 document.body.dataset.theme = scenario.theme;
+document.body.dataset.variant = variant;
 document.title = `${scenario.local} · ${screen.name} · 가상 데모`;
 document.querySelector("#brand").innerHTML =
   `<b class="brand-symbol">${scenario.symbol}</b><strong>${scenario.brand}<small>${scenario.local}</small></strong><span class="header-menu">•••</span>`;
@@ -62,12 +70,12 @@ if (screen.kind === "offer") {
 document.querySelector("#screen").innerHTML = header + body;
 document.querySelector("#actions").innerHTML = screen.cta
   ? `<button type="button" data-next>${copy(screen.cta)}<span>→</span></button>${screen.secondary ? `<button type="button" class="secondary" data-next>${copy(screen.secondary)}</button>` : ""}`
-  : `<a class="restart" href="?scenario=${scenarioId}&step=1">처음부터 다시 보기 ↻</a>`;
+  : `<a class="restart" href="?scenario=${scenarioId}&variant=${variant}&step=1">처음부터 다시 보기 ↻</a>`;
 document.querySelectorAll("[data-next]").forEach((button) =>
   button.addEventListener("click", () => {
     if (step === 2 && screen.kind === "options")
       sessionStorage.setItem(
-        `demo-${scenarioId}-options`,
+        optionsKey,
         JSON.stringify(
           [...document.querySelectorAll("[data-option]")].map((input) => input.checked),
         ),
@@ -79,4 +87,4 @@ document.querySelectorAll("[data-next]").forEach((button) =>
 );
 document
   .querySelector(".restart")
-  ?.addEventListener("click", () => sessionStorage.removeItem(`demo-${scenarioId}-options`));
+  ?.addEventListener("click", () => sessionStorage.removeItem(optionsKey));

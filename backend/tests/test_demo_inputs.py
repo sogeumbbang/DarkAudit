@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import os
 import unittest
 import zipfile
@@ -83,3 +84,27 @@ class DemoInputsTest(unittest.TestCase):
             self.assertIn("AndroidManifest.xml", apk.namelist())
             self.assertIn("classes.dex", apk.namelist())
             self.assertIsNone(apk.testzip())
+
+    def test_paired_catalog_assets_are_real_pngs_with_stable_stage_names(self):
+        from PIL import Image
+        cases = self.client.get("/api/v1/demo-inputs").json()["cases"]
+        self.assertEqual({case["id"] for case in cases}, {"pet", "travel", "credit"})
+        for case in cases:
+            self.assertEqual([item["id"] for item in case["variants"]], ["risky", "partial", "revised"])
+            names = [[screen["flowStep"] for screen in variant["screens"]] for variant in case["variants"]]
+            self.assertEqual(names[0], names[1])
+            self.assertEqual(names[0], names[2])
+            for variant in case["variants"]:
+                self.assertEqual(len(variant["screens"]), 6)
+                for screen in variant["screens"]:
+                    response = self.client.get(screen["url"])
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(hashlib.sha256(response.content).hexdigest(), screen["sha256"])
+                    with Image.open(io.BytesIO(response.content)) as image:
+                        self.assertEqual(image.format, "PNG")
+                        self.assertEqual(image.width, 786)
+            self.assertNotEqual(case["variants"][0]["screens"][1]["sha256"], case["variants"][1]["screens"][1]["sha256"])
+            self.assertNotEqual(case["variants"][1]["screens"][3]["sha256"], case["variants"][2]["screens"][3]["sha256"])
+        for path in ("unknown/risky/01.png", "pet/unknown/01.png", "pet/risky/manifest.json", "pet/risky/07.png"):
+            self.assertEqual(self.client.get(f"/demo/cases/{path}").status_code, 404)
+        self.assertEqual(self.client.get("/demo/web/variants.js").status_code, 200)

@@ -1,6 +1,11 @@
 export type AuditStatus = "draft" | "queued" | "analyzing" | "completed" | "failed";
 export type FindingSeverity = "HIGH" | "REVIEW" | "LOW";
 export type FindingStatus = "open" | "reviewing" | "resolved";
+export type DemoVariant = "risky" | "partial" | "revised";
+export type DemoPreset = {
+  scenario: "pet" | "travel" | "credit";
+  source: "screenshots" | "website";
+};
 
 export type AuditScreenDto = {
   id: string;
@@ -75,9 +80,17 @@ export type AuditRunDto = {
 
 export type AnalysisSummary = {
   complete?: boolean;
+  reviewRequired?: boolean;
   supportedRules?: string[];
+  unsupportedRules?: string[];
   limitations?: string[];
   analyzedScreenCount?: number;
+  regression?: {
+    comparisonStatus: "complete" | "incomplete";
+    limitations: string[];
+    pendingCount: number;
+    resolvedRatio: number | null;
+  };
   ruleAssessments?: {
     ruleId: string;
     status: "detected" | "not_detected" | "insufficient_evidence" | "not_supported";
@@ -88,6 +101,8 @@ export type AnalysisSummary = {
 export type ProductType = "insurance" | "deposit" | "loan" | "investment" | "other";
 
 export type AuditDto = {
+  demoPreset?: DemoPreset | null;
+  demoVariant?: DemoVariant | null;
   productType?: ProductType | null;
   createdAt?: string | null;
   id: string;
@@ -108,6 +123,7 @@ export type DashboardSummaryDto = {
 };
 
 export type CreateAuditDto = {
+  demoPreset?: DemoPreset;
   productType?: ProductType | null;
   name: string;
   platform: AuditDto["platform"];
@@ -116,6 +132,7 @@ export type CreateAuditDto = {
 export type UploadAuditScreen = { id: string; flowStep: string; file: File };
 
 export type CaptureAuditUrlDto = {
+  demoVariant?: DemoVariant;
   auditId: string;
   url: string;
   mode: "quick" | "smart";

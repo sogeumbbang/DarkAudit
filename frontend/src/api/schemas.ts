@@ -56,6 +56,14 @@ export const findingSchema = z.object({
 });
 
 export const auditSchema = z.object({
+  demoPreset: z
+    .object({
+      scenario: z.enum(["pet", "travel", "credit"]),
+      source: z.enum(["screenshots", "website"]),
+    })
+    .nullable()
+    .optional(),
+  demoVariant: z.enum(["risky", "partial", "revised"]).nullable().optional(),
   productType: z
     .enum(["insurance", "deposit", "loan", "investment", "other"])
     .nullable()
@@ -94,9 +102,19 @@ export const auditSchema = z.object({
   analysisSummary: z
     .object({
       complete: z.boolean().optional(),
+      reviewRequired: z.boolean().optional(),
       supportedRules: z.array(z.string()).optional(),
+      unsupportedRules: z.array(z.string()).optional(),
       limitations: z.array(z.string()).optional(),
       analyzedScreenCount: z.number().int().nonnegative().optional(),
+      regression: z
+        .object({
+          comparisonStatus: z.enum(["complete", "incomplete"]),
+          limitations: z.array(z.string()),
+          pendingCount: z.number().int().nonnegative(),
+          resolvedRatio: z.number().min(0).max(1).nullable(),
+        })
+        .optional(),
       ruleAssessments: z
         .array(
           z.object({
@@ -122,4 +140,26 @@ export const analysisJobSchema = z.object({
   progress: z.number().min(0).max(100),
   runId: z.string().nullable().optional(),
   error: z.string().nullable().optional(),
+});
+
+const regressionChangeSchema = z.object({
+  ruleId: z.string(),
+  findingId: z.string().nullable(),
+  before: z.enum(["HIGH", "REVIEW", "LOW"]).nullable(),
+  after: z.enum(["HIGH", "REVIEW", "LOW"]).nullable(),
+});
+
+export const regressionSchema = z.object({
+  auditId: z.string(),
+  fromVersion: z.number().int().positive(),
+  toVersion: z.number().int().positive(),
+  comparisonStatus: z.enum(["complete", "incomplete"]),
+  limitations: z.array(z.string()),
+  resolvedRatio: z.number().min(0).max(1).nullable(),
+  resolved: z.array(regressionChangeSchema),
+  improved: z.array(regressionChangeSchema),
+  persisted: z.array(regressionChangeSchema),
+  new: z.array(regressionChangeSchema),
+  regressed: z.array(regressionChangeSchema),
+  pending: z.array(regressionChangeSchema),
 });

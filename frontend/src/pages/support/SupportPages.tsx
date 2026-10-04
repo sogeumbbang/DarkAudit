@@ -13,29 +13,7 @@ import { useDeleteAudit } from "@/features/audit-dashboard/useDeleteAudit";
 
 export { GuidelinesPage } from "./GuidelinesPage";
 
-export function BenchmarkPage() {
-  return (
-    <div className="workspace-page support-page mx-auto max-w-6xl">
-      <PageHeading
-        eyebrow="REVIEW / COMPARISON"
-        title="비교 분석"
-        description="수정의 과정을 살펴보고, 다음 검토의 근거를 남기세요."
-      />
-      <Card className="support-surface mt-7 p-7">
-        <h2 className="font-bold">수정 전·후 결과 비교</h2>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          동일 진단에서 화면을 다시 등록하면 회차별 탐지 항목의 해결·유지·재발 여부를 비교할 수
-          있습니다.
-        </p>
-        <Button asChild className="mt-6" variant="outline">
-          <Link to="/app/overview">
-            진단 결과 선택 <ArrowRight size={16} />
-          </Link>
-        </Button>
-      </Card>
-    </div>
-  );
-}
+export { BenchmarkPage } from "./BenchmarkPage";
 
 export function SettingsPage() {
   return (

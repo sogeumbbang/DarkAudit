@@ -51,6 +51,14 @@ def init_db() -> None:
         path = DB_URL.replace("sqlite:///", "")
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     Base.metadata.create_all(_engine)
+    audit_columns = {column["name"] for column in inspect(_engine).get_columns("audit")}
+    if "updated_at" not in audit_columns:
+        with _engine.begin() as connection:
+            connection.execute(text("ALTER TABLE audit ADD COLUMN updated_at TIMESTAMP"))
+            connection.execute(text("UPDATE audit SET updated_at = created_at"))
+    if "demo_preset" not in audit_columns:
+        with _engine.begin() as connection:
+            connection.execute(text("ALTER TABLE audit ADD COLUMN demo_preset JSON"))
     columns = {column["name"] for column in inspect(_engine).get_columns("screen")}
     if "flow_step" not in columns:
         with _engine.begin() as connection:
@@ -75,6 +83,12 @@ def utcnow() -> datetime:
 def aware(value: datetime) -> datetime:
     """SQLite drops timezone metadata; API timestamps must remain RFC 3339 compatible."""
     return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def touch_audit(session: Session, audit_id: int) -> None:
+    audit = session.get(Audit, audit_id)
+    if audit is not None:
+        audit.updated_at = utcnow()
 
 
 def new_id(prefix: str) -> str:
@@ -218,7 +232,7 @@ def to_finding_dto(
         screenIds=screen_ids,
         element=(primary.text if primary and primary.text else (ev.what_text if ev else "")) or "",
         severity=f.severity.value,
-        status="resolved" if f.status.value == "RESOLVED" else "open",
+        status={"RESOLVED": "resolved", "REVIEWING": "reviewing"}.get(f.status.value, "open"),
         confidence=f.confidence if f.confidence is not None else 0.7,
         decisionNote=f.decision_note or "",
         decisionUpdatedAt=aware(f.decision_updated_at).isoformat() if f.decision_updated_at else None,
@@ -291,13 +305,15 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
         name=audit.name,
         platform=audit.product_name or "mobile-web",
         status=status,
-        updatedAt=aware(audit.created_at),
+        updatedAt=aware(audit.updated_at or audit.created_at),
         createdAt=aware(audit.created_at),
         productType=audit.sector if audit.sector in {"insurance", "deposit", "loan", "investment", "other"} else None,
         screens=screen_dtos,
         findings=findings,
         runs=run_dtos,
         latestRunId=f"run-{run.id}" if run else None,
+        demoPreset=audit.demo_preset,
+        demoVariant=(audit.runs[-1].analysis_summary or {}).get("demoVariant") if audit.runs else None,
         analysisSummary=(run.analysis_summary or {}) if run else (
             (audit.runs[-1].analysis_summary or {}) if audit.runs else {}
         ),
@@ -337,7 +353,10 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
         persisted=[change_dto(c, to_id_by_fp) for c in report.persisted],
         new=[change_dto(c, to_id_by_fp) for c in report.new],
         regressed=[change_dto(c, to_id_by_fp) for c in report.regressed],
-        resolvedRatio=round(report.resolved_ratio, 3),
+        pending=[change_dto(c, from_id_by_fp) for c in report.pending],
+        limitations=report.limitations,
+        comparisonStatus="incomplete" if report.limitations else "complete",
+        resolvedRatio=round(report.resolved_ratio, 3) if report.resolved_ratio is not None else None,
     )
 
 
@@ -357,4 +376,4 @@ def get_audit(session: Session, audit_id: str) -> Audit:
 
 
 def list_audits(session: Session) -> list[Audit]:
-    return list(session.scalars(select(Audit).order_by(Audit.created_at.desc())))
+    return list(session.scalars(select(Audit).order_by(Audit.updated_at.desc(), Audit.id.desc())))

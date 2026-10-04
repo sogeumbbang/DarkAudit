@@ -5,16 +5,11 @@ import { Button } from "@/components/ui/Button";
 import type { AuditDto, FindingDto } from "@/entities/audit/types";
 import { orderFindings } from "@/entities/audit/orderFindings";
 import { ReportScreen } from "./ReportScreen";
+import { AnalysisNotice } from "./AnalysisNotice";
 
 import "./audit-report.css";
 
 const statuses = { open: "검토 필요", reviewing: "검토 중", resolved: "해결됨" };
-const assessments = {
-  detected: "탐지됨",
-  not_detected: "미탐지",
-  insufficient_evidence: "근거 부족",
-  not_supported: "미지원",
-};
 
 function isBackdropClick(event: MouseEvent<HTMLDialogElement>) {
   if (event.target !== event.currentTarget) return false;
@@ -244,27 +239,7 @@ export function AuditReport({ audit, onClose }: { audit: AuditDto; onClose: () =
           </section>
           <section className="audit-report-scope">
             <h2>02. 분석 범위와 한계</h2>
-            <p>
-              {summary?.complete === true
-                ? "수집한 화면의 지원 규칙 검사 완료"
-                : "분석 완료 여부를 확인하거나 추가 검토가 필요합니다."}
-            </p>
-            <p>탐지되지 않은 항목이나 수집하지 않은 화면의 안전을 보장하지 않습니다.</p>
-            {summary?.supportedRules && (
-              <p>지원 규칙: {summary.supportedRules.join(", ") || "없음"}</p>
-            )}
-            {summary?.analyzedScreenCount !== undefined && (
-              <p>분석 화면: {summary.analyzedScreenCount}개</p>
-            )}
-            {summary?.limitations?.map((limitation, index) => (
-              <p key={index}>{limitation}</p>
-            ))}
-            {summary?.ruleAssessments?.map((assessment) => (
-              <p key={assessment.ruleId}>
-                {assessment.ruleId}: {assessments[assessment.status]}
-                {assessment.reasons.length > 0 && ` — ${assessment.reasons.join(" / ")}`}
-              </p>
-            ))}
+            <AnalysisNotice summary={summary} />
           </section>
           {!audit.findings.length && (
             <p>탐지된 항목이 없습니다. 분석 범위와 한계를 함께 확인하세요.</p>

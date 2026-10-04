@@ -32,12 +32,19 @@ RiskType = Literal[
 ]
 Severity = Literal["HIGH", "REVIEW", "LOW"]
 FindingStatus = Literal["open", "reviewing", "resolved"]
+DemoVariant = Literal["risky", "partial", "revised"]
+
+
+class DemoPreset(BaseModel):
+    scenario: Literal["pet", "travel", "credit"]
+    source: Literal["screenshots", "website"]
 
 
 class CreateAuditRequest(BaseModel):
     name: str = Field(min_length=1)
     platform: Literal["mobile-web", "desktop-web", "app"]
     productType: Literal["insurance", "deposit", "loan", "investment", "other"] | None = None
+    demoPreset: DemoPreset | None = None
 
 
 class ScreenDto(BaseModel):
@@ -147,6 +154,8 @@ class AuditDto(BaseModel):
     runs: list[AuditRunDto] = Field(default_factory=list)
     latestRunId: str | None = None
     analysisSummary: dict = Field(default_factory=dict)
+    demoPreset: DemoPreset | None = None
+    demoVariant: DemoVariant | None = None
 
 
 class JobDto(BaseModel):
@@ -166,6 +175,7 @@ class ImportFigmaRequest(BaseModel):
 
 
 class CaptureAuditRequest(BaseModel):
+    demoVariant: DemoVariant | None = None
     url: HttpUrl
     mode: Literal["quick", "smart"] = "quick"
     profiles: list[Literal["desktop", "mobile"]] = Field(
@@ -199,7 +209,10 @@ class RegressionDto(BaseModel):
     persisted: list[RegressionChangeDto] = Field(default_factory=list)
     new: list[RegressionChangeDto] = Field(default_factory=list)
     regressed: list[RegressionChangeDto] = Field(default_factory=list)
-    resolvedRatio: float = 0.0
+    pending: list[RegressionChangeDto] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    comparisonStatus: Literal["complete", "incomplete"] = "complete"
+    resolvedRatio: float | None = None
 
 
 class FindingDecisionRequest(BaseModel):

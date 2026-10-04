@@ -63,6 +63,12 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: "audits/:auditId/recheck",
+        lazy: async () => ({
+          Component: (await import("@/pages/audit-create/AuditRecheckPage")).AuditRecheckPage,
+        }),
+      },
+      {
         path: "guidelines",
         lazy: async () => ({
           Component: (await import("@/pages/support/SupportPages")).GuidelinesPage,

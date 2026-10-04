@@ -61,6 +61,49 @@ v1 과 v2 의 Finding 을 "같은 문제"로 잇는 키. Regression Audit 의 �
 
 ## 검증
 
+### 재검증 판정 보류
+
+비교 대상 두 회차가 지원 규칙 검사를 완료하고, 분석 화면 수와 화면 순서·단계·경로가
+같을 때만 사라진 Finding을 해결로 판정합니다. 근거 부족, 수집 누락, 모의 분석,
+검사 요약이 없는 이전 결과는 보수적으로 판정을 보류합니다.
+
+`GET /api/v1/audits/{id}/regression`은 읽기만 수행합니다. 불완전한 비교는
+`comparisonStatus: "incomplete"`, `pending`, `limitations`, `resolvedRatio: null`을
+반환합니다. `null`을 해결률 0%로 표시하지 마세요. 분석 완료 시 저장된 보류 사유는
+결과 화면과 PDF에도 표시됩니다. 화면의 의미적 대응이나 규칙 버전 비교까지 보장하는
+기능은 아니며, 화면 구성이 바뀐 경우에는 수동 확인이 필요합니다.
+
+### 정상 화면 오탐 회귀 검사
+
+저장소 루트에서 실행합니다. `ai/evaluation/clean_cases.json`은 기존 정상 Flow 11개와
+라벨 해시를 고정합니다. 일반 평가 보고서에도 `clean_regression` 집계가 추가됩니다.
+
+이미 저장한 회차별 예측 결과를 비용 없이 집계하려면:
+
+```bash
+python -m ai.evaluation.clean_regression --predictions docs/eval/hybrid_visual/run-1
+```
+
+출력은 오탐 Finding 수, 오탐 Flow 수, 규칙별 FPR, 분석 실패 수, 검사 미완료 수를
+구분합니다. 예측 파일 누락·실패·모의 분석은 정상 판정으로 세지 않으며, 규칙 검사
+기록이 없거나 근거가 부족한 빈 결과도 통과하지 않습니다. 기본 통과 기준은 오탐·실패·
+미완료 모두 0이고, 초과 시 종료 코드 1을 반환합니다. 합의된 기준선이 있으면
+`--max-false-positive-findings N`과 `--max-analysis-failures N`으로 한도를 지정합니다.
+FPR 분모는 판정 가능한 `(Flow, 규칙)` 쌍이며 미판정 수를 함께 확인해야 합니다.
+
+합성 화면을 생성한 환경에서 새 모델 출력을 측정하려면 다음 명령을 사용합니다.
+이 명령은 실제 모델 API를 호출하므로 비용이 발생합니다.
+
+```bash
+python -m backend.eval_hybrid --clean-only --visual --runs 1 --output-dir /tmp/darkaudit-clean-new
+python -m ai.evaluation.clean_regression --predictions /tmp/darkaudit-clean-new/run-1
+```
+
+출력 디렉터리는 비어 있어야 합니다. `--clean-only`에서 경로를 생략하면 매번 새 경로를
+만들어 과거 예측 재사용을 방지합니다. 정상 사례만으로 재현율을 판단할 수 없으므로,
+탐지 조건을 변경했다면 기존 Risky/Clean 전체 평가도 실행해야 합니다.
+CI 단위테스트는 고정 목록과 집계·실패 판정을 검증하며 실제 모델 성능을 측정하지 않습니다.
+
 ```bash
 pip install sqlalchemy
 python test_fingerprint.py   # fingerprint 견고성
@@ -68,8 +111,9 @@ python verify_schema.py      # 라벨 적재 + Regression
 ```
 
 `verify_schema.py` 는 Counterfactual Pair 를 회차로 사용한다(risky = v1, clean = v2).
-다만 clean 에 Finding 이 0건이라 이것만으로는 매칭 로직이 검증되지 않으므로,
-매칭이 실제로 판단을 내려야 하는 경우는 `test_fingerprint.py` 에서 다룬다.
+라벨 적재만으로 검사 완료를 입증할 수 없어 해결 판정이 보류되는지 확인합니다.
+정상 검사 후 해결·재발 판정은 `backend/tests/test_regression_regressed.py`에서,
+문구·좌표 변화에 대한 매칭은 `test_fingerprint.py`에서 다룹니다.
 
 ## 알려진 한계
 

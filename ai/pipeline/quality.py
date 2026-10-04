@@ -1,6 +1,7 @@
 """Expose collection/verification limits separately from finding counts."""
 
 from ai.schemas.audit_schema import RULE_BASE_SEVERITY
+from ai.rules.rule_loader import RuleLoader
 
 
 def describe_warning(code: str) -> str:
@@ -46,9 +47,16 @@ def describe_warning(code: str) -> str:
 def summarize(summary: dict) -> dict:
     result = dict(summary)
     result.setdefault("supportedRules", sorted(RULE_BASE_SEVERITY))
+    result["unsupportedRules"] = sorted(
+        {rule["rule_id"] for rule in RuleLoader().rules()} - set(result["supportedRules"])
+    )
     warnings = result.get("warnings", [])
     result["limitations"] = sorted({describe_warning(w) for w in warnings})
     batches = result.get("batches", [])
+    result["reviewRequired"] = any(
+        batch.get("telemetry", {}).get("analysis_mode") == "visual"
+        for batch in batches
+    ) or result.get("source") in {"upload", "figma", "android"}
     assessments = []
     for rule in sorted(RULE_BASE_SEVERITY):
         rows = [

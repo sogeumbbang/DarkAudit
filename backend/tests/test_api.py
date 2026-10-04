@@ -60,6 +60,45 @@ class DetectingProvider:
         }
 
 
+class VerifiedAssessmentProvider(DetectingProvider):
+    """Fixture with explicit rule coverage; the demo fake cannot certify a clean run."""
+    def __init__(self, detecting=True):
+        self.detecting = detecting
+
+    def analyze(self, **kwargs):
+        from ai.schemas.audit_schema import RULE_BASE_SEVERITY
+
+        output = super().analyze(**kwargs)
+        if not self.detecting:
+            output["semantic_findings"] = []
+        output["rule_assessments"] = [
+            {
+                "rule_id": rule,
+                "status": "detected" if self.detecting and rule == "DA-12" else "not_detected",
+                "reason": "고정 테스트 화면의 검사 결과",
+                "screen_ids": [s.screen_id for s in kwargs["request"].screens],
+                "checks": ["loss_framed_decline"] if self.detecting and rule == "DA-12" else [],
+                "choice_pairs": [], "price_comparisons": [],
+            }
+            for rule in sorted(RULE_BASE_SEVERITY)
+        ]
+        return output
+
+
+def run_verified_analysis(client, audit_id, *, detecting=True):
+    # This regression fixture isolates comparison from OCR on the one-pixel test image.
+    from ai.vision.candidate_grounding import OCRAnchor
+
+    with patch("backend.api.service.create_provider", return_value=VerifiedAssessmentProvider(detecting)), patch(
+        "ai.pipeline.baseline.BaselineAuditPipeline._ground_visual_bboxes",
+        lambda self, output, request: (output, []),
+    ), patch(
+        "ai.pipeline.baseline.extract_ocr_anchors",
+        return_value=[OCRAnchor("고정 검증 화면", (0.1, 0.1, 0.8, 0.2), 1.0)],
+    ):
+        return client.post(f"/api/v1/audits/{audit_id}/analyze").json()
+
+
 from backend.tests.support import IsolatedApiTestCase
 
 
@@ -477,14 +516,13 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         empty = self.client.get(f"/api/v1/audits/{audit_id}/regression")
         self.assertEqual(empty.status_code, 409, empty.text)
 
-        # v1: DetectingProvider 가 DA-12 하나를 찾는다.
+        # v1: 검사 완료 근거와 함께 DA-12 하나를 찾는다.
         self.client.post(
             f"/api/v1/audits/{audit_id}/screens",
             files={"files": ("option.png", image, "image/png")},
             data={"screen_ids": "option", "flow_steps": "추가 보장 선택"},
         )
-        with patch("backend.api.service.create_provider", return_value=DetectingProvider()):
-            job1 = self.client.post(f"/api/v1/audits/{audit_id}/analyze").json()
+        job1 = run_verified_analysis(self.client, audit_id)
         self.assertEqual(
             self.client.get(f"/api/v1/analysis-jobs/{job1['jobId']}").json()["status"], "completed"
         )
@@ -498,7 +536,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
             files={"files": ("option.png", image, "image/png")},
             data={"screen_ids": "option", "flow_steps": "추가 보장 선택"},
         )
-        job2 = self.client.post(f"/api/v1/audits/{audit_id}/analyze").json()
+        job2 = run_verified_analysis(self.client, audit_id, detecting=False)
         self.assertEqual(
             self.client.get(f"/api/v1/analysis-jobs/{job2['jobId']}").json()["status"], "completed"
         )
@@ -509,7 +547,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         self.assertEqual(body["auditId"], audit_id)
         self.assertEqual(body["fromVersion"], 1)
         self.assertEqual(body["toVersion"], 2)
-        self.assertEqual(len(body["resolved"]), 1)
+        self.assertEqual(len(body["resolved"]), 1, body)
         self.assertEqual(body["resolved"][0]["ruleId"], "DA-12")
         self.assertEqual(body["resolved"][0]["before"], "REVIEW")
         self.assertIsNone(body["resolved"][0]["after"])

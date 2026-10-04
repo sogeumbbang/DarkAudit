@@ -38,6 +38,7 @@ export function AnalysisProgress({
   failed,
   error,
   onBack,
+  demo = false,
 }: {
   source: AuditSource;
   auditId?: string;
@@ -46,6 +47,7 @@ export function AnalysisProgress({
   failed: boolean;
   error?: string | null;
   onBack: () => void;
+  demo?: boolean;
 }) {
   const running = !completed && !failed;
   const [startedAt] = useState(Date.now);
@@ -181,6 +183,11 @@ export function AnalysisProgress({
             <Link to={`/app/overview?audit=${auditId}`}>
               결과 확인하기 <ArrowRight size={16} />
             </Link>
+          </Button>
+        )}
+        {completed && demo && auditId && (
+          <Button asChild className="mt-3" variant="outline">
+            <Link to={`/app/audits/${encodeURIComponent(auditId)}/recheck`}>데모 수정본 실행</Link>
           </Button>
         )}
         {failed && (

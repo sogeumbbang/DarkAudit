@@ -1,5 +1,5 @@
 import { apiRequest, warmUpApi } from "@/api/client";
-import { analysisJobSchema, auditSchema } from "@/api/schemas";
+import { analysisJobSchema, auditSchema, regressionSchema } from "@/api/schemas";
 import type {
   AnalyzeAndroidAppDto,
   AuditDto,
@@ -8,6 +8,7 @@ import type {
   FindingStatus,
   ImportFigmaAuditDto,
   UploadAuditScreen,
+  DemoVariant,
 } from "@/entities/audit/types";
 
 export async function createAudit(input: CreateAuditDto) {
@@ -20,11 +21,14 @@ export async function createAudit(input: CreateAuditDto) {
 export function uploadAuditScreens({
   auditId,
   screens,
+  demoVariant,
 }: {
   auditId: string;
   screens: UploadAuditScreen[];
+  demoVariant?: DemoVariant;
 }) {
   const body = new FormData();
+  if (demoVariant) body.append("demo_variant", demoVariant);
   screens.forEach((screen) => {
     body.append("files", screen.file, screen.file.name);
     body.append("screen_ids", screen.id);
@@ -40,6 +44,7 @@ export function uploadAuditScreens({
             id: screen.id,
             flowStep: screen.flowStep,
             fileName: screen.file.name,
+            demoVariant,
           })),
         ),
       ),
@@ -93,6 +98,14 @@ export async function getAnalysisStatus(jobId: string) {
 
 export function deleteAudit(auditId: string) {
   return apiRequest<void>(`/api/v1/audits/${auditId}`, { method: "DELETE" });
+}
+
+export async function getAuditRegression(auditId: string, from: number, to: number) {
+  return regressionSchema.parse(
+    await apiRequest<unknown>(
+      `/api/v1/audits/${encodeURIComponent(auditId)}/regression?from=${from}&to=${to}`,
+    ),
+  );
 }
 
 export function updateFindingStatus(findingId: string, status: FindingStatus) {

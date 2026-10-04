@@ -69,12 +69,14 @@ class Severity(str, enum.Enum):
 
 class FindingStatus(str, enum.Enum):
     """
-    회차 간 비교 결과.
+    사용자 검토 상태와 회차 간 비교 결과.
       OPEN      이번 회차에서 발견됨
+      REVIEWING 사용자가 검토 중으로 저장함
       RESOLVED  이전 회차에 있었으나 이번 회차에서 사라짐
       REGRESSED 해결됐던 문제가 다시 나타남
     """
     OPEN = "OPEN"
+    REVIEWING = "REVIEWING"
     RESOLVED = "RESOLVED"
     REGRESSED = "REGRESSED"
 
@@ -98,6 +100,8 @@ class Audit(Base):
     sector: Mapped[str | None] = mapped_column(String(40))        # insurance / deposit / loan / investment
     product_name: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    demo_preset: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     runs: Mapped[list[AuditRun]] = relationship(
         back_populates="audit", cascade="all, delete-orphan", order_by="AuditRun.version"

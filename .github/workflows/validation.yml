@@ -30,4 +30,4 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npx playwright install --with-deps chrome
-      - run: npx playwright test e2e/core-flow.spec.ts e2e/accessibility.spec.ts
+      - run: npx playwright test e2e/core-flow.spec.ts e2e/accessibility.spec.ts e2e/report.spec.ts e2e/analysis-notice.spec.ts e2e/recheck.spec.ts e2e/demo-variants.spec.ts

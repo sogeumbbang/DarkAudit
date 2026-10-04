@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
+import { AnalysisNotice } from "@/features/audit-report/AnalysisNotice";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { orderFindings } from "@/entities/audit/orderFindings";
 import { isFindingOnScreen } from "@/entities/audit/findingScreens";
@@ -239,6 +240,16 @@ function FindingDetails({
             <p>분석 유형 · {finding.riskType}</p>
             <p className="mt-2">연결된 화면 · {finding.screenIds.length}개</p>
           </div>
+        )}
+        {finding.status === "open" && (
+          <Button
+            className="mt-3 w-full"
+            variant="outline"
+            disabled={findingStatus.isPending}
+            onClick={() => findingStatus.mutate({ findingId: finding.id, status: "reviewing" })}
+          >
+            검토 시작
+          </Button>
         )}
         <button
           className={cn(
@@ -667,9 +678,21 @@ export function OverviewPage() {
             <h2 className="review-audit-title font-display">{audit.name}</h2>
           </div>
         </div>
-        <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
-          <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {audit.status !== "queued" && audit.status !== "analyzing" && (
+            <Button asChild variant="outline">
+              <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                {audit.demoPreset ? "데모 수정본 실행" : "수정본 재검사"}
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>전후 비교</Link>
+          </Button>
+          <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
+            <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+          </Button>
+        </div>
       </header>
       {showReport && (
         <AuditReport
@@ -680,52 +703,7 @@ export function OverviewPage() {
           }}
         />
       )}
-      {audit.analysisSummary?.supportedRules && (
-        <section aria-label="분석 범위">
-          <details className="analysis-scope py-2">
-            <summary className="cursor-pointer text-xs font-semibold text-muted">
-              {audit.analysisSummary.complete
-                ? "분석 범위 확인"
-                : "일부 검사에 추가 확인이 필요합니다"}
-            </summary>
-            <h2 className="font-semibold">
-              {audit.analysisSummary.complete
-                ? "수집한 화면의 규칙 검사 완료"
-                : "검사 범위와 추가 확인 사항"}
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              지원 규칙 {audit.analysisSummary.supportedRules.length}개 · 분석 화면{" "}
-              {audit.analysisSummary.analyzedScreenCount ?? 0}개. 전체 15개 유형 중 지원 규칙만
-              검사하며, 탐지 0건이 미수집 화면의 안전을 의미하지는 않습니다.
-            </p>
-            {!!audit.analysisSummary.limitations?.length && (
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                {audit.analysisSummary.limitations.map((limit) => (
-                  <li key={limit}>{limit}</li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {audit.analysisSummary.ruleAssessments?.map((assessment) => (
-                <span
-                  className="rounded border border-border px-2 py-1 text-xs"
-                  key={assessment.ruleId}
-                >
-                  {assessment.ruleId}:{" "}
-                  {
-                    {
-                      detected: "탐지됨",
-                      not_detected: "관찰 범위 내 미탐지",
-                      insufficient_evidence: "근거 부족",
-                      not_supported: "검사하지 않음",
-                    }[assessment.status]
-                  }
-                </span>
-              ))}
-            </div>
-          </details>
-        </section>
-      )}
+      <AnalysisNotice summary={audit.analysisSummary} />
       <section aria-label="진단 요약" className="map-toolbar">
         <div role="group" aria-label="점검 항목 필터" className="flex flex-wrap items-center gap-1">
           <span className="mr-2 text-xs font-semibold text-muted">전체 진단</span>

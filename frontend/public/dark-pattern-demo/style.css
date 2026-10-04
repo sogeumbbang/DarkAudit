@@ -531,6 +531,21 @@ button.secondary {
   background: var(--soft);
   border-radius: 12px;
 }
+body[data-variant="revised"] .fine-print {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+body[data-variant="revised"] button.secondary {
+  height: 52px;
+  background: var(--accent);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+}
+body[data-variant="revised"] .illustration {
+  height: 130px;
+}
 footer {
   text-align: center;
   font-size: 8px;

@@ -29,6 +29,14 @@ it("includes all findings, saved decisions and incomplete analysis in the report
   audit.findings[0]!.decisionNote = "기본 선택을 해제하기로 결정했습니다.";
   audit.analysisSummary = {
     complete: false,
+    reviewRequired: true,
+    unsupportedRules: ["DA-01", "DA-02"],
+    regression: {
+      comparisonStatus: "incomplete",
+      pendingCount: 1,
+      resolvedRatio: null,
+      limitations: ["검사 미완료로 해결 여부를 확인할 수 없습니다."],
+    },
     limitations: ["최종 결제 화면 누락"],
     ruleAssessments: [
       { ruleId: "DA-15", status: "insufficient_evidence", reasons: ["가격 확인 불가"] },
@@ -44,6 +52,9 @@ it("includes all findings, saved decisions and incomplete analysis in the report
   expect(screen.getByText(/기본 선택을 해제하기로 결정했습니다/)).toBeInTheDocument();
   expect(screen.getByText("최종 결제 화면 누락")).toBeInTheDocument();
   expect(screen.getByText(/DA-15: 근거 부족/)).toBeInTheDocument();
+  expect(screen.getByText(/검토 후보 · 이미지 중심/)).toBeVisible();
+  expect(screen.getByText(/미지원 규칙 2개/)).toBeVisible();
+  expect(screen.getByText(/재검증 판정 보류/)).toBeVisible();
   expect(screen.getAllByRole("img")).toHaveLength(audit.screens.length);
   expect(screen.queryByText(/심각도/)).not.toBeInTheDocument();
 });

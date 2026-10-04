@@ -7,7 +7,7 @@ Counterfactual Pair 를 회차로 사용한다.
     v1 = risky   (문제가 있는 상태)
     v2 = clean   (수정한 상태)
 
-기대 결과: v1 의 모든 Finding 이 v2 에서 RESOLVED, Resolved Ratio = 1.0
+기대 결과: 라벨만 적재한 회차는 검사 완료 근거가 없어 PENDING, Resolved Ratio = None
 
     python verify_schema.py
 """
@@ -136,11 +136,12 @@ def main() -> None:
             session.commit()
 
             s = rep.summary()
-            passed = s["resolved_ratio"] == 1.0 and s["new"] == 0
+            # Labels alone do not prove that an actual inspection completed.
+            passed = s["resolved_ratio"] is None and s["resolved"] == 0 and s["new"] == 0
             ok += passed
             mark = "통과" if passed else "확인필요"
             print(f"{pid:<10} resolved={s['resolved']:<2} persisted={s['persisted']:<2} "
-                  f"new={s['new']:<2} ratio={s['resolved_ratio']:<5} {mark}")
+                  f"new={s['new']:<2} pending={s['pending']:<2} ratio={str(s['resolved_ratio']):<5} {mark}")
 
         print(f"\nCounterfactual Regression: {ok}/{len(pairs)} 쌍 통과")
 

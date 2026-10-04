@@ -1,0 +1,56 @@
+{
+  "suite": "financial-clean-v1",
+  "rule_ids": [
+    "DA-03",
+    "DA-04",
+    "DA-07",
+    "DA-12",
+    "DA-15"
+  ],
+  "cases": [
+    {
+      "flow_id": "dep-001-clean",
+      "label_sha256": "42fba63733d6769078df6d306df6164c995bec236d21e9baf709aa31ddcc3666"
+    },
+    {
+      "flow_id": "dep-002-clean",
+      "label_sha256": "bed5856a8baf7d41095c12b66aa4430c4e42668ba49d3360259055988867161a"
+    },
+    {
+      "flow_id": "ins-001-clean",
+      "label_sha256": "00432107cb26c8811fcc35df844a5b52358e3262a92a2d66778d8a548a9894dc"
+    },
+    {
+      "flow_id": "ins-002-clean",
+      "label_sha256": "3af7c31987df9b49f199afe1cb44146ad4d75571417cd5ffe516f4511a3d388b"
+    },
+    {
+      "flow_id": "ins-003-clean",
+      "label_sha256": "bf320bd94c11e789b99e24f2311810bd7bef9f852bbee0b3ab04db6571af134b"
+    },
+    {
+      "flow_id": "ins-004-clean",
+      "label_sha256": "829b8a0078d81e0ae0c8b408629bd4cf76383f04bc25c39de1e8e989e8fd5737"
+    },
+    {
+      "flow_id": "ins-005-clean",
+      "label_sha256": "5787634ddb6efa930f671de0c8969d7900b03facfa882badb021cfcf14ad7f42"
+    },
+    {
+      "flow_id": "ins-006-clean",
+      "label_sha256": "426f0ee7bea33c58658b643f14fc23521c94add6b8a7247feef513c4e25653a5"
+    },
+    {
+      "flow_id": "ins-007-clean",
+      "label_sha256": "8af124d443613777f3ce8c11858114213fb287f7074fa712ada273001028152e"
+    },
+    {
+      "flow_id": "ins-008-clean",
+      "label_sha256": "3989ceb73bc7490d2d39af830acd073e30dc017aca1ae7b5bfcb000762d41c3a"
+    },
+    {
+      "flow_id": "ins-009-clean",
+      "label_sha256": "60db6d1ac823b7c12033e2af3cba466c8605a463286dd52214f2f1d81a834f59"
+    }
+  ]
+}
