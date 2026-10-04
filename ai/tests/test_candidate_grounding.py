@@ -32,6 +32,14 @@ class TesseractOCRTests(unittest.TestCase):
         self.assertEqual(result.blocks[0].bbox, (10, 20, 55, 12))
         self.assertAlmostEqual(result.blocks[0].confidence, 0.85)
 
+    def test_blank_env_values_fall_back_to_defaults(self) -> None:
+        blank = {"DARKAUDIT_TESSERACT_COMMAND": "", "DARKAUDIT_TESSERACT_LANG": ""}
+        with patch.dict("os.environ", blank):
+            ocr = TesseractOCR()
+
+        self.assertEqual(ocr.command, "tesseract")
+        self.assertEqual(ocr.languages, "kor+eng")
+
 
 class CandidateGroundingTests(unittest.TestCase):
     def setUp(self) -> None:

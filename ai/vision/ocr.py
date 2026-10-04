@@ -57,8 +57,9 @@ class TesseractOCR:
         timeout_seconds: float = 20,
         psm: int = 11,
     ) -> None:
-        self.command = command or os.getenv("DARKAUDIT_TESSERACT_COMMAND", "tesseract")
-        self.languages = languages or os.getenv("DARKAUDIT_TESSERACT_LANG", "kor+eng")
+        # A blank value in .env (KEY=) means "use the default", not an empty command.
+        self.command = command or os.getenv("DARKAUDIT_TESSERACT_COMMAND") or "tesseract"
+        self.languages = languages or os.getenv("DARKAUDIT_TESSERACT_LANG") or "kor+eng"
         self.timeout_seconds = timeout_seconds
         self.psm = psm
 
@@ -85,6 +86,9 @@ class TesseractOCR:
                 check=False,
                 capture_output=True,
                 text=True,
+                # Tesseract writes UTF-8; the Windows default (cp949) would garble Korean.
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout_seconds,
             )
         except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
