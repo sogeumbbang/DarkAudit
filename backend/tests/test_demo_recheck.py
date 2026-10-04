@@ -53,3 +53,55 @@ class DemoRecheckTest(IsolatedApiTestCase):
         audit = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
         self.assertEqual(audit["id"], audit_id)
         self.assertIsNone(audit["demoPreset"])
+
+    def test_native_demo_versions_preserve_source_and_history(self):
+        import os
+        from pathlib import Path
+        from unittest.mock import patch
+        from backend.api.android_runner import AndroidCapture
+        from backend.api.demo_inputs import APK_PATH, DEFAULT_FIGMA_URL
+        from backend.tests.test_figma_import import _TINY_PNG, _PROTOTYPE_DOCUMENT
+
+        class Client:
+            def __init__(self, *args): pass
+            def get_file(self, key): return {"document": _PROTOTYPE_DOCUMENT}
+            def render_frames(self, key, ids): return {node: node for node in ids}
+            def download_render(self, url, destination, **kwargs):
+                destination.write_bytes(_TINY_PNG)
+                return len(_TINY_PNG)
+
+        class Runner:
+            last_warnings = []
+            def __init__(self, *args): pass
+            def capture(self, apk, target, **kwargs):
+                target.mkdir(parents=True, exist_ok=True)
+                path = target / "01.png"
+                path.write_bytes(_TINY_PNG)
+                return [AndroidCapture(path, "앱 실행", 393, 852)]
+
+        with patch("backend.api.figma_import.FigmaClient", Client), patch(
+            "backend.api.android_import.BrowserStackAndroidRunner", Runner
+        ), patch.dict(os.environ, {"BROWSERSTACK_USERNAME": "user", "BROWSERSTACK_ACCESS_KEY": "key"}):
+            for source, scenario, platform in (("figma", "credit", "mobile-web"), ("android", "moa", "app")):
+                preset = {"scenario": scenario, "source": source}
+                audit_id = self.client.post("/api/v1/audits", json={
+                    "name": source, "platform": platform, "demoPreset": preset,
+                }).json()["id"]
+                for version, variant in enumerate(("risky", "partial", "revised"), 1):
+                    if source == "figma":
+                        response = self.client.post(f"/api/v1/audits/{audit_id}/figma", json={
+                            "fileUrl": DEFAULT_FIGMA_URL, "target": platform,
+                            "selectionMode": "prototype-flow", "flowName": "가입 Flow", "demoVariant": variant,
+                        })
+                    else:
+                        response = self.client.post(f"/api/v1/audits/{audit_id}/mobile-app", data={"demo_variant": variant},
+                            files={"app": (f"{variant}.apk", APK_PATH.with_name(f"darkaudit-demo-{variant}.apk").read_bytes(), "application/vnd.android.package-archive")})
+                    self.assertEqual(response.status_code, 202, response.text)
+                    job = self.client.get(f"/api/v1/analysis-jobs/{response.json()['jobId']}").json()
+                    self.assertEqual(job["status"], "completed", job)
+                    audit = next(a for a in self.client.get("/api/v1/dashboard/summary").json()["audits"] if a["id"] == audit_id)
+                    self.assertEqual(audit["demoPreset"], preset)
+                    self.assertEqual(audit["demoVariant"], variant)
+                    self.assertEqual(audit["analysisSummary"]["source"], source)
+                    self.assertEqual(len(audit["runs"]), version)
+                    self.assertEqual(audit["findings"], [])

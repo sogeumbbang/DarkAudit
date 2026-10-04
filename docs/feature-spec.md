@@ -123,7 +123,7 @@ flowchart TD
 | F-37 | 수정 결정 메모 | 구현 | Finding별 저장·수정·비우기, 저장 시각, PDF 포함 |
 | F-38 | 진단 삭제 | 구현 | Audit 및 회차·탐지와 관련 입력 파일 디렉터리 삭제 |
 | F-39 | 가이드라인 RAG 챗봇 | 구현 | 질문·대화 기록, 출처 인용, 관련 규칙·체크리스트. 진단과 독립 |
-| F-40 | 입력별 데모 | 구현 | 스크린샷·URL은 3종 시나리오 × 원본·일부 수정·전체 개선 버전. 같은 진단에서 수정본 실행·비교. Figma·APK는 기존 데모 제공 |
+| F-40 | 입력별 데모 | 구현 | 스크린샷·URL은 3종 시나리오 × 원본·일부 수정·전체 개선 버전. 같은 진단에서 수정본 실행·비교. Figma·APK도 세 버전 선택 및 같은 진단에서 수정본 재검사 제공 |
 
 ## 5. 입력 및 수집 명세
 
@@ -374,7 +374,8 @@ fingerprint는 규칙, 라벨 단위, 화면 순번, 위치 격자, 정규화 �
 | GET | `/api/v1/demo-inputs` | 없음 | 200, 입력별 데모 설정·시나리오·버전별 파일 목록 |
 | GET | `/demo/web/{filename}` | 허용된 데모 파일명 | 200, 정적 파일 |
 | GET | `/demo/cases/{scenario}/{variant}/{filename}` | pet/travel/credit, risky/partial/revised, 01.png~06.png | 200, 합성 PNG |
-| GET | `/demo/darkaudit-demo.apk` | 없음 | 200, 데모 APK |
+| GET | `/demo/darkaudit-demo.apk` | 없음 | 200, 원본 데모 APK (호환) |
+| GET | `/demo/android/{variant}.apk` | risky·partial·revised | 200, 버전별 데모 APK |
 | GET | `/artifacts/{path}` | 저장 경로 | 저장 파일 제공. 별도 인증 경로가 아님 |
 
 Swagger UI는 `/docs`, OpenAPI는 `/openapi.json`에서 제공한다. 개별 Audit 상세 GET은 별도로 없으며 프론트는 dashboard summary에서 결과를 선택한다.
@@ -477,9 +478,9 @@ Audit
 
 완료 화면이나 결과 화면에서 **데모 수정본 실행**을 누르면 기존 Audit ID에 새 회차를 추가한다. 파일 다운로드·업로드 또는 URL 재탐색 후 일반 분석을 수행하고 최신 완료 두 회차를 비교한다. 수정본부터 새 진단을 시작하는 것도 가능하다. 화면 단계 이름을 버전 사이에 유지하며, 웹의 선택 상태는 시나리오·버전별로 분리한다.
 
-`demoPreset`은 `{scenario: pet|travel|credit, source: screenshots|website}` 형태로 Audit에 저장한다. `demoVariant`는 회차의 `analysis_summary`에 저장하고 AuditDto에는 가장 최근 회차의 값을 반환한다. 기존 DB에는 nullable `demo_preset` 컬럼을 추가한다. 식별 정보가 없는 과거 데모는 이름만으로 추측하지 않으며 새 데모 진단부터 수정본 선택을 지원한다. 일반 파일 재검사로 전환할 수 있다.
+`demoPreset`은 `{scenario: pet|travel|credit|moa, source: screenshots|website|figma|android}` 형태로 Audit에 저장한다. `demoVariant`는 회차의 `analysis_summary`에 저장하고 AuditDto에는 가장 최근 회차의 값을 반환한다. 기존 DB에는 nullable `demo_preset` 컬럼을 추가한다. 식별 정보가 없는 과거 데모는 이름만으로 추측하지 않으며 새 데모 진단부터 수정본 선택을 지원한다. 일반 파일 재검사로 전환할 수 있다.
 
-제작용 `expectedRules`는 모델 입력이나 탐지 결과에 주입하지 않는다. 전체 개선본도 탐지 0건을 보장하지 않으며 fake provider·불완전한 검사·비교 불가능한 화면은 기존 정책대로 해결 판정을 보류한다. Figma·APK는 기존 데모를 유지하며 이 버전 선택·자동 수정본 실행의 대상은 아니다.
+제작용 `expectedRules`는 모델 입력이나 탐지 결과에 주입하지 않는다. 전체 개선본도 탐지 0건을 보장하지 않으며 fake provider·불완전한 검사·비교 불가능한 화면은 기존 정책대로 해결 판정을 보류한다. Figma는 실제 파일의 버전별 6단계 프로토타입을 이름으로 선택하고, APK는 버전별로 빌드·서명된 파일을 다운로드한다. 두 입력 모두 원본·일부 수정본·전체 개선본을 같은 진단에 추가할 수 있다.
 
 근거: [챗봇](../backend/api/chat.py), [RAG 구현](../ai/rag/chatbot.py), [데모 입력](../backend/api/demo_inputs.py), [데모 실행 안내](../demo/README.md), [수정본 화면](../frontend/src/pages/audit-create/DemoRecheckPanel.tsx), [파일 생성기](../demo/render_cases.py).
 
@@ -560,8 +561,8 @@ python -m backend.eval_hybrid --clean-only --visual --runs 1 --output-dir /tmp/d
 | 검증 | 결과 | 범위 |
 | --- | --- | --- |
 | AI unittest | 138개 통과 | URL 스마트 탐색 한도와 마지막 응답의 정상 종료 판정 포함 |
-| Backend unittest | 133개 통과 | DB 마이그레이션·수정 시각·데모 파일 54개·동일 진단 3회차·분할 검사 규칙별 비교·URL 원본 캡처 보존·배포 커밋 확인 포함 |
-| Frontend Vitest | 82개 통과 | 기존 화면 및 재검사·비교·데모 수정본·오류 재시도·일부 해결/판정 보류. 동시 실행 부하로 인한 시간 초과 후 maxWorkers=2로 전체 재검증 |
+| Backend unittest | 135개 통과 | DB 마이그레이션·수정 시각·데모 파일 54개·동일 진단 3회차·분할 검사 규칙별 비교·URL 원본 캡처 보존·배포 커밋 확인 포함 |
+| Frontend Vitest | 84개 통과 | 기존 화면 및 재검사·비교·데모 수정본·오류 재시도·일부 해결/판정 보류. 동시 실행 부하로 인한 시간 초과 후 maxWorkers=2로 전체 재검증 |
 | Playwright | 52개 통과 | core-flow, accessibility, report, analysis-notice, recheck, demo-variants를 desktop/mobile Chrome에서 실행 |
 | 새 화면 접근성 | 통과 | 재검사·비교·검사 안내의 serious/critical 위반 검사 및 데스크톱·모바일 레이아웃 확인 |
 | 프론트 build / lint | 통과 | TypeScript·번들·ESLint |

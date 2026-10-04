@@ -17,6 +17,17 @@ APK_PATH = ROOT / "demo/assets/darkaudit-demo.apk"
 CASES_DIR = ROOT / "frontend/public/demo-cases"
 DEFAULT_FIGMA_URL = "https://www.figma.com/design/YtP0tCCij8KTBOiZXkzh9B/DarkAudit-Mobile-Banking-Mockup"
 DEFAULT_FIGMA_FLOW = "릿 크레딧 · 6단계"
+VARIANT_LABELS = {"risky": "문제 포함 원본", "partial": "일부 수정본", "revised": "전체 개선본"}
+
+
+@router.get("/demo/android/{variant}.apk")
+def demo_android_variant(variant: str) -> FileResponse:
+    if variant not in VARIANT_LABELS:
+        raise HTTPException(404, "Demo variant not found")
+    path = APK_PATH.with_name(f"darkaudit-demo-{variant}.apk")
+    if not path.is_file():
+        raise HTTPException(404, "Demo APK not installed")
+    return FileResponse(path, media_type="application/vnd.android.package-archive", filename=path.name)
 
 
 @router.get("/demo/web/{filename}", name="demo_web")
@@ -69,6 +80,12 @@ def demo_inputs() -> dict:
             "available": True,
         },
         "figma": {
+            "variants": [
+                {"id": variant, "label": label,
+                 "flowName": DEFAULT_FIGMA_FLOW if variant == "risky" else f"릿 크레딧 · {label} · 6단계",
+                 "available": figma_ready}
+                for variant, label in VARIANT_LABELS.items()
+            ] if built_in_file else [],
             "fileUrl": figma_url,
             "selectionMode": "prototype-flow" if built_in_file else "all-frames",
             "flowName": DEFAULT_FIGMA_FLOW if built_in_file else None,
@@ -76,6 +93,12 @@ def demo_inputs() -> dict:
             "reason": None if figma_ready else "Figma 데모를 준비 중입니다. 다른 입력으로 먼저 체험해 주세요.",
         },
         "android": {
+            "variants": [
+                {"id": variant, "label": label,
+                 "downloadUrl": f"/demo/android/{variant}.apk",
+                 "available": android_ready and APK_PATH.with_name(f"darkaudit-demo-{variant}.apk").is_file()}
+                for variant, label in VARIANT_LABELS.items()
+            ],
             "downloadUrl": str(router.url_path_for("demo_apk")),
             "available": android_ready,
             "reason": None if android_ready else "Android 데모를 준비 중입니다. 다른 입력으로 먼저 체험해 주세요.",

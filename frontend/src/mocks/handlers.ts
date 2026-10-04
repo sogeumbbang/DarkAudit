@@ -68,10 +68,26 @@ export const handlers = [
       website: { url: "/demo/web/index.html?step=1", available: true },
       figma: {
         fileUrl: "https://www.figma.com/design/demo-file/Banking-Demo",
+        variants: ["risky", "partial", "revised"].map((id) => ({
+          id,
+          label: id,
+          available: true,
+          flowName: `릿 크레딧 · ${id} · 6단계`,
+        })),
         available: true,
         reason: null,
       },
-      android: { downloadUrl: "/demo/darkaudit-demo.apk", available: true, reason: null },
+      android: {
+        downloadUrl: "/demo/darkaudit-demo.apk",
+        available: true,
+        reason: null,
+        variants: ["risky", "partial", "revised"].map((id) => ({
+          id,
+          label: id,
+          available: true,
+          downloadUrl: `/demo/android/${id}.apk`,
+        })),
+      },
     });
   }),
   http.get("*/demo/cases/:scenario/:variant/:filename", ({ params, request }) => {
@@ -91,6 +107,13 @@ export const handlers = [
       ),
     );
   }),
+  http.get(
+    "*/demo/android/:filename",
+    () =>
+      new HttpResponse(new Uint8Array([0x50, 0x4b, 3, 4]).buffer, {
+        headers: { "Content-Type": "application/vnd.android.package-archive" },
+      }),
+  ),
   http.get(
     "*/demo/darkaudit-demo.apk",
     () =>
@@ -197,6 +220,8 @@ export const handlers = [
     const input = (await request.json()) as Omit<ImportFigmaAuditDto, "auditId">;
     const audit = dashboardFixture.audits.find((item) => item.id === auditId);
     if (!audit) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    const run = addMockRun(audit);
+    audit.demoVariant = input.demoVariant;
     audit.screens = ["시작 프레임", "옵션 선택", "최종 확인"].map((flowStep, index) => ({
       id: `figma-${index + 1}`,
       order: index + 1,
@@ -208,7 +233,7 @@ export const handlers = [
     const job: AnalysisJobDto = {
       jobId: `job-${crypto.randomUUID()}`,
       auditId,
-      runId: `run-${crypto.randomUUID()}`,
+      runId: run.id,
       status: "queued",
       progress: 5,
     };
@@ -216,10 +241,13 @@ export const handlers = [
     audit.status = "queued";
     return HttpResponse.json(job, { status: 202 });
   }),
-  http.post("*/api/v1/audits/:auditId/mobile-app", async ({ params }) => {
+  http.post("*/api/v1/audits/:auditId/mobile-app", async ({ params, request }) => {
     const auditId = String(params.auditId);
     const audit = dashboardFixture.audits.find((item) => item.id === auditId);
     if (!audit) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
+    const input = import.meta.env.MODE === "test" ? new FormData() : await request.formData();
+    const run = addMockRun(audit);
+    audit.demoVariant = (input.get("demo_variant") as DemoVariant | null) ?? undefined;
     audit.platform = "app";
     audit.screens = ["앱 시작", "주요 선택", "확인 직전"].map((flowStep, index) => ({
       id: `android-${index + 1}`,
@@ -231,7 +259,7 @@ export const handlers = [
     const job: AnalysisJobDto = {
       jobId: `job-${crypto.randomUUID()}`,
       auditId,
-      runId: `run-${crypto.randomUUID()}`,
+      runId: run.id,
       status: "queued",
       progress: 5,
     };

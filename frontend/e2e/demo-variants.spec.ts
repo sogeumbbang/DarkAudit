@@ -68,3 +68,27 @@ test("web variants keep option state isolated and improve the authored choices",
     await expect(page.locator("button.secondary")).toHaveCount(0);
   }
 });
+
+for (const source of ["Figma", "APK", "URL"]) {
+  test(`${source} demo preserves the audit across original, partial and revised runs`, async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/app/audits/new");
+    await page.getByRole("button", { name: `${source} 데모 실행`, exact: true }).click();
+    await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible();
+    await page.getByRole("link", { name: "데모 수정본 실행", exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/audits\/[^/]+\/recheck$/);
+    const originalAuditUrl = page.url();
+    for (const variant of ["partial", "revised"]) {
+      await page.getByLabel("실행할 수정본").selectOption(variant);
+      await page.getByRole("button", { name: "선택한 데모 수정본 실행" }).click();
+      await expect(
+        page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
+      ).toBeVisible();
+      expect(page.url()).toBe(originalAuditUrl);
+    }
+    await page.screenshot({ path: testInfo.outputPath(`${source}-recheck.png`), fullPage: true });
+    await page.getByRole("link", { name: "전후 비교 보기" }).click();
+    await expect(page.getByRole("heading", { name: "v2 → v3 비교" })).toBeVisible();
+  });
+}

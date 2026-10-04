@@ -23,15 +23,17 @@ public class MainActivity extends Activity {
     private LinearLayout content;
     private int step = 1;
     private boolean clean;
+    private boolean optionsFixed;
     private final boolean[] selected = new boolean[3];
     private static final String[] NAMES = {"플랜 소개", "투자 설정", "혜택 알림", "혜택 포기 확인", "투자 위험 확인", "최종 이용료"};
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        clean = getIntent().getBooleanExtra("clean", false);
+        clean = BuildConfig.VARIANT.equals("revised");
+        optionsFixed = !BuildConfig.VARIANT.equals("risky");
         step = state == null ? 1 : state.getInt("step", 1);
         boolean[] saved = state == null ? null : state.getBooleanArray("selected");
-        for (int i = 0; i < selected.length; i++) selected[i] = saved == null ? !clean : saved[i];
+        for (int i = 0; i < selected.length; i++) selected[i] = saved == null ? !optionsFixed : saved[i];
         getWindow().setStatusBarColor(Color.WHITE);
         getWindow().setNavigationBarColor(Color.WHITE);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
@@ -106,13 +108,13 @@ public class MainActivity extends Activity {
             case 1:
                 heading("작게 시작하는 나의 투자", "오늘의 작은 돈이\n내일의 가능성으로", "모아 라이트 멤버십\n투자 정보와 포트폴리오 관리를 한곳에서.");
                 graphic("모아 성장 포트폴리오", "+12.8%", "최근 1년 수익률 예시");
-                text("월 이용료 총액     " + (clean ? "8,400원" : "6,900원"), 21, ink, true);
-                if(clean) paragraph("기본료 6,900원 + 필수 관리비 1,500원");
+                text("월 이용료 총액     " + (optionsFixed ? "8,400원" : "6,900원"), 21, ink, true);
+                if(optionsFixed) paragraph("기본료 6,900원 + 필수 관리비 1,500원");
                 feature("1,000원부터 살펴보는 분산투자"); feature("매일 확인하는 자산 리포트");
                 text("과거 수익률은 미래 수익을 보장하지 않습니다. 원금 손실이 최대 100% 발생할 수 있으며 예금자보호 대상이 아닙니다.", clean ? 14 : 9, clean ? ink : Color.rgb(193,203,197), false);
                 primary="다음 · 투자 설정 보기"; break;
             case 2:
-                heading("나를 위한 추천 설정", "투자 습관,\n미리 준비해 뒀어요", "편리한 관리를 위한 선택사항이에요.\n원하지 않는 항목은 해제할 수 있어요.");
+                heading("투자 설정", optionsFixed ? "필요한 항목만\n직접 선택해 주세요" : "투자 습관,\n미리 준비해 뒀어요", optionsFixed ? "모두 미선택 상태입니다.\n동의하지 않아도 서비스를 이용할 수 있어요." : "편리한 관리를 위한 선택사항이에요.\n원하지 않는 항목은 해제할 수 있어요.");
                 check("[선택] 만기 자동 재투자", "수익과 원금을 같은 상품에 다시 투자 / 무료", 0);
                 check("[선택] 제휴사 정보 제공", "맞춤 금융상품 광고를 위한 제3자 제공 / 무료", 1);
                 check("[선택] 광고성 정보 수신", "앱 푸시와 이메일로 혜택 소식 받기 / 무료", 2);
@@ -124,6 +126,13 @@ public class MainActivity extends Activity {
                 feature("관심 자산의 상품 광고"); feature("제휴 서비스 프로모션");
                 primary="다음 · 혜택 알림 받기"; secondary="알림 없이 계속"; break;
             case 4:
+                if(clean) {
+                    heading("알림 선택 안내", "내 선택은\n그대로 유지돼요", "알림을 받지 않아도 기본 서비스를\n동일하게 이용할 수 있습니다.");
+                    feature("앞 단계의 선택을 유지합니다");
+                    feature("원할 때 설정에서 변경할 수 있습니다");
+                    primary="다음 · 안내 확인";
+                    break;
+                }
                 heading("잠깐, 놓치기 전에", "이 기회를\n그냥 보내실 건가요?", "투자 혜택 알림을 한 번 더 안내드려요.");
                 graphic("YOUR NEXT OPPORTUNITY", "나만 놓친다면?", "준비된 혜택 소식이 기다리고 있어요");
                 text(clean ? "알림 없이도 기본 서비스를 동일하게 이용할 수 있습니다." : "남들은 챙기는 혜택을 혼자 포기하고\n나중에 후회하시겠어요?", 20, clean ? ink : Color.rgb(169,72,47), true);

@@ -108,3 +108,19 @@ class DemoInputsTest(unittest.TestCase):
         for path in ("unknown/risky/01.png", "pet/unknown/01.png", "pet/risky/manifest.json", "pet/risky/07.png"):
             self.assertEqual(self.client.get(f"/demo/cases/{path}").status_code, 404)
         self.assertEqual(self.client.get("/demo/web/variants.js").status_code, 200)
+
+    def test_native_versions_are_distinct_downloads_and_flows(self):
+        with patch.dict(os.environ, {"FIGMA_ACCESS_TOKEN": "key", "BROWSERSTACK_USERNAME": "user", "BROWSERSTACK_ACCESS_KEY": "key"}):
+            data = self.client.get("/api/v1/demo-inputs").json()
+        self.assertEqual(len({v['flowName'] for v in data['figma']['variants']}), 3)
+        hashes = []
+        for variant in data['android']['variants']:
+            self.assertTrue(variant['available'])
+            response = self.client.get(variant['downloadUrl'])
+            self.assertEqual(response.status_code, 200)
+            with zipfile.ZipFile(io.BytesIO(response.content)) as apk:
+                self.assertIn('classes.dex', apk.namelist())
+            hashes.append(hashlib.sha256(response.content).hexdigest())
+        self.assertEqual(len(set(hashes)), 3)
+        self.assertEqual(self.client.get('/demo/android/unknown.apk').status_code, 404)
+        self.assertEqual(self.client.get('/demo/android/.env').status_code, 404)

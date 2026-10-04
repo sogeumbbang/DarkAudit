@@ -56,7 +56,7 @@ def capture_and_analyze_android(
             paths: dict[str,list[int]] = {}
             for index,capture in enumerate(captures,1):
                 paths.setdefault(capture.path_id, []).append(index)
-            run.analysis_summary = {"source":"android", "warnings":runner.last_warnings, "paths":getattr(runner,"last_paths",None) or list(paths.values())}
+            run.analysis_summary = {**(run.analysis_summary or {}), "source":"android", "warnings":runner.last_warnings, "paths":getattr(runner,"last_paths",None) or list(paths.values())}
             session.commit()
         service.analyze_run_screens(job_id, run_id, [capture.image_path for capture in captures])
     except Exception as exc:

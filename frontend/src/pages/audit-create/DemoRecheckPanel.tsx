@@ -2,8 +2,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { captureAuditUrl, startAnalysis, uploadAuditScreens } from "@/api/audits";
-import { demoGoal, demoVariantLabels, getDemoInputs, getDemoScreens } from "@/api/demo";
+import {
+  analyzeAndroidApp,
+  importFigmaAudit,
+  captureAuditUrl,
+  startAnalysis,
+  uploadAuditScreens,
+} from "@/api/audits";
+import { demoGoal, demoVariantLabels, getDemoApk, getDemoInputs, getDemoScreens } from "@/api/demo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto, DemoVariant } from "@/entities/audit/types";
@@ -38,20 +44,48 @@ export function DemoRecheckPanel({
     (!jobId && !uploadedVariant && ["queued", "analyzing"].includes(audit.status));
   const preset = audit.demoPreset!;
   const demo = catalog.data?.cases.find((item) => item.id === preset.scenario);
-  const selected = demo?.variants.find((item) => item.id === variant);
+  const selected = ["screenshots", "website"].includes(preset.source)
+    ? demo?.variants.find((item) => item.id === variant)
+    : undefined;
+  const figma = preset.source === "figma" ? catalog.data?.figma : undefined;
+  const figmaVariant = figma?.variants.find((item) => item.id === variant);
+  const android = preset.source === "android" ? catalog.data?.android : undefined;
+  const androidVariant = android?.variants.find((item) => item.id === variant);
+  const available = Boolean(
+    selected ||
+    (figma?.available && figmaVariant?.available) ||
+    (android?.available && androidVariant?.available),
+  );
 
   useEffect(() => {
     if (completed || failed) void client.invalidateQueries({ queryKey: dashboardKeys.all });
   }, [completed, failed, client]);
 
   async function run() {
-    if (!selected || busy || lock.current) return;
+    if (!available || busy || lock.current) return;
     lock.current = true;
     setPending(true);
     setError("");
     try {
       let nextJob;
-      if (preset.source === "website") {
+      if (figma && figmaVariant) {
+        nextJob = await importFigmaAudit({
+          auditId: audit.id,
+          fileUrl: figma.fileUrl,
+          target: audit.platform,
+          selectionMode: "prototype-flow",
+          flowName: figmaVariant.flowName,
+          demoVariant: variant,
+        });
+      } else if (androidVariant) {
+        const appFile = await getDemoApk(androidVariant.downloadUrl);
+        nextJob = await analyzeAndroidApp({
+          auditId: audit.id,
+          appFile,
+          goal: "다음 버튼으로 6단계 최종 이용료까지 확인",
+          demoVariant: variant,
+        });
+      } else if (preset.source === "website" && selected) {
         nextJob = await captureAuditUrl({
           auditId: audit.id,
           url: selected.websiteUrl,
@@ -60,13 +94,15 @@ export function DemoRecheckPanel({
           goal: demoGoal,
           demoVariant: variant,
         });
-      } else {
+      } else if (selected) {
         if (uploadedVariant !== variant) {
           const screens = await getDemoScreens(selected);
           await uploadAuditScreens({ auditId: audit.id, screens, demoVariant: variant });
           setUploadedVariant(variant);
         }
         nextJob = await startAnalysis(audit.id);
+      } else {
+        throw new Error("선택한 데모 수정본이 준비되지 않았습니다.");
       }
       setJobId(nextJob.jobId);
       void client.invalidateQueries({ queryKey: dashboardKeys.all });
@@ -83,9 +119,16 @@ export function DemoRecheckPanel({
     <Card className="mt-6 space-y-5 p-6">
       <h2 className="text-lg font-bold">데모 수정본 실행</h2>
       <p className="text-sm leading-6 text-muted">
-        {demo?.name ?? preset.scenario} ·{" "}
-        {preset.source === "website" ? "URL 자동 탐색" : "스크린샷"}. 같은 진단에 새 회차를
-        추가합니다. 별도 파일을 준비하지 않아도 됩니다.
+        {preset.source === "android" ? "모아 소액투자" : (demo?.name ?? preset.scenario)} ·{" "}
+        {
+          {
+            website: "URL 자동 탐색",
+            screenshots: "스크린샷",
+            figma: "Figma 프로토타입",
+            android: "APK 자동 탐색",
+          }[preset.source]
+        }
+        . 같은 진단에 새 회차를 추가합니다. 별도 파일을 준비하지 않아도 됩니다.
       </p>
       {audit.demoVariant && (
         <p className="text-sm">최근 등록한 데모: {demoVariantLabels[audit.demoVariant]}</p>
@@ -151,6 +194,21 @@ export function DemoRecheckPanel({
           </div>
         </section>
       )}
+      {figma && figmaVariant && (
+        <a
+          className="block text-sm underline"
+          href={figma.fileUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Figma에서 {figmaVariant.flowName} 확인 (새 탭)
+        </a>
+      )}
+      {androidVariant && (
+        <a className="block text-sm underline" href={androidVariant.downloadUrl} download>
+          APK {androidVariant.label} 다운로드
+        </a>
+      )}
       {catalog.isPending && <p role="status">데모 파일 목록을 불러오는 중입니다.</p>}
       {catalog.isError && (
         <div role="alert">
@@ -160,7 +218,7 @@ export function DemoRecheckPanel({
           </Button>
         </div>
       )}
-      {!catalog.isPending && !catalog.isError && !selected && (
+      {!catalog.isPending && !catalog.isError && !available && (
         <p role="alert">이 데모의 수정본 파일이 준비되지 않았습니다.</p>
       )}
       {error && (
@@ -202,7 +260,7 @@ export function DemoRecheckPanel({
           )}
         </div>
       ) : (
-        <Button disabled={busy || !selected} onClick={() => void run()}>
+        <Button disabled={busy || !available} onClick={() => void run()}>
           {pending ? "데모 준비 중…" : running ? "분석 중…" : "선택한 데모 수정본 실행"}
         </Button>
       )}

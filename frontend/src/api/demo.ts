@@ -33,6 +33,16 @@ const demoInputsSchema = z.object({
     .default([]),
   website: z.object({ url: demoAssetUrl, available: z.boolean() }),
   figma: z.object({
+    variants: z
+      .array(
+        z.object({
+          id: z.enum(["risky", "partial", "revised"]),
+          label: z.string(),
+          flowName: z.string(),
+          available: z.boolean(),
+        }),
+      )
+      .default([]),
     fileUrl: z.string(),
     selectionMode: z.enum(["prototype-flow", "all-frames"]).default("all-frames"),
     flowName: z.string().nullable().optional(),
@@ -40,6 +50,16 @@ const demoInputsSchema = z.object({
     reason: z.string().nullable(),
   }),
   android: z.object({
+    variants: z
+      .array(
+        z.object({
+          id: z.enum(["risky", "partial", "revised"]),
+          label: z.string(),
+          downloadUrl: demoAssetUrl,
+          available: z.boolean(),
+        }),
+      )
+      .default([]),
     downloadUrl: demoAssetUrl,
     available: z.boolean(),
     reason: z.string().nullable(),

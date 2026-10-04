@@ -2,4 +2,4 @@
 FROM scratch
 COPY frontend/public/dark-pattern-demo/ /web/
 COPY frontend/public/demo-cases/ /cases/
-COPY demo/assets/darkaudit-demo.apk /android/darkaudit-demo.apk
+COPY demo/assets/ /android/

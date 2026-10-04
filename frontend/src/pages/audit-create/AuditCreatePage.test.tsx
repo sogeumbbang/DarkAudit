@@ -126,9 +126,7 @@ describe("AuditCreatePage", () => {
   }, 10_000);
 
   it("keeps the form intact when the APK download is an HTML error page", async () => {
-    server.use(
-      http.get("*/demo/darkaudit-demo.apk", () => HttpResponse.html("<html>Error</html>")),
-    );
+    server.use(http.get("*/demo/android/risky.apk", () => HttpResponse.html("<html>Error</html>")));
     const user = userEvent.setup();
     renderPage();
     const button = await screen.findByRole("button", { name: "APK 데모 실행" });

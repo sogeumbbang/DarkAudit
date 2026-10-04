@@ -196,20 +196,28 @@ export function AuditCreatePage() {
         input.websiteGoal =
           "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.";
       } else if (kind === "figma") {
+        const selected =
+          config.figma.variants.find((item) => item.id === demoVariant) ??
+          (demoVariant === "risky" && config.figma.flowName
+            ? { flowName: config.figma.flowName, available: config.figma.available }
+            : undefined);
+        if (!selected?.available) throw new Error("선택한 Figma 데모 흐름이 준비되지 않았습니다.");
         setFigmaUrl(config.figma.fileUrl);
         setFigmaTarget("mobile-web");
-        setFigmaSelection(config.figma.selectionMode);
-        setFigmaFlow(config.figma.flowName ?? "");
-        name = "Figma 데모 · 금융상품 화면 검사";
+        setFigmaSelection("prototype-flow");
+        setFigmaFlow(selected.flowName);
+        name = `Figma 데모 · 릿 크레딧 · ${demoVariantLabels[demoVariant]}`;
         input.figmaUrl = config.figma.fileUrl;
         input.figmaTarget = "mobile-web";
-        input.figmaSelection = config.figma.selectionMode;
-        input.figmaFlow = config.figma.flowName ?? "";
+        input.figmaSelection = "prototype-flow";
+        input.figmaFlow = selected.flowName;
       } else {
-        const file = await getDemoApk(config.android.downloadUrl);
+        const selected = config.android.variants.find((item) => item.id === demoVariant);
+        if (!selected?.available) throw new Error("선택한 APK 데모 파일이 준비되지 않았습니다.");
+        const file = await getDemoApk(selected.downloadUrl);
         setAppFile(file);
         setAndroidGoal("다음 버튼으로 6단계 최종 이용료까지 확인");
-        name = "APK 데모 · 모아 소액투자";
+        name = `APK 데모 · 모아 소액투자 · ${demoVariantLabels[demoVariant]}`;
         input.appFile = file;
         input.androidGoal = "다음 버튼으로 6단계 최종 이용료까지 확인";
       }
@@ -227,8 +235,8 @@ export function AuditCreatePage() {
         input,
         kind === "website"
           ? { scenario: selectedDemo?.id ?? "travel", source: "website" }
-          : undefined,
-        kind === "website" ? demoVariant : undefined,
+          : { scenario: kind === "figma" ? "credit" : "moa", source: kind },
+        demoVariant,
       );
     } catch (error) {
       setSampleError(error instanceof Error ? error.message : "데모를 실행하지 못했습니다.");
@@ -359,6 +367,7 @@ export function AuditCreatePage() {
         target: figmaTarget,
         selectionMode: figmaSelection,
         flowName: figmaFlow.trim() || undefined,
+        demoVariant: variant,
       });
       setJobId(job.jobId);
     } else if (source === "android" && appFile) {
@@ -366,6 +375,7 @@ export function AuditCreatePage() {
         auditId: audit.id,
         appFile,
         goal: androidGoal.trim() || undefined,
+        demoVariant: variant,
       });
       setJobId(job.jobId);
     } else if (source === "screenshots") {

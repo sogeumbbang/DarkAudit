@@ -288,6 +288,8 @@ def import_figma(audit_id: str, payload: ImportFigmaRequest, background: Backgro
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, f"Figma: {payload.fileUrl}")
+        if payload.demoVariant and audit.demo_preset:
+            run.analysis_summary = {"demoVariant": payload.demoVariant}
         session.commit()
         job = create_job(audit_id, run.id)
         background.add_task(
@@ -302,6 +304,7 @@ async def analyze_mobile_app(
     background: BackgroundTasks,
     app_file: UploadFile = File(..., alias="app"),
     goal: str | None = Form(default=None),
+    demo_variant: DemoVariant | None = Form(default=None),
 ) -> JobDto:
     try:
         AndroidRunnerSettings.from_env()
@@ -344,6 +347,8 @@ async def analyze_mobile_app(
             except KeyError:
                 raise HTTPException(404, "Audit not found")
             run = next_run(session, audit.id, f"Android APK: {app_file.filename}")
+            if demo_variant and audit.demo_preset:
+                run.analysis_summary = {"demoVariant": demo_variant}
             target_dir = ANDROID_DIR / audit_id / f"run-{run.version}"
             target_dir.mkdir(parents=True, exist_ok=True)
             apk_path = target_dir / "app.apk"

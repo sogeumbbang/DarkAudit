@@ -1,4 +1,4 @@
-# DarkAudit 데모 v3
+# DarkAudit 데모 v4
 
 ## 스크린샷·URL의 원본 → 수정본 체험
 
@@ -31,9 +31,9 @@ npx prettier --write public/demo-cases/manifest.json src/mocks/fixtures/demo-cas
 
 Playwright Chrome으로 원본 HTML을 렌더링하고 화면 순서·기본 체크·금액·가로 넘침을 검증한다. 가독성을 높인 긴 화면은 잘리지 않도록 전체 높이로 캡처한다. 기존 `sample-audit/`는 보험 원본으로, `demo/sample-audit-revised/`는 보험 일부 수정본으로 함께 갱신한다. 개발용 MSW 카탈로그도 함께 생성한다.
 
-웹 미리보기는 `index.html?scenario=pet&variant=revised&step=1` 형태다. 선택 상태는 시나리오·버전별로 분리한다. 이번 버전 쌍과 앱의 수정본 실행 기능은 **스크린샷·URL**에 적용했다. 기존 온라인 Figma 파일과 APK는 아래 v2 데모를 계속 사용하며 별도의 수정본 자동 실행은 제공하지 않는다.
+웹 미리보기는 `index.html?scenario=pet&variant=revised&step=1` 형태다. 선택 상태는 시나리오·버전별로 분리한다. 버전 선택과 같은 진단의 수정본 재검사는 **스크린샷·URL·Figma·APK 네 입력 모두** 지원한다. Figma는 릿 크레딧, APK는 모아 소액투자 시나리오를 사용한다.
 
-## 기존 입력별 데모
+## 입력별 데모
 
 서로 다른 네 개의 가상 금융 서비스다. 각 흐름은 **6개의 연속 화면**으로 구성하며, 실제 개인정보 입력·계약·결제는 없다. 화면의 문구와 상태 자체가 분석 입력이며 정답이나 탐지 결과를 API에 주입하지 않는다.
 
@@ -46,7 +46,7 @@ Playwright Chrome으로 원본 HTML을 렌더링하고 화면 순서·기본 체
 | APK | moa · 모아 소액투자 | 멤버십 → 투자 설정 → 상품 알림 → 혜택 포기 → 위험 확인 → 최종 이용료 | `demo/assets/darkaudit-demo.apk` |
 | 스크린샷 | moru · 모루 펫케어 | 보험 안내 → 특약 선택 → 정보 동의 → 특약 재권유 → 면책 조건 → 최종 보험료 | `frontend/public/sample-audit/`의 새 6장 |
 
-기존 Figma 파일의 새 페이지 **Lit Credit · 6-screen demo**에 수정 가능한 6개 프레임을 생성했다. 데모 버튼은 **릿 크레딧 · 6단계** 프로토타입을 이름으로 선택하므로 기존 `01_Product_Select` 한 장은 포함하지 않는다. `previews/figma-*.png`는 실제 Figma 출력이고, `credit-*.png`는 웹 콘텐츠 원본 미리보기다. 다른 Figma 파일 URL을 환경 변수로 지정하면 전체 프레임 모드를 사용한다.
+기존 Figma 파일의 새 페이지 **Lit Credit · 6-screen demo**에 수정 가능한 6개 프레임을 생성했다. 데모 버튼은 **릿 크레딧 · 6단계** 프로토타입을 이름으로 선택하므로 기존 `01_Product_Select` 한 장은 포함하지 않는다. `previews/figma-*.png`는 실제 Figma 출력이고, `credit-*.png`는 웹 콘텐츠 원본 미리보기다. 기본 파일에는 원본과 수정본 두 흐름이 존재한다. 다른 파일 URL을 환경 변수로 지정하면 수정본 흐름을 임의로 가정하지 않으며, 일반 Figma 입력에서 해당 파일을 검사할 수 있다.
 
 ## 의도한 패턴
 
@@ -106,7 +106,7 @@ adb install -r demo/android/build/darkaudit-demo.apk
 adb shell am start -n com.darkaudit.demo/.MainActivity
 ```
 
-JDK 11+, Android SDK platform 34와 build-tools 34.0.0이 필요하다. 재빌드 후 `demo/assets/darkaudit-demo.apk`와 `frontend/public/dark-pattern-demo/darkaudit-demo.apk`를 갱신한다. 빌드 폴더의 디버그 서명 키는 커밋하지 않는다.
+JDK 11+, Android SDK platform 34와 build-tools 34.0.0이 필요하다. 빌드는 `demo/assets/darkaudit-demo-{risky,partial,revised}.apk`를 각각 생성하고 서명을 검증한다. `demo/assets/darkaudit-demo.apk`는 원본 호환 파일이다. 서비스는 `/demo/android/{variant}.apk`에서 선택한 버전을 내려받는다. 빌드 폴더의 디버그 서명 키는 커밋하지 않는다.
 
 ## Figma 생성 원본
 
@@ -117,6 +117,18 @@ node demo/figma/build.mjs
 ```
 
 `scenarios.js`의 신용관리 내용과 `source.js`에서 `code.js` 및 `flow.json`을 재생성한다. 동일 생성 원본의 화면별 실행으로 온라인 Figma 파일을 만들었으며, 독립 플러그인 전체 실행은 별도로 검증하지 않았다. `online/state.json`에 실제 노드 ID, `online/graph.json`에 전환 연결과 레이아웃 검사 결과를 보관한다. 프로토타입을 수동 분석할 때는 Flow 이름 `릿 크레딧 · 6단계`를 사용한다. 서버의 `FIGMA_ACCESS_TOKEN`에도 해당 파일의 읽기 권한이 필요하다.
+
+## Figma·APK 수정본과 v4 검증
+
+- Figma: 기존 파일의 `Lit Credit · 6-screen demo` 페이지에 원본 6개와 일부 수정본 6개, 전체 개선본 6개가 실제로 저장되어 있다. 세 흐름은 화면 단계 이름을 공유하고 각 버전 안에서만 이동한다.
+- Flow 이름: `릿 크레딧 · 6단계`, `릿 크레딧 · 일부 수정본 · 6단계`, `릿 크레딧 · 전체 개선본 · 6단계`.
+- 일부 수정본: 자동 갱신·광고 등 기본 체크를 해제하고 처음부터 필수 관리비를 공개한다. 전체 개선본: 읽을 수 있는 조건, 같은 크기의 동의·거절 버튼, 중립적인 안내, 직접 갱신 중단을 적용한다.
+- APK: 설치 시 버전이 확정된 세 파일이다. 숨겨진 실행 인자를 전달하지 않아도 올바른 화면을 표시한다. 수정본은 처음부터 월 8,400원을 고지한다.
+- 2026-10-04 검증: 세 APK 모두 BrowserStack 실제 Android 기기에서 마지막 8,400원 화면까지 6장 수집, 원본 체크 3개와 수정본 미선택 상태를 확인했다. 서비스용 Figma API로 세 흐름 각각 6개 노드가 정확히 선택됨을 확인했다. Figma 개선본의 렌더링도 육안 확인했다.
+- 백엔드 135개, 프론트엔드 84개, 데스크톱·모바일 데모 브라우저 검사 12개 통과. 네 입력의 브라우저 체험은 MSW로 검증하며, 실제 모델의 버전별 검출률 검증과는 구분한다.
+- 배포 시에도 `FIGMA_MAX_FRAMES=6`, `ANDROID_MAX_SCREENS=6`이 필요하다. 기존 Render 환경에 남은 5 설정은 코드 배포만으로 변경되지 않는다.
+
+`node demo/figma/build.mjs`는 기존 독립 플러그인에 더해 공유 웹 콘텐츠에서 `variants.json`을 생성한다. `update-variants.js`는 기존 온라인 파일의 프레임·컴포넌트를 재사용하는 MCP 실행 원본이다. 이 스크립트 앞에 `const DEMO_VARIANTS = <variants.json 내용>;`을 붙여 Figma MCP에서 실행했다. 기존 수정본 흐름이 있으면 중복 생성하지 않으며, 원본이나 다른 페이지를 삭제하지 않는다. 생성된 실제 ID는 `online/variants.json`에 기록했다. 독립 개발 플러그인은 여전히 원본 6장을 생성하는 용도다.
 
 ## 기존 v2 검증과 재생성 기록
 

@@ -1,0 +1,96 @@
+{
+  "fileKey": "YtP0tCCij8KTBOiZXkzh9B",
+  "pageId": "14:2",
+  "variants": [
+    {
+      "variant": "risky",
+      "flowName": "릿 크레딧 · 6단계",
+      "screenIds": [
+        "17:2",
+        "19:3",
+        "20:4",
+        "23:5",
+        "23:26",
+        "24:7"
+      ]
+    },
+    {
+      "variant": "partial",
+      "flowName": "릿 크레딧 · 일부 수정본 · 6단계",
+      "screenIds": [
+        "29:147",
+        "29:171",
+        "29:195",
+        "29:217",
+        "29:238",
+        "29:259"
+      ],
+      "bounds": [
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        }
+      ],
+      "textCount": 84
+    },
+    {
+      "variant": "revised",
+      "flowName": "릿 크레딧 · 전체 개선본 · 6단계",
+      "screenIds": [
+        "29:287",
+        "29:311",
+        "29:335",
+        "29:359",
+        "29:380",
+        "29:401"
+      ],
+      "bounds": [
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        },
+        {
+          "width": 393,
+          "height": 852
+        }
+      ],
+      "textCount": 83
+    }
+  ]
+}

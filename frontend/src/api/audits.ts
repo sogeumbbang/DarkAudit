@@ -79,9 +79,15 @@ export async function importFigmaAudit({ auditId, ...input }: ImportFigmaAuditDt
   );
 }
 
-export async function analyzeAndroidApp({ auditId, appFile, goal }: AnalyzeAndroidAppDto) {
+export async function analyzeAndroidApp({
+  auditId,
+  appFile,
+  goal,
+  demoVariant,
+}: AnalyzeAndroidAppDto) {
   const body = new FormData();
   body.append("app", appFile, appFile.name);
+  if (demoVariant) body.append("demo_variant", demoVariant);
   if (goal) body.append("goal", goal);
   return analysisJobSchema.parse(
     await apiRequest<unknown>(`/api/v1/audits/${auditId}/mobile-app`, {

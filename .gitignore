@@ -17,6 +17,7 @@ cache/
 node_modules/
 dist/
 build/
+*.apk.idsig
 
 # 생성물 — YAML 이 원본, JSON 은 빌드 산출물
 rules/dark_pattern_rules.json

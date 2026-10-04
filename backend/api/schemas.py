@@ -36,8 +36,8 @@ DemoVariant = Literal["risky", "partial", "revised"]
 
 
 class DemoPreset(BaseModel):
-    scenario: Literal["pet", "travel", "credit"]
-    source: Literal["screenshots", "website"]
+    scenario: Literal["pet", "travel", "credit", "moa"]
+    source: Literal["screenshots", "website", "figma", "android"]
 
 
 class CreateAuditRequest(BaseModel):
@@ -168,6 +168,7 @@ class JobDto(BaseModel):
 
 
 class ImportFigmaRequest(BaseModel):
+    demoVariant: DemoVariant | None = None
     fileUrl: HttpUrl
     target: Literal["mobile-web", "desktop-web", "app"]
     selectionMode: Literal["prototype-flow", "all-frames"]

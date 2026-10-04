@@ -206,7 +206,7 @@ def import_and_analyze_figma(
                 encoding="utf-8",
             )
             index_by_node = {item["nodeId"]:index for index,item in enumerate(manifest_frames,1)}
-            run.analysis_summary = {"source":"figma", "warnings":selection_warnings +
+            run.analysis_summary = {**(run.analysis_summary or {}), "source":"figma", "warnings":selection_warnings +
                 ([f"figma_render_missing:{len(missing)}"] if missing else []),
                 "paths":[[index_by_node[frame.node_id] for frame in path if frame.node_id in index_by_node] for path in paths]}
             session.commit()

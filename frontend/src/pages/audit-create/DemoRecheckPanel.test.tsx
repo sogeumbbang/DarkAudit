@@ -4,11 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 
+import * as auditApi from "@/api/audits";
 import { dashboardFixture } from "@/mocks/fixtures/dashboard";
 import { server } from "@/mocks/server";
 import { DemoRecheckPanel } from "./DemoRecheckPanel";
 
-function setup(source: "screenshots" | "website" = "screenshots") {
+function setup(source: "screenshots" | "website" | "figma" | "android" = "screenshots") {
   const audit = structuredClone(dashboardFixture.audits[0]!);
   audit.status = "completed";
   audit.demoPreset = { scenario: "pet", source };
@@ -121,3 +122,72 @@ it("does not create a run when downloading a revised image fails", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("올바르지 않습니다");
   expect(uploads).toBe(0);
 });
+
+it.each(["figma", "android"] as const)(
+  "rechecks %s partial and revised inputs on the same audit",
+  async (source) => {
+    const versions: string[] = [];
+    const assets: string[] = [];
+    server.use(
+      http.post(
+        `*/api/v1/audits/:id/${source === "figma" ? "figma" : "mobile-app"}`,
+        async ({ params, request }) => {
+          expect(params.id).toBe(audit.id);
+          if (source === "figma") {
+            const input = (await request.json()) as {
+              demoVariant: string;
+              flowName: string;
+              selectionMode: string;
+            };
+            expect(input.selectionMode).toBe("prototype-flow");
+            expect(input.flowName).toContain(input.demoVariant);
+            versions.push(input.demoVariant);
+          } else {
+            const input = await request.formData();
+            versions.push(String(input.get("demo_variant")));
+            expect(input.get("app")).toBeInstanceOf(File);
+          }
+          return HttpResponse.json({
+            jobId: "native-demo",
+            auditId: audit.id,
+            status: "queued",
+            progress: 5,
+          });
+        },
+      ),
+      http.get("*/demo/android/:file", ({ params }) => {
+        assets.push(String(params.file));
+        return new HttpResponse(new Uint8Array([0x50, 0x4b, 3, 4]).buffer);
+      }),
+      http.get("*/api/v1/analysis-jobs/native-demo", () =>
+        HttpResponse.json({
+          jobId: "native-demo",
+          auditId: audit.id,
+          status: "completed",
+          progress: 100,
+        }),
+      ),
+    );
+    const androidSpy =
+      source === "android"
+        ? vi.spyOn(auditApi, "analyzeAndroidApp").mockImplementation(async (input) => {
+            expect(input.auditId).toBe(audit.id);
+            expect(input.appFile.size).toBe(4);
+            versions.push(input.demoVariant!);
+            return { jobId: "native-demo", auditId: audit.id, status: "queued", progress: 5 };
+          })
+        : undefined;
+    const audit = setup(source);
+    const user = userEvent.setup();
+    for (const version of ["partial", "revised"]) {
+      await user.selectOptions(screen.getByLabelText("실행할 수정본"), version);
+      const button = screen.getByRole("button", { name: "선택한 데모 수정본 실행" });
+      await waitFor(() => expect(button).toBeEnabled());
+      await user.click(button);
+      await screen.findByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" });
+    }
+    androidSpy?.mockRestore();
+    expect(versions).toEqual(["partial", "revised"]);
+    if (source === "android") expect(assets).toEqual(["partial.apk", "revised.apk"]);
+  },
+);

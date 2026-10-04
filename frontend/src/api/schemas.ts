@@ -58,8 +58,8 @@ export const findingSchema = z.object({
 export const auditSchema = z.object({
   demoPreset: z
     .object({
-      scenario: z.enum(["pet", "travel", "credit"]),
-      source: z.enum(["screenshots", "website"]),
+      scenario: z.enum(["pet", "travel", "credit", "moa"]),
+      source: z.enum(["screenshots", "website", "figma", "android"]),
     })
     .nullable()
     .optional(),

@@ -3,8 +3,8 @@ export type FindingSeverity = "HIGH" | "REVIEW" | "LOW";
 export type FindingStatus = "open" | "reviewing" | "resolved";
 export type DemoVariant = "risky" | "partial" | "revised";
 export type DemoPreset = {
-  scenario: "pet" | "travel" | "credit";
-  source: "screenshots" | "website";
+  scenario: "pet" | "travel" | "credit" | "moa";
+  source: "screenshots" | "website" | "figma" | "android";
 };
 
 export type AuditScreenDto = {
@@ -141,6 +141,7 @@ export type CaptureAuditUrlDto = {
 };
 
 export type ImportFigmaAuditDto = {
+  demoVariant?: DemoVariant;
   auditId: string;
   fileUrl: string;
   target: AuditDto["platform"];
@@ -149,6 +150,7 @@ export type ImportFigmaAuditDto = {
 };
 
 export type AnalyzeAndroidAppDto = {
+  demoVariant?: DemoVariant;
   auditId: string;
   appFile: File;
   goal?: string;
