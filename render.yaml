@@ -23,5 +23,9 @@ services:
         value: Google Pixel 8
       - key: BROWSERSTACK_ANDROID_VERSION
         value: "14.0"
+      - key: ANDROID_MAX_SCREENS
+        value: "6"
+      - key: ANDROID_MAX_ACTIONS
+        value: "20"
       - key: DARKAUDIT_CORS_ORIGINS
         sync: false

@@ -36,6 +36,8 @@
    | `BROWSERSTACK_ACCESS_KEY` | APK 사용 시 필수 | BrowserStack App Automate access key |
    | `BROWSERSTACK_ANDROID_DEVICE` | 선택 | 기본값 `Google Pixel 8` |
    | `BROWSERSTACK_ANDROID_VERSION` | 선택 | 기본값 `14.0` |
+   | `ANDROID_MAX_SCREENS` | 심사용 `6` | 기존 값이 `5`이면 6단계 APK 데모가 최종 이용료 전에 종료된다 |
+   | `ANDROID_MAX_ACTIONS` | 심사용 `20` | 화면 수와 별개인 탐색 동작 한도 |
    | `DARKAUDIT_CORS_ORIGINS` | 선택 | 커스텀 도메인을 쓸 때만. 비워도 `*.vercel.app`은 허용된다 |
    | `DARKAUDIT_FRONTEND_CONTRACT` | 선택 | 기본값 `v2`(전체 개방). 프런트가 모르는 값을 막아야 할 때만 `v1`로 내린다 |
 
@@ -44,6 +46,11 @@
 
    이걸 빼면 재배포·재시작할 때마다 진단 기록과 캡처 이미지가 전부 사라진다.
    SQLite(`data/darkaudit.db`)와 업로드·캡처 산출물이 모두 이 경로 아래에 있다.
+
+   로컬 `.env` 수정은 Render 환경변수를 바꾸지 않는다. 배포 담당자는 Render의
+   Environment에서 `ANDROID_MAX_SCREENS=6`, `ANDROID_MAX_ACTIONS=20`을 적용하고
+   재배포해야 한다. `render.yaml`에도 같은 값을 명시했지만, 대시보드에서 따로 관리하는
+   기존 서비스는 저장소 파일 수정만으로 환경변수가 바뀌지 않을 수 있다.
 
 5. 배포가 끝나면 `https://<서비스명>.onrender.com` URL이 생긴다. **이 URL을 적어둔다.**
 6. `curl https://<서비스명>.onrender.com/health`로 `status: "ok"`와 `commit`을 확인한다.

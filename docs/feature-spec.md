@@ -559,8 +559,8 @@ python -m backend.eval_hybrid --clean-only --visual --runs 1 --output-dir /tmp/d
 
 | 검증 | 결과 | 범위 |
 | --- | --- | --- |
-| AI unittest | 136개 통과 (직전 작업) | 이번 UI·저장 상태 변경에서는 AI 코드를 추가 변경하지 않음 |
-| Backend unittest | 131개 통과 | 전체 실행. DB 마이그레이션·수정 시각·데모 파일 54개·동일 진단 3회차·분할 검사 규칙별 비교 포함 |
+| AI unittest | 138개 통과 | URL 스마트 탐색 한도와 마지막 응답의 정상 종료 판정 포함 |
+| Backend unittest | 133개 통과 | DB 마이그레이션·수정 시각·데모 파일 54개·동일 진단 3회차·분할 검사 규칙별 비교·URL 원본 캡처 보존·배포 커밋 확인 포함 |
 | Frontend Vitest | 82개 통과 | 기존 화면 및 재검사·비교·데모 수정본·오류 재시도·일부 해결/판정 보류. 동시 실행 부하로 인한 시간 초과 후 maxWorkers=2로 전체 재검증 |
 | Playwright | 52개 통과 | core-flow, accessibility, report, analysis-notice, recheck, demo-variants를 desktop/mobile Chrome에서 실행 |
 | 새 화면 접근성 | 통과 | 재검사·비교·검사 안내의 serious/critical 위반 검사 및 데스크톱·모바일 레이아웃 확인 |
