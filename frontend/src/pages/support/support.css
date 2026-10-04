@@ -1,0 +1,211 @@
+.audit-records {
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  box-shadow: none;
+  background: var(--color-surface);
+}
+.audit-records > h2 {
+  background: var(--workspace-blue);
+  padding: 22px 28px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.audit-record-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 28px;
+}
+.audit-record-thumbnail {
+  flex: 0 0 96px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  background: var(--workspace-sage);
+  border-radius: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+.audit-record-row:nth-child(even) .audit-record-thumbnail {
+  background: var(--workspace-blue);
+}
+.audit-record-thumbnail img {
+  display: block;
+  max-width: 100%;
+  height: 108px;
+  object-fit: contain;
+  border-radius: 3px;
+  box-shadow: 0 3px 10px #18313f14;
+}
+.audit-record-row > div:nth-child(2) > a {
+  font-size: 19px;
+  letter-spacing: -0.03em;
+}
+.audit-record-actions {
+  justify-content: flex-end;
+  max-width: 300px;
+}
+.guidelines-page nav {
+  background: var(--color-background);
+}
+.guidelines-page nav button {
+  border-color: transparent;
+  background: transparent;
+  border-radius: 12px;
+}
+.guidelines-page nav button[aria-pressed="true"] {
+  background: var(--color-navy);
+  color: var(--color-surface);
+}
+.guidelines-page nav button[aria-pressed="true"] > span {
+  color: inherit;
+}
+.guidelines-page nav button[aria-pressed="true"] > span:last-child {
+  opacity: 0.85;
+}
+.guideline-category-heading {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--workspace-blue);
+  padding: 28px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+.guideline-category-number {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 450;
+  line-height: 1;
+  letter-spacing: -0.07em;
+  color: #59727c;
+}
+.guideline-category-heading h2 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.guideline-entries {
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+.guideline-entries h3 button {
+  padding-block: 24px;
+}
+.guideline-entries h3 button > span:first-child {
+  color: var(--color-accent-ink);
+}
+.guideline-entries h3 button > span:nth-child(2) {
+  font-size: 18px;
+  font-weight: 550;
+}
+.guideline-entries h3 button[aria-expanded="true"] {
+  background: #f8f6f0;
+}
+.guideline-entries div[role="region"] {
+  padding-top: 12px;
+}
+.guideline-checkpoint {
+  padding: 20px;
+  background: var(--workspace-sage);
+  border-radius: 12px;
+}
+.guideline-source {
+  background: #e9dfc9;
+  padding: 28px;
+  border-radius: 20px;
+}
+.support-surface {
+  border: 0;
+  background: var(--color-surface);
+  padding: 40px;
+  box-shadow: none;
+}
+.support-surface > h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.support-surface > p {
+  max-width: 640px;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.support-surface dl {
+  max-width: 680px;
+  margin-top: 32px;
+}
+.support-surface dl > div {
+  padding: 24px;
+  background: var(--workspace-blue);
+  border-radius: 14px;
+}
+.support-surface dl > div:nth-child(2) {
+  background: var(--workspace-sage);
+}
+@media (max-width: 1199px) {
+  .audit-record-row {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .audit-record-actions {
+    margin-left: auto;
+  }
+}
+@media (max-width: 639px) {
+  .audit-records > h2 {
+    padding: 20px;
+  }
+  .audit-record-row {
+    padding: 24px 20px;
+    gap: 16px;
+  }
+  .audit-record-thumbnail {
+    flex-basis: 60px;
+    height: 88px;
+    padding: 8px;
+    align-self: start;
+  }
+  .audit-record-thumbnail img {
+    height: 72px;
+  }
+  .audit-record-row > div:nth-child(2) {
+    flex-basis: calc(100% - 76px);
+  }
+  .audit-record-row > div:nth-child(2) > a {
+    font-size: 17px;
+  }
+  .audit-record-row > div:nth-child(2) > p {
+    font-size: 12px;
+  }
+  .audit-record-actions {
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
+  }
+  .guideline-category-heading {
+    padding: 24px 20px;
+    gap: 16px;
+  }
+  .guideline-category-number {
+    font-size: 48px;
+  }
+  .guideline-category-heading h2 {
+    font-size: 23px;
+  }
+  .guideline-entries h3 button > span:nth-child(2) {
+    font-size: 17px;
+  }
+  .guideline-checkpoint {
+    padding: 16px;
+  }
+  .guideline-source,
+  .support-surface {
+    padding: 24px 20px;
+  }
+  .support-surface > h2 {
+    font-size: 25px;
+  }
+}

@@ -1,6 +1,8 @@
 import { ChevronDown, ExternalLink, FileText } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { PageHeading } from "@/components/common/PageHeading";
+import "./support.css";
 import { cn } from "@/lib/cn";
 import { guidelineCategories } from "./guidelines";
 
@@ -19,14 +21,12 @@ export function GuidelinesPage() {
   const category = guidelineCategories[categoryIndex]!;
 
   return (
-    <div className="mx-auto max-w-5xl pb-8">
-      <p className="text-xs font-semibold tracking-wide text-brand-600">검토 기준 · 15개 유형</p>
-      <h1 className="font-display mt-3 text-3xl font-bold tracking-tight">
-        금융 다크패턴 4개 범주
-      </h1>
-      <p className="mt-3 text-sm leading-6 text-muted">
-        범주를 고르고, 궁금한 유형을 펼쳐 확인하세요.
-      </p>
+    <div className="workspace-page guidelines-page mx-auto max-w-6xl pb-8">
+      <PageHeading
+        eyebrow="04 / REVIEW GUIDELINES · 15개 유형"
+        title="금융 다크패턴 4개 범주"
+        description="범주를 고르고, 궁금한 유형을 펼쳐 확인하세요."
+      />
 
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[210px_minmax(0,1fr)] lg:gap-8">
         <nav
@@ -84,13 +84,18 @@ export function GuidelinesPage() {
           aria-labelledby="guideline-category-title"
           className="min-w-0"
         >
-          <div className="mb-5">
-            <h2 id="guideline-category-title" className="text-xl font-bold">
-              {category.title}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted">{category.description}</p>
+          <div className="guideline-category-heading">
+            <span className="guideline-category-number" aria-hidden="true">
+              0{categoryIndex + 1}
+            </span>
+            <div>
+              <h2 id="guideline-category-title" className="text-xl font-bold">
+                {category.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">{category.description}</p>
+            </div>
           </div>
-          <div className="overflow-hidden rounded-card border border-border bg-surface">
+          <div className="guideline-entries overflow-hidden">
             {category.types.map((type) => {
               const expanded = openId === type.id;
               return (
@@ -133,7 +138,7 @@ export function GuidelinesPage() {
                     className="px-5 pb-6 sm:pl-14 sm:pr-6"
                   >
                     <p className="max-w-prose text-base leading-7 text-text">{type.description}</p>
-                    <div className="mt-5 border-l-2 border-brand-400 pl-4">
+                    <div className="guideline-checkpoint mt-5">
                       <h4 className="text-sm font-semibold text-brand-700">화면에서 확인할 점</h4>
                       <p className="mt-2 max-w-prose text-sm leading-7 text-text">
                         {type.checkpoint}
@@ -154,7 +159,7 @@ export function GuidelinesPage() {
         </section>
       </div>
 
-      <aside aria-label="공식 가이드라인 자료" className="mt-10 border-t border-border pt-6">
+      <aside aria-label="공식 가이드라인 자료" className="guideline-source mt-10">
         <div className="flex items-start gap-3">
           <FileText size={20} aria-hidden="true" className="mt-1 shrink-0 text-muted" />
           <div className="min-w-0">

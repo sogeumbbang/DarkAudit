@@ -38,7 +38,7 @@ describe("OverviewPage", () => {
     );
     expect(header).not.toHaveTextContent("DA-04");
     await userEvent.click(screen.getByText("판단 근거 및 가이드라인"));
-    expect(screen.getByText("규칙 코드")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "RULE · 검토 기준" })).toBeVisible();
     expect(screen.getByText("DA-04")).toBeVisible();
     await userEvent.click(
       within(screen.getByRole("group", { name: "점검 항목 필터" })).getByRole("button", {

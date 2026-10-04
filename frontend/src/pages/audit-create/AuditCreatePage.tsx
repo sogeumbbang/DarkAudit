@@ -8,6 +8,8 @@ import { z } from "zod";
 
 import { AnalysisProgress } from "@/pages/audit-create/AnalysisProgress";
 
+import { PageHeading } from "@/components/common/PageHeading";
+import "./audit-create.css";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { warmUpApi } from "@/api/client";
@@ -363,26 +365,25 @@ export function AuditCreatePage() {
     );
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="workspace-page audit-create-page mx-auto max-w-6xl">
       <Link
         className="inline-flex items-center gap-2 text-sm text-muted hover:text-text"
-        to="/app/overview"
+        to="/app/dashboard"
       >
         <ArrowLeft size={15} /> 대시보드
       </Link>
-      <div className="mt-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-brand-600">새 진단</p>
-        <h1 className="font-display mt-2 text-3xl font-bold">AI UX 진단 시작</h1>
-        <p className="mt-3 text-sm text-muted">
-          구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다.
-        </p>
-      </div>
+      <PageHeading
+        eyebrow="02 / START A REVIEW"
+        title="AI UX 진단 시작"
+        description="구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다."
+      />
       <form
-        className="mt-8 grid gap-6 lg:grid-cols-[0.68fr_1.32fr]"
+        className="audit-create-form grid lg:grid-cols-[0.68fr_1.32fr]"
         onSubmit={(event) => void handleSubmit(submit)(event)}
       >
-        <Card className="h-fit p-6">
-          <h2 className="font-bold">진단 정보</h2>
+        <Card className="audit-create-info h-fit p-6">
+          <p className="editorial-label">01 / PROJECT</p>
+          <h2 className="audit-form-title">진단 정보</h2>
           <label className="mt-6 block text-sm font-semibold" htmlFor="audit-name">
             진단 이름
           </label>
@@ -413,7 +414,9 @@ export function AuditCreatePage() {
           </div>
         </Card>
         <div>
-          <Card className="p-6">
+          <Card className="audit-create-source p-6">
+            <p className="editorial-label">02 / SCREEN INPUT</p>
+            <h2 className="audit-form-title">검토할 화면</h2>
             <SourcePicker value={source} onChange={setSource} />
             {source === "website" && (
               <WebsiteFields
@@ -478,14 +481,14 @@ export function AuditCreatePage() {
           </div>
         </div>
       </form>
-      <Card className="mt-10 border-border bg-surface p-5">
+      <Card className="audit-demo mt-10 p-5">
         <p className="flex items-center gap-2 font-bold text-brand-900">
           <Images size={19} /> 입력 유형별 데모 체험
         </p>
         <p className="mt-1 text-sm leading-6 text-muted">
           자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="audit-demo-options">
           {(
             [
               ["website", "URL", "환전 멤버십 · 6단계 여행 준비 흐름"],

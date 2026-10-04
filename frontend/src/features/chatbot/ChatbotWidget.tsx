@@ -79,7 +79,7 @@ function ChatbotPanel() {
     return (
       <button
         aria-label="다크패턴 챗봇"
-        className="fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-full bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
+        className="fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-control bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
         onClick={() => setOpen(true)}
       >
         <MessageCircle aria-hidden="true" size={19} />
@@ -91,7 +91,7 @@ function ChatbotPanel() {
   return (
     <section
       aria-label="다크패턴 챗봇"
-      className="fixed inset-x-4 bottom-4 z-30 flex max-h-[min(640px,calc(100vh-2rem))] flex-col rounded-card border border-border bg-surface shadow-2xl sm:left-auto sm:right-5 sm:w-[440px]"
+      className="workspace-chat fixed inset-x-4 bottom-4 z-30 flex max-h-[min(640px,calc(100vh-2rem))] flex-col rounded-card border border-border bg-surface shadow-card sm:left-auto sm:right-5 sm:w-[440px]"
     >
       <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
@@ -122,7 +122,7 @@ function ChatbotPanel() {
             <div className="mt-3 flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <button
-                  className="rounded-full border border-border px-3 py-1.5 text-xs text-text hover:bg-brand-50"
+                  className="rounded-control border border-border px-3 py-2 text-xs text-text hover:bg-brand-50"
                   key={suggestion}
                   onClick={() => void send(suggestion)}
                 >

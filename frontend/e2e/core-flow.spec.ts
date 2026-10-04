@@ -140,7 +140,7 @@ test("image marks expand inline explanations without moving or zooming the image
   const viewport = page.getByTestId("screen-preview-viewport");
   const related = viewport.getByRole("button", { name: "2번 순차적 가격 공개 관련 영역" });
   const list = page.getByRole("navigation", { name: "점검 항목" });
-  const items = list.locator("button[aria-expanded]");
+  const items = list.locator('button[id^="finding-trigger-"]');
   const panel = page.locator("#finding-detail-panel");
   await expect(related).toBeVisible();
   await expect(panel).toHaveCount(0);
@@ -177,7 +177,13 @@ test("image marks expand inline explanations without moving or zooming the image
   const preview = (await viewport.boundingBox())!;
   if (isMobile) expect(pane.y).toBeGreaterThan(preview.y + preview.height);
   else expect(pane.x).toBeGreaterThanOrEqual(preview.x + preview.width - 1);
-  if (!isMobile) await expect(items.last()).toBeInViewport();
+  if (!isMobile) {
+    // Expanded evidence scrolls independently of the inspected screen.
+    const scrollTop = await list.evaluate((element) => element.scrollTop);
+    await items.last().scrollIntoViewIfNeeded();
+    await expect(items.last()).toBeInViewport();
+    await list.evaluate((element, top) => element.scrollTo({ top }), scrollTop);
+  }
   await page.screenshot({ path: testInfo.outputPath("review-selected.png"), fullPage: true });
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(
@@ -231,8 +237,8 @@ test("review filters show status without severity and advance after resolving", 
 }) => {
   await page.goto("/app/overview?filter=needs-review&finding=finding-preselected-option");
   const list = page.getByRole("navigation", { name: "점검 항목" });
-  const items = list.locator("button[aria-expanded]");
-  const selected = list.locator('button[aria-expanded="true"]');
+  const items = list.locator('button[id^="finding-trigger-"]');
+  const selected = list.locator('button[id^="finding-trigger-"][aria-expanded="true"]');
   const filters = page.getByRole("group", { name: "점검 항목 필터" });
   await expect(page.getByText(/심각도/)).toHaveCount(0);
   await expect(selected.getByText("검토 중", { exact: true })).toBeVisible();

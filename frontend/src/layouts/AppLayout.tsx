@@ -1,10 +1,19 @@
-import { BookOpen, ClipboardList, LayoutDashboard, Plus, Menu, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  ClipboardList,
+  LayoutDashboard,
+  Plus,
+  Menu,
+  X,
+} from "lucide-react";
 import { Fragment, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
 import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
 import { cn } from "@/lib/cn";
+import "./workspace.css";
 
 const navigation = [
   { label: "대시보드", icon: LayoutDashboard, to: "/app/dashboard", nested: false },
@@ -27,8 +36,8 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-20 flex-col border-r border-border bg-surface p-5 text-text transition-[width]",
-        collapsed && !mobile ? "w-[88px]" : "w-[280px]",
+        "workspace-sidebar fixed inset-y-0 left-0 z-20 flex-col bg-surface p-5 text-text transition-[width]",
+        collapsed && !mobile ? "w-[88px]" : "w-[240px]",
         mobile ? "flex lg:hidden" : "hidden lg:flex",
       )}
     >
@@ -97,9 +106,15 @@ export function AppLayout() {
     <div
       className={cn(
         "workspace min-h-screen bg-background transition-[padding]",
-        isCollapsed ? "lg:pl-[88px]" : "lg:pl-[280px]",
+        isCollapsed ? "lg:pl-[88px]" : "lg:pl-[240px]",
       )}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-white focus:p-3"
+      >
+        본문으로 건너뛰기
+      </a>
       <Sidebar collapsed={isCollapsed} onCollapse={() => setIsCollapsed((value) => !value)} />
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
@@ -108,7 +123,7 @@ export function AppLayout() {
             className="absolute inset-0 bg-black/45"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className="relative h-full w-[280px] shadow-2xl">
+          <div className="relative h-full w-[240px] shadow-2xl">
             <Sidebar mobile onNavigate={() => setIsMenuOpen(false)} />
             <button
               aria-label="메뉴 닫기"
@@ -120,8 +135,8 @@ export function AppLayout() {
           </div>
         </div>
       )}
-      <main className="min-w-0 px-6 pb-28 pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pt-10 xl:px-12">
-        <div className="mb-5 flex items-center gap-3 lg:hidden">
+      <main id="main-content" className="workspace-main min-w-0">
+        <div className="workspace-mobile-header flex items-center gap-3 lg:hidden">
           <button
             aria-label="메뉴 열기"
             className="rounded-control border border-border p-2 text-text"
@@ -130,6 +145,14 @@ export function AppLayout() {
             <Menu size={20} />
           </button>
           <Brand dark />
+        </div>
+        <div className="workspace-topbar">
+          <span>
+            FINANCIAL UX <span aria-hidden="true">/</span> REVIEW WORKSPACE
+          </span>
+          <Link to="/landing">
+            DarkAudit 소개 <ArrowUpRight size={13} aria-hidden="true" />
+          </Link>
         </div>
         <Outlet />
       </main>

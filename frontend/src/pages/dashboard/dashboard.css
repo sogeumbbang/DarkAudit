@@ -1,0 +1,218 @@
+.dashboard-focus {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  align-items: stretch;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: 28px;
+  margin-bottom: 32px;
+}
+.dashboard-focus-copy {
+  align-self: center;
+  padding: 40px;
+}
+.dashboard-focus h2,
+.dashboard-empty h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.2vw, 46px);
+  line-height: 1.18;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  margin-block: 24px 28px;
+}
+.dashboard-focus-project {
+  font-weight: 600;
+  font-size: 17px;
+}
+.dashboard-focus-description {
+  color: var(--color-muted);
+  font-size: 14px;
+  margin: 8px 0 24px;
+}
+.dashboard-focus-meta {
+  color: var(--color-muted);
+  font-size: 12px;
+  margin-top: 24px;
+}
+.dashboard-focus-meta span {
+  margin-inline: 8px;
+}
+.dashboard-focus-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  background: var(--workspace-blue);
+  padding: 24px;
+}
+.dashboard-focus-preview > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--color-navy);
+}
+.dashboard-focus-preview > div > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dashboard-focus-preview img {
+  height: 340px;
+  max-width: 100%;
+  object-fit: contain;
+  margin-block: 24px;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px #18313f20;
+}
+.dashboard-focus-preview > p {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+.dashboard-focus-preview:focus-visible {
+  outline-offset: -4px;
+}
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--color-navy);
+  color: white;
+  border-radius: 20px;
+  padding: 26px 32px;
+}
+.dashboard-metric {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding-inline: 24px;
+  border-left: 1px solid #ffffff26;
+}
+.dashboard-metric:first-child {
+  border: 0;
+  padding-left: 0;
+}
+.dashboard-metric:last-child {
+  padding-right: 0;
+}
+.dashboard-metric dt,
+.dashboard-metric-value span {
+  font-size: 12px;
+  color: #d5dfdc;
+}
+.dashboard-metric-value {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-metric-description {
+  grid-column: 1/-1;
+  font-size: 11px;
+  color: #bbcaca;
+}
+.dashboard-records {
+  margin-top: 48px;
+}
+.dashboard-records > div:first-child {
+  padding-top: 0;
+  margin-bottom: 12px;
+  border: 0;
+}
+.dashboard-records h2 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+.dashboard-records > div[role="region"] {
+  border-radius: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.dashboard-records thead {
+  background: var(--workspace-sage);
+}
+.dashboard-records th {
+  font-size: 12px;
+}
+.dashboard-records td {
+  font-size: 13px;
+}
+.dashboard-records td:first-child {
+  font-size: 14px;
+}
+.dashboard-empty {
+  padding: 48px;
+  border-radius: 28px;
+  background: var(--workspace-blue);
+  margin-bottom: 32px;
+}
+.dashboard-empty > p {
+  color: var(--color-muted);
+}
+.dashboard-empty > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  font-size: 14px;
+  font-weight: 600;
+}
+@media (max-width: 1199px) {
+  .dashboard-focus-copy {
+    padding: 32px;
+  }
+  .dashboard-focus h2 {
+    font-size: 36px;
+  }
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 0;
+  }
+  .dashboard-metric:nth-child(3) {
+    border: 0;
+    padding-left: 0;
+  }
+  .dashboard-metric:nth-child(2) {
+    padding-right: 0;
+  }
+}
+@media (max-width: 639px) {
+  .dashboard-focus {
+    grid-template-columns: 1fr;
+    border-radius: 24px;
+  }
+  .dashboard-focus-copy {
+    padding: 28px 24px;
+  }
+  .dashboard-focus h2 {
+    font-size: 36px;
+  }
+  .dashboard-focus-preview img {
+    height: 300px;
+  }
+  .dashboard-metrics {
+    padding: 24px 20px;
+  }
+  .dashboard-metric {
+    padding-inline: 14px;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .dashboard-metric-value {
+    font-size: 32px;
+  }
+  .dashboard-metric-description {
+    font-size: 10px;
+  }
+  .dashboard-empty {
+    padding: 28px 24px;
+  }
+  .dashboard-records ul {
+    background: var(--color-surface);
+    border-radius: 20px;
+    padding-inline: 20px;
+  }
+}

@@ -1,7 +1,9 @@
-import { ArrowRight, ChartNoAxesColumn, Settings, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowRight, FileText, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { PageHeading } from "@/components/common/PageHeading";
+import "./support.css";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -13,10 +15,13 @@ export { GuidelinesPage } from "./GuidelinesPage";
 
 export function BenchmarkPage() {
   return (
-    <div className="mx-auto max-w-4xl">
-      <ChartNoAxesColumn className="text-brand-600" size={30} />
-      <h1 className="font-display mt-4 text-3xl font-bold">비교 분석</h1>
-      <Card className="mt-7 p-7">
+    <div className="workspace-page support-page mx-auto max-w-6xl">
+      <PageHeading
+        eyebrow="REVIEW / COMPARISON"
+        title="비교 분석"
+        description="수정의 과정을 살펴보고, 다음 검토의 근거를 남기세요."
+      />
+      <Card className="support-surface mt-7 p-7">
         <h2 className="font-bold">수정 전·후 결과 비교</h2>
         <p className="mt-3 text-sm leading-6 text-muted">
           동일 진단에서 화면을 다시 등록하면 회차별 탐지 항목의 해결·유지·재발 여부를 비교할 수
@@ -34,10 +39,13 @@ export function BenchmarkPage() {
 
 export function SettingsPage() {
   return (
-    <div className="mx-auto max-w-4xl">
-      <Settings className="text-brand-600" size={30} />
-      <h1 className="font-display mt-4 text-3xl font-bold">설정</h1>
-      <Card className="mt-7 p-7">
+    <div className="workspace-page support-page mx-auto max-w-6xl">
+      <PageHeading
+        eyebrow="WORKSPACE / SETTINGS"
+        title="설정"
+        description="진단 환경과 자료의 사용 범위를 확인하세요."
+      />
+      <Card className="support-surface mt-7 p-7">
         <h2 className="flex items-center gap-2 font-bold">
           <ShieldCheck size={20} /> 데모 운영 모드
         </h2>
@@ -65,7 +73,14 @@ function AuditRow({ audit }: { audit: AuditDto }) {
   const remove = useDeleteAudit();
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-5 px-6 py-6 sm:px-8">
+    <li className="audit-record-row">
+      <div className="audit-record-thumbnail" aria-hidden="true">
+        {audit.screens[0] ? (
+          <img src={audit.screens[0].imageUrl} alt="" loading="lazy" />
+        ) : (
+          <FileText size={28} strokeWidth={1.4} />
+        )}
+      </div>
       <div className="min-w-0 flex-1 basis-64">
         <div className="mb-3">
           <Badge
@@ -109,7 +124,7 @@ function AuditRow({ audit }: { audit: AuditDto }) {
           )}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="audit-record-actions flex flex-wrap items-center gap-3">
         <Link
           className="inline-flex items-center gap-2 rounded-control px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
           to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
@@ -118,7 +133,7 @@ function AuditRow({ audit }: { audit: AuditDto }) {
           상세 결과 <ArrowRight size={15} />
         </Link>
         {confirming ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-danger">화면과 탐지 결과가 함께 삭제됩니다.</span>
             <Button
               className="px-3 py-2 text-xs"
@@ -155,22 +170,21 @@ export function AuditManagementPage() {
   const { data, isPending, isError, refetch } = useDashboardSummary();
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold">진단 기록</h1>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            진행한 진단을 최신순으로 확인하고, 선택한 진단의 상세 결과를 열어보세요.
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/app/audits/new">
-            새 진단 시작 <ArrowRight size={16} />
-          </Link>
-        </Button>
-      </div>
+    <div className="workspace-page records-page mx-auto max-w-6xl">
+      <PageHeading
+        eyebrow="03 / REVIEW ARCHIVE"
+        title="진단 기록"
+        description="진행한 진단을 최신순으로 확인하고, 선택한 진단의 상세 결과를 열어보세요."
+        action={
+          <Button asChild>
+            <Link to="/app/audits/new">
+              새 진단 시작 <ArrowRight size={16} />
+            </Link>
+          </Button>
+        }
+      />
 
-      <Card className="mt-8 overflow-hidden">
+      <Card className="audit-records mt-8 overflow-hidden">
         <h2 className="border-b border-border px-6 py-5 text-sm font-bold sm:px-8">
           전체 진단{data ? ` · ${data.audits.length}건` : ""}
         </h2>

@@ -1,10 +1,13 @@
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageHeading } from "@/components/common/PageHeading";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { dashboardMetrics, productLabels, reviewStatus } from "./dashboard";
+
+import "./dashboard.css";
 
 export function DashboardPage() {
   const { data, isPending, isError, refetch } = useDashboardSummary();
@@ -14,26 +17,33 @@ export function DashboardPage() {
       new Date(a.createdAt ?? a.updatedAt).getTime(),
   );
   const metrics = dashboardMetrics(audits);
+  const focusAudit =
+    audits.find(
+      (audit) =>
+        audit.screens.length && audit.findings.some((finding) => finding.status !== "resolved"),
+    ) ?? audits.find((audit) => audit.screens.length);
+  const focusFinding = focusAudit?.findings.find((finding) => finding.status !== "resolved");
+  const focusScreen =
+    focusAudit?.screens.find(
+      (screen) => screen.id === (focusFinding?.bbox?.screenId ?? focusFinding?.screenIds[0]),
+    ) ?? focusAudit?.screens[0];
+  const focusLink = focusAudit
+    ? `/app/overview?audit=${encodeURIComponent(focusAudit.id)}${focusFinding ? `&finding=${encodeURIComponent(focusFinding.id)}` : ""}`
+    : "/app/audits/new";
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-7">
-        <div>
-          <p className="mb-4 font-mono text-xs tracking-[0.08em] text-muted">
-            DARKAUDIT / WORKSPACE
-          </p>
-          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            대시보드
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-muted">
-            여러 진단의 진행 상태와 검토 결과를 한곳에서 관리하세요.
-          </p>
-        </div>
-        <Button asChild variant="primary">
-          <Link to="/app/audits/new">
-            <Plus size={16} aria-hidden="true" /> 새 진단 시작
-          </Link>
-        </Button>
-      </div>
+    <div className="workspace-page dashboard-page mx-auto max-w-6xl">
+      <PageHeading
+        eyebrow="01 / YOUR WORKSPACE"
+        title="대시보드"
+        description="여러 진단의 진행 상태와 검토 결과를 한곳에서 관리하세요."
+        action={
+          <Button asChild>
+            <Link to="/app/audits/new">
+              <Plus size={16} aria-hidden="true" /> 새 진단 시작
+            </Link>
+          </Button>
+        }
+      />
       {isPending ? (
         <p role="status" className="mt-8">
           진단 현황을 불러오는 중입니다.
@@ -47,30 +57,91 @@ export function DashboardPage() {
         </Card>
       ) : (
         <>
-          <dl
-            aria-label="진단 현황"
-            className="grid grid-cols-2 border-b border-border bg-surface lg:grid-cols-4"
-          >
+          {focusAudit && focusScreen ? (
+            <section className="dashboard-focus" aria-labelledby="continue-review-title">
+              <div className="dashboard-focus-copy">
+                <p className="editorial-label">
+                  01 / {focusFinding ? "CONTINUE REVIEWING" : "LATEST ANALYSIS"}
+                </p>
+                <h2 id="continue-review-title">
+                  {focusFinding ? (
+                    <>
+                      좋은 경험을 위한,
+                      <br />
+                      다음 검토.
+                    </>
+                  ) : (
+                    <>
+                      검토의 기록을,
+                      <br />
+                      한눈에.
+                    </>
+                  )}
+                </h2>
+                <p className="dashboard-focus-project">{focusAudit.name}</p>
+                <p className="dashboard-focus-description">
+                  {focusFinding
+                    ? focusFinding.title
+                    : "화면별 분석 결과와 검토 기록을 다시 살펴보세요."}
+                </p>
+                <Button asChild>
+                  <Link to={focusLink}>
+                    {focusFinding ? "이어서 검토하기" : "분석 결과 보기"}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                </Button>
+                <p className="dashboard-focus-meta">
+                  화면 {focusAudit.screens.length}개 <span>·</span> 검토 필요{" "}
+                  {focusAudit.findings.filter((finding) => finding.status !== "resolved").length}건
+                </p>
+              </div>
+              <Link
+                to={focusLink}
+                className="dashboard-focus-preview"
+                aria-label={`${focusAudit.name} 화면 검토 열기`}
+              >
+                <div>
+                  <span>SCREEN {String(focusScreen.order).padStart(2, "0")}</span>
+                  <span>
+                    {focusScreen.flowStep}
+                    <ArrowUpRight size={14} aria-hidden="true" />
+                  </span>
+                </div>
+                <img src={focusScreen.imageUrl} alt={`${focusScreen.flowStep} 검토할 화면`} />
+                <p>{focusFinding ? "화면 속 근거부터 살펴보세요." : "분석한 화면과 검토 기록"}</p>
+              </Link>
+            </section>
+          ) : !audits.length ? (
+            <section className="dashboard-empty" aria-labelledby="first-review-title">
+              <p className="editorial-label">YOUR FIRST REVIEW</p>
+              <h2 id="first-review-title">
+                더 나은 선택을 만드는
+                <br />첫 화면을 등록하세요.
+              </h2>
+              <p>URL, Figma, APK 또는 스크린샷으로 시작할 수 있습니다.</p>
+              <Link to="/app/audits/new">
+                첫 진단 시작하기 <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </section>
+          ) : null}
+          <dl aria-label="진단 현황" className="dashboard-metrics">
             {[
               ["전체 진단", metrics.total, "등록된 진단 수"],
               ["검토 필요", metrics.needsReview, "미해결 후보 또는 추가 확인"],
               ["검토 완료", metrics.reviewed, "분석 완료 · 미해결 후보 없음"],
               ["위험 후보 수", metrics.candidates, "해결된 항목을 포함한 전체 후보"],
             ].map(([label, value, description]) => (
-              <div
-                key={label}
-                className="border-r border-border p-5 last:border-r-0 sm:p-6 [&:nth-child(2)]:border-r-0 [&:nth-child(-n+2)]:border-b lg:[&:nth-child(2)]:border-r lg:[&:nth-child(-n+2)]:border-b-0"
-              >
+              <div key={label} className="dashboard-metric">
                 <dt className="text-sm font-medium text-muted">{label}</dt>
-                <dd className="mt-5 text-4xl font-medium tracking-tight tabular-nums text-brand-700 sm:text-5xl">
+                <dd className="dashboard-metric-value">
                   {value}
                   <span className="ml-1 text-sm font-normal text-muted">건</span>
                 </dd>
-                <dd className="mt-3 break-keep text-sm leading-6 text-muted">{description}</dd>
+                <dd className="dashboard-metric-description">{description}</dd>
               </div>
             ))}
           </dl>
-          <Card className="mt-10 overflow-hidden border-x-0 border-t-0">
+          <section className="dashboard-records mt-12">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-5">
               <h2 className="font-semibold">진단 목록</h2>
               <Link
@@ -183,7 +254,7 @@ export function DashboardPage() {
                 </div>
               </>
             )}
-          </Card>
+          </section>
         </>
       )}
     </div>

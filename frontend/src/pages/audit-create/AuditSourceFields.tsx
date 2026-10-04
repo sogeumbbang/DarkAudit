@@ -33,11 +33,7 @@ export function SourcePicker({
   onChange: (value: AuditSource) => void;
 }) {
   return (
-    <div
-      className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
-      role="tablist"
-      aria-label="진단 입력 소스"
-    >
+    <div className="source-picker" role="tablist" aria-label="진단 입력 소스">
       {sources.map(({ id, label, description, icon: Icon }) => (
         <button
           className={cn(
@@ -85,9 +81,7 @@ export function WebsiteFields({
       <h2 className="font-bold" id="website-source-title">
         웹사이트 자동 진단
       </h2>
-      <p className="mt-1 text-xs text-muted">
-        공개 URL을 Playwright로 열어 선택한 화면 크기에서 자동 캡처합니다.
-      </p>
+      <p className="mt-1 text-xs text-muted">공개 URL의 화면을 선택한 크기로 자동 캡처합니다.</p>
       <FieldLabel htmlFor="target-url" className="mt-5">
         검사할 웹사이트 주소
       </FieldLabel>
@@ -130,7 +124,7 @@ export function WebsiteFields({
         <ModeButton
           active={scanMode === "smart"}
           title="스마트 탐색"
-          description="Computer Use로 주요 선택 흐름 탐색"
+          description="주요 선택 흐름을 따라 화면 탐색"
           smart
           onClick={() => setScanMode("smart")}
         />

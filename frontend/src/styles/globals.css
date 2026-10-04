@@ -21,34 +21,46 @@
   --font-display: "Wanted Sans Variable", "SUIT Variable", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  --color-brand-50: #eef2f8;
-  --color-brand-100: #dce4f0;
-  --color-brand-300: #a3b4ce;
-  --color-brand-400: #7088ad;
-  --color-brand-500: #36527d;
-  --color-brand-600: #233b63;
-  --color-brand-700: #1e3356;
-  --color-brand-800: #192b49;
-  --color-brand-900: #15233c;
-  --color-brand-950: #101b2e;
+  /* Surfaces and brand anchors. Ink variants keep small status text readable. */
+  --color-background: #f5f3ed;
+  --color-background-secondary: #ece8de;
+  --color-surface: #fffdfc;
+  --color-text: #1e2c35;
+  --color-muted: #5e6a6e;
+  --color-text-muted: #8b908b;
+  --color-border: #ddd7cb;
+  --color-navy: #213542;
+  --color-navy-hover: #182a34;
+  --color-sage: #8f9b8f;
+  --color-gold: #b79a63;
+  --color-risk: #c9744f;
+  --color-safe: #6e8773;
 
-  --color-accent: #c4a35d;
-  --color-accent-hover: #b39350;
-  --color-accent-soft: #f7f2e7;
-  --color-accent-ink: #80652e;
+  --color-brand-50: #ece8de;
+  --color-brand-100: #e2e2d9;
+  --color-brand-300: #a8b1a7;
+  --color-brand-400: #768778;
+  --color-brand-500: #314a59;
+  --color-brand-600: #213542;
+  --color-brand-700: #1e303d;
+  --color-brand-800: #182a34;
+  --color-brand-900: #172832;
+  --color-brand-950: #12212a;
 
-  --color-background: #faf9f6;
-  --color-surface: #ffffff;
-  --color-border: #dce1e8;
-  --color-text: #202b3b;
-  --color-muted: #606c7d;
-  --color-danger: #b4232c;
-  --color-warning: #805500;
-  --color-success: #146c50;
+  --color-accent: #b79a63;
+  --color-accent-hover: #a88b55;
+  --color-accent-soft: #f2e9d6;
+  --color-accent-ink: #7d602e;
+  --color-danger: #a14b29;
+  --color-warning: #7d602e;
+  --color-success: #49644e;
 
-  --radius-card: 0.375rem;
-  --radius-control: 0.25rem;
-  --shadow-card: none;
+  --radius-card: 1.5rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(30 44 53 / 2%), 0 12px 36px rgb(30 44 53 / 4%);
+  --shadow-product: 0 4px 8px rgb(30 44 53 / 3%), 0 24px 64px rgb(30 44 53 / 8%);
+  --spacing-section: clamp(88px, 10vw, 160px);
+  --spacing-feature: clamp(96px, 12vw, 180px);
 }
 
 @layer base {
@@ -90,19 +102,19 @@
 
 @layer utilities {
   .page-container {
-    width: min(100% - 3rem, 1280px);
+    width: min(100% - 3rem, 1400px);
     margin-inline: auto;
   }
 
   @media (min-width: 640px) {
     .page-container {
-      width: min(100% - 5rem, 1280px);
+      width: min(100% - 5rem, 1400px);
     }
   }
 
   @media (min-width: 1024px) {
     .page-container {
-      width: min(100% - 8rem, 1280px);
+      width: min(100% - 6rem, 1400px);
     }
   }
 
@@ -169,8 +181,7 @@
   }
 }
 
-/* Page titles share one rhythm across the workspace. */
-.workspace h1 {
-  letter-spacing: -0.025em;
-  line-height: 1.25;
+button:not(:disabled),
+summary {
+  cursor: pointer;
 }

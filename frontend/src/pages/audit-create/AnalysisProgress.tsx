@@ -73,15 +73,14 @@ export function AnalysisProgress({
   }[source];
 
   return (
-    <div className="mx-auto max-w-3xl py-10">
-      <Card className="overflow-hidden p-8 text-center sm:p-12">
+    <div className="analysis-progress-page mx-auto max-w-3xl py-10">
+      <Card className="analysis-progress-surface overflow-hidden text-center">
         {running ? (
           <div
             aria-hidden="true"
-            className="relative mx-auto flex size-24 items-center justify-center overflow-hidden rounded-3xl border border-brand-100 bg-gradient-to-b from-brand-50 to-brand-100"
+            className="analysis-progress-emblem relative mx-auto flex size-24 items-center justify-center overflow-hidden"
           >
             <ScanLine size={44} strokeWidth={1.3} className="text-brand-600" />
-            <div className="analysis-scan-line absolute inset-x-3 top-3 h-px bg-brand-500 shadow-[0_0_12px_2px_var(--color-brand-400)]" />
           </div>
         ) : (
           <span
@@ -162,7 +161,7 @@ export function AnalysisProgress({
                 </span>
               </span>
             </div>
-            <div className="mx-auto mt-7 min-h-32 max-w-lg rounded-card border border-brand-100 bg-brand-50 p-5 text-left">
+            <div className="analysis-progress-tip mx-auto mt-7 min-h-32 max-w-lg p-5 text-left">
               <div key={tipIndex} className="analysis-tip-enter">
                 <p className="text-xs font-semibold text-brand-600">진단 안내</p>
                 <p className="mt-2 text-sm font-bold text-brand-900">{tip.title}</p>

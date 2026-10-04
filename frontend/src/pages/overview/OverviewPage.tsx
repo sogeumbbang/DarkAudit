@@ -22,6 +22,7 @@ import { orderFindings } from "@/entities/audit/orderFindings";
 import { isFindingOnScreen } from "@/entities/audit/findingScreens";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { ScreenPreview } from "./ScreenPreview";
+import { guidelineCategories } from "@/pages/support/guidelines";
 import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
@@ -107,8 +108,8 @@ function FlowOverview({
               <span className="font-bold tabular-nums">{index + 1}</span>
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 tabular-nums",
-                  screen.findingCount ? "bg-danger text-white" : "text-muted",
+                  "rounded px-1.5 py-0.5 tabular-nums",
+                  screen.findingCount ? "bg-accent-soft text-accent-ink" : "text-muted",
                 )}
               >
                 {screen.findingCount}건
@@ -139,6 +140,9 @@ function FindingDetails({
 }) {
   const findingStatus = useFindingStatus();
   const [showMetadata, setShowMetadata] = useState(false);
+  const category = guidelineCategories.find((category) =>
+    category.types.some((rule) => rule.id === finding.ruleId),
+  );
   return (
     <div
       id="finding-detail-panel"
@@ -149,34 +153,71 @@ function FindingDetails({
       <h4 id="finding-detail-heading" tabIndex={-1} className="sr-only">
         탐지 항목 상세
       </h4>
-      <div className="px-3 pb-3">
-        <p className="mt-2 text-sm leading-6 text-muted">{finding.description}</p>
-
-        <div className="mt-3 border-l-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm leading-6 text-brand-950">
-          <h4 className="font-bold">개선 권고안</h4>
-          <p className="mt-1">{finding.recommendation}</p>
+      <div className="finding-editorial-body">
+        <div className="finding-signals">
+          <span className={finding.severity === "HIGH" ? "text-accent-ink" : ""}>
+            위험도 {{ HIGH: "높음", REVIEW: "검토 필요", LOW: "낮음" }[finding.severity]}
+          </span>
+          <span>신뢰도 {Math.round(finding.confidence * 100)}%</span>
+          {category && <span>{category.title}</span>}
         </div>
-        <details className="mt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-muted">
-            판단 근거 및 가이드라인
-          </summary>
-          <dl className="mt-3 divide-y divide-border border-y border-border text-sm">
-            <div className="grid grid-cols-[80px_1fr] gap-3 py-2">
-              <dt className="text-muted">규칙 코드</dt>
-              <dd>{finding.ruleId}</dd>
-            </div>
-            <div className="grid grid-cols-[80px_1fr] gap-3 py-2">
-              <dt className="text-muted">대상 요소</dt>
-              <dd>{finding.element}</dd>
-            </div>
-          </dl>
-          <div className="mt-3 flex gap-3 rounded-card border border-border p-3">
-            <FileText className="shrink-0 text-brand-600" size={18} />
-            <div>
-              <p className="text-sm font-semibold">금융위원회 금융소비자 보호 가이드라인</p>
-              <p className="mt-2 text-xs leading-6 text-muted">{finding.guideline}</p>
-            </div>
-          </div>
+        <div className="finding-context">
+          <p className="editorial-label">WHERE · 대상 요소</p>
+          <p>{finding.element}</p>
+          <a href="#finding-screen-preview">
+            화면에서 위치 확인 <ArrowRight size={13} aria-hidden="true" />
+          </a>
+        </div>
+        <div className="finding-observation">
+          <h4 className="editorial-label">OBSERVATION · 관찰 내용</h4>
+          <p>
+            {finding.observation ||
+              "별도의 관찰 기록이 없습니다. 화면과 판단 근거를 함께 확인하세요."}
+          </p>
+          {(finding.defaultState || finding.costImpact) && (
+            <dl className="finding-context-facts">
+              {finding.defaultState && (
+                <div>
+                  <dt>초기 상태</dt>
+                  <dd>{finding.defaultState}</dd>
+                </div>
+              )}
+              {finding.costImpact && (
+                <div>
+                  <dt>비용 영향</dt>
+                  <dd>{finding.costImpact}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </div>
+        <div className="finding-rule">
+          <h4 className="editorial-label">RULE · 검토 기준</h4>
+          <Link to="/app/guidelines">
+            {finding.ruleId} <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+          <p>{finding.guideline}</p>
+        </div>
+        <div className="finding-reason">
+          <h4 className="editorial-label">WHY · 검토가 필요한 이유</h4>
+          <p>{finding.description}</p>
+        </div>
+        <div className="finding-fix">
+          <p className="editorial-label">FIX · 개선 방향</p>
+          <h4>개선 권고안</h4>
+          <p>{finding.recommendation}</p>
+        </div>
+        <details className="finding-reference">
+          <summary className="cursor-pointer text-xs text-muted">판단 근거 및 가이드라인</summary>
+          <p className="mt-3 text-xs text-muted">
+            금융위원회 금융소비자 보호 가이드라인 · {finding.ruleId}
+          </p>
+          <Link
+            to="/app/guidelines"
+            className="mt-2 inline-block text-sm underline underline-offset-4"
+          >
+            검토 기준 전체 보기
+          </Link>
         </details>
         <details className="mt-3">
           <summary className="cursor-pointer text-sm font-semibold text-muted">
@@ -186,6 +227,7 @@ function FindingDetails({
         </details>
         <button
           aria-label="탐지 메타데이터"
+          aria-expanded={showMetadata}
           className="mt-3 flex items-center gap-1 text-xs text-muted"
           onClick={() => setShowMetadata((value) => !value)}
         >
@@ -193,8 +235,9 @@ function FindingDetails({
           분석 정보
         </button>
         {showMetadata && (
-          <div className="mt-3 rounded-card border border-border p-4 text-xs text-muted">
-            신뢰도 {Math.round(finding.confidence * 100)}%
+          <div className="mt-3 border-t border-border py-3 text-xs text-muted">
+            <p>분석 유형 · {finding.riskType}</p>
+            <p className="mt-2">연결된 화면 · {finding.screenIds.length}개</p>
           </div>
         )}
         <button
@@ -327,9 +370,12 @@ function FindingsList({
                     {number}
                   </span>
                   <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3 className="min-w-0 flex-1 text-sm font-semibold leading-7">
-                      {finding.title}
-                    </h3>
+                    <div className="min-w-0 flex-1">
+                      {selected && <p className="finding-what-label">WHAT · 발견한 문제</p>}
+                      <h3 className="min-w-0 flex-1 text-sm font-semibold leading-7">
+                        {finding.title}
+                      </h3>
+                    </div>
                     <span className="shrink-0">
                       <FindingStatusBadge finding={finding} />
                     </span>
@@ -605,7 +651,7 @@ export function OverviewPage() {
   }
 
   return (
-    <div className="overview-page mx-auto max-w-[1800px]">
+    <div className="overview-page workspace-page mx-auto max-w-[1800px]">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link
@@ -618,7 +664,7 @@ export function OverviewPage() {
           <h1 className="sr-only">진단 결과 상세</h1>
           <div className="flex items-center gap-3">
             <Badge variant={auditStatus.variant}>{auditStatus.label}</Badge>
-            <h2 className="font-display text-xl font-bold">{audit.name}</h2>
+            <h2 className="review-audit-title font-display">{audit.name}</h2>
           </div>
         </div>
         <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
@@ -636,7 +682,7 @@ export function OverviewPage() {
       )}
       {audit.analysisSummary?.supportedRules && (
         <section aria-label="분석 범위">
-          <details className="rounded-control border border-border bg-white px-4 py-2">
+          <details className="analysis-scope py-2">
             <summary className="cursor-pointer text-xs font-semibold text-muted">
               {audit.analysisSummary.complete
                 ? "분석 범위 확인"
