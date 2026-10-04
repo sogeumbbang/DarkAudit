@@ -74,7 +74,7 @@ def demo_inputs() -> dict:
         APK_PATH.is_file() and os.getenv("BROWSERSTACK_USERNAME") and os.getenv("BROWSERSTACK_ACCESS_KEY")
     )
     return {
-        "cases": json.loads((CASES_DIR / "manifest.json").read_text())["cases"] if (CASES_DIR / "manifest.json").is_file() else [],
+        "cases": json.loads((CASES_DIR / "manifest.json").read_text(encoding="utf-8"))["cases"] if (CASES_DIR / "manifest.json").is_file() else [],
         "website": {
             "url": str(router.url_path_for("demo_web", filename="index.html")) + "?step=1",
             "available": True,

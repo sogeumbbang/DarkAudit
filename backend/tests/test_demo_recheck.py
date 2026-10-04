@@ -15,7 +15,7 @@ class DemoRecheckTest(IsolatedApiTestCase):
         })
         self.assertEqual(created.status_code, 201, created.text)
         audit_id = created.json()["id"]
-        case = json.loads((CASES_DIR / "manifest.json").read_text())["cases"][0]
+        case = json.loads((CASES_DIR / "manifest.json").read_text(encoding="utf-8"))["cases"][0]
         for version, variant in enumerate(case["variants"], 1):
             uploaded = self.client.post(f"/api/v1/audits/{audit_id}/screens", files=[
                 ("files", (screen["fileName"], (CASES_DIR / "pet" / variant["id"] / screen["fileName"]).read_bytes(), "image/png"))

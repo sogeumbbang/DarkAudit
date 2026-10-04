@@ -83,7 +83,7 @@ def render_cases(directory: Path, names: list[str]):
         ],
     }
     (directory / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     return cases
 
@@ -149,7 +149,7 @@ def main():
             else:
                 predictions[identifier] = record
                 (args.output / f"{identifier}.json").write_text(
-                    json.dumps(record, ensure_ascii=False, indent=2) + "\n"
+                    json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
                 )
     report = Evaluator().evaluate_dataset([c for c, _ in cases], predictions)
     report.update(
@@ -162,7 +162,7 @@ def main():
         },
     )
     (args.output / "report.json").write_text(
-        json.dumps(report, ensure_ascii=False, indent=2) + "\n"
+        json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print(
         json.dumps(
