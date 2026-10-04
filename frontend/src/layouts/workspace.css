@@ -148,6 +148,37 @@
   font-weight: 600;
   letter-spacing: -0.04em;
 }
+/* Keep the review canvas theme local to the overview route. */
+.workspace--overview {
+  --color-background: #f3f6f8;
+  --color-background-secondary: #e9f0f4;
+  --color-surface: #ffffff;
+  --color-text: #203b49;
+  --color-muted: #586e7a;
+  --color-border: #e0e7eb;
+  --color-navy: #173f50;
+  --color-brand-50: #eaf1f5;
+  --color-brand-100: #dce8ee;
+  --color-brand-500: #39667b;
+  --color-brand-600: #173f50;
+  --color-brand-700: #123747;
+  --color-accent-soft: #fbf0e7;
+  --color-accent-ink: #93562f;
+  --workspace-sage: #eaf1f5;
+}
+.workspace--overview .workspace-main {
+  padding: 22px 32px 72px;
+}
+.workspace--overview .workspace-topbar {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+}
+.workspace--overview .workspace-sidebar nav {
+  margin-top: 24px;
+}
+.workspace--overview .workspace-sidebar {
+  border-color: #e0e7eb;
+}
 @media (max-width: 1199px) {
   .workspace-main {
     padding-inline: 32px;
@@ -165,6 +196,13 @@
   }
 }
 @media (max-width: 639px) {
+  .workspace--overview .workspace-main {
+    padding: 18px 16px 90px;
+  }
+  .workspace--overview .workspace-mobile-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
   .workspace-main {
     padding: 20px 20px 100px;
   }

@@ -23,6 +23,8 @@ from sqlalchemy.orm import Session
 from .models import AuditRun, Finding, FindingStatus, RunStatus, Severity
 
 SEVERITY_ORDER = {Severity.LOW: 0, Severity.REVIEW: 1, Severity.HIGH: 2}
+SCREEN_LOCAL_RULES = {"DA-03", "DA-04", "DA-07", "DA-12"}
+LONG_FLOW_WARNING = "long_flow_comparison_limited"
 
 
 @dataclass
@@ -100,13 +102,13 @@ def _previously_resolved(session: Session, audit_id: int, before_version: int) -
     return out
 
 
-def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
-    """A missing detection is only a resolution after comparable, complete inspections."""
+def _scope_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
+    """Collection failures and scope changes still block every rule."""
     limitations = []
     for run in (previous, current):
         summary = run.analysis_summary or {}
-        if run.status != RunStatus.DONE or summary.get("complete") is not True or summary.get("warnings"):
-            limitations.append(f"v{run.version}: 검사 미완료 또는 근거 부족으로 해결 여부를 확인할 수 없습니다.")
+        if run.status != RunStatus.DONE:
+            limitations.append(f"v{run.version}: 분석이 완료되지 않았습니다.")
         if not run.screens or summary.get("analyzedScreenCount") != len(run.screens):
             limitations.append(f"v{run.version}: 전체 화면의 분석 완료를 확인할 수 없습니다.")
 
@@ -125,6 +127,60 @@ def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
     ):
         limitations.append("두 회차의 지원 규칙이 달라 해결 여부를 확인할 수 없습니다.")
     return list(dict.fromkeys(limitations))
+
+
+def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
+    limitations = _scope_limitations(previous, current)
+    for run in (previous, current):
+        summary = run.analysis_summary or {}
+        if summary.get("complete") is not True or summary.get("warnings"):
+            if set(summary.get("warnings", [])) == {LONG_FLOW_WARNING}:
+                limitations.append(
+                    f"v{run.version}: 분할 검사로 화면 간 가격 비교(DA-15)가 제한됩니다. "
+                    "화면별 규칙은 해당 규칙의 전체 화면 검사 근거가 있을 때만 해결로 구분합니다."
+                )
+            else:
+                limitations.append(f"v{run.version}: 검사 미완료 또는 근거 부족으로 해결 여부를 확인할 수 없습니다.")
+    return list(dict.fromkeys(limitations))
+
+
+def _verified_local_rule(run: AuditRun, rule_id: str) -> bool:
+    """Only the long-flow limitation can be isolated from screen-local checks.
+
+    Require explicit assessment coverage for every stored screen, including
+    overlapping batches. A clean batch must never mask missing evidence in another.
+    Price comparisons remain conservative because they span distant screens.
+    """
+    if rule_id not in SCREEN_LOCAL_RULES:
+        return False
+    summary = run.analysis_summary or {}
+    warnings = set(summary.get("warnings", []))
+    if warnings - {LONG_FLOW_WARNING}:
+        return False
+    if summary.get("complete") is not True and warnings != {LONG_FLOW_WARNING}:
+        return False
+    if rule_id not in summary.get("supportedRules", []):
+        return False
+    expected = {f"screen-{screen.screen_index:02d}" for screen in run.screens}
+    covered = set()
+    for batch in summary.get("batches", []):
+        screens = set(batch.get("screens", []))
+        telemetry = batch.get("telemetry", {})
+        if not screens or not screens <= expected or telemetry.get("warnings"):
+            return False
+        provider = str(telemetry.get("provider") or "")
+        if not provider or "fake" in provider.lower():
+            return False
+        assessments = [a for a in telemetry.get("rule_assessments", []) if a.get("rule_id") == rule_id]
+        if len(assessments) != 1:
+            return False
+        assessment = assessments[0]
+        if assessment.get("status") not in {"detected", "not_detected"}:
+            return False
+        if set(assessment.get("screen_ids", [])) != screens:
+            return False
+        covered.update(screens)
+    return bool(expected) and covered == expected
 
 
 def compare(
@@ -152,6 +208,14 @@ def compare(
 
     report = RegressionReport(audit_id, from_version, to_version)
     report.limitations = _comparison_limitations(prev_run, curr_run)
+    same_scope = not _scope_limitations(prev_run, curr_run)
+
+    def can_verify(rule_id: str) -> bool:
+        return not report.limitations or (
+            same_scope
+            and _verified_local_rule(prev_run, rule_id)
+            and _verified_local_rule(curr_run, rule_id)
+        )
 
     for fp, pf in prev.items():
         if fp in curr:
@@ -159,7 +223,7 @@ def compare(
             ch = Change(fp, pf.rule_id, pf.severity, cf.severity)
             (report.improved if ch.improved else report.persisted).append(ch)
         else:
-            target = report.pending if report.limitations else report.resolved
+            target = report.resolved if can_verify(pf.rule_id) else report.pending
             target.append(Change(fp, pf.rule_id, before=pf.severity))
 
     for fp, cf in curr.items():
@@ -168,19 +232,19 @@ def compare(
         ch = Change(fp, cf.rule_id, after=cf.severity)
         if fp in ever_resolved:
             report.regressed.append(ch)
-            if update_statuses and not report.limitations:
+            if update_statuses and can_verify(cf.rule_id):
                 cf.status = FindingStatus.REGRESSED
         else:
             report.new.append(ch)
 
     # 이전 회차 Finding 의 상태를 갱신한다.
     # 다음 비교에서 재발 여부를 판단하려면 이 기록이 남아 있어야 한다.
-    if update_statuses and not report.limitations:
+    if update_statuses:
         resolved_fps = {c.fingerprint for c in report.resolved}
         for fp, pf in prev.items():
             if fp in resolved_fps:
                 pf.status = FindingStatus.RESOLVED
-            elif pf.status != FindingStatus.REVIEWING:
+            elif can_verify(pf.rule_id) and pf.status != FindingStatus.REVIEWING:
                 pf.status = FindingStatus.OPEN
 
         session.flush()

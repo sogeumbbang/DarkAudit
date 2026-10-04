@@ -88,7 +88,10 @@ def startup() -> None:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    result = {"status": "ok"}
+    if commit := os.getenv("RENDER_GIT_COMMIT"):
+        result["commit"] = commit
+    return result
 
 
 @app.post("/api/v1/audits", response_model=AuditDto, status_code=status.HTTP_201_CREATED)

@@ -195,15 +195,20 @@ class PlaywrightSessionFactory:
         headless: bool = True,
         navigation_timeout_ms: int = 30_000,
         settle_time_ms: int = 750,
+        run_id: str | None = None,
     ) -> None:
         self.output_root = Path(output_root)
         self.url_policy = url_policy or UrlSafetyPolicy()
         self.headless = headless
         self.navigation_timeout_ms = navigation_timeout_ms
         self.settle_time_ms = settle_time_ms
+        self.run_id = run_id
 
     def __call__(self, audit_id: str, profile: DeviceProfile) -> "PlaywrightBrowserSession":
-        target = self.output_root / _safe_segment(audit_id) / _safe_segment(profile.name)
+        target = self.output_root / _safe_segment(audit_id)
+        if self.run_id is not None:
+            target = target / _safe_segment(self.run_id)
+        target = target / _safe_segment(profile.name)
         return PlaywrightBrowserSession(
             profile,
             target,

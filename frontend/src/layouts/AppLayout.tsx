@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { Fragment, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
 import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
@@ -99,6 +99,7 @@ function Sidebar({
 }
 
 export function AppLayout() {
+  const { pathname } = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -106,6 +107,7 @@ export function AppLayout() {
     <div
       className={cn(
         "workspace min-h-screen bg-background transition-[padding]",
+        pathname === "/app/overview" && "workspace--overview",
         isCollapsed ? "lg:pl-[88px]" : "lg:pl-[240px]",
       )}
     >

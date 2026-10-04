@@ -74,6 +74,9 @@ function Comparison({ audit }: { audit: AuditDto }) {
               v{result.fromVersion} → v{result.toVersion} 비교
             </h2>
             <p className="mt-2 text-sm text-muted">최신 완료 두 회차 · {audit.name}</p>
+            <p className="mt-3 font-semibold">
+              탐지 항목 {previous.findingCount}건 → {current.findingCount}건
+            </p>
             <p className="mt-4 text-xl font-bold">
               해결률 ·{" "}
               {result.comparisonStatus === "incomplete" || result.resolvedRatio === null
@@ -85,7 +88,17 @@ function Comparison({ audit }: { audit: AuditDto }) {
             </p>
             {result.comparisonStatus === "incomplete" && (
               <div role="status" className="mt-4 rounded-control bg-brand-50 p-4">
-                <h3 className="font-semibold">해결 판정이 보류되었습니다</h3>
+                <h3 className="font-semibold">
+                  {result.resolved.length > 0
+                    ? "일부 항목의 해결 판정이 보류되었습니다"
+                    : "해결 판정이 보류되었습니다"}
+                </h3>
+                {result.resolved.length > 0 && (
+                  <p className="mt-2 text-sm">
+                    검사 근거가 확인된 {result.resolved.length}건은 해결로 구분했습니다. 전체
+                    해결률은 산출하지 않습니다.
+                  </p>
+                )}
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
                   {result.limitations.map((reason) => (
                     <li key={reason}>{reason}</li>

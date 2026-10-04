@@ -80,6 +80,7 @@ export function ScreenPreview({
     <div id="finding-screen-preview" className="map-preview" ref={previewRef} tabIndex={-1}>
       <div className="map-preview-heading">
         <div>
+          <p className="overview-kicker">SCREEN PREVIEW</p>
           <h2 className="flex flex-wrap items-center gap-x-2 text-sm font-semibold">
             <span>
               {screen.order}. {screen.flowStep}

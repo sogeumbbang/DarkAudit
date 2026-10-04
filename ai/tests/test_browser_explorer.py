@@ -90,6 +90,35 @@ class HybridWebExplorerTest(unittest.TestCase):
             self.assertEqual(factory.session.executed[0].type, BrowserActionType.CLICK)
             self.assertIn("completed", result.stop_reason)
 
+    def test_completion_on_last_allowed_turn_is_not_budget_exhaustion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = HybridWebExplorer(
+                FakeFactory(directory), computer_agent=FakeAgent(), max_agent_turns=2,
+            ).capture(
+                audit_id="audit", url="https://example.com",
+                profile=get_device_profile("mobile"), mode=ScanMode.SMART,
+            )
+            self.assertEqual(result.stop_reason, "Computer Use completed exploration")
+
+    def test_six_step_journey_has_room_for_screenshot_and_intermediate_actions(self):
+        class JourneyAgent(FakeAgent):
+            def resume(self, previous_turn, screenshot_path):
+                self.resumes += 1
+                if self.resumes <= 8:
+                    return ComputerTurn(str(self.resumes), "call", (
+                        BrowserAction(BrowserActionType.CLICK, x=100, y=100),
+                    ))
+                return ComputerTurn("done", None)
+
+        with tempfile.TemporaryDirectory() as directory:
+            factory = FakeFactory(directory)
+            result = HybridWebExplorer(factory, computer_agent=JourneyAgent()).capture(
+                audit_id="audit", url="https://example.com",
+                profile=get_device_profile("mobile"), mode=ScanMode.SMART,
+            )
+            self.assertEqual(len(factory.session.executed), 8)
+            self.assertEqual(result.stop_reason, "Computer Use completed exploration")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,5 @@
+# Uses the repository's real .dockerignore; no runtime image or credentials needed.
+FROM scratch
+COPY frontend/public/dark-pattern-demo/ /web/
+COPY frontend/public/demo-cases/ /cases/
+COPY demo/assets/darkaudit-demo.apk /android/darkaudit-demo.apk

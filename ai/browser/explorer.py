@@ -15,7 +15,7 @@ class HybridWebExplorer:
         *,
         computer_agent: ComputerAgent | None = None,
         action_policy: ActionSafetyPolicy | None = None,
-        max_agent_turns: int = 6,
+        max_agent_turns: int = 12,
     ) -> None:
         if max_agent_turns < 1:
             raise ValueError("max_agent_turns must be at least 1")
@@ -88,6 +88,11 @@ class HybridWebExplorer:
                     )
                     self._append_unique(artifacts, current)
                 turn = self.computer_agent.resume(turn, current.image_path)
+                # A completion returned on the final allowed turn is still a
+                # completed exploration, not an exhausted budget.
+                if turn.is_finished:
+                    stop_reason = "Computer Use completed exploration"
+                    break
 
             try:
                 final_page = session.capture("final full page", full_page=True)

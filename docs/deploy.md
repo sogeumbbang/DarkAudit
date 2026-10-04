@@ -46,11 +46,12 @@
    SQLite(`data/darkaudit.db`)와 업로드·캡처 산출물이 모두 이 경로 아래에 있다.
 
 5. 배포가 끝나면 `https://<서비스명>.onrender.com` URL이 생긴다. **이 URL을 적어둔다.**
-6. `curl https://<서비스명>.onrender.com/health` → `{"status":"ok"}` 확인.
+6. `curl https://<서비스명>.onrender.com/health`로 `status: "ok"`와 `commit`을 확인한다.
+   Render가 주입하는 `RENDER_GIT_COMMIT`을 반환하므로 로컬 `git rev-parse HEAD`와
+   대조할 수 있다. 자동 배포가 켜져 있어도 빌드가 실패하면 이전 버전이 계속 서비스된다.
 
-무료 티어는 15분 미사용 시 슬립되고 첫 요청이 콜드스타트로 30초 이상 걸린다. 프런트의
-API 타임아웃이 30초라 첫 방문이 그대로 실패할 수 있으므로, 시연 전에 health로 한 번
-깨워두거나 유료 플랜을 쓴다.
+프런트는 진단 생성과 데모 목록 조회 전에 `/health`를 최대 120초 기다린다.
+서버 준비 요청만 재시도하며, 진단 생성 POST를 자동으로 중복 실행하지 않는다.
 
 ## 2. 프런트 — Vercel
 
@@ -67,8 +68,8 @@ API 타임아웃이 30초라 첫 방문이 그대로 실패할 수 있으므로,
    | `VITE_USE_MOCKS` | `false` |
    | `VITE_CHATBOT_ENABLED` | 선택. `false`면 챗봇 위젯을 숨긴다 |
 
-   `VITE_USE_MOCKS`를 빠뜨리면 목업 모드로 떠서 백엔드를 아예 타지 않는다. 화면은 멀쩡히
-   뜨고 데이터도 그럴듯해서 시연 중에 알아채기 어렵다.
+   `VITE_USE_MOCKS=true`이면 목업 모드로 떠서 백엔드를 타지 않는다.
+   심사용 배포는 반드시 `false`로 설정하고 Network에서 Render API 요청을 확인한다.
 
    `VITE_API_BASE_URL`이 없으면 프로덕션 빌드는 `client.ts`의 `DEPLOYED_API_BASE_URL`로
    넘어간다. 안전망이지만 백엔드 서비스명을 바꾸면 같이 고쳐야 한다. 값이 틀리면 빌드는
@@ -80,10 +81,29 @@ API 타임아웃이 30초라 첫 방문이 그대로 실패할 수 있으므로,
 
 ## 배포 후 확인
 
-1. 프로덕션 URL 접속 → `/`가 대시보드로 리다이렉트되는지.
-2. 진단 생성 화면에서 **샘플 5장 불러오기** → 분석 시작 → 결과가 나오는지.
-3. 탐지 항목을 클릭했을 때 캡처 화면 위에 위험 요소 박스가 그려지는지.
-4. 브라우저 개발자도구 콘솔에 CORS 오류가 없는지.
+1. 프로덕션 `/landing` → 새 진단 화면을 연다.
+2. `/api/v1/demo-inputs`에 세 시나리오의 `cases`와 세 가지 버전이 있는지,
+   `/demo/cases/pet/revised/01.png`가 실제 PNG로 응답하는지 확인한다.
+3. Figma·APK·URL·스크린샷 데모를 각각 실행한다. 작업의 `completed` 상태뿐 아니라
+   결과 화면의 캡처 이미지가 로드되고, 6단계 데모의 마지막 금액 화면까지 수집됐는지 확인한다.
+4. 스크린샷·URL 데모의 수정본을 실행한다. 같은 진단에 다음 회차가 추가되고,
+   이전 회차의 이미지 주소와 내용이 유지돼야 한다.
+5. 새로고침 후 진단 기록·결과·이미지가 유지되고 CORS 오류가 없는지 확인한다.
+
+### Docker 데모 파일 누락 검사
+
+`Dockerfile`의 `COPY`만 추가해도 `.dockerignore`에서 제외한 파일은 복사할 수 없다.
+특히 `frontend/public/*` 제외 규칙 아래에 `demo-cases/` 예외가 필요하다.
+배포 전에 다음 명령으로 실제 빌드 컨텍스트의 웹·스크린샷·APK 파일을 확인한다.
+이 검사는 GitHub Actions에서도 실행한다.
+
+```bash
+docker build --file demo/Dockerfile.assets-check --tag darkaudit-assets-check .
+```
+
+URL 캡처는 `data/captures/{audit_id}/run-{run_id}/{profile}/` 아래에 저장한다.
+스마트 탐색은 최대 12회 모델 응답을 처리하며, 한도에 도달한 경우 수집한 범위만
+검사한다. 분석 완료가 해당 사이트의 모든 화면을 검사했다는 뜻은 아니다.
 
 실패하면 Render 대시보드 → **Logs**에서 원인을 본다. `_fail_job()`이 기록한 메시지는
 `GET /api/v1/analysis-jobs/{id}`의 `error` 필드에도 그대로 나온다.

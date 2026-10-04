@@ -6,6 +6,9 @@ import {
   CircleAlert,
   ChevronDown,
   FileText,
+  GitCompareArrows,
+  Layers2,
+  ListChecks,
   MoreVertical,
   RefreshCw,
   ShieldCheck,
@@ -71,6 +74,74 @@ function FindingStatusBadge({ finding }: { finding: FindingDto }) {
   );
 }
 
+function ReviewSummary({ audit }: { audit: AuditDto }) {
+  const total = audit.findings.length;
+  const open = audit.findings.filter((item) => item.status === "open").length;
+  const reviewing = audit.findings.filter((item) => item.status === "reviewing").length;
+  const resolved = audit.findings.filter((item) => item.status === "resolved").length;
+  return (
+    <section className="overview-metrics" aria-label="진단 현황">
+      <div className="overview-metric overview-metric--total">
+        <div className="overview-metric-label">
+          <span>전체 검토 후보</span>
+          <ListChecks size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {total}
+          <span>건</span>
+        </p>
+        <p className="overview-metric-note">화면의 근거를 바탕으로 확인하세요</p>
+      </div>
+      <div className="overview-metric">
+        <div className="overview-metric-label">
+          <span>검토 필요</span>
+          <CircleAlert size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {open + reviewing}
+          <span>건</span>
+        </p>
+        <p className="overview-metric-note">
+          <i className="metric-dot metric-dot--warm" aria-hidden="true" />
+          미검토 {open} · 검토 중 {reviewing}
+        </p>
+      </div>
+      <div className="overview-metric overview-metric--resolved">
+        <div className="overview-metric-label">
+          <span>해결 표시</span>
+          <CheckCircle2 size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {resolved}
+          <span>/ {total}건</span>
+        </p>
+        <div className="overview-status-track" aria-hidden="true">
+          <span style={{ width: `${total ? (resolved / total) * 100 : 0}%` }} />
+        </div>
+        <p className="overview-metric-note">검토자가 지정한 상태 기준</p>
+      </div>
+      <div className="overview-metric">
+        <div className="overview-metric-label">
+          <span>등록 화면</span>
+          <Layers2 size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {audit.screens.length}
+          <span>개</span>
+        </p>
+        <p className="overview-metric-note">
+          {
+            { "mobile-web": "모바일 웹", "desktop-web": "데스크톱 웹", app: "모바일 앱" }[
+              audit.platform
+            ]
+          }{" "}
+          · 화면별 근거 확인
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function FlowOverview({
   screens,
   selectedScreenId,
@@ -84,15 +155,20 @@ function FlowOverview({
 }) {
   return (
     <aside className="map-screens" aria-label="가입 흐름 요약">
-      <div className="flex items-center justify-between px-3 py-3">
-        <h2 className="text-xs font-semibold">화면 {screens.length}</h2>
+      <div className="map-flow-heading">
+        <div>
+          <span className="overview-kicker">SCREEN FLOW</span>
+          <h2>
+            화면 흐름 <span>{screens.length}</span>
+          </h2>
+        </div>
         <button
           aria-label="전체 흐름 보기"
           title="전체 흐름 보기"
           onClick={onShowAll}
           className="rounded p-1 text-muted hover:bg-brand-50"
         >
-          <ArrowRight size={16} />
+          전체 보기 <ArrowRight size={14} />
         </button>
       </div>
       <div className="map-screen-list" role="group" aria-label="가입 흐름 단계">
@@ -105,24 +181,19 @@ function FlowOverview({
             aria-pressed={selectedScreenId === screen.id}
             onClick={() => onSelect(screen.id)}
           >
-            <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-              <span className="font-bold tabular-nums">{index + 1}</span>
-              <span
-                className={cn(
-                  "rounded px-1.5 py-0.5 tabular-nums",
-                  screen.findingCount ? "bg-accent-soft text-accent-ink" : "text-muted",
-                )}
-              >
-                {screen.findingCount}건
-              </span>
-            </div>
+            <span className="map-screen-number">{String(index + 1).padStart(2, "0")}</span>
             <img
               alt={`${screen.flowStep} 캡처 화면`}
               src={screen.imageUrl}
               loading="lazy"
               className="mx-auto h-24 max-w-full rounded-sm bg-white object-contain shadow-sm"
             />
-            <p className="mt-2 truncate text-xs font-medium">{screen.flowStep}</p>
+            <div className="map-screen-copy">
+              <p>{screen.flowStep}</p>
+              <span>
+                {screen.findingCount ? `검토 후보 ${screen.findingCount}건` : "탐지 항목 없음"}
+              </span>
+            </div>
           </button>
         ))}
       </div>
@@ -329,14 +400,17 @@ function FindingsList({
   return (
     <section className="review-findings" aria-label="문제 목록">
       <div className="review-findings-heading">
-        <h2 className="text-sm font-semibold">
-          전체 진단 문제{" "}
-          <span className="ml-1 text-muted">
-            {findings.length === allFindings.length
-              ? `${allFindings.length}건`
-              : `${findings.length} / ${allFindings.length}건`}
-          </span>
-        </h2>
+        <div>
+          <p className="overview-kicker">FINDINGS</p>
+          <h2 className="text-sm font-semibold">
+            전체 진단 문제{" "}
+            <span className="ml-1 text-muted">
+              {findings.length === allFindings.length
+                ? `${allFindings.length}건`
+                : `${findings.length} / ${allFindings.length}건`}
+            </span>
+          </h2>
+        </div>
         <div className="flex items-center gap-2 text-xs tabular-nums text-muted">
           <button
             aria-label="이전 탐지 항목"
@@ -397,6 +471,13 @@ function FindingsList({
                   />
                 </div>
               </button>
+              {!selected && (
+                <div className="finding-list-context">
+                  <p>{finding.element}</p>
+                  <span>{finding.ruleId}</span>
+                  <span>연결 화면 {finding.screenIds.length}개</span>
+                </div>
+              )}
               {selected && (
                 <FindingDetails
                   finding={finding}
@@ -663,8 +744,8 @@ export function OverviewPage() {
 
   return (
     <div className="overview-page workspace-page mx-auto max-w-[1800px]">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <header className="overview-header">
+        <div className="overview-heading">
           <Link
             className="mb-2 inline-flex items-center gap-1 text-xs text-muted hover:text-brand-600"
             to="/app/audits"
@@ -672,24 +753,30 @@ export function OverviewPage() {
             <ChevronLeft size={14} />
             진단 관리
           </Link>
+          <p className="overview-kicker">AUDIT OVERVIEW</p>
           <h1 className="sr-only">진단 결과 상세</h1>
-          <div className="flex items-center gap-3">
+          <div className="overview-title-row">
             <Badge variant={auditStatus.variant}>{auditStatus.label}</Badge>
             <h2 className="review-audit-title font-display">{audit.name}</h2>
           </div>
+          <p className="overview-subtitle">화면의 문제를 살펴보고, 개선의 다음 단계를 정하세요.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="overview-actions">
           {audit.status !== "queued" && audit.status !== "analyzing" && (
             <Button asChild variant="outline">
               <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                <RefreshCw size={14} aria-hidden="true" />
                 {audit.demoPreset ? "데모 수정본 실행" : "수정본 재검사"}
               </Link>
             </Button>
           )}
           <Button asChild variant="outline">
-            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>전후 비교</Link>
+            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
+              <GitCompareArrows size={15} aria-hidden="true" />
+              전후 비교
+            </Link>
           </Button>
-          <Button ref={reportButtonRef} variant="outline" onClick={() => setShowReport(true)}>
+          <Button ref={reportButtonRef} onClick={() => setShowReport(true)}>
             <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
           </Button>
         </div>
@@ -703,10 +790,10 @@ export function OverviewPage() {
           }}
         />
       )}
+      <ReviewSummary audit={audit} />
       <AnalysisNotice summary={audit.analysisSummary} />
       <section aria-label="진단 요약" className="map-toolbar">
-        <div role="group" aria-label="점검 항목 필터" className="flex flex-wrap items-center gap-1">
-          <span className="mr-2 text-xs font-semibold text-muted">전체 진단</span>
+        <div role="group" aria-label="점검 항목 필터" className="overview-filters">
           {findingFilters.map(({ value, label }) => (
             <button
               key={value}
@@ -720,11 +807,13 @@ export function OverviewPage() {
               )}
             >
               {label}{" "}
-              {value === "all"
-                ? orderedFindings.length
-                : value === "needs-review"
-                  ? needsReview
-                  : resolved}
+              <span>
+                {value === "all"
+                  ? orderedFindings.length
+                  : value === "needs-review"
+                    ? needsReview
+                    : resolved}
+              </span>
             </button>
           ))}
         </div>

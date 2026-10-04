@@ -5,6 +5,7 @@ frontend/*
 !frontend/public/
 frontend/public/*
 !frontend/public/dark-pattern-demo/
+!frontend/public/demo-cases/
 frontend/public/dark-pattern-demo/*.apk
 demo/android/build/
 *.keystore

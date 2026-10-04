@@ -199,7 +199,8 @@ def capture_and_analyze_url(
         if mode is ScanMode.SMART:
             computer_agent = OpenAIComputerUseAgent(os.environ["DARKAUDIT_COMPUTER_MODEL"])
         explorer = HybridWebExplorer(
-            PlaywrightSessionFactory(CAPTURE_DIR), computer_agent=computer_agent
+            PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}"),
+            computer_agent=computer_agent,
         )
         capture = URLCapturePipeline(explorer).run(
             audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal

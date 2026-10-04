@@ -122,6 +122,35 @@ export function DemoRecheckPanel({
         실제 분석으로 결과를 확인합니다. ‘전체 개선본’도 탐지 0건이나 해결률 100%를 보장하지 않으며,
         검사 근거가 부족하면 비교를 보류합니다.
       </p>
+      {selected && (
+        <section aria-label="선택한 데모 수정본 미리보기">
+          <h3 className="text-sm font-semibold">
+            {selected.label} · {selected.screens.length}개 화면
+          </h3>
+          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
+            {selected.screens.map((screen, index) => (
+              <a
+                key={screen.url}
+                href={screen.url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-control border border-border bg-surface p-2 text-xs hover:border-brand-500"
+                aria-label={`${index + 1}. ${screen.flowStep} ${selected.label} 이미지 열기 (새 탭)`}
+              >
+                <img
+                  src={screen.url}
+                  alt={`${screen.flowStep} ${selected.label}`}
+                  className="h-28 w-full object-contain"
+                  loading="lazy"
+                />
+                <span className="mt-2 block">
+                  {index + 1}. {screen.flowStep}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
       {catalog.isPending && <p role="status">데모 파일 목록을 불러오는 중입니다.</p>}
       {catalog.isError && (
         <div role="alert">

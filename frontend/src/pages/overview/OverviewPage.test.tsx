@@ -377,6 +377,17 @@ describe("OverviewPage", () => {
 
     expect(screen.getByLabelText("상세 결과 불러오는 중")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "보험 가입 흐름 v1" })).toBeInTheDocument();
+    const metrics = screen.getByRole("region", { name: "진단 현황" });
+    expect(
+      within(metrics).getByText("전체 검토 후보").closest(".overview-metric"),
+    ).toHaveTextContent("3건");
+    expect(within(metrics).getByText("검토 필요").closest(".overview-metric")).toHaveTextContent(
+      "2건",
+    );
+    expect(within(metrics).getByText("해결 표시").closest(".overview-metric")).toHaveTextContent(
+      "1/ 3건",
+    );
+    expect(metrics).toHaveTextContent("검토자가 지정한 상태 기준");
     // 첫 진입에서 미리보기는 화면 1이 아니라 선택된 탐지 항목(DA-04)이 있는
     // 화면이어야 한다. 둘이 어긋나면 위치 강조가 보이지 않는다.
     expect(screen.getByRole("img", { name: "옵션 선택 캡처 화면 미리보기" })).toHaveAttribute(
@@ -393,6 +404,11 @@ describe("OverviewPage", () => {
     const completedHeading = await screen.findByRole("heading", { name: "적금 가입 흐름 v2" });
     expect(completedHeading).toBeInTheDocument();
     expect(completedHeading.previousElementSibling).toHaveTextContent("완료");
+    const metrics = screen.getByRole("region", { name: "진단 현황" });
+    expect(within(metrics).getByText("해결 표시").closest(".overview-metric")).toHaveTextContent(
+      "0/ 0건",
+    );
+    expect(metrics).not.toHaveTextContent("100%");
     expect(screen.getByText("탐지된 항목이 없습니다")).toBeInTheDocument();
     // 탐지 항목이 없으면 기존대로 첫 화면을 보여준다.
     expect(screen.getByRole("img", { name: "상품 안내 캡처 화면 미리보기" })).toHaveAttribute(

@@ -106,6 +106,27 @@ it("does not request comparison when only one completed run exists", async () =>
   expect(calls).toBe(0);
 });
 
+it("distinguishes verified resolutions from rules still awaiting evidence", async () => {
+  server.use(
+    http.get("*/api/v1/audits/:auditId/regression", () =>
+      HttpResponse.json({
+        ...response,
+        comparisonStatus: "incomplete",
+        resolvedRatio: null,
+        limitations: ["화면 간 가격 비교 제한"],
+        pending: [{ ruleId: "DA-15", findingId: "price-before", before: "HIGH", after: null }],
+      }),
+    ),
+  );
+  setup();
+  expect(await screen.findByText("일부 항목의 해결 판정이 보류되었습니다")).toBeInTheDocument();
+  expect(screen.getByText(/검사 근거가 확인된 1건은 해결/)).toBeInTheDocument();
+  expect(screen.getByText("해결률 · 산출 보류")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "해결 · 1건" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "보류 · 1건" })).toBeInTheDocument();
+  expect(screen.getByText("탐지 항목 1건 → 1건")).toBeInTheDocument();
+});
+
 it("allows retry after a comparison error", async () => {
   let calls = 0;
   server.use(
