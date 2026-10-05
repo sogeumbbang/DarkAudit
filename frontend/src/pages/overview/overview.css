@@ -888,3 +888,37 @@
     transition: none;
   }
 }
+
+/* Adapt to the space left beside the sidebar, including tablets in landscape. */
+@container workspace (max-width: 760px) {
+  .review-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    gap: 16px;
+  }
+  .review-findings-list {
+    overflow: visible;
+  }
+  .map-preview {
+    height: clamp(380px, 72dvh, 640px);
+  }
+  .overview-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (pointer: coarse), (max-width: 1023px) {
+  .overview-actions > :is(a, button),
+  .overview-filters button,
+  .map-flow-heading > button,
+  .map-preview-heading button,
+  .review-findings-heading button,
+  .finding-context > a,
+  .finding-inline-detail button {
+    min-height: 44px;
+  }
+  .review-findings-heading button,
+  .map-zoom-controls button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

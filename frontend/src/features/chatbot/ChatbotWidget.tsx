@@ -79,7 +79,7 @@ function ChatbotPanel() {
     return (
       <button
         aria-label="다크패턴 챗봇"
-        className="fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-control bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
+        className="workspace-chat-launcher fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-control bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
         onClick={() => setOpen(true)}
       >
         <MessageCircle aria-hidden="true" size={19} />
@@ -111,7 +111,7 @@ function ChatbotPanel() {
 
       <div
         aria-live="polite"
-        className="min-h-48 flex-1 space-y-4 overflow-y-auto px-5 py-4"
+        className="workspace-chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4"
         ref={listRef}
       >
         {messages.length === 0 && (
@@ -177,7 +177,7 @@ function ChatbotPanel() {
             질문
           </label>
           <textarea
-            className="max-h-32 min-h-10 flex-1 resize-none rounded-control border border-border bg-surface px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+            className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-control border border-border bg-surface px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             id={inputId}
             maxLength={1000}
             onChange={(event) => setDraft(event.target.value)}

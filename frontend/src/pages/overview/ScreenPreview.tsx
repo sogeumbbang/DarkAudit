@@ -58,6 +58,8 @@ export function ScreenPreview({
       ? finding.bbox
       : finding?.relatedElements?.find((item) => item.bbox?.screenId === screen.id)?.bbox;
   function startPan(event: PointerEvent<HTMLDivElement>) {
+    // A fitted image should scroll with the page on phones; drag only after zooming.
+    if (event.pointerType === "touch" && scale <= 1) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     panOrigin.current = {
       pointerId: event.pointerId,
@@ -118,9 +120,10 @@ export function ScreenPreview({
         tabIndex={0}
         data-testid="screen-preview-viewport"
         className={cn(
-          "map-viewport scrollbar-hidden overflow-auto touch-none select-none",
+          "map-viewport scrollbar-hidden overflow-auto select-none",
           isPanning ? "cursor-grabbing" : "cursor-grab",
         )}
+        style={{ touchAction: scale > 1 ? "none" : "pan-y pinch-zoom" }}
         onPointerDown={startPan}
         onPointerUp={stopPan}
         onPointerCancel={stopPan}

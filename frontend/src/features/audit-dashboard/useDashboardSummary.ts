@@ -11,5 +11,9 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: dashboardKeys.summary(),
     queryFn: getDashboardSummary,
+    refetchInterval: (query) =>
+      query.state.data?.audits.some((audit) => ["queued", "analyzing"].includes(audit.status))
+        ? 3000
+        : false,
   });
 }

@@ -35,6 +35,7 @@ DarkAudit 데이터 모델
 from __future__ import annotations
 
 import enum
+import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -91,11 +92,27 @@ class RunStatus(str, enum.Enum):
 # ---------------------------------------------------------------- 테이블
 
 
+class AuditSequence(Base):
+    """Never decrement: deleted audit IDs must not identify another workspace."""
+    __tablename__ = "audit_sequence"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    value: Mapped[int] = mapped_column(default=0)
+
+
+class Workspace(Base):
+    __tablename__ = "workspace"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class Audit(Base):
     """하나의 금융상품 가입 Flow 에 대한 감사 세션."""
     __tablename__ = "audit"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[str | None] = mapped_column(ForeignKey("workspace.id"), nullable=True, index=True)
+    artifact_secret: Mapped[str | None] = mapped_column(String(64), default=lambda: secrets.token_hex(32))
     name: Mapped[str] = mapped_column(String(200))
     sector: Mapped[str | None] = mapped_column(String(40))        # insurance / deposit / loan / investment
     product_name: Mapped[str | None] = mapped_column(String(200))

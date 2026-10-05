@@ -11,6 +11,8 @@ services:
         value: openai
       - key: DARKAUDIT_MODEL
         sync: false
+      - key: DARKAUDIT_COMPUTER_MODEL
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: FIGMA_ACCESS_TOKEN

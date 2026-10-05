@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import os
-import threading
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from sqlalchemy import select
 
 from ai.browser.explorer import HybridWebExplorer
-from ai.browser.models import CaptureArtifact, ScanMode
+from ai.browser.models import CaptureArtifact, ExplorationEvent, ScanMode
 from ai.browser.playwright_driver import PlaywrightSessionFactory
 from ai.pipeline.baseline import MVP_RULE_IDS, BaselineAuditPipeline
 from ai.pipeline.web_audit import URLCapturePipeline, prepare_analysis_artifacts, analysis_batches, batch_indices
@@ -44,8 +43,9 @@ from backend.app.rule_engine.core import RuleBase
 from backend.app.rule_engine.severity import ScoredFinding
 from backend.app.rule_engine.severity import score as score_rule_findings
 
-from .schemas import JobDto
+from .schemas import ExplorationEventDto, JobDto
 from .store import SessionLocal, new_id, touch_audit
+from . import jobs
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
@@ -54,30 +54,21 @@ CAPTURE_DIR = DATA_DIR / "captures"
 FIGMA_DIR = DATA_DIR / "figma"
 ANDROID_DIR = DATA_DIR / "android"
 
-_jobs: dict[str, JobDto] = {}
-_jobs_lock = threading.Lock()
-
-
 def rules_by_id() -> dict[str, dict]:
     return {rule["rule_id"]: rule for rule in RuleLoader().rules()}
 
 
-def create_job(audit_id: str, run_id: int) -> JobDto:
+def create_job(audit_id: str, run_id: int, source: str = "screenshots") -> JobDto:
     job = JobDto(
         jobId=new_id("job"), auditId=audit_id, runId=f"run-{run_id}",
-        status="queued", progress=5,
+        status="queued", progress=5, source=source,
     )
-    with _jobs_lock:
-        _jobs[job.jobId] = job
+    jobs.create(DATA_DIR, job)
     return job
 
 
 def get_job(job_id: str) -> JobDto:
-    with _jobs_lock:
-        job = _jobs.get(job_id)
-        if job is None:
-            raise KeyError(job_id)
-        return job.model_copy(deep=True)
+    return jobs.get(DATA_DIR, job_id)
 
 
 def recover_interrupted_runs() -> int:
@@ -93,6 +84,7 @@ def recover_interrupted_runs() -> int:
             run.note = "서버 재시작으로 진단 작업이 중단되었습니다. 다시 진단해 주세요."
             touch_audit(session, run.audit_id)
         session.commit()
+        jobs.recover(DATA_DIR)
         return len(runs)
 
 
@@ -108,10 +100,48 @@ def compatible_capture_profiles(url: str, profiles: tuple[str, ...]) -> tuple[st
 
 
 def _update_job(job_id: str, **changes: object) -> None:
-    with _jobs_lock:
-        job = _jobs[job_id]
+    def change(job: JobDto) -> None:
         for key, value in changes.items():
             setattr(job, key, value)
+    jobs.update(DATA_DIR, job_id, change)
+
+
+def _record_exploration(job_id: str, event: ExplorationEvent) -> None:
+    artifact = event.artifact
+    action = event.action
+    labels = {
+        "capture": "전체 페이지 캡처" if artifact.full_page else "첫 화면 확인",
+        "result": "동작 후 화면 확인",
+        "complete": "화면 수집 완료",
+        "stopped": "탐색 종료",
+    }
+    if event.kind == "action":
+        label = {
+            "click": "클릭 실행", "scroll": "스크롤 실행", "wait": "화면 대기",
+            "keypress": "탐색 키 실행", "move": "포인터 이동",
+        }.get(action.type.value if action else "", "동작 실행")
+    elif event.kind == "stopped":
+        label = (
+            "탐색 횟수 한도에 도달했습니다"
+            if event.reason == "agent turn budget exhausted"
+            else "안전 확인이 필요해 탐색을 멈췄습니다"
+        )
+    else:
+        label = labels[event.kind]
+    def change(job: JobDto) -> None:
+        events = job.explorationEvents
+        events.append(ExplorationEventDto(
+            id=events[-1].id + 1 if events else 1,
+            kind=event.kind, label=label, profile=artifact.profile,
+            imageUrl=public_image_path(artifact.image_path),
+            width=artifact.viewport_width, height=artifact.viewport_height,
+            fullPage=artifact.full_page,
+            x=action.x / artifact.viewport_width if action and action.x is not None else None,
+            y=action.y / artifact.viewport_height if action and action.y is not None else None,
+        ))
+        # Bound the polling response and memory even if an agent returns many actions.
+        del events[:-240]
+    jobs.update(DATA_DIR, job_id, change)
 
 
 def next_run(session, audit_id: int, note: str | None = None) -> AuditRun:
@@ -195,16 +225,19 @@ def capture_and_analyze_url(
 ) -> None:
     try:
         _mark_running(job_id, run_id, 12)
+        _update_job(job_id, explorationMode=mode.value, explorationStage="capturing")
         computer_agent = None
         if mode is ScanMode.SMART:
             computer_agent = OpenAIComputerUseAgent(os.environ["DARKAUDIT_COMPUTER_MODEL"])
         explorer = HybridWebExplorer(
             PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}"),
             computer_agent=computer_agent,
+            on_event=lambda event: _record_exploration(job_id, event),
         )
         capture = URLCapturePipeline(explorer).run(
             audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
         )
+        _update_job(job_id, explorationStage="analyzing", progress=55)
         selected = prepare_analysis_artifacts(capture.artifacts)
         persisted = list(capture.artifacts)
         persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
@@ -268,8 +301,9 @@ def capture_and_analyze_url(
                               analysis_screens=batch_screens, grounded_visuals=grounded)
             _apply_regression(session, run)
             session.commit()
-        _update_job(job_id, status="completed", progress=100)
+        _update_job(job_id, status="completed", progress=100, explorationStage="completed")
     except Exception as exc:
+        _update_job(job_id, explorationStage="failed")
         _fail_job(job_id, run_id, exc)
 
 
@@ -301,6 +335,14 @@ def _mark_running(job_id: str, run_id: int, progress: float) -> None:
         run = session.get(AuditRun, run_id)
         if run is None:
             raise ValueError("Analysis run no longer exists")
+        if run.status is RunStatus.FAILED:
+            # Preserve collection evidence, but reset output from the failed attempt.
+            summary = dict(run.analysis_summary or {})
+            summary.pop("batches", None)
+            summary.pop("regression", None)
+            summary["warnings"] = [w for w in summary.get("warnings", []) if w != "analysis_failed"]
+            run.analysis_summary = summarize(summary)
+            run.note = None
         run.status = RunStatus.RUNNING
         touch_audit(session, run.audit_id)
         session.commit()

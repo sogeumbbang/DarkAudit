@@ -67,6 +67,47 @@ class FakeAgent:
 
 
 class HybridWebExplorerTest(unittest.TestCase):
+    def test_events_show_each_action_on_its_preceding_screen(self):
+        class BatchAgent(FakeAgent):
+            def begin(self, goal):
+                return ComputerTurn("batch", "call", (
+                    BrowserAction(BrowserActionType.CLICK, x=100, y=100),
+                    BrowserAction(BrowserActionType.SCROLL, x=100, y=100, scroll_y=200),
+                ))
+
+            def resume(self, previous_turn, screenshot_path):
+                return ComputerTurn("done", None)
+
+        with tempfile.TemporaryDirectory() as directory:
+            events = []
+            factory = FakeFactory(directory)
+            HybridWebExplorer(factory, computer_agent=BatchAgent(), on_event=events.append).capture(
+                audit_id="audit", url="https://example.com",
+                profile=get_device_profile("mobile"), mode=ScanMode.SMART,
+            )
+            self.assertEqual([e.kind for e in events], [
+                "capture", "action", "result", "action", "result", "capture", "complete",
+            ])
+            self.assertEqual(events[1].artifact.image_path, events[0].artifact.image_path)
+            self.assertEqual(events[3].artifact.image_path, events[2].artifact.image_path)
+            self.assertNotEqual(events[1].artifact.image_path, events[2].artifact.image_path)
+
+    def test_blocked_action_is_not_reported_as_executed(self):
+        class UnsafeAgent(FakeAgent):
+            def begin(self, goal):
+                return ComputerTurn("unsafe", "call", (BrowserAction(BrowserActionType.TYPE, text="secret"),))
+
+        with tempfile.TemporaryDirectory() as directory:
+            events = []
+            factory = FakeFactory(directory)
+            HybridWebExplorer(factory, computer_agent=UnsafeAgent(), on_event=events.append).capture(
+                audit_id="audit", url="https://example.com",
+                profile=get_device_profile("mobile"), mode=ScanMode.SMART,
+            )
+            self.assertEqual(factory.session.executed, [])
+            self.assertNotIn("action", [e.kind for e in events])
+            self.assertEqual(events[-1].kind, "stopped")
+
     def test_quick_mode_captures_viewport_and_full_page_without_agent(self):
         with tempfile.TemporaryDirectory() as directory:
             factory = FakeFactory(directory)

@@ -124,7 +124,7 @@ export function WebsiteFields({
         <ModeButton
           active={scanMode === "smart"}
           title="스마트 탐색"
-          description="주요 선택 흐름을 따라 화면 탐색"
+          description="AI가 클릭·스크롤하며 탐색하는 과정을 실시간 확인"
           smart
           onClick={() => setScanMode("smart")}
         />

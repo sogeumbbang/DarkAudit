@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto, DemoVariant } from "@/entities/audit/types";
 import { useAnalysisStatus } from "@/features/audit-create/useAuditWorkflow";
+import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
 import { dashboardKeys } from "@/features/audit-dashboard/useDashboardSummary";
 
 export function DemoRecheckPanel({
@@ -28,7 +29,7 @@ export function DemoRecheckPanel({
     audit.demoVariant === "partial" ? "revised" : "partial",
   );
   const [uploadedVariant, setUploadedVariant] = useState<DemoVariant>();
-  const [jobId, setJobId] = useState<string>();
+  const [jobId, setJobId] = usePersistedJob("demoJob");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [manual, setManual] = useState(false);

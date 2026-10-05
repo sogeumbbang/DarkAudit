@@ -7,7 +7,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
@@ -36,9 +36,9 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "workspace-sidebar fixed inset-y-0 left-0 z-20 flex-col bg-surface p-5 text-text transition-[width]",
+        "workspace-sidebar flex-col bg-surface p-5 text-text transition-[width]",
         collapsed && !mobile ? "w-[88px]" : "w-[240px]",
-        mobile ? "flex lg:hidden" : "hidden lg:flex",
+        mobile ? "relative flex h-full" : "fixed inset-y-0 left-0 z-20 hidden lg:flex",
       )}
     >
       <div className="flex items-center justify-between px-2 py-2">
@@ -98,6 +98,78 @@ function Sidebar({
   );
 }
 
+function MobileNavigation({ onDismiss }: { onDismiss: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    dialog?.showModal();
+    document.body.style.overflow = "hidden";
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) onDismiss();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+      document.body.style.overflow = previousOverflow;
+      dialog?.close();
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [onDismiss]);
+
+  return (
+    <dialog
+      id="mobile-navigation"
+      ref={dialogRef}
+      className="workspace-mobile-menu"
+      aria-label="주요 메뉴"
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        const controls = [
+          ...event.currentTarget.querySelectorAll<HTMLElement>(
+            'a[href], button:not([tabindex="-1"])',
+          ),
+        ].filter(
+          (element) =>
+            element.getClientRects().length && getComputedStyle(element).visibility !== "hidden",
+        );
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onDismiss();
+      }}
+    >
+      <button
+        aria-label="메뉴 닫기"
+        tabIndex={-1}
+        className="workspace-menu-backdrop"
+        onClick={onDismiss}
+      />
+      <div className="workspace-menu-panel">
+        <Sidebar mobile onNavigate={onDismiss} />
+        <button
+          aria-label="메뉴 닫기"
+          className="workspace-menu-close rounded-control border border-border text-text"
+          onClick={onDismiss}
+        >
+          <X size={20} />
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 export function AppLayout() {
   const { pathname } = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -106,7 +178,7 @@ export function AppLayout() {
   return (
     <div
       className={cn(
-        "workspace min-h-screen bg-background transition-[padding]",
+        "workspace min-h-screen bg-background",
         pathname === "/app/overview" && "workspace--overview",
         isCollapsed ? "lg:pl-[88px]" : "lg:pl-[240px]",
       )}
@@ -118,29 +190,13 @@ export function AppLayout() {
         본문으로 건너뛰기
       </a>
       <Sidebar collapsed={isCollapsed} onCollapse={() => setIsCollapsed((value) => !value)} />
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            aria-label="메뉴 닫기"
-            className="absolute inset-0 bg-black/45"
-            onClick={() => setIsMenuOpen(false)}
-          />
-          <div className="relative h-full w-[240px] shadow-2xl">
-            <Sidebar mobile onNavigate={() => setIsMenuOpen(false)} />
-            <button
-              aria-label="메뉴 닫기"
-              className="absolute right-5 top-7 rounded-control border border-border p-2 text-text lg:hidden"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <X size={17} />
-            </button>
-          </div>
-        </div>
-      )}
+      {isMenuOpen && <MobileNavigation onDismiss={() => setIsMenuOpen(false)} />}
       <main id="main-content" className="workspace-main min-w-0">
         <div className="workspace-mobile-header flex items-center gap-3 lg:hidden">
           <button
             aria-label="메뉴 열기"
+            aria-expanded={isMenuOpen}
+            aria-controls={isMenuOpen ? "mobile-navigation" : undefined}
             className="rounded-control border border-border p-2 text-text"
             onClick={() => setIsMenuOpen(true)}
           >

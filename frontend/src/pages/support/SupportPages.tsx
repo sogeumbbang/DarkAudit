@@ -31,6 +31,10 @@ export function SettingsPage() {
           업로드 이미지는 진단 근거로만 사용하며, 서버의 AI provider와 모델 설정은 배포 환경에서
           관리됩니다.
         </p>
+        <p className="mt-3 text-sm leading-6 text-muted">
+          진단 기록은 이 브라우저의 작업공간에 연결됩니다. 같은 브라우저에서 다시 열면 이어서 확인할
+          수 있으며, 브라우저 데이터를 삭제하면 기존 기록에 접근할 수 없게 됩니다.
+        </p>
         <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
           <div className="rounded-control bg-brand-50 p-4">
             <dt className="text-muted">이미지 입력</dt>
@@ -38,7 +42,7 @@ export function SettingsPage() {
           </div>
           <div className="rounded-control bg-brand-50 p-4">
             <dt className="text-muted">지원 방식</dt>
-            <dd className="mt-1 font-semibold">URL · Screenshot · Figma</dd>
+            <dd className="mt-1 font-semibold">URL · Screenshot · Figma · Android APK</dd>
           </div>
         </dl>
       </Card>
@@ -103,6 +107,14 @@ function AuditRow({ audit }: { audit: AuditDto }) {
         </p>
       </div>
       <div className="audit-record-actions flex flex-wrap items-center gap-3">
+        {audit.latestJobId && (
+          <Link
+            className="px-3 py-2 text-sm font-semibold text-brand-700 hover:underline"
+            to={`/app/audits/new?job=${encodeURIComponent(audit.latestJobId)}`}
+          >
+            검사 과정 보기
+          </Link>
+        )}
         <Link
           className="inline-flex items-center gap-2 rounded-control px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
           to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
@@ -120,6 +132,11 @@ function AuditRow({ audit }: { audit: AuditDto }) {
             >
               {remove.isPending ? "삭제 중" : "삭제"}
             </Button>
+            {remove.isError && (
+              <p role="alert" className="text-xs text-danger">
+                {remove.error.message}
+              </p>
+            )}
             <Button
               className="px-3 py-2 text-xs"
               disabled={remove.isPending}

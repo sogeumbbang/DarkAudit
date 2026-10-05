@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 import type { AuditSource } from "@/pages/audit-create/AuditSourceFields";
+import { ExplorationViewer, type ExplorationState } from "@/pages/audit-create/ExplorationViewer";
 
 const TIPS = [
   {
@@ -39,6 +40,7 @@ export function AnalysisProgress({
   error,
   onBack,
   demo = false,
+  exploration,
 }: {
   source: AuditSource;
   auditId?: string;
@@ -48,6 +50,7 @@ export function AnalysisProgress({
   error?: string | null;
   onBack: () => void;
   demo?: boolean;
+  exploration?: ExplorationState;
 }) {
   const running = !completed && !failed;
   const [startedAt] = useState(Date.now);
@@ -75,7 +78,12 @@ export function AnalysisProgress({
   }[source];
 
   return (
-    <div className="analysis-progress-page mx-auto max-w-3xl py-10">
+    <div
+      className={cn(
+        "analysis-progress-page mx-auto py-10",
+        exploration ? "max-w-6xl" : "max-w-3xl",
+      )}
+    >
       <Card className="analysis-progress-surface overflow-hidden text-center">
         {running ? (
           <div
@@ -110,6 +118,7 @@ export function AnalysisProgress({
                 : "아직 분석 중입니다. 완료되면 ‘결과 확인하기’ 버튼이 나타납니다."}
           </p>
         </div>
+        {exploration && <ExplorationViewer exploration={exploration} running={running} />}
         {!failed && (
           <div className="mx-auto mt-8 max-w-lg">
             <div className="flex items-center justify-between text-xs">
@@ -150,7 +159,7 @@ export function AnalysisProgress({
         {running && (
           <>
             <div className="mx-auto mt-5 flex max-w-lg items-center justify-between text-xs text-muted">
-              <span>이 화면에서 기다려 주세요</span>
+              <span>새로고침해도 이 검사로 돌아옵니다</span>
               <span>
                 경과 시간{" "}
                 <span

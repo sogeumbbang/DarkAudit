@@ -12,7 +12,7 @@ class ReviewStateTest(IsolatedApiTestCase):
     def setUp(self):
         super().setUp()
         with store.SessionLocal() as session:
-            audit = Audit(name="Review state", product_name="mobile-web")
+            audit = Audit(name="Review state", product_name="mobile-web", owner_id=self.owner_id)
             run = AuditRun(version=1, status=RunStatus.DONE)
             finding = Finding(rule_id="DA-04", label_unit="screen", fingerprint="review",
                               severity=Severity.HIGH, base_severity=Severity.HIGH)

@@ -41,6 +41,9 @@ function addMockRun(audit: AuditDto) {
 }
 
 export const handlers = [
+  http.post("*/api/v1/sessions", () =>
+    HttpResponse.json({ token: "mock_workspace_".padEnd(43, "x") }, { status: 201 }),
+  ),
   ...chatbotHandlers,
   http.put("*/api/v1/findings/:findingId/decision", async ({ params, request }) => {
     const { decisionNote } = (await request.json()) as { decisionNote: string };

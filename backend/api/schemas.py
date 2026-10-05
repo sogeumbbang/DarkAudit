@@ -153,9 +153,23 @@ class AuditDto(BaseModel):
     # 회차 목록. 프론트가 아직 쓰지 않아도 무해하다.
     runs: list[AuditRunDto] = Field(default_factory=list)
     latestRunId: str | None = None
+    latestJobId: str | None = None
     analysisSummary: dict = Field(default_factory=dict)
     demoPreset: DemoPreset | None = None
     demoVariant: DemoVariant | None = None
+
+
+class ExplorationEventDto(BaseModel):
+    id: int
+    kind: Literal["capture", "action", "result", "complete", "stopped"]
+    label: str
+    profile: str
+    imageUrl: str
+    width: int
+    height: int
+    fullPage: bool = False
+    x: float | None = None
+    y: float | None = None
 
 
 class JobDto(BaseModel):
@@ -165,6 +179,11 @@ class JobDto(BaseModel):
     progress: float = Field(ge=0, le=100)
     runId: str | None = None
     error: str | None = None
+    source: Literal["screenshots", "website", "figma", "android"] = "screenshots"
+    demo: bool = False
+    explorationMode: Literal["quick", "smart"] | None = None
+    explorationStage: Literal["capturing", "analyzing", "completed", "failed"] | None = None
+    explorationEvents: list[ExplorationEventDto] = Field(default_factory=list)
 
 
 class ImportFigmaRequest(BaseModel):

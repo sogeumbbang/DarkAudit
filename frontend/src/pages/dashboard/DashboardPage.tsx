@@ -163,7 +163,10 @@ export function DashboardPage() {
               </div>
             ) : (
               <>
-                <ul className="divide-y divide-border sm:hidden" aria-label="진단 목록">
+                <ul
+                  className="dashboard-record-cards divide-y divide-border"
+                  aria-label="진단 목록"
+                >
                   {audits.map((audit) => (
                     <li key={audit.id} className="py-5">
                       <div className="flex items-start justify-between gap-3">
@@ -181,6 +184,14 @@ export function DashboardPage() {
                         {audit.productType ? productLabels[audit.productType] : "미지정"} · 위험
                         후보 {audit.findings.length}건
                       </p>
+                      {audit.latestJobId && (
+                        <Link
+                          className="mt-2 inline-block text-sm text-brand-700 underline"
+                          to={`/app/audits/new?job=${encodeURIComponent(audit.latestJobId)}`}
+                        >
+                          검사 과정 보기
+                        </Link>
+                      )}
                       <p className="mt-1 text-xs text-muted">
                         {audit.createdAt
                           ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(
@@ -192,7 +203,7 @@ export function DashboardPage() {
                   ))}
                 </ul>
                 <div
-                  className="hidden overflow-x-auto sm:block"
+                  className="dashboard-record-table overflow-x-auto"
                   role="region"
                   aria-label="진단 목록 표"
                   tabIndex={0}
@@ -219,6 +230,14 @@ export function DashboardPage() {
                               >
                                 {audit.name}
                               </Link>
+                              {audit.latestJobId && (
+                                <Link
+                                  className="mt-2 block text-xs text-brand-700 underline"
+                                  to={`/app/audits/new?job=${encodeURIComponent(audit.latestJobId)}`}
+                                >
+                                  검사 과정 보기
+                                </Link>
+                              )}
                             </td>
                             <td className="whitespace-nowrap px-6 py-5">
                               {audit.productType ? productLabels[audit.productType] : "미지정"}

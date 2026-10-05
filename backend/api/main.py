@@ -12,9 +12,9 @@ from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 
 from ai.browser.models import ScanMode
 from ai.browser.safety import UnsafeUrlError, UrlSafetyPolicy
@@ -24,6 +24,8 @@ from backend.app.regression import compare
 from .android_import import capture_and_analyze_android
 from .android_runner import AndroidRunnerError, AndroidRunnerSettings
 from .chat import router as chat_router
+from .access import router as access_router, require_owner, authorized_image, sign_image
+from . import jobs
 from .demo_inputs import router as demo_router
 from .figma_client import InvalidFigmaUrlError, parse_figma_url
 from .figma_import import import_and_analyze_figma
@@ -56,12 +58,13 @@ from .service import (
     public_image_path,
     rules_by_id,
 )
-from .store import utcnow, SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto, touch_audit
+from .store import allocate_audit_id, utcnow, SessionLocal, get_audit, init_db, list_audits, to_audit_dto, to_regression_dto, touch_audit
 
 app = FastAPI(title="DarkAudit API", version="1.1.0")
+app.include_router(access_router)
 app.include_router(demo_router)
 # 다크패턴 챗봇(부가 기능). 끄기/제거는 docs/chatbot.md 참고.
-app.include_router(chat_router)
+app.include_router(chat_router, dependencies=[Depends(require_owner)])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.getenv(
@@ -77,7 +80,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/artifacts", StaticFiles(directory=DATA_DIR), name="artifacts")
+
+
+@app.exception_handler(jobs.JobAlreadyRunning)
+async def duplicate_job_handler(request, exc):
+    return JSONResponse({"detail": str(exc)}, status_code=409)
+
+
+@app.get("/artifacts/{relative_path:path}")
+def artifact_image(relative_path: str, audit: str = "", expires: int = 0, signature: str = ""):
+    path = authorized_image(DATA_DIR, relative_path, audit, expires, signature)
+    return FileResponse(path, headers={"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer"})
 
 
 @app.on_event("startup")
@@ -95,9 +108,9 @@ def health() -> dict[str, str]:
 
 
 @app.post("/api/v1/audits", response_model=AuditDto, status_code=status.HTTP_201_CREATED)
-def create_audit(payload: CreateAuditRequest) -> AuditDto:
+def create_audit(payload: CreateAuditRequest, owner_id: str = Depends(require_owner)) -> AuditDto:
     with SessionLocal() as session:
-        audit = Audit(name=payload.name.strip(), product_name=payload.platform, sector=payload.productType,
+        audit = Audit(id=allocate_audit_id(session), name=payload.name.strip(), owner_id=owner_id, product_name=payload.platform, sector=payload.productType,
                       demo_preset=payload.demoPreset.model_dump() if payload.demoPreset else None)
         session.add(audit)
         session.commit()
@@ -105,14 +118,14 @@ def create_audit(payload: CreateAuditRequest) -> AuditDto:
 
 
 @app.get("/api/v1/dashboard/summary", response_model=DashboardSummaryDto)
-def dashboard_summary() -> DashboardSummaryDto:
+def dashboard_summary(owner_id: str = Depends(require_owner)) -> DashboardSummaryDto:
     with SessionLocal() as session:
-        audits = [to_audit_dto(session, audit, rules_by_id()) for audit in list_audits(session)]
+        audits = [to_audit_dto(session, audit, rules_by_id()) for audit in list_audits(session, owner_id)]
         return DashboardSummaryDto(activeAuditId=audits[0].id if audits else None, audits=audits)
 
 
 @app.delete("/api/v1/audits/{audit_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_audit(audit_id: str) -> None:
+def delete_audit(audit_id: str, owner_id: str = Depends(require_owner)) -> None:
     """
     진단 하나를 회차·화면·탐지까지 통째로 지운다.
 
@@ -125,15 +138,18 @@ def delete_audit(audit_id: str) -> None:
     """
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
         directory_name = f"audit-{audit.id}"
+        if jobs.has_active(DATA_DIR, audit_id):
+            raise HTTPException(409, "진행 중인 검사가 끝난 뒤 삭제해 주세요.")
         session.delete(audit)
         session.commit()
 
     for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR, ANDROID_DIR):
         shutil.rmtree(base / directory_name, ignore_errors=True)
+    jobs.delete_for_audit(DATA_DIR, audit_id)
 
 
 @app.get("/api/v1/audits/{audit_id}/regression", response_model=RegressionDto)
@@ -141,10 +157,11 @@ def get_regression(
     audit_id: str,
     from_version: int | None = Query(default=None, alias="from", ge=1),
     to_version: int | None = Query(default=None, alias="to", ge=1),
+    owner_id: str = Depends(require_owner),
 ) -> RegressionDto:
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
 
@@ -178,6 +195,7 @@ async def upload_screens(
     flow_steps: list[str] = Form(default=[]),
     demo_variant: DemoVariant | None = Form(default=None),
     x_darkaudit_screen_metadata: str | None = Header(default=None),
+    owner_id: str = Depends(require_owner),
 ) -> AuditDto:
     if not 1 <= len(files) <= 6:
         raise HTTPException(400, "1개에서 6개의 이미지가 필요합니다.")
@@ -190,7 +208,7 @@ async def upload_screens(
             raise HTTPException(400, "화면 메타데이터가 잘못되었습니다.")
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, "uploaded screenshots")
@@ -229,10 +247,10 @@ async def upload_screens(
 
 
 @app.post("/api/v1/audits/{audit_id}/analyze", response_model=JobDto, status_code=202)
-def analyze(audit_id: str, background: BackgroundTasks) -> JobDto:
+def analyze(audit_id: str, background: BackgroundTasks, owner_id: str = Depends(require_owner)) -> JobDto:
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = audit.runs[-1] if audit.runs else None
@@ -247,7 +265,7 @@ def analyze(audit_id: str, background: BackgroundTasks) -> JobDto:
 
 
 @app.post("/api/v1/audits/{audit_id}/capture", response_model=JobDto, status_code=202)
-def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundTasks) -> JobDto:
+def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundTasks, owner_id: str = Depends(require_owner)) -> JobDto:
     if payload.mode == "smart" and not os.getenv("DARKAUDIT_COMPUTER_MODEL"):
         raise HTTPException(400, "smart 모드에는 DARKAUDIT_COMPUTER_MODEL 설정이 필요합니다.")
     try:
@@ -259,14 +277,14 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
         raise HTTPException(400, str(exc))
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, f"URL: {payload.url}")
         if payload.demoVariant and audit.demo_preset:
             run.analysis_summary = {"demoVariant": payload.demoVariant}
         session.commit()
-        job = create_job(audit_id, run.id)
+        job = create_job(audit_id, run.id, source="website")
         background.add_task(
             capture_and_analyze_url, job.jobId, run.id,
             audit_id=audit_id, url=str(payload.url), profiles=profiles,
@@ -276,7 +294,7 @@ def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundT
 
 
 @app.post("/api/v1/audits/{audit_id}/figma", response_model=JobDto, status_code=202)
-def import_figma(audit_id: str, payload: ImportFigmaRequest, background: BackgroundTasks) -> JobDto:
+def import_figma(audit_id: str, payload: ImportFigmaRequest, background: BackgroundTasks, owner_id: str = Depends(require_owner)) -> JobDto:
     try:
         parse_figma_url(str(payload.fileUrl))
     except InvalidFigmaUrlError:
@@ -284,14 +302,14 @@ def import_figma(audit_id: str, payload: ImportFigmaRequest, background: Backgro
 
     with SessionLocal() as session:
         try:
-            audit = get_audit(session, audit_id)
+            audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
         run = next_run(session, audit.id, f"Figma: {payload.fileUrl}")
         if payload.demoVariant and audit.demo_preset:
             run.analysis_summary = {"demoVariant": payload.demoVariant}
         session.commit()
-        job = create_job(audit_id, run.id)
+        job = create_job(audit_id, run.id, source="figma")
         background.add_task(
             import_and_analyze_figma, job.jobId, run.id, audit_id=audit_id, request=payload
         )
@@ -305,6 +323,7 @@ async def analyze_mobile_app(
     app_file: UploadFile = File(..., alias="app"),
     goal: str | None = Form(default=None),
     demo_variant: DemoVariant | None = Form(default=None),
+    owner_id: str = Depends(require_owner),
 ) -> JobDto:
     try:
         AndroidRunnerSettings.from_env()
@@ -343,7 +362,7 @@ async def analyze_mobile_app(
 
         with SessionLocal() as session:
             try:
-                audit = get_audit(session, audit_id)
+                audit = get_audit(session, audit_id, owner_id)
             except KeyError:
                 raise HTTPException(404, "Audit not found")
             run = next_run(session, audit.id, f"Android APK: {app_file.filename}")
@@ -355,7 +374,7 @@ async def analyze_mobile_app(
             temporary_path.replace(apk_path)
             temporary_path = None
             session.commit()
-            job = create_job(audit_id, run.id)
+            job = create_job(audit_id, run.id, source="android")
             background.add_task(
                 capture_and_analyze_android,
                 job.jobId,
@@ -371,22 +390,28 @@ async def analyze_mobile_app(
 
 
 @app.get("/api/v1/analysis-jobs/{job_id}", response_model=JobDto)
-def analysis_job(job_id: str) -> JobDto:
+def analysis_job(job_id: str, owner_id: str = Depends(require_owner)) -> JobDto:
     try:
-        return get_job(job_id)
+        job = get_job(job_id)
+        with SessionLocal() as session:
+            audit = get_audit(session, job.auditId, owner_id)
+            job.demo = bool(audit.demo_preset)
+            for event in job.explorationEvents:
+                event.imageUrl = sign_image(audit, event.imageUrl)
+        return job
     except KeyError:
         raise HTTPException(404, "Job not found")
 
 
 @app.patch("/api/v1/findings/{finding_id}")
-def update_finding(finding_id: str, payload: FindingStatusRequest) -> dict[str, str]:
+def update_finding(finding_id: str, payload: FindingStatusRequest, owner_id: str = Depends(require_owner)) -> dict[str, str]:
     try:
         pk = int(finding_id.rsplit("-", 1)[-1])
     except ValueError:
         raise HTTPException(404, "Finding not found")
     with SessionLocal() as session:
         finding = session.get(Finding, pk)
-        if finding is None:
+        if finding is None or finding.run.audit.owner_id != owner_id:
             raise HTTPException(404, "Finding not found")
         finding.status = FindingStatus(payload.status.upper())
         touch_audit(session, finding.run.audit_id)
@@ -395,14 +420,14 @@ def update_finding(finding_id: str, payload: FindingStatusRequest) -> dict[str, 
 
 
 @app.put("/api/v1/findings/{finding_id}/decision", response_model=FindingDecisionDto)
-def save_finding_decision(finding_id: str, payload: FindingDecisionRequest) -> FindingDecisionDto:
+def save_finding_decision(finding_id: str, payload: FindingDecisionRequest, owner_id: str = Depends(require_owner)) -> FindingDecisionDto:
     try:
         pk = int(finding_id.rsplit("-", 1)[-1])
     except ValueError:
         raise HTTPException(404, "Finding not found")
     with SessionLocal() as session:
         finding = session.get(Finding, pk)
-        if finding is None:
+        if finding is None or finding.run.audit.owner_id != owner_id:
             raise HTTPException(404, "Finding not found")
         updated_at = utcnow()
         finding.decision_note = payload.decisionNote.strip()

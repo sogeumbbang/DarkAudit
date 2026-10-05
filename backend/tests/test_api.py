@@ -660,7 +660,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
 
     def test_da15_primary_bbox_is_kept_on_final_evidence_screen(self) -> None:
         with service.SessionLocal() as session:
-            audit = Audit(name="Sequential pricing", product_name="mobile-web")
+            audit = Audit(name="Sequential pricing", product_name="mobile-web", owner_id=self.owner_id)
             run = AuditRun(version=1, status=RunStatus.DONE)
             audit.runs.append(run)
             run.screens.extend([

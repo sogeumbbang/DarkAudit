@@ -37,7 +37,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
         return run
 
     def make_audit(self, session):
-        audit = Audit(name="Six-screen recheck", product_name="mobile-web")
+        audit = Audit(name="Six-screen recheck", product_name="mobile-web", owner_id=self.owner_id)
         self.make_run(audit, 1, RULES)
         self.make_run(audit, 2, [])
         session.add(audit)

@@ -8,6 +8,8 @@
   margin-bottom: 32px;
 }
 .dashboard-focus-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
   align-self: center;
   padding: 40px;
 }
@@ -115,6 +117,26 @@
 }
 .dashboard-records {
   margin-top: 48px;
+}
+.dashboard-record-cards {
+  display: none;
+}
+@container workspace (max-width: 760px) {
+  .dashboard-focus {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-focus-preview img {
+    height: 280px;
+  }
+  .dashboard-record-table {
+    display: none;
+  }
+  .dashboard-record-cards {
+    display: block;
+    background: var(--color-surface);
+    border-radius: 20px;
+    padding-inline: 20px;
+  }
 }
 .dashboard-records > div:first-child {
   padding-top: 0;

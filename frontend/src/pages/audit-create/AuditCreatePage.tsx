@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { z } from "zod";
 
 import { AnalysisProgress } from "@/pages/audit-create/AnalysisProgress";
+import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
 
 import { PageHeading } from "@/components/common/PageHeading";
 import "./audit-create.css";
@@ -70,7 +71,7 @@ export function AuditCreatePage() {
   const demoInputs = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
   const selectedDemo = demoInputs.data?.cases.find((item) => item.id === demoScenario);
   const selectedVariant = selectedDemo?.variants.find((item) => item.id === demoVariant);
-  const [jobId, setJobId] = useState<string>();
+  const [jobId, setJobId] = usePersistedJob();
   const [auditId, setAuditId] = useState<string>();
   const screenInputRef = useRef<HTMLInputElement>(null);
   const appInputRef = useRef<HTMLInputElement>(null);
@@ -412,13 +413,22 @@ export function AuditCreatePage() {
     return (
       <AnalysisProgress
         key={jobId}
-        source={source}
-        demo={Boolean(activeDemo)}
-        auditId={auditId}
+        source={analysis.data?.source ?? source}
+        demo={analysis.data?.demo ?? Boolean(activeDemo)}
+        auditId={analysis.data?.auditId ?? auditId}
         progress={analysis.data?.progress ?? 5}
         completed={analysis.data?.status === "completed"}
         failed={analysis.data?.status === "failed" || analysis.isError}
-        error={analysis.data?.error}
+        error={analysis.data?.error ?? analysis.error?.message}
+        exploration={
+          (analysis.data?.source ?? source) === "website"
+            ? {
+                mode: analysis.data?.explorationMode ?? scanMode,
+                stage: analysis.data?.explorationStage,
+                events: analysis.data?.explorationEvents ?? [],
+              }
+            : undefined
+        }
         onBack={() => setJobId(undefined)}
       />
     );

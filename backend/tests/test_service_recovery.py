@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 from sqlalchemy import create_engine
@@ -31,7 +33,7 @@ class InterruptedRunRecoveryTest(unittest.TestCase):
             session.add(audit)
             session.commit()
 
-        with patch.object(service, "SessionLocal", sessions):
+        with tempfile.TemporaryDirectory() as directory, patch.object(service, "DATA_DIR", Path(directory)), patch.object(service, "SessionLocal", sessions):
             self.assertEqual(service.recover_interrupted_runs(), 2)
 
         with sessions() as session:

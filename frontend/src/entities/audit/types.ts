@@ -114,6 +114,7 @@ export type AuditDto = {
   findings: FindingDto[];
   runs?: AuditRunDto[];
   latestRunId?: string | null;
+  latestJobId?: string | null;
   analysisSummary?: AnalysisSummary;
 };
 
@@ -156,6 +157,19 @@ export type AnalyzeAndroidAppDto = {
   goal?: string;
 };
 
+export type ExplorationEventDto = {
+  id: number;
+  kind: "capture" | "action" | "result" | "complete" | "stopped";
+  label: string;
+  profile: string;
+  imageUrl: string;
+  width: number;
+  height: number;
+  fullPage: boolean;
+  x?: number | null;
+  y?: number | null;
+};
+
 export type AnalysisJobDto = {
   jobId: string;
   auditId: string;
@@ -163,4 +177,9 @@ export type AnalysisJobDto = {
   progress: number;
   runId?: string | null;
   error?: string | null;
+  source?: "screenshots" | "website" | "figma" | "android";
+  demo?: boolean;
+  explorationMode?: "quick" | "smart" | null;
+  explorationStage?: "capturing" | "analyzing" | "completed" | "failed" | null;
+  explorationEvents?: ExplorationEventDto[];
 };

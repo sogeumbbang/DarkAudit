@@ -14,6 +14,7 @@ MemoryStore 를 대체한다. 서버가 재시작되어도 감사 결과가 남�
 from __future__ import annotations
 
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,7 +52,15 @@ def init_db() -> None:
         path = DB_URL.replace("sqlite:///", "")
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     Base.metadata.create_all(_engine)
+    with _engine.begin() as connection:
+        connection.execute(text("""INSERT INTO audit_sequence (id, value)
+            SELECT 1, (SELECT COALESCE(MAX(id), 0) FROM audit)
+            WHERE NOT EXISTS (SELECT 1 FROM audit_sequence WHERE id = 1)"""))
     audit_columns = {column["name"] for column in inspect(_engine).get_columns("audit")}
+    for column, sql_type in (("owner_id", "VARCHAR(64)"), ("artifact_secret", "VARCHAR(64)")):
+        if column not in audit_columns:
+            with _engine.begin() as connection:
+                connection.execute(text(f"ALTER TABLE audit ADD COLUMN {column} {sql_type}"))
     if "updated_at" not in audit_columns:
         with _engine.begin() as connection:
             connection.execute(text("ALTER TABLE audit ADD COLUMN updated_at TIMESTAMP"))
@@ -78,6 +87,15 @@ def init_db() -> None:
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def allocate_audit_id(session: Session) -> int:
+    # Also accommodate legacy/imported rows above the counter. The update and
+    # audit insert share a transaction, including on migrated SQLite databases.
+    return session.execute(text("""UPDATE audit_sequence SET value = CASE
+        WHEN value < (SELECT COALESCE(MAX(id), 0) FROM audit)
+        THEN (SELECT COALESCE(MAX(id), 0) FROM audit) + 1 ELSE value + 1 END
+        WHERE id = 1 RETURNING value""")).scalar_one()
 
 
 def aware(value: datetime) -> datetime:
@@ -250,6 +268,8 @@ def to_finding_dto(
 
 
 def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
+    from .access import sign_image
+    from . import jobs
     run = latest_completed_run(audit)
 
     screens_src = run.screens if run else (audit.runs[-1].screens if audit.runs else [])
@@ -276,7 +296,7 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
             id=screen_ext_id[s.id],
             order=s.screen_index,
             flowStep=s.flow_step or f"화면 {s.screen_index}",
-            imageUrl=s.image_path or "",
+            imageUrl=sign_image(audit, s.image_path or ""),
             findingCount=count_by_screen.get(screen_ext_id[s.id], 0),
             width=s.viewport_w,
             height=s.viewport_h,
@@ -312,6 +332,7 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
         findings=findings,
         runs=run_dtos,
         latestRunId=f"run-{run.id}" if run else None,
+        latestJobId=jobs.latest(DATA_DIR, f"audit-{audit.id}"),
         demoPreset=audit.demo_preset,
         demoVariant=(audit.runs[-1].analysis_summary or {}).get("demoVariant") if audit.runs else None,
         analysisSummary=(run.analysis_summary or {}) if run else (
@@ -363,17 +384,20 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
 def audit_pk(audit_id: str) -> int:
     """외부 id(audit-123) → 내부 PK."""
     try:
+        if not re.fullmatch(r"audit-[1-9][0-9]*", audit_id):
+            raise ValueError("Noncanonical audit ID")
         return int(audit_id.rsplit("-", 1)[-1])
     except ValueError as exc:
         raise KeyError(audit_id) from exc
 
 
-def get_audit(session: Session, audit_id: str) -> Audit:
+def get_audit(session: Session, audit_id: str, owner_id: str | None = None) -> Audit:
     a = session.get(Audit, audit_pk(audit_id))
-    if a is None:
+    if a is None or (owner_id is not None and a.owner_id != owner_id):
         raise KeyError(audit_id)
     return a
 
 
-def list_audits(session: Session) -> list[Audit]:
-    return list(session.scalars(select(Audit).order_by(Audit.updated_at.desc(), Audit.id.desc())))
+def list_audits(session: Session, owner_id: str) -> list[Audit]:
+    return list(session.scalars(select(Audit).where(Audit.owner_id == owner_id)
+                               .order_by(Audit.updated_at.desc(), Audit.id.desc())))

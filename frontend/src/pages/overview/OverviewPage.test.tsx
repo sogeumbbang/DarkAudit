@@ -436,9 +436,19 @@ describe("OverviewPage", () => {
       pointerId: 2,
       pointerType: "touch",
     });
-    expect(previewViewport).toHaveClass("cursor-grabbing");
+    expect(previewViewport).toHaveClass("cursor-grab");
+    expect(previewViewport).toHaveStyle({ touchAction: "pan-y pinch-zoom" });
     fireEvent.pointerUp(previewViewport, { pointerId: 2, pointerType: "touch" });
     await user.click(screen.getByRole("button", { name: "확대" }));
+    expect(previewViewport).toHaveStyle({ touchAction: "none" });
+    fireEvent.pointerDown(previewViewport, {
+      pointerId: 2,
+      pointerType: "touch",
+      clientX: 100,
+      clientY: 100,
+    });
+    expect(previewViewport).toHaveClass("cursor-grabbing");
+    fireEvent.pointerUp(previewViewport, { pointerId: 2, pointerType: "touch" });
     expect(previewViewport).toHaveClass("overflow-auto");
     expect(previewViewport).toHaveClass("cursor-grab");
     expect(screen.getByLabelText("미리보기 배율")).not.toHaveTextContent("100%");

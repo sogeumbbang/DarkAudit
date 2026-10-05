@@ -99,6 +99,7 @@ export const auditSchema = z.object({
     )
     .optional(),
   latestRunId: z.string().nullable().optional(),
+  latestJobId: z.string().nullable().optional(),
   analysisSummary: z
     .object({
       complete: z.boolean().optional(),
@@ -140,6 +141,26 @@ export const analysisJobSchema = z.object({
   progress: z.number().min(0).max(100),
   runId: z.string().nullable().optional(),
   error: z.string().nullable().optional(),
+  source: z.enum(["screenshots", "website", "figma", "android"]).optional(),
+  demo: z.boolean().optional(),
+  explorationMode: z.enum(["quick", "smart"]).nullable().optional(),
+  explorationStage: z.enum(["capturing", "analyzing", "completed", "failed"]).nullable().optional(),
+  explorationEvents: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        kind: z.enum(["capture", "action", "result", "complete", "stopped"]),
+        label: z.string(),
+        profile: z.string(),
+        imageUrl: z.string(),
+        width: z.number().positive(),
+        height: z.number().positive(),
+        fullPage: z.boolean(),
+        x: z.number().min(0).max(1).nullable().optional(),
+        y: z.number().min(0).max(1).nullable().optional(),
+      }),
+    )
+    .optional(),
 });
 
 const regressionChangeSchema = z.object({

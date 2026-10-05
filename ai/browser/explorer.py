@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from .base import BrowserSessionFactory, ComputerAgent
-from .models import BrowserActionType, CaptureArtifact, CaptureResult, ScanMode
+from .models import BrowserActionType, CaptureArtifact, CaptureResult, ExplorationEvent, ScanMode
 from .profiles import DeviceProfile
 from .safety import ActionSafetyPolicy, UnsafeActionError, UnsafeUrlError
 
@@ -16,6 +18,7 @@ class HybridWebExplorer:
         computer_agent: ComputerAgent | None = None,
         action_policy: ActionSafetyPolicy | None = None,
         max_agent_turns: int = 12,
+        on_event: Callable[[ExplorationEvent], None] | None = None,
     ) -> None:
         if max_agent_turns < 1:
             raise ValueError("max_agent_turns must be at least 1")
@@ -23,6 +26,11 @@ class HybridWebExplorer:
         self.computer_agent = computer_agent
         self.action_policy = action_policy or ActionSafetyPolicy()
         self.max_agent_turns = max_agent_turns
+        self.on_event = on_event
+
+    def _emit(self, event: ExplorationEvent) -> None:
+        if self.on_event is not None:
+            self.on_event(event)
 
     def capture(
         self,
@@ -39,10 +47,13 @@ class HybridWebExplorer:
         with self.session_factory(audit_id, profile) as session:
             initial = session.start(url)
             self._append_unique(artifacts, initial)
+            self._emit(ExplorationEvent("capture", initial))
 
             if mode is ScanMode.QUICK:
                 full_page = session.capture("full page", full_page=True)
                 self._append_unique(artifacts, full_page)
+                self._emit(ExplorationEvent("capture", full_page))
+                self._emit(ExplorationEvent("complete", full_page, reason=stop_reason))
                 return CaptureResult(audit_id, profile.name, mode, tuple(artifacts), stop_reason)
 
             if self.computer_agent is None:
@@ -68,7 +79,7 @@ class HybridWebExplorer:
                     action for action in turn.actions if action.type is not BrowserActionType.SCREENSHOT
                 ]
                 try:
-                    for action in actionable:
+                    for action_index, action in enumerate(actionable, 1):
                         target = session.inspect_target(action) if action.type is BrowserActionType.CLICK else None
                         self.action_policy.validate(
                             action,
@@ -76,17 +87,18 @@ class HybridWebExplorer:
                             viewport_height=profile.viewport_height,
                             target=target,
                         )
+                        # Coordinates refer to the screen BEFORE the action.
+                        self._emit(ExplorationEvent("action", current, action))
                         session.execute(action)
+                        current = session.capture(
+                            f"agent step {turn_index}.{action_index}", action=action,
+                        )
+                        self._append_unique(artifacts, current)
+                        self._emit(ExplorationEvent("result", current))
                 except (UnsafeActionError, UnsafeUrlError) as exc:
                     stop_reason = f"safety policy stopped exploration: {exc}"
                     break
 
-                if actionable:
-                    current = session.capture(
-                        f"agent step {turn_index}",
-                        action=actionable[-1],
-                    )
-                    self._append_unique(artifacts, current)
                 turn = self.computer_agent.resume(turn, current.image_path)
                 # A completion returned on the final allowed turn is still a
                 # completed exploration, not an exhausted budget.
@@ -97,8 +109,12 @@ class HybridWebExplorer:
             try:
                 final_page = session.capture("final full page", full_page=True)
                 self._append_unique(artifacts, final_page)
+                self._emit(ExplorationEvent("capture", final_page))
             except UnsafeUrlError as exc:
                 stop_reason = f"safety policy stopped exploration: {exc}"
+
+            kind = "complete" if stop_reason == "Computer Use completed exploration" else "stopped"
+            self._emit(ExplorationEvent(kind, current, reason=stop_reason))
 
         return CaptureResult(audit_id, profile.name, mode, tuple(artifacts), stop_reason)
 

@@ -42,7 +42,6 @@ class IsolatedApiTestCase(unittest.TestCase):
             resources.enter_context(patch.object(module, "SessionLocal", sessions))
         resources.enter_context(patch.object(store, "_engine", engine))
         resources.enter_context(patch.object(store, "DB_URL", url))
-        resources.enter_context(patch.object(service, "_jobs", {}))
         for module in (main, service, store):
             for key, suffix in [
                 ("DATA_DIR", ""),
@@ -55,10 +54,8 @@ class IsolatedApiTestCase(unittest.TestCase):
                     directory = root / suffix
                     directory.mkdir(exist_ok=True)
                     resources.enter_context(patch.object(module, key, directory))
-        for route in main.app.routes:
-            if getattr(route, "path", None) == "/artifacts":
-                resources.enter_context(patch.object(route.app, "directory", str(root)))
-                resources.enter_context(
-                    patch.object(route.app, "all_directories", [str(root)])
-                )
         self.client = resources.enter_context(TestClient(main.app))
+        self.token = self.client.post("/api/v1/sessions").json()["token"]
+        self.client.headers["Authorization"] = f"Bearer {self.token}"
+        from backend.api.access import require_owner
+        self.owner_id = require_owner(f"Bearer {self.token}")

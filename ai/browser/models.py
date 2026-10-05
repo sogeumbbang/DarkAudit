@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 class ScanMode(str, Enum):
@@ -125,6 +125,14 @@ class CaptureArtifact:
             "pathId": self.path_id,
             "warnings": list(self.warnings),
         }
+
+
+@dataclass(frozen=True, slots=True)
+class ExplorationEvent:
+    kind: Literal["capture", "action", "result", "complete", "stopped"]
+    artifact: CaptureArtifact
+    action: BrowserAction | None = None
+    reason: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

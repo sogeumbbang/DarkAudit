@@ -136,6 +136,105 @@
   border: 0;
   border-radius: 16px;
 }
+.exploration-viewer {
+  container: exploration / inline-size;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+.exploration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+}
+.exploration-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  height: 460px;
+  padding: 18px;
+  overflow: auto;
+  background: #e8edf0;
+}
+.exploration-frame {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  line-height: 0;
+  box-shadow: 0 6px 28px #18313f1a;
+}
+.exploration-frame img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+.exploration-pointer {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #214fdd;
+  color: white;
+  box-shadow: 0 0 0 6px #214fdd33;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.exploration-history {
+  border-left: 1px solid var(--color-border);
+}
+.exploration-events {
+  position: relative;
+  max-height: 506px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+}
+.exploration-event {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+.exploration-event:hover {
+  background: var(--workspace-blue);
+}
+.exploration-event.is-selected {
+  border-color: #214fdd44;
+  background: var(--workspace-blue);
+}
+@container exploration (max-width: 720px) {
+  .exploration-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .exploration-history {
+    border-left: 0;
+  }
+  .exploration-events {
+    max-height: 210px;
+  }
+  .exploration-screen {
+    height: clamp(240px, 48dvh, 420px);
+    min-height: 240px;
+    padding: 12px;
+  }
+  .exploration-frame img {
+    max-height: min(396px, max(216px, calc(48dvh - 24px)));
+  }
+}
+.exploration-history button {
+  min-height: 44px;
+}
 @media (max-width: 1199px) {
   .audit-create-form {
     grid-template-columns: minmax(0, 1fr);
@@ -165,6 +264,23 @@
     width: 100%;
   }
   .analysis-progress-surface {
-    padding: 32px 20px;
+    padding: 24px 12px;
+  }
+  .analysis-progress-page {
+    padding-top: 0;
+  }
+  .analysis-progress-emblem {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+  .analysis-progress-emblem svg {
+    width: 30px;
+    height: 30px;
+  }
+  .analysis-progress-surface h1 {
+    font-size: 24px;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
   }
 }

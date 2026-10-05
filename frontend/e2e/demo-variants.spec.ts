@@ -21,7 +21,7 @@ test("runs original, partial and revised demos in the same audit", async ({ page
   await expect(
     page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
   ).toBeVisible();
-  expect(page.url()).toBe(originalAuditUrl);
+  expect(new URL(page.url()).pathname).toBe(new URL(originalAuditUrl).pathname);
   await page.screenshot({ path: testInfo.outputPath("demo-updates.png"), fullPage: true });
   const results = await new AxeBuilder({ page }).analyze();
   expect(
@@ -85,7 +85,7 @@ for (const source of ["Figma", "APK", "URL"]) {
       await expect(
         page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
       ).toBeVisible();
-      expect(page.url()).toBe(originalAuditUrl);
+      expect(new URL(page.url()).pathname).toBe(new URL(originalAuditUrl).pathname);
     }
     await page.screenshot({ path: testInfo.outputPath(`${source}-recheck.png`), fullPage: true });
     await page.getByRole("link", { name: "전후 비교 보기" }).click();

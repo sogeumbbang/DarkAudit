@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto } from "@/entities/audit/types";
 import { useAnalysisStatus } from "@/features/audit-create/useAuditWorkflow";
+import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
 import { dashboardKeys, useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
 import { DemoRecheckPanel } from "./DemoRecheckPanel";
 
@@ -18,7 +19,7 @@ function RecheckForm({ audit }: { audit: AuditDto }) {
   const [uploaded, setUploaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [jobId, setJobId] = useState<string>();
+  const [jobId, setJobId] = usePersistedJob("recheckJob");
   const lock = useRef(false);
   const queryClient = useQueryClient();
   const job = useAnalysisStatus(jobId);

@@ -24,6 +24,7 @@
   color: var(--color-text);
 }
 .workspace-main {
+  container: workspace / inline-size;
   max-width: 1560px;
   margin-inline: auto;
   padding: 30px 48px 100px;
@@ -54,6 +55,57 @@
 }
 .workspace-sidebar {
   border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.workspace-mobile-menu {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+.workspace-mobile-menu::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.workspace-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.workspace-menu-panel {
+  position: relative;
+  width: min(280px, calc(100% - 48px));
+  height: 100%;
+}
+.workspace-menu-panel .workspace-sidebar {
+  width: 100%;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+.workspace-menu-close {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--color-surface);
+}
+.workspace-mobile-header > button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 .workspace-sidebar > div:first-child {
   padding-inline: 4px;
@@ -148,6 +200,42 @@
   font-weight: 600;
   letter-spacing: -0.04em;
 }
+.workspace-chat {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  max-height: min(
+    640px,
+    calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))
+  );
+}
+.workspace-chat-launcher {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: max(16px, env(safe-area-inset-right));
+}
+@media (min-width: 640px) {
+  .workspace-chat-launcher {
+    bottom: max(20px, env(safe-area-inset-bottom));
+    right: max(20px, env(safe-area-inset-right));
+  }
+}
+.workspace-chat > header,
+.workspace-chat > form {
+  flex-shrink: 0;
+}
+.workspace-chat button {
+  min-height: 44px;
+}
+.workspace-chat button[aria-label] {
+  min-width: 44px;
+  flex-shrink: 0;
+}
+@media (max-width: 639px) {
+  .workspace-chat > header {
+    padding: 16px;
+  }
+  .workspace-chat > header p {
+    display: none;
+  }
+}
 /* Keep the review canvas theme local to the overview route. */
 .workspace--overview {
   --color-background: #f3f6f8;
@@ -204,7 +292,8 @@
     padding-bottom: 16px;
   }
   .workspace-main {
-    padding: 20px 20px 100px;
+    padding: 20px max(16px, env(safe-area-inset-right)) max(80px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
   }
   .workspace-topbar {
     display: none;
@@ -226,5 +315,13 @@
   }
   .workspace-heading-action {
     width: 100%;
+  }
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .workspace input:not([type="checkbox"]):not([type="radio"]),
+  .workspace select,
+  .workspace textarea {
+    font-size: 16px;
   }
 }

@@ -22,8 +22,17 @@ The frontend currently calls:
 - `GET /api/v1/analysis-jobs/{jobId}`
 - `PATCH /api/v1/findings/{findingId}`
 
-Requests include cookies and, when available, the `darkaudit.accessToken` session-storage value as
-a Bearer token. Upload requests use a two-minute timeout; other requests use 30 seconds.
+The first private API request creates a browser workspace through `POST /api/v1/sessions`.
+Its opaque bearer token is stored in localStorage, scoped to the configured API URL; cookies
+are not used. Reloads and later visits in the same browser retain access. Clearing browser
+storage removes that access key; a newly created workspace cannot access the old records.
+This is browser workspace isolation, not an account login or cross-device identity system.
+Upload requests use a two-minute timeout; other requests use 30 seconds.
+
+Audit image responses contain signatures scoped to one image and expiring at the next UTC
+midnight. Database files, APK uploads and manifests are never served through `/artifacts`.
+Reopen the audit to renew image links. The `?job=...` address reconnects to a persisted job;
+the audit list also links to its latest job. Interrupted jobs retain their collected history.
 
 After FastAPI is running on port 8000, regenerate its TypeScript contract with:
 
