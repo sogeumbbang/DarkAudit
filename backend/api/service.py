@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from sqlalchemy import select
 
 from ai.browser.explorer import HybridWebExplorer
+from ai.schemas.audit_schema import MAX_ANALYSIS_SCREENS
 from ai.browser.models import CaptureArtifact, ExplorationEvent, ScanMode
 from ai.browser.playwright_driver import PlaywrightSessionFactory
 from ai.pipeline.baseline import MVP_RULE_IDS, BaselineAuditPipeline
@@ -44,6 +45,7 @@ from backend.app.rule_engine.severity import ScoredFinding
 from backend.app.rule_engine.severity import score as score_rule_findings
 
 from .schemas import ExplorationEventDto, JobDto
+from .demo_capture import demo_entry_screens
 from .store import SessionLocal, new_id, touch_audit
 from . import jobs
 
@@ -119,6 +121,7 @@ def _record_exploration(job_id: str, event: ExplorationEvent) -> None:
         label = {
             "click": "클릭 실행", "scroll": "스크롤 실행", "wait": "화면 대기",
             "keypress": "탐색 키 실행", "move": "포인터 이동",
+            "double_click": "더블 클릭 실행", "type": "텍스트 입력", "drag": "드래그 실행",
         }.get(action.type.value if action else "", "동작 실행")
     elif event.kind == "stopped":
         label = (
@@ -138,6 +141,9 @@ def _record_exploration(job_id: str, event: ExplorationEvent) -> None:
             fullPage=artifact.full_page,
             x=action.x / artifact.viewport_width if action and action.x is not None else None,
             y=action.y / artifact.viewport_height if action and action.y is not None else None,
+            actionType=action.type.value if action else None,
+            scrollX=action.scroll_x if action and action.type.value == "scroll" else None,
+            scrollY=action.scroll_y if action and action.type.value == "scroll" else None,
         ))
         # Bound the polling response and memory even if an agent returns many actions.
         del events[:-240]
@@ -186,7 +192,7 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
         groups = (run.analysis_summary or {}).get("paths") or [[s.screen_index for s, _ in ordered]]
         lookup = {s.screen_index: (s, p) for s, p in ordered}
         for group in groups:
-            if len(group) > 5:
+            if len(group) > MAX_ANALYSIS_SCREENS:
                 run.analysis_summary = {**(run.analysis_summary or {}), "warnings": [
                     *(run.analysis_summary or {}).get("warnings", []), "long_flow_comparison_limited"]}
             for positions in batch_indices(len(group)):
@@ -238,8 +244,15 @@ def capture_and_analyze_url(
             audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
         )
         _update_job(job_id, explorationStage="analyzing", progress=55)
-        selected = prepare_analysis_artifacts(capture.artifacts)
-        persisted = list(capture.artifacts)
+        with SessionLocal() as session:
+            run = session.get(AuditRun, run_id)
+            demo_requested = bool(run and (run.audit.demo_preset or {}).get("source") == "website")
+            canonical = demo_entry_screens(capture.artifacts, url, run.audit.demo_preset,
+                                           (run.analysis_summary or {}).get("demoVariant")) if run else None
+        selected = prepare_analysis_artifacts(canonical or capture.artifacts)
+        # All live frames remain in the job history. Demo comparisons use the
+        # six actual first-entry captures, not an agent-dependent action count.
+        persisted = list(canonical or capture.artifacts)
         persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
         for artifact in selected:
             if artifact.image_path.resolve() not in persisted_paths:
@@ -251,6 +264,7 @@ def capture_and_analyze_url(
                 raise ValueError("Capture run no longer exists")
             screens: list[Screen] = []
             screen_by_path: dict[Path, Screen] = {}
+            selected_paths = {a.image_path.resolve() for a in selected}
             for index, artifact in enumerate(persisted, 1):
                 screen = Screen(
                     flow_type=FlowType.join,
@@ -259,6 +273,11 @@ def capture_and_analyze_url(
                     image_path=public_image_path(artifact.image_path),
                     viewport_w=artifact.viewport_width,
                     viewport_h=artifact.viewport_height,
+                    analysis_context={
+                        "profile": artifact.profile, "path_id": artifact.path_id,
+                        "state_id": artifact.state_id, "analysis_screen_id": artifact.screen_id,
+                        "analysis_included": artifact.image_path.resolve() in selected_paths,
+                    },
                 )
                 run.screens.append(screen)
                 screens.append(screen)
@@ -278,7 +297,11 @@ def capture_and_analyze_url(
                 f"{p.profile}: {p.stop_reason}" for p in capture.profiles
                 if p.stop_reason != "Computer Use completed exploration"
             ]}
-            if any(sum(a.profile == b.profile and a.path_id == b.path_id for b in selected) > 5 for a in selected):
+            if canonical:
+                run.analysis_summary = {**run.analysis_summary, "comparisonScope": "demo-step-entry"}
+            elif demo_requested:
+                run.analysis_summary["warnings"].append("demo_journey_incomplete")
+            if any(sum(a.profile == b.profile and a.path_id == b.path_id for b in selected) > MAX_ANALYSIS_SCREENS for a in selected):
                 run.analysis_summary = {**run.analysis_summary, "warnings": [
                     *run.analysis_summary["warnings"], "long_flow_comparison_limited"]}
             for batch in analysis_batches(selected):

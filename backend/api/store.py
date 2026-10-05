@@ -356,13 +356,26 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
     from_id_by_fp = {f.fingerprint: f.id for f in (from_run.findings if from_run else [])}
     to_id_by_fp = {f.fingerprint: f.id for f in (to_run.findings if to_run else [])}
 
-    def change_dto(change, id_by_fp: dict[str, int]) -> RegressionChangeDto:
+    def change_dto(change, id_by_fp: dict[str, int], *, pending: bool = False) -> RegressionChangeDto:
         finding_id = id_by_fp.get(change.fingerprint)
+        finding = session.get(Finding, finding_id) if finding_id is not None else None
+        evidence = finding.evidence if finding else None
+        note = None
+        if pending:
+            reasons = []
+            for run in (from_run, to_run):
+                for assessment in (run.analysis_summary or {}).get("ruleAssessments", []) if run else []:
+                    if assessment.get("ruleId") == change.rule_id and assessment.get("status") in {"insufficient_evidence", "not_supported"}:
+                        reasons.extend(f"v{run.version}: {reason}" for reason in assessment.get("reasons", []))
+            note = " ".join(dict.fromkeys(reasons or report.limitations)) or None
         return RegressionChangeDto(
             ruleId=change.rule_id,
             findingId=f"finding-{finding_id}" if finding_id is not None else None,
             before=change.before.value if change.before else None,
             after=change.after.value if change.after else None,
+            location=evidence.where_text if evidence else None,
+            element=evidence.what_text if evidence else None,
+            verificationNote=note,
         )
 
     return RegressionDto(
@@ -374,10 +387,13 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
         persisted=[change_dto(c, to_id_by_fp) for c in report.persisted],
         new=[change_dto(c, to_id_by_fp) for c in report.new],
         regressed=[change_dto(c, to_id_by_fp) for c in report.regressed],
-        pending=[change_dto(c, from_id_by_fp) for c in report.pending],
+        pending=[change_dto(c, from_id_by_fp, pending=True) for c in report.pending],
         limitations=report.limitations,
         comparisonStatus="incomplete" if report.limitations else "complete",
         resolvedRatio=round(report.resolved_ratio, 3) if report.resolved_ratio is not None else None,
+        scopeDescription=("각 데모 단계에 처음 진입한 6개 화면끼리 비교합니다. 추가 클릭·스크롤은 탐색 기록에서 확인할 수 있습니다."
+                          if all(run and (run.analysis_summary or {}).get("comparisonScope") == "demo-step-entry"
+                                 for run in (from_run, to_run)) else None),
     )
 
 

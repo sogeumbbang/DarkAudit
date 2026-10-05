@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import AuditRun, Finding, FindingStatus, RunStatus, Severity
+from .models import AuditRun, Finding, FindingStatus, RunStatus, Screen, Severity
 
 SEVERITY_ORDER = {Severity.LOW: 0, Severity.REVIEW: 1, Severity.HIGH: 2}
 SCREEN_LOCAL_RULES = {"DA-03", "DA-04", "DA-07", "DA-12"}
@@ -109,7 +109,7 @@ def _scope_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
         summary = run.analysis_summary or {}
         if run.status != RunStatus.DONE:
             limitations.append(f"v{run.version}: 분석이 완료되지 않았습니다.")
-        if not run.screens or summary.get("analyzedScreenCount") != len(run.screens):
+        if not _analysis_screens(run) or summary.get("analyzedScreenCount") != len(_analysis_screens(run)):
             limitations.append(f"v{run.version}: 전체 화면의 분석 완료를 확인할 수 없습니다.")
 
     def screen_scope(run: AuditRun) -> list[tuple]:
@@ -117,7 +117,7 @@ def _scope_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
             (screen.screen_index, screen.flow_type, screen.flow_step,
              (screen.analysis_context or {}).get("profile"),
              (screen.analysis_context or {}).get("path_id"))
-            for screen in run.screens
+            for screen in _analysis_screens(run)
         ]
 
     if screen_scope(previous) != screen_scope(current):
@@ -127,6 +127,13 @@ def _scope_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
     ):
         limitations.append("두 회차의 지원 규칙이 달라 해결 여부를 확인할 수 없습니다.")
     return list(dict.fromkeys(limitations))
+
+
+def _analysis_screens(run: AuditRun) -> list[Screen]:
+    # A full-page source replaced by exhaustive readable crops is retained for
+    # inspection, but is not an extra unexamined screen in the coverage count.
+    return [screen for screen in run.screens
+            if (screen.analysis_context or {}).get("analysis_included") is not False]
 
 
 def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
@@ -144,24 +151,33 @@ def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
     return list(dict.fromkeys(limitations))
 
 
-def _verified_local_rule(run: AuditRun, rule_id: str) -> bool:
-    """Only the long-flow limitation can be isolated from screen-local checks.
+def _verified_rule(run: AuditRun, rule_id: str) -> bool:
+    """Verify each rule independently when collection and scope are intact.
 
     Require explicit assessment coverage for every stored screen, including
     overlapping batches. A clean batch must never mask missing evidence in another.
-    Price comparisons remain conservative because they span distant screens.
+    A different rule being inconclusive does not invalidate this rule.
+    Price comparisons remain conservative when a journey was split across batches.
     """
-    if rule_id not in SCREEN_LOCAL_RULES:
-        return False
     summary = run.analysis_summary or {}
     warnings = set(summary.get("warnings", []))
-    if warnings - {LONG_FLOW_WARNING}:
+    if warnings - {LONG_FLOW_WARNING} or (rule_id not in SCREEN_LOCAL_RULES and LONG_FLOW_WARNING in warnings):
         return False
-    if summary.get("complete") is not True and warnings != {LONG_FLOW_WARNING}:
+    if summary.get("complete") is not True and not warnings and not any(
+        assessment.get("status") in {"insufficient_evidence", "not_supported"}
+        for batch in summary.get("batches", [])
+        for assessment in batch.get("telemetry", {}).get("rule_assessments", [])
+    ):
+        # An unexplained incomplete run is not a rule-specific limitation.
         return False
     if rule_id not in summary.get("supportedRules", []):
         return False
-    expected = {f"screen-{screen.screen_index:02d}" for screen in run.screens}
+    expected = {(screen.analysis_context or {}).get("analysis_screen_id", f"screen-{screen.screen_index:02d}")
+                for screen in _analysis_screens(run)}
+    if rule_id == "DA-15" and not any(
+        set(batch.get("screens", [])) == expected for batch in summary.get("batches", [])
+    ):
+        return False
     covered = set()
     for batch in summary.get("batches", []):
         screens = set(batch.get("screens", []))
@@ -213,8 +229,8 @@ def compare(
     def can_verify(rule_id: str) -> bool:
         return not report.limitations or (
             same_scope
-            and _verified_local_rule(prev_run, rule_id)
-            and _verified_local_rule(curr_run, rule_id)
+            and _verified_rule(prev_run, rule_id)
+            and _verified_rule(curr_run, rule_id)
         )
 
     for fp, pf in prev.items():

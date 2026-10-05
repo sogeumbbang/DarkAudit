@@ -15,13 +15,13 @@ from ai.pipeline.web_audit import URLAuditPipeline, URLCapturePipeline
 from ai.evaluation import DEFAULT_EVALUATION_RULE_IDS, Evaluator, report_json
 from ai.providers.computer_use import OpenAIComputerUseAgent
 from ai.providers.openai_provider import OpenAIResponsesProvider
-from ai.schemas.audit_schema import AuditScreen, LLMAuditRequest
+from ai.schemas.audit_schema import AuditScreen, LLMAuditRequest, MAX_ANALYSIS_SCREENS
 
 def build_parser() -> argparse.ArgumentParser:
     load_dotenv()
     parser = argparse.ArgumentParser(prog="darkaudit")
     sub = parser.add_subparsers(dest="command", required=True)
-    audit = sub.add_parser("audit", help="Audit 1 to 5 screenshots")
+    audit = sub.add_parser("audit", help=f"Audit 1 to {MAX_ANALYSIS_SCREENS} screenshots")
     audit.add_argument("--image", action="append", required=True, type=Path)
     audit.add_argument("--flow-step", action="append", required=True)
     audit.add_argument("--screen-id", action="append")
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_image_audit(args: argparse.Namespace) -> int:
     if len(args.image) != len(args.flow_step): raise SystemExit("--image and --flow-step counts must match")
-    if not 1 <= len(args.image) <= 5: raise SystemExit("Provide 1 to 5 images")
+    if not 1 <= len(args.image) <= MAX_ANALYSIS_SCREENS: raise SystemExit(f"Provide 1 to {MAX_ANALYSIS_SCREENS} images")
     ids = args.screen_id or [f"screen_{index:02d}" for index in range(1, len(args.image) + 1)]
     if len(ids) != len(args.image): raise SystemExit("--screen-id count must match --image count")
     if not args.model: raise SystemExit("Set --model or DARKAUDIT_MODEL")

@@ -12,7 +12,7 @@ from PIL import Image
 from ai.browser.explorer import HybridWebExplorer
 from ai.browser.models import CaptureArtifact, CaptureResult, ScanMode
 from ai.browser.profiles import get_device_profile
-from ai.schemas.audit_schema import AuditScreen, HybridAuditOutput, LLMAuditRequest
+from ai.schemas.audit_schema import AuditScreen, HybridAuditOutput, LLMAuditRequest, MAX_ANALYSIS_SCREENS
 
 from .baseline import BaselineAuditPipeline, _sum_usage
 from .rule_candidates import run_artifact_rules, candidate_payload
@@ -87,10 +87,10 @@ class URLAuditPipeline:
         capture_pipeline: URLCapturePipeline,
         audit_pipeline: BaselineAuditPipeline,
         *,
-        max_analysis_screens: int = 5,
+        max_analysis_screens: int = MAX_ANALYSIS_SCREENS,
     ) -> None:
-        if not 1 <= max_analysis_screens <= 5:
-            raise ValueError("max_analysis_screens must be between 1 and 5")
+        if not 1 <= max_analysis_screens <= MAX_ANALYSIS_SCREENS:
+            raise ValueError(f"max_analysis_screens must be between 1 and {MAX_ANALYSIS_SCREENS}")
         self.capture_pipeline = capture_pipeline
         self.audit_pipeline = audit_pipeline
         self.max_analysis_screens = max_analysis_screens
@@ -149,12 +149,12 @@ class URLAuditPipeline:
 
 
 def select_analysis_artifacts(
-    artifacts: tuple[CaptureArtifact, ...], limit: int = 5
+    artifacts: tuple[CaptureArtifact, ...], limit: int = MAX_ANALYSIS_SCREENS
 ) -> tuple[CaptureArtifact, ...]:
     if not artifacts:
         raise ValueError("URL capture produced no screenshots")
-    if not 1 <= limit <= 5:
-        raise ValueError("limit must be between 1 and 5")
+    if not 1 <= limit <= MAX_ANALYSIS_SCREENS:
+        raise ValueError(f"limit must be between 1 and {MAX_ANALYSIS_SCREENS}")
     expanded: list[CaptureArtifact] = []
     for artifact in artifacts:
         if artifact.full_page:
@@ -259,10 +259,10 @@ def prepare_analysis_artifacts(artifacts: tuple[CaptureArtifact, ...]) -> tuple[
     )) for a in expanded)
 
 
-def batch_indices(count: int, limit: int = 5) -> list[list[int]]:
+def batch_indices(count: int, limit: int = MAX_ANALYSIS_SCREENS) -> list[list[int]]:
     """Cover every image, retaining initial context and adjacent transitions."""
-    if not 1 <= limit <= 5:
-        raise ValueError("batch limit must be between 1 and 5")
+    if not 1 <= limit <= MAX_ANALYSIS_SCREENS:
+        raise ValueError(f"batch limit must be between 1 and {MAX_ANALYSIS_SCREENS}")
     if not count:
         return []
     if limit == 1:
@@ -277,7 +277,7 @@ def batch_indices(count: int, limit: int = 5) -> list[list[int]]:
     return batches
 
 
-def analysis_batches(artifacts: tuple[CaptureArtifact, ...], limit: int = 5) -> list[tuple[CaptureArtifact, ...]]:
+def analysis_batches(artifacts: tuple[CaptureArtifact, ...], limit: int = MAX_ANALYSIS_SCREENS) -> list[tuple[CaptureArtifact, ...]]:
     groups: dict[tuple[str, str], list[CaptureArtifact]] = {}
     for artifact in artifacts:
         groups.setdefault((artifact.profile, artifact.path_id), []).append(artifact)

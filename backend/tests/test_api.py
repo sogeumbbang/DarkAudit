@@ -128,6 +128,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         class RecordingProvider(FakeMultimodalProvider):
             def analyze(self, **kwargs):
                 batches.append([screen.screen_id for screen in kwargs["request"].screens])
+                assert len(kwargs["request"].screens) <= kwargs["output_schema"]["properties"]["screens"]["maxItems"]
                 return super().analyze(**kwargs)
 
         audit_id = self.client.post("/api/v1/audits", json={
@@ -147,7 +148,7 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         self.assertEqual(job["status"], "completed", job)
         self.assertEqual(set().union(*map(set, batches)), {f"screen-{i:02d}" for i in range(1, 7)})
         self.assertTrue(any({"screen-01", "screen-06"} <= set(batch) for batch in batches))
-        self.assertTrue(all(len(batch) <= 5 for batch in batches))
+        self.assertEqual(batches, [[f"screen-{i:02d}" for i in range(1, 7)]])
         rejected = self.client.post(f"/api/v1/audits/{audit_id}/screens", files=files + [files[0]])
         self.assertEqual(rejected.status_code, 400)
 

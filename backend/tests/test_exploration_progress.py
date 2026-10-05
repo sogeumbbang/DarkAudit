@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from ai.browser.models import ExplorationEvent
+from ai.browser.models import ExplorationEvent, BrowserAction, BrowserActionType
 from ai.tests.test_browser_explorer import FakeAgent, FakeSession
 from backend.api import service, jobs
 from backend.tests.support import IsolatedApiTestCase
@@ -53,6 +53,7 @@ class ExplorationProgressTest(IsolatedApiTestCase):
         self.assertEqual(events[1]["imageUrl"], events[0]["imageUrl"])
         self.assertNotEqual(events[2]["imageUrl"], events[1]["imageUrl"])
         self.assertAlmostEqual(events[1]["x"], 100 / events[1]["width"])
+        self.assertEqual(events[1]["actionType"], "click")
         self.assertEqual(len(observations[0].explorationEvents), 1)
         self.assertNotIn("imagePath", str(events))
 
@@ -68,3 +69,16 @@ class ExplorationProgressTest(IsolatedApiTestCase):
         self.assertEqual(len(events), 240)
         self.assertEqual(events[0].id, 6)
         self.assertEqual(events[-1].id, 245)
+
+    def test_motion_metadata_preserves_scroll_direction_without_input_contents(self):
+        from ai.browser.profiles import get_device_profile
+
+        job = service.create_job("audit", 1)
+        artifact = ImageSession(service.CAPTURE_DIR, get_device_profile("mobile")).start("https://example.com")
+        service._record_exploration(job.jobId, ExplorationEvent("action", artifact,
+            BrowserAction(BrowserActionType.SCROLL, scroll_x=0, scroll_y=-500)))
+        service._record_exploration(job.jobId, ExplorationEvent("action", artifact,
+            BrowserAction(BrowserActionType.TYPE, text="private input")))
+        scroll, typing = service.get_job(job.jobId).explorationEvents
+        self.assertEqual((scroll.actionType, scroll.scrollX, scroll.scrollY), ("scroll", 0, -500))
+        self.assertNotIn("private input", typing.model_dump_json())

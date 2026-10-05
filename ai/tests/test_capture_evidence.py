@@ -150,7 +150,7 @@ class CaptureEvidenceTest(unittest.TestCase):
             {a.screen_id for a in artifacts}, {a.screen_id for b in batches for a in b}
         )
         self.assertTrue(
-            all(len(b) <= 5 and len({a.profile for a in b}) == 1 for b in batches)
+            all(len(b) <= 6 and len({a.profile for a in b}) == 1 for b in batches)
         )
 
     def test_browser_extracts_aria_cost_text_and_document_coordinates(self):

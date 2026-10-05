@@ -92,7 +92,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
 
     def test_other_warnings_collection_gaps_fake_and_scope_changes_block_all(self):
         for defect in ("mock", "warning", "batch_warning", "fake_provider", "missing_provider", "missing_batch", "extra_screen",
-                       "different_step", "different_rules", "failed", "missing_reason"):
+                       "different_step", "different_rules", "failed"):
             with self.subTest(defect=defect), service.SessionLocal() as session:
                 audit = self.make_audit(session)
                 run = audit.runs[-1]
@@ -117,13 +117,59 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                     summary["supportedRules"] = ["DA-04"]
                 elif defect == "failed":
                     run.status = RunStatus.FAILED
-                else:
-                    summary["warnings"] = []
                 run.analysis_summary = summary
                 report = compare(session, audit.id, 1, 2, update_statuses=True)
                 self.assertFalse(report.resolved)
                 self.assertEqual(len(report.pending), 5)
                 self.assertTrue(all(f.status == FindingStatus.OPEN for f in audit.runs[0].findings))
+
+    def test_one_inconclusive_rule_does_not_block_other_verified_rules(self):
+        with service.SessionLocal() as session:
+            audit = self.make_audit(session)
+            for run in audit.runs:
+                summary = deepcopy(run.analysis_summary)
+                summary["warnings"] = []
+                run.analysis_summary = summarize(summary)
+            report = compare(session, audit.id, 1, 2)
+            self.assertEqual({r.rule_id for r in report.resolved}, set(RULES) - {"DA-15"})
+            self.assertEqual([r.rule_id for r in report.pending], ["DA-15"])
+            self.assertIsNone(report.resolved_ratio)
+
+    def test_url_assessment_ids_and_archived_full_page_do_not_invalidate_coverage(self):
+        with service.SessionLocal() as session:
+            audit = self.make_audit(session)
+            for run in audit.runs:
+                summary = deepcopy(run.analysis_summary)
+                for screen in run.screens:
+                    screen.analysis_context = {"analysis_screen_id": f"mobile_{screen.screen_index}", "analysis_included": True}
+                for batch in summary["batches"]:
+                    ids = [f"mobile_{int(s.rsplit('-', 1)[1])}" for s in batch["screens"]]
+                    batch["screens"] = ids
+                    for row in batch["telemetry"]["rule_assessments"]:
+                        row["screen_ids"] = ids
+                run.screens.append(Screen(screen_index=7, flow_step="full-page source", analysis_context={"analysis_included": False}))
+                run.analysis_summary = summarize(summary)
+            report = compare(session, audit.id, 1, 2)
+            self.assertEqual({r.rule_id for r in report.resolved}, set(RULES) - {"DA-15"})
+            self.assertEqual([r.rule_id for r in report.pending], ["DA-15"])
+
+    def test_complete_six_screen_assessments_can_verify_price_resolution(self):
+        with service.SessionLocal() as session:
+            audit = self.make_audit(session)
+            for run in audit.runs:
+                summary = deepcopy(run.analysis_summary)
+                summary["warnings"] = []
+                batch = summary["batches"][1]
+                ids = [f"screen-{i:02d}" for i in range(1, 7)]
+                batch["screens"] = ids
+                for row in batch["telemetry"]["rule_assessments"]:
+                    row["screen_ids"] = ids
+                summary["batches"] = [batch]
+                run.analysis_summary = summarize(summary)
+            report = compare(session, audit.id, 1, 2)
+            self.assertEqual({r.rule_id for r in report.resolved}, set(RULES))
+            self.assertFalse(report.pending)
+            self.assertEqual(report.resolved_ratio, 1)
 
     def test_verified_local_resolution_is_remembered_for_recurrence(self):
         with service.SessionLocal() as session:

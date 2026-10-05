@@ -158,6 +158,22 @@ export const analysisJobSchema = z.object({
         fullPage: z.boolean(),
         x: z.number().min(0).max(1).nullable().optional(),
         y: z.number().min(0).max(1).nullable().optional(),
+        actionType: z
+          .enum([
+            "click",
+            "double_click",
+            "scroll",
+            "type",
+            "wait",
+            "keypress",
+            "drag",
+            "move",
+            "screenshot",
+          ])
+          .nullable()
+          .optional(),
+        scrollX: z.number().int().nullable().optional(),
+        scrollY: z.number().int().nullable().optional(),
       }),
     )
     .optional(),
@@ -168,9 +184,13 @@ const regressionChangeSchema = z.object({
   findingId: z.string().nullable(),
   before: z.enum(["HIGH", "REVIEW", "LOW"]).nullable(),
   after: z.enum(["HIGH", "REVIEW", "LOW"]).nullable(),
+  location: z.string().nullable().optional(),
+  element: z.string().nullable().optional(),
+  verificationNote: z.string().nullable().optional(),
 });
 
 export const regressionSchema = z.object({
+  scopeDescription: z.string().nullable().optional(),
   auditId: z.string(),
   fromVersion: z.number().int().positive(),
   toVersion: z.number().int().positive(),

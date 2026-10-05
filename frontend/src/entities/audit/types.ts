@@ -168,6 +168,19 @@ export type ExplorationEventDto = {
   fullPage: boolean;
   x?: number | null;
   y?: number | null;
+  actionType?:
+    | "click"
+    | "double_click"
+    | "scroll"
+    | "type"
+    | "wait"
+    | "keypress"
+    | "drag"
+    | "move"
+    | "screenshot"
+    | null;
+  scrollX?: number | null;
+  scrollY?: number | null;
 };
 
 export type AnalysisJobDto = {

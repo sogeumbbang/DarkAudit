@@ -114,7 +114,18 @@ it("distinguishes verified resolutions from rules still awaiting evidence", asyn
         comparisonStatus: "incomplete",
         resolvedRatio: null,
         limitations: ["화면 간 가격 비교 제한"],
-        pending: [{ ruleId: "DA-15", findingId: "price-before", before: "HIGH", after: null }],
+        scopeDescription: "각 데모 단계에 처음 진입한 6개 화면끼리 비교합니다.",
+        pending: [
+          {
+            ruleId: "DA-15",
+            findingId: "price-before",
+            before: "HIGH",
+            after: null,
+            location: "6단계 최종 금액",
+            element: "최종 이용료",
+            verificationNote: "v2: 초기 가격을 확인하지 못했습니다.",
+          },
+        ],
       }),
     ),
   );
@@ -125,6 +136,11 @@ it("distinguishes verified resolutions from rules still awaiting evidence", asyn
   expect(screen.getByRole("heading", { name: "해결 · 1건" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "보류 · 1건" })).toBeInTheDocument();
   expect(screen.getByText("탐지 항목 1건 → 1건")).toBeInTheDocument();
+  expect(
+    screen.getByText("각 데모 단계에 처음 진입한 6개 화면끼리 비교합니다."),
+  ).toBeInTheDocument();
+  expect(screen.getByText("6단계 최종 금액 · 최종 이용료")).toBeInTheDocument();
+  expect(screen.getByText("확인 필요: v2: 초기 가격을 확인하지 못했습니다.")).toBeInTheDocument();
 });
 
 it("allows retry after a comparison error", async () => {

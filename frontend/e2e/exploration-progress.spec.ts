@@ -29,7 +29,15 @@ test("shows browser frames and click history during a website audit", async ({
             explorationStage: "capturing",
             explorationEvents: [
               { ...frame, id: 1, kind: "capture", label: "첫 화면 확인" },
-              { ...frame, id: 2, kind: "action", label: "클릭 실행", x: 0.7, y: 0.65 },
+              {
+                ...frame,
+                id: 2,
+                kind: "action",
+                actionType: "click",
+                label: "클릭 실행",
+                x: 0.7,
+                y: 0.65,
+              },
             ],
           }),
           { headers: { "Content-Type": "application/json" } },
@@ -48,6 +56,12 @@ test("shows browser frames and click history during a website audit", async ({
   expect(page.url()).toBe(jobUrl);
   await expect(viewer.getByText("COMPUTER USE")).toBeVisible();
   await expect(viewer.getByRole("img", { name: "동작 위치" })).toBeVisible();
+  await expect(viewer.getByText("조작 지점 확대")).toBeVisible();
+  await expect
+    .poll(() =>
+      viewer.locator(".exploration-frame").evaluate((node) => getComputedStyle(node).transform),
+    )
+    .toMatch(/matrix\(1\.65/);
   const image = viewer.getByRole("img", { name: /클릭 실행 —/ });
   await expect(image).toBeVisible();
   await expect
@@ -55,6 +69,7 @@ test("shows browser frames and click history during a website audit", async ({
     .toBeGreaterThan(0);
   await viewer.getByRole("button", { name: /1. 첫 화면 확인/ }).click();
   await expect(viewer.getByRole("img", { name: "동작 위치" })).toHaveCount(0);
+  await expect(viewer.locator(".exploration-scan")).toHaveCount(0);
   await viewer.getByRole("button", { name: "최신 화면 보기" }).click();
   await expect(viewer.getByRole("img", { name: "동작 위치" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -63,6 +78,8 @@ test("shows browser frames and click history during a website audit", async ({
     results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
   ).toEqual([]);
   await viewer.screenshot({ path: testInfo.outputPath("exploration-viewer.png") });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(viewer.locator(".exploration-frame")).toHaveCSS("transition-duration", "0s");
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const screen = await viewer.locator(".exploration-screen").boundingBox();

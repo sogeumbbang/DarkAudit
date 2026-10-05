@@ -5,6 +5,8 @@ from ai.rules.rule_loader import RuleLoader
 
 
 def describe_warning(code: str) -> str:
+    if "demo_journey_incomplete" in code:
+        return "URL 데모의 동일한 6단계 화면을 모두 확보하지 못했습니다. 누락된 단계를 포함해 다시 검사해 주세요."
     if "evidence_contract:" in code:
         return "일부 규칙은 필수 근거를 확인하지 못했습니다. 해당 규칙의 검사 상태를 확인해 주세요."
     if "analysis_failed" in code:

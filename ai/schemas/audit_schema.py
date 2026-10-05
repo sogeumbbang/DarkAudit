@@ -8,6 +8,7 @@ from typing import Any
 
 
 SCHEMA_VERSION = "1.3"
+MAX_ANALYSIS_SCREENS = 6
 DEVICE_PROFILES = frozenset({"desktop", "mobile", "iphone"})
 
 
@@ -126,8 +127,8 @@ class LLMAuditRequest:
     schema_version: str = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if not self.audit_id.strip() or not 1 <= len(self.screens) <= 5:
-            raise ValueError("audit_id and 1 to 5 screens are required")
+        if not self.audit_id.strip() or not 1 <= len(self.screens) <= MAX_ANALYSIS_SCREENS:
+            raise ValueError(f"audit_id and 1 to {MAX_ANALYSIS_SCREENS} screens are required")
         if self.schema_version != SCHEMA_VERSION:
             raise ValueError(f"schema_version must be {SCHEMA_VERSION}")
         ids = [screen.screen_id for screen in self.screens]

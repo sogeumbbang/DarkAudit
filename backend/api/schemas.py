@@ -170,6 +170,9 @@ class ExplorationEventDto(BaseModel):
     fullPage: bool = False
     x: float | None = None
     y: float | None = None
+    actionType: Literal["click", "double_click", "scroll", "type", "wait", "keypress", "drag", "move", "screenshot"] | None = None
+    scrollX: int | None = None
+    scrollY: int | None = None
 
 
 class JobDto(BaseModel):
@@ -218,6 +221,9 @@ class RegressionChangeDto(BaseModel):
     findingId: str | None = None
     before: Severity | None = None
     after: Severity | None = None
+    location: str | None = None
+    element: str | None = None
+    verificationNote: str | None = None
 
 
 class RegressionDto(BaseModel):
@@ -233,6 +239,7 @@ class RegressionDto(BaseModel):
     limitations: list[str] = Field(default_factory=list)
     comparisonStatus: Literal["complete", "incomplete"] = "complete"
     resolvedRatio: float | None = None
+    scopeDescription: str | None = None
 
 
 class FindingDecisionRequest(BaseModel):

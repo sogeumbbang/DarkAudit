@@ -77,6 +77,9 @@ function Comparison({ audit }: { audit: AuditDto }) {
               v{result.fromVersion} → v{result.toVersion} 비교
             </h2>
             <p className="mt-2 text-sm text-muted">최신 완료 두 회차 · {audit.name}</p>
+            {result.scopeDescription && (
+              <p className="mt-2 text-sm leading-6 text-muted">{result.scopeDescription}</p>
+            )}
             <p className="mt-3 font-semibold">
               탐지 항목 {previous.findingCount}건 → {current.findingCount}건
             </p>
@@ -129,6 +132,11 @@ function Comparison({ audit }: { audit: AuditDto }) {
                         <p className="font-semibold">
                           {change.ruleId} · {ruleNames.get(change.ruleId) ?? "검토 항목"}
                         </p>
+                        {(change.location || change.element) && (
+                          <p className="mt-2 leading-6">
+                            {[change.location, change.element].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
                         <p className="mt-1 text-muted">
                           이전: {change.before ? severityLabels[change.before] : "항목 없음"} →
                           이번:{" "}
@@ -138,6 +146,11 @@ function Comparison({ audit }: { audit: AuditDto }) {
                               ? "확인 보류"
                               : "미탐지"}
                         </p>
+                        {key === "pending" && change.verificationNote && (
+                          <p className="mt-2 text-xs leading-6 text-muted">
+                            확인 필요: {change.verificationNote}
+                          </p>
+                        )}
                         {change.findingId &&
                           audit.findings.some((finding) => finding.id === change.findingId) && (
                             <Link
