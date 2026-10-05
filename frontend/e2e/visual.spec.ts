@@ -5,19 +5,13 @@ async function waitForStableLayout(page: Page) {
     await document.fonts.ready;
     // Full-page snapshots also need below-the-fold, lazily loaded photographs.
     for (const image of document.images) image.loading = "eager";
-    // 이미지가 다 실려야 한다. bbox 오버레이는 렌더링된 <img> 박스를 실측해서
-    // 그 위에 그리는데, 로드 전에 찍으면 아직 자리를 못 잡은 상태가 남는다.
-    // absolute 라 문서 높이에 영향을 주지 않아 아래 높이 안정화로는 잡히지 않는다.
+    // Loading can finish before async decoding/painting, especially with responsive
+    // WebP images. Decode every selected source and fail on missing assets.
     await Promise.all(
-      [...document.images]
-        .filter((image) => !image.complete)
-        .map(
-          (image) =>
-            new Promise<void>((resolve) => {
-              image.addEventListener("load", () => resolve(), { once: true });
-              image.addEventListener("error", () => resolve(), { once: true });
-            }),
-        ),
+      [...document.images].map(async (image) => {
+        await image.decode();
+        if (!image.naturalWidth) throw new Error(`Image did not load: ${image.currentSrc}`);
+      }),
     );
     await new Promise<void>((resolve) => {
       let previousHeight = -1;
@@ -40,7 +34,12 @@ test("landing visual", async ({ page }) => {
   await page.goto("/landing");
   await page.getByRole("heading", { name: /다 만든 화면,/ }).waitFor();
   await waitForStableLayout(page);
-  await expect(page).toHaveScreenshot("landing.png", { fullPage: true, animations: "disabled" });
+  await expect(page).toHaveScreenshot("landing.png", {
+    fullPage: true,
+    animations: "disabled",
+    // CI must have time for two full-page captures, including image encoding.
+    timeout: 15_000,
+  });
 });
 
 test("overview visual", async ({ page }) => {

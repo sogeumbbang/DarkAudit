@@ -5,8 +5,6 @@ import { dashboardFixture } from "../src/mocks/fixtures/dashboard";
 test("shows review candidates and deferred verification before findings and in the report", async ({
   page,
 }, testInfo) => {
-  await page.goto("/app/overview");
-  await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
   const fixture = structuredClone(dashboardFixture);
   fixture.audits[0]!.analysisSummary = {
     complete: false,
@@ -36,16 +34,37 @@ test("shows review candidates and deferred verification before findings and in t
       limitations: ["두 회차의 화면 구성이 달라 해결 여부를 확인할 수 없습니다."],
     },
   };
-  // Inject a server-result fixture into the dev app's cache without making external requests.
-  await page.evaluate(async (data) => {
-    const modulePath = "/src/app/query-client.ts";
-    const { queryClient } = await import(modulePath);
-    queryClient.setQueryData(["dashboard", "summary"], data);
+  // Serve the same fixture on the initial request and every progress poll. A cache-only
+  // override is overwritten by the 3-second dashboard refresh on slower CI runners.
+  await page.addInitScript((data) => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (new URL(url, location.origin).pathname === "/api/v1/dashboard/summary") {
+        sessionStorage.setItem(
+          "test:dashboard-requests",
+          String(Number(sessionStorage.getItem("test:dashboard-requests") ?? 0) + 1),
+        );
+        return new Response(JSON.stringify(data), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return originalFetch(input, init);
+    };
   }, fixture);
+  await page.goto("/app/overview");
+  await page.getByRole("heading", { name: "보험 가입 흐름 v1" }).waitFor();
   const notice = page.getByRole("region", { name: "분석 범위" });
   await expect(notice.getByText(/검토 후보 · 이미지 중심/)).toBeVisible();
   await expect(notice.getByText(/DA-07: 근거 부족/)).toBeVisible();
   await expect(notice.getByText(/미지원 규칙 10개/)).toBeVisible();
+  await expect(notice.getByText(/재검증 판정 보류/)).toBeVisible();
+  // Exercise a real refresh before opening the report, even on fast machines.
+  await expect
+    .poll(() => page.evaluate(() => Number(sessionStorage.getItem("test:dashboard-requests"))), {
+      timeout: 10_000,
+    })
+    .toBeGreaterThanOrEqual(2);
   await expect(notice.getByText(/재검증 판정 보류/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

@@ -10,7 +10,9 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:5173",
-    channel: "chrome",
+    // Use the Chrome for Testing revision pinned by package-lock.json, not the
+    // independently updated system Chrome installed on a developer/CI machine.
+    channel: "chromium",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -25,6 +27,6 @@ export default defineConfig({
       name: "desktop-chrome",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1000 } },
     },
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"], channel: "chrome" } },
+    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
   ],
 });

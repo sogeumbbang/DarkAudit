@@ -30,7 +30,7 @@ From `frontend/`, run `npm install`, then:
 - `npm run lint` and `npm run format:check`: check ESLint and Prettier rules.
 - `npm run test`: run Vitest.
 - `npm run build`: type-check and produce a production bundle.
-- `npm run test:e2e` / `npm run test:a11y`: run Playwright flows/accessibility checks; configured browser channel is Chrome.
+- `npm run test:e2e` / `npm run test:a11y`: run Playwright flows/accessibility checks; install the pinned Chrome for Testing build with `npx playwright install chromium`. The `chromium` channel uses the version bundled with Playwright; project names retain the `-chrome` suffix for snapshot compatibility.
 
 ## Coding Style & Naming Conventions
 

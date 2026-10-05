@@ -286,7 +286,7 @@ npm run build
 Playwright 브라우저를 설치한 환경에서는 E2E와 접근성 테스트도 실행할 수 있습니다.
 
 ```bash
-npx playwright install chrome
+npx playwright install chromium
 npm run test:e2e
 npm run test:a11y
 ```

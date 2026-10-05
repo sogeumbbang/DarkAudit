@@ -46,9 +46,15 @@ npm run api:types
 npm run build
 npm run lint
 npm run test
+npx playwright install chromium
 npm run test:e2e
 ```
 
-Visual snapshots cover 1440px desktop and 390px mobile viewports. Run `npm run
+Browser tests use Playwright's pinned Chrome for Testing (`channel: "chromium"`), so local and
+CI runs use the same browser revision from `package-lock.json`. The `desktop-chrome` and
+`mobile-chrome` project names are retained for existing snapshot paths. Reinstall Chromium
+after updating Playwright. CI retains its HTML report, screenshots and traces for seven days.
+
+Visual snapshots cover 1440px desktop and 412px mobile viewports. Run `npm run
 test:e2e:update` only after intentionally reviewing a UI change. Lighthouse expects a production
 preview on port 4173 and writes its report to `reports/lighthouse.json`.
