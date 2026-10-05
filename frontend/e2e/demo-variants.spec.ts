@@ -1,52 +1,69 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("runs original, partial and revised demos in the same audit", async ({ page }, testInfo) => {
-  await page.goto("/app/audits/new");
-  await expect(page.getByLabel("실행할 데모 버전")).toBeVisible();
-  await page.getByLabel("스크린샷·URL 데모 시나리오").selectOption("pet");
-  await page.getByRole("button", { name: "스크린샷 데모 실행", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible();
-  await page.getByRole("link", { name: "데모 수정본 실행", exact: true }).click();
-  await expect(page).toHaveURL(/\/app\/audits\/[^/]+\/recheck$/);
-  const originalAuditUrl = page.url();
-  await expect(page.getByLabel("실행할 수정본")).toHaveValue("partial");
-  await page.getByRole("button", { name: "선택한 데모 수정본 실행" }).click();
-  await expect(
-    page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "전체 개선본 선택" }).click();
-  await expect(page.getByLabel("실행할 수정본")).toHaveValue("revised");
-  await page.getByRole("button", { name: "선택한 데모 수정본 실행" }).click();
-  await expect(
-    page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
-  ).toBeVisible();
-  expect(new URL(page.url()).pathname).toBe(new URL(originalAuditUrl).pathname);
-  await page.screenshot({ path: testInfo.outputPath("demo-updates.png"), fullPage: true });
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(
-    results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
-  ).toEqual([]);
-  await page.getByRole("link", { name: "전후 비교 보기" }).click();
-  await expect(page.getByRole("heading", { name: "v2 → v3 비교" })).toBeVisible();
-  await expect(page.getByText("해결률 · 산출 보류")).toBeVisible();
-  await page.getByRole("link", { name: "진단 결과 보기" }).click();
-  await expect(page.getByRole("link", { name: "데모 수정본 실행" })).toBeVisible();
-});
-
-test("can start directly with a revised scenario", async ({ page }) => {
-  await page.goto("/app/audits/new");
-  await page.getByLabel("스크린샷·URL 데모 시나리오").selectOption("credit");
-  await page.getByLabel("실행할 데모 버전").selectOption("revised");
-  await page.getByRole("button", { name: "스크린샷 데모 실행", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible();
-  await page.getByRole("link", { name: "결과 확인하기" }).click();
-  await expect(
-    page.getByRole("heading", { name: "스크린샷 데모 · 릿 크레딧 · 전체 개선본" }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "데모 수정본 실행" }).click();
-  await expect(page.getByText("최근 등록한 데모: 전체 개선본")).toBeVisible();
-});
+for (const [source, title] of [
+  ["스크린샷", "모루 펫케어"],
+  ["URL", "로밍 패스"],
+  ["Figma", "릿 크레딧"],
+  ["APK", "모아 소액투자"],
+]) {
+  test(`${source} demo follows original, revised and comparison without variant choices`, async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/app/audits/new");
+    const demos = page.getByRole("region", { name: "데모 체험" });
+    await expect(demos.getByRole("combobox")).toHaveCount(0);
+    if (source === "URL")
+      await page.screenshot({ path: testInfo.outputPath("start.png"), fullPage: true });
+    await demos.getByRole("button", { name: `${source} 데모 실행`, exact: true }).click();
+    await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "원본 결과 확인하기", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "비교하기", exact: true })).toHaveCount(0);
+    await page.getByRole("link", { name: "원본 결과 확인하기", exact: true }).click();
+    await expect(
+      page.getByRole("heading", {
+        name: `${source} 데모 · ${title} · 문제 포함 원본`,
+        exact: true,
+      }),
+    ).toBeVisible();
+    const auditId = new URL(page.url()).searchParams.get("audit");
+    await expect(page.getByRole("link", { name: "전후 비교", exact: true })).toHaveCount(0);
+    if (source === "URL") {
+      await page.screenshot({ path: testInfo.outputPath("original.png"), fullPage: true });
+      const result = await new AxeBuilder({ page }).analyze();
+      expect(
+        result.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
+      ).toEqual([]);
+    }
+    await page.getByRole("link", { name: "수정본 실행해보기", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/app/audits/${auditId}/recheck$`));
+    await expect(page.getByRole("combobox")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "내 파일로 재검사" })).toHaveCount(0);
+    if (source === "URL")
+      await page.screenshot({ path: testInfo.outputPath("revised-start.png"), fullPage: true });
+    await page.getByRole("button", { name: "수정본 실행해보기", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "수정본 분석이 완료되었습니다" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "수정본 실행해보기", exact: true })).toHaveCount(
+      0,
+    );
+    await page.screenshot({ path: testInfo.outputPath(`${source}-completed.png`), fullPage: true });
+    const result = await new AxeBuilder({ page }).analyze();
+    expect(
+      result.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? "")),
+    ).toEqual([]);
+    await page.getByRole("link", { name: "비교하기", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/app/benchmark\\?audit=${auditId}$`));
+    await expect(page.getByRole("heading", { name: "v1 → v2 비교", exact: true })).toBeVisible();
+    await expect(page.getByRole("combobox")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "수정본 재검사", exact: true })).toHaveCount(0);
+    if (source === "URL")
+      await page.screenshot({ path: testInfo.outputPath("comparison.png"), fullPage: true });
+    await page.getByRole("link", { name: "진단 결과 보기", exact: true }).click();
+    await expect(page.getByRole("link", { name: "비교하기", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "수정본 실행해보기", exact: true })).toHaveCount(0);
+    expect(new URL(page.url()).searchParams.get("audit")).toBe(auditId);
+  });
+}
 
 test("web variants keep option state isolated and improve the authored choices", async ({
   page,
@@ -68,27 +85,3 @@ test("web variants keep option state isolated and improve the authored choices",
     await expect(page.locator("button.secondary")).toHaveCount(0);
   }
 });
-
-for (const source of ["Figma", "APK", "URL"]) {
-  test(`${source} demo preserves the audit across original, partial and revised runs`, async ({
-    page,
-  }, testInfo) => {
-    await page.goto("/app/audits/new");
-    await page.getByRole("button", { name: `${source} 데모 실행`, exact: true }).click();
-    await expect(page.getByRole("heading", { name: "진단이 완료되었습니다" })).toBeVisible();
-    await page.getByRole("link", { name: "데모 수정본 실행", exact: true }).click();
-    await expect(page).toHaveURL(/\/app\/audits\/[^/]+\/recheck$/);
-    const originalAuditUrl = page.url();
-    for (const variant of ["partial", "revised"]) {
-      await page.getByLabel("실행할 수정본").selectOption(variant);
-      await page.getByRole("button", { name: "선택한 데모 수정본 실행" }).click();
-      await expect(
-        page.getByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" }),
-      ).toBeVisible();
-      expect(new URL(page.url()).pathname).toBe(new URL(originalAuditUrl).pathname);
-    }
-    await page.screenshot({ path: testInfo.outputPath(`${source}-recheck.png`), fullPage: true });
-    await page.getByRole("link", { name: "전후 비교 보기" }).click();
-    await expect(page.getByRole("heading", { name: "v2 → v3 비교" })).toBeVisible();
-  });
-}

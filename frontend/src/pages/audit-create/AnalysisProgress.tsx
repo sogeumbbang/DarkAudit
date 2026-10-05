@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 import type { AuditSource } from "@/pages/audit-create/AuditSourceFields";
 import { ExplorationViewer, type ExplorationState } from "@/pages/audit-create/ExplorationViewer";
+import { DemoJourney } from "@/features/audit-create/DemoJourney";
+import "./audit-create.css";
 
 const TIPS = [
   {
@@ -41,6 +43,7 @@ export function AnalysisProgress({
   onBack,
   demo = false,
   exploration,
+  demoStep = 1,
 }: {
   source: AuditSource;
   auditId?: string;
@@ -51,6 +54,7 @@ export function AnalysisProgress({
   onBack: () => void;
   demo?: boolean;
   exploration?: ExplorationState;
+  demoStep?: 1 | 2;
 }) {
   const running = !completed && !failed;
   const [startedAt] = useState(Date.now);
@@ -85,6 +89,7 @@ export function AnalysisProgress({
       )}
     >
       <Card className="analysis-progress-surface overflow-hidden text-center">
+        {demo && <DemoJourney step={demoStep} />}
         {running ? (
           <div
             aria-hidden="true"
@@ -190,13 +195,8 @@ export function AnalysisProgress({
         {completed && (
           <Button asChild className="mt-9">
             <Link to={`/app/overview?audit=${auditId}`}>
-              결과 확인하기 <ArrowRight size={16} />
+              {demo ? "원본 결과 확인하기" : "결과 확인하기"} <ArrowRight size={16} />
             </Link>
-          </Button>
-        )}
-        {completed && demo && auditId && (
-          <Button asChild className="mt-3" variant="outline">
-            <Link to={`/app/audits/${encodeURIComponent(auditId)}/recheck`}>데모 수정본 실행</Link>
           </Button>
         )}
         {failed && (

@@ -209,8 +209,12 @@ export function AuditRecheckPage() {
     <div className="workspace-page mx-auto max-w-4xl">
       <PageHeading
         eyebrow="REVIEW / RECHECK"
-        title="수정본 재검사"
-        description="기존 진단에 수정한 화면을 등록하고 변화를 확인하세요."
+        title={audit?.demoPreset ? "수정본 실행해보기" : "수정본 재검사"}
+        description={
+          audit?.demoPreset
+            ? "원본과 같은 흐름의 수정본이 준비되어 있습니다. 실행 후 전후 변화를 비교하세요."
+            : "기존 진단에 수정한 화면을 등록하고 변화를 확인하세요."
+        }
       />
       {summary.isPending ? (
         <p role="status" className="mt-6">
@@ -225,11 +229,7 @@ export function AuditRecheckPage() {
         </div>
       ) : audit ? (
         audit.demoPreset ? (
-          <DemoRecheckPanel
-            key={audit.id}
-            audit={audit}
-            manualForm={<RecheckForm audit={audit} />}
-          />
+          <DemoRecheckPanel key={audit.id} audit={audit} />
         ) : (
           <RecheckForm key={audit.id} audit={audit} />
         )

@@ -64,7 +64,10 @@ describe("AuditCreatePage", () => {
     const button = await screen.findByRole("button", { name: "URL 데모 실행" });
     await waitFor(() => expect(button).toBeEnabled());
     await user.dblClick(button);
-    await waitFor(() => expect(capture).toMatchObject({ mode: "smart", profiles: ["mobile"] }));
+    await waitFor(() =>
+      expect(capture).toMatchObject({ mode: "smart", profiles: ["mobile"], demoVariant: "risky" }),
+    );
+    expect(capture!.url).toContain("scenario=travel&variant=risky&step=1");
     expect(captureCount).toBe(1);
   });
 

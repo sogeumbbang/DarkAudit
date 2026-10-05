@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { AnalysisProgress } from "@/pages/audit-create/AnalysisProgress";
 import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
+import { DemoJourney } from "@/features/audit-create/DemoJourney";
 
 import { PageHeading } from "@/components/common/PageHeading";
 import "./audit-create.css";
@@ -45,8 +46,7 @@ type AuditForm = z.infer<typeof auditSchema>;
 
 export function AuditCreatePage() {
   const queryClient = useQueryClient();
-  const [demoScenario, setDemoScenario] = useState<DemoPreset["scenario"]>("pet");
-  const [demoVariant, setDemoVariant] = useState<DemoVariant>("risky");
+  const demoVariant = "risky";
   const [activeDemo, setActiveDemo] = useState<DemoPreset>();
   const [source, setSource] = useState<AuditSource>("website");
   const [url, setUrl] = useState("");
@@ -69,7 +69,7 @@ export function AuditCreatePage() {
   const [loadingDemo, setLoadingDemo] = useState<AuditSource>();
   const executionLock = useRef(false);
   const demoInputs = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
-  const selectedDemo = demoInputs.data?.cases.find((item) => item.id === demoScenario);
+  const selectedDemo = demoInputs.data?.cases.find((item) => item.id === "pet");
   const selectedVariant = selectedDemo?.variants.find((item) => item.id === demoVariant);
   const [jobId, setJobId] = usePersistedJob();
   const [auditId, setAuditId] = useState<string>();
@@ -118,9 +118,6 @@ export function AuditCreatePage() {
     setSampleError(undefined);
 
     try {
-      if (!selectedVariant && (demoScenario !== "pet" || demoVariant !== "risky")) {
-        throw new Error("선택한 데모 목록을 불러오지 못했습니다. 잠시 후 다시 실행해 주세요.");
-      }
       const loaded = selectedVariant
         ? (await getDemoScreens(selectedVariant)).map((screen) => ({
             ...screen,
@@ -158,7 +155,7 @@ export function AuditCreatePage() {
           uploadPlatform: "mobile-web",
           screens: loaded,
         },
-        { scenario: demoScenario, source: "screenshots" },
+        { scenario: "pet", source: "screenshots" },
         demoVariant,
       );
     } catch (error) {
@@ -178,19 +175,19 @@ export function AuditCreatePage() {
 
     try {
       const input = { ...currentInput(), source: kind };
+      const websiteDemo = config.cases.find((item) => item.id === "travel");
       let name: string;
       if (kind === "website") {
-        if (!selectedVariant && (demoScenario !== "pet" || demoVariant !== "risky")) {
-          throw new Error("선택한 데모 목록을 불러오지 못했습니다. 잠시 후 다시 실행해 주세요.");
-        }
-        const demoUrl = selectedVariant?.websiteUrl ?? config.website.url;
+        const demoUrl =
+          websiteDemo?.variants.find((item) => item.id === "risky")?.websiteUrl ??
+          config.website.url;
         setUrl(demoUrl);
         setScanMode("smart");
         setProfiles(["mobile"]);
         setWebsiteGoal(
           "다음 버튼으로 6개 화면의 최종 이용료까지 확인하세요. 거절 버튼이 있으면 거절하고 계속하세요. 실제 계약이나 결제는 하지 마세요.",
         );
-        name = `URL 데모 · ${selectedDemo?.name ?? "로밍 패스 환전 멤버십"} · ${demoVariantLabels[demoVariant]}`;
+        name = `URL 데모 · ${websiteDemo?.name ?? "로밍 패스 환전 멤버십"} · ${demoVariantLabels[demoVariant]}`;
         input.url = demoUrl;
         input.scanMode = "smart";
         input.profiles = ["mobile"];
@@ -228,14 +225,14 @@ export function AuditCreatePage() {
         kind === "android"
           ? "investment"
           : kind === "website"
-            ? (selectedDemo?.productType ?? "other")
+            ? (websiteDemo?.productType ?? "other")
             : "";
       setValue("productType", productType);
       await runAudit(
         { name, productType },
         input,
         kind === "website"
-          ? { scenario: selectedDemo?.id ?? "travel", source: "website" }
+          ? { scenario: "travel", source: "website" }
           : { scenario: kind === "figma" ? "credit" : "moa", source: kind },
         demoVariant,
       );
@@ -446,6 +443,86 @@ export function AuditCreatePage() {
         title="AI UX 진단 시작"
         description="구현 단계에 맞는 입력 소스를 선택하면 필요한 옵션만 안내합니다."
       />
+      <Card className="audit-demo p-5" role="region" aria-label="데모 체험">
+        <p className="flex items-center gap-2 font-bold text-brand-900">
+          <Images size={19} /> 입력 유형별 데모 체험
+        </p>
+        <p className="mt-1 text-sm leading-6 text-muted">
+          준비된 원본을 검사한 뒤, 수정본을 실행하고 전후 변화를 비교해 보세요.
+        </p>
+        <DemoJourney step={1} />
+        <div className="audit-demo-options">
+          {(
+            [
+              ["website", "URL", "로밍 패스 환전 멤버십 · 원본"],
+              ["figma", "Figma", "릿 크레딧 · 원본"],
+              ["android", "APK", "모아 소액투자 · 원본"],
+            ] as const
+          ).map(([kind, label, description]) => (
+            <div className="rounded-control border border-border bg-white p-4" key={kind}>
+              <p className="text-sm font-bold">{label}</p>
+              <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{description}</p>
+              <Button
+                className="mt-3 w-full"
+                type="button"
+                variant="outline"
+                disabled={pending || !demoInputs.data?.[kind].available}
+                onClick={() => void runDemo(kind)}
+              >
+                {loadingDemo === kind ? (
+                  <LoaderCircle className="animate-spin" size={16} />
+                ) : (
+                  <Play size={16} />
+                )}
+                {label} 데모 실행
+              </Button>
+              {kind !== "website" && demoInputs.data?.[kind].reason && (
+                <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
+              )}
+            </div>
+          ))}
+          <div className="rounded-control border border-border bg-white p-4">
+            <p className="text-sm font-bold">스크린샷</p>
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
+              {selectedDemo?.name ?? "반려동물 보험"} · {demoVariantLabels[demoVariant]} · 6단계
+            </p>
+            <Button
+              className="mt-3 w-full"
+              disabled={pending}
+              type="button"
+              variant="outline"
+              onClick={runSampleDemo}
+            >
+              {loadingSamples ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : (
+                <Play size={16} />
+              )}
+              스크린샷 데모 실행
+            </Button>
+          </div>
+        </div>
+        {demoInputs.isPending && (
+          <p className="mt-3 text-xs text-muted">데모 연결을 확인하고 있습니다.</p>
+        )}
+        {demoInputs.isError && (
+          <p className="mt-3 text-xs text-danger">
+            데모 연결을 확인하지 못했습니다.
+            <button
+              className="ml-2 underline"
+              type="button"
+              onClick={() => void demoInputs.refetch()}
+            >
+              다시 확인
+            </button>
+          </p>
+        )}
+        {sampleError && (
+          <p role="alert" className="mt-3 text-xs text-danger">
+            {sampleError}
+          </p>
+        )}
+      </Card>
       <form
         className="audit-create-form grid lg:grid-cols-[0.68fr_1.32fr]"
         onSubmit={(event) => void handleSubmit(submit)(event)}
@@ -550,124 +627,6 @@ export function AuditCreatePage() {
           </div>
         </div>
       </form>
-      <Card className="audit-demo mt-10 p-5">
-        <p className="flex items-center gap-2 font-bold text-brand-900">
-          <Images size={19} /> 입력 유형별 데모 체험
-        </p>
-        <p className="mt-1 text-sm leading-6 text-muted">
-          자료 없이도 체험할 수 있습니다. 데모를 선택하면 바로 분석을 시작합니다.
-        </p>
-        {demoInputs.data?.cases.length ? (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold">
-              스크린샷·URL 데모 시나리오
-              <select
-                className="mt-2 w-full rounded-control border border-border bg-surface p-3"
-                value={demoScenario}
-                disabled={pending}
-                onChange={(event) => setDemoScenario(event.target.value as DemoPreset["scenario"])}
-              >
-                {demoInputs.data.cases.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm font-semibold">
-              실행할 데모 버전
-              <select
-                className="mt-2 w-full rounded-control border border-border bg-surface p-3"
-                value={demoVariant}
-                disabled={pending}
-                onChange={(event) => setDemoVariant(event.target.value as DemoVariant)}
-              >
-                {Object.entries(demoVariantLabels).map(([id, label]) => (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="text-xs leading-5 text-muted sm:col-span-2">
-              원본에는 사전 선택·숨겨진 조건·버튼 위계·감정적 압박·비용 후공개가 포함됩니다. 일부
-              수정본은 사전 선택과 비용 공개를 개선하고, 전체 개선본은 나머지 문구와 선택 구조도
-              수정합니다. 실제 탐지 결과는 분석으로 확인합니다.
-            </p>
-          </div>
-        ) : null}
-        <div className="audit-demo-options">
-          {(
-            [
-              ["website", "URL", "선택한 시나리오·버전의 6단계 웹 흐름"],
-              ["figma", "Figma", "설정된 Figma 파일의 주요 화면 검사"],
-              ["android", "APK", "소액투자 · 6단계 투자 설정 흐름"],
-            ] as const
-          ).map(([kind, label, description]) => (
-            <div className="rounded-control border border-border bg-white p-4" key={kind}>
-              <p className="text-sm font-bold">{label}</p>
-              <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{description}</p>
-              <Button
-                className="mt-3 w-full"
-                type="button"
-                variant="outline"
-                disabled={pending || !demoInputs.data?.[kind].available}
-                onClick={() => void runDemo(kind)}
-              >
-                {loadingDemo === kind ? (
-                  <LoaderCircle className="animate-spin" size={16} />
-                ) : (
-                  <Play size={16} />
-                )}
-                {label} 데모 실행
-              </Button>
-              {kind !== "website" && demoInputs.data?.[kind].reason && (
-                <p className="mt-2 text-xs text-muted">{demoInputs.data[kind].reason}</p>
-              )}
-            </div>
-          ))}
-          <div className="rounded-control border border-border bg-white p-4">
-            <p className="text-sm font-bold">스크린샷</p>
-            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">
-              {selectedDemo?.name ?? "반려동물 보험"} · {demoVariantLabels[demoVariant]} · 6단계
-            </p>
-            <Button
-              className="mt-3 w-full"
-              disabled={pending}
-              type="button"
-              variant="outline"
-              onClick={runSampleDemo}
-            >
-              {loadingSamples ? (
-                <LoaderCircle className="animate-spin" size={16} />
-              ) : (
-                <Play size={16} />
-              )}
-              스크린샷 데모 실행
-            </Button>
-          </div>
-        </div>
-        {demoInputs.isPending && (
-          <p className="mt-3 text-xs text-muted">데모 연결을 확인하고 있습니다.</p>
-        )}
-        {demoInputs.isError && (
-          <p className="mt-3 text-xs text-danger">
-            데모 연결을 확인하지 못했습니다.
-            <button
-              className="ml-2 underline"
-              type="button"
-              onClick={() => void demoInputs.refetch()}
-            >
-              다시 확인
-            </button>
-          </p>
-        )}
-        {sampleError && (
-          <p role="alert" className="mt-3 text-xs text-danger">
-            {sampleError}
-          </p>
-        )}
-      </Card>
     </div>
   );
 }

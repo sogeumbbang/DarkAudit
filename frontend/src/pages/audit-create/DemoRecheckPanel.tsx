@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -9,34 +9,31 @@ import {
   startAnalysis,
   uploadAuditScreens,
 } from "@/api/audits";
-import { demoGoal, demoVariantLabels, getDemoApk, getDemoInputs, getDemoScreens } from "@/api/demo";
+import { demoGoal, getDemoApk, getDemoInputs, getDemoScreens } from "@/api/demo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto, DemoVariant } from "@/entities/audit/types";
 import { useAnalysisStatus } from "@/features/audit-create/useAuditWorkflow";
 import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
 import { dashboardKeys } from "@/features/audit-dashboard/useDashboardSummary";
+import { DemoJourney } from "@/features/audit-create/DemoJourney";
+import { AnalysisProgress } from "./AnalysisProgress";
 
-export function DemoRecheckPanel({
-  audit,
-  manualForm,
-}: {
-  audit: AuditDto;
-  manualForm: ReactNode;
-}) {
+export function DemoRecheckPanel({ audit }: { audit: AuditDto }) {
   const catalog = useQuery({ queryKey: ["demo-inputs"], queryFn: getDemoInputs, retry: false });
-  const [variant, setVariant] = useState<DemoVariant>(
-    audit.demoVariant === "partial" ? "revised" : "partial",
-  );
+  const variant = "revised";
   const [uploadedVariant, setUploadedVariant] = useState<DemoVariant>();
   const [jobId, setJobId] = usePersistedJob("demoJob");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [manual, setManual] = useState(false);
   const lock = useRef(false);
   const client = useQueryClient();
   const job = useAnalysisStatus(jobId);
-  const completed = job.data?.status === "completed";
+  const completed =
+    job.data?.status === "completed" ||
+    (audit.demoVariant === "revised" &&
+      audit.status === "completed" &&
+      (audit.runs ?? []).filter((run) => run.status === "completed").length >= 2);
   const failed = job.data?.status === "failed";
   const running = Boolean(jobId && !completed && !failed);
   const busy =
@@ -103,7 +100,7 @@ export function DemoRecheckPanel({
         }
         nextJob = await startAnalysis(audit.id);
       } else {
-        throw new Error("선택한 데모 수정본이 준비되지 않았습니다.");
+        throw new Error("데모 수정본이 준비되지 않았습니다.");
       }
       setJobId(nextJob.jobId);
       void client.invalidateQueries({ queryKey: dashboardKeys.all });
@@ -115,162 +112,76 @@ export function DemoRecheckPanel({
     }
   }
 
-  if (manual) return <>{manualForm}</>;
+  if (jobId && !completed) {
+    return (
+      <AnalysisProgress
+        source={preset.source}
+        auditId={audit.id}
+        progress={job.data?.progress ?? 0}
+        completed={false}
+        failed={failed || job.isError}
+        error={job.data?.error ?? job.error?.message}
+        demo
+        demoStep={2}
+        exploration={
+          job.data?.explorationMode
+            ? {
+                mode: job.data.explorationMode,
+                stage: job.data.explorationStage,
+                events: job.data.explorationEvents ?? [],
+              }
+            : undefined
+        }
+        onBack={() => setJobId(undefined)}
+      />
+    );
+  }
+
   return (
     <Card className="mt-6 space-y-5 p-6">
-      <h2 className="text-lg font-bold">데모 수정본 실행</h2>
-      <p className="text-sm leading-6 text-muted">
-        {preset.source === "android" ? "모아 소액투자" : (demo?.name ?? preset.scenario)} ·{" "}
-        {
-          {
-            website: "URL 자동 탐색",
-            screenshots: "스크린샷",
-            figma: "Figma 프로토타입",
-            android: "APK 자동 탐색",
-          }[preset.source]
-        }
-        . 같은 진단에 새 회차를 추가합니다. 별도 파일을 준비하지 않아도 됩니다.
-      </p>
-      {audit.demoVariant && (
-        <p className="text-sm">최근 등록한 데모: {demoVariantLabels[audit.demoVariant]}</p>
-      )}
-      <label className="block text-sm font-semibold" htmlFor="demo-update-variant">
-        실행할 수정본
-      </label>
-      <select
-        id="demo-update-variant"
-        className="w-full rounded-control border border-border bg-surface p-3"
-        value={variant}
-        disabled={busy}
-        onChange={(event) => {
-          setVariant(event.target.value as DemoVariant);
-          setJobId(undefined);
-          setUploadedVariant(undefined);
-          setError("");
-        }}
-      >
-        {Object.entries(demoVariantLabels).map(([id, label]) => (
-          <option key={id} value={id}>
-            {label}
-          </option>
-        ))}
-      </select>
-      <p className="text-sm leading-6 text-muted">
-        {variant === "risky"
-          ? "사전 선택·숨겨진 조건·버튼 위계·감정적 압박·필수 비용 후공개가 있는 원본입니다."
-          : variant === "partial"
-            ? "선택 항목의 기본 체크를 해제하고 필수 비용을 처음부터 공개합니다. 버튼 위계·작은 조건·압박 문구는 남겨둡니다."
-            : "기본 체크와 비용 공개에 더해 선택 버튼의 비중, 조건 가독성, 압박 문구와 반복 동의까지 개선했습니다."}
-      </p>
-      <p className="text-xs leading-5 text-muted">
-        실제 분석으로 결과를 확인합니다. ‘전체 개선본’도 탐지 0건이나 해결률 100%를 보장하지 않으며,
-        검사 근거가 부족하면 비교를 보류합니다.
-      </p>
-      {selected && (
-        <section aria-label="선택한 데모 수정본 미리보기">
-          <h3 className="text-sm font-semibold">
-            {selected.label} · {selected.screens.length}개 화면
-          </h3>
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {selected.screens.map((screen, index) => (
-              <a
-                key={screen.url}
-                href={screen.url}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-control border border-border bg-surface p-2 text-xs hover:border-brand-500"
-                aria-label={`${index + 1}. ${screen.flowStep} ${selected.label} 이미지 열기 (새 탭)`}
-              >
-                <img
-                  src={screen.url}
-                  alt={`${screen.flowStep} ${selected.label}`}
-                  className="h-28 w-full object-contain"
-                  loading="lazy"
-                />
-                <span className="mt-2 block">
-                  {index + 1}. {screen.flowStep}
-                </span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-      {figma && figmaVariant && (
-        <a
-          className="block text-sm underline"
-          href={figma.fileUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Figma에서 {figmaVariant.flowName} 확인 (새 탭)
-        </a>
-      )}
-      {androidVariant && (
-        <a className="block text-sm underline" href={androidVariant.downloadUrl} download>
-          APK {androidVariant.label} 다운로드
-        </a>
-      )}
-      {catalog.isPending && <p role="status">데모 파일 목록을 불러오는 중입니다.</p>}
-      {catalog.isError && (
-        <div role="alert">
-          데모 목록을 불러오지 못했습니다.
-          <Button variant="outline" onClick={() => void catalog.refetch()}>
-            데모 목록 다시 확인
-          </Button>
-        </div>
-      )}
-      {!catalog.isPending && !catalog.isError && !available && (
-        <p role="alert">이 데모의 수정본 파일이 준비되지 않았습니다.</p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-      {running && <p role="status">데모 수정본을 분석하고 있습니다. {job.data?.progress ?? 0}%</p>}
-      {busy && !running && !pending && (
-        <p role="status">진행 중인 회차가 있습니다. 완료 후 다시 열어 주세요.</p>
-      )}
-      {job.isError && (
-        <div role="alert">
-          작업 상태를 확인하지 못했습니다.
-          <Button variant="outline" onClick={() => void job.refetch()}>
-            상태 다시 확인
-          </Button>
-        </div>
-      )}
-      {failed && <p role="alert">분석에 실패했습니다. {job.data?.error}</p>}
+      <DemoJourney step={2} />
       {completed ? (
-        <div className="space-y-4">
-          <h3 className="font-bold">데모 수정본 분석이 완료되었습니다</h3>
+        <>
+          <h2 className="text-lg font-bold">수정본 분석이 완료되었습니다</h2>
+          <p className="text-sm leading-6 text-muted">원본과 수정본의 검사 결과를 비교해 보세요.</p>
           <Button asChild>
-            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>전후 비교 보기</Link>
+            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>비교하기</Link>
           </Button>
-          {variant !== "revised" && (
-            <Button
-              className="ml-2"
-              variant="outline"
-              onClick={() => {
-                setVariant("revised");
-                setJobId(undefined);
-                setUploadedVariant(undefined);
-              }}
-            >
-              전체 개선본 선택
-            </Button>
-          )}
-        </div>
+        </>
       ) : (
-        <Button disabled={busy || !available} onClick={() => void run()}>
-          {pending ? "데모 준비 중…" : running ? "분석 중…" : "선택한 데모 수정본 실행"}
-        </Button>
-      )}
-      {!busy && !jobId && (
-        <div>
-          <Button variant="outline" onClick={() => setManual(true)}>
-            내 파일로 재검사
+        <>
+          <h2 className="text-lg font-bold">준비된 수정본을 검사합니다</h2>
+          <p className="text-sm leading-6 text-muted">
+            기본 체크, 비용 공개, 선택 버튼과 안내 문구를 개선한 수정본입니다. 파일이나 설정을
+            바꾸지 않고 바로 실행할 수 있습니다.
+          </p>
+          <p className="text-xs leading-5 text-muted">
+            개선 여부는 실제 검사 결과와 확인된 근거를 바탕으로 비교합니다.
+          </p>
+          {catalog.isPending && <p role="status">수정본을 준비하고 있습니다.</p>}
+          {catalog.isError && (
+            <div role="alert">
+              수정본을 불러오지 못했습니다.
+              <Button variant="outline" onClick={() => void catalog.refetch()}>
+                다시 불러오기
+              </Button>
+            </div>
+          )}
+          {!catalog.isPending && !catalog.isError && !available && (
+            <p role="alert">이 데모의 수정본이 아직 준비되지 않았습니다.</p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+          {busy && !pending && (
+            <p role="status">원본 검사가 완료되면 수정본을 실행할 수 있습니다.</p>
+          )}
+          <Button disabled={busy || !available} onClick={() => void run()}>
+            {pending ? "수정본 준비 중…" : "수정본 실행해보기"}
           </Button>
-        </div>
+        </>
       )}
     </Card>
   );

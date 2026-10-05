@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { AuditDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
+import { DemoJourney } from "@/features/audit-create/DemoJourney";
 import { guidelineCategories } from "./guidelines";
 
 const groups = [
@@ -41,9 +42,11 @@ function Comparison({ audit }: { audit: AuditDto }) {
         <Button asChild variant="outline">
           <Link to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}>진단 결과 보기</Link>
         </Button>
-        <Button asChild>
-          <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>수정본 재검사</Link>
-        </Button>
+        {!audit.demoPreset && (
+          <Button asChild>
+            <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>수정본 재검사</Link>
+          </Button>
+        )}
       </div>
       {(audit.status === "queued" || audit.status === "analyzing" || audit.status === "failed") && (
         <p className="text-sm text-muted">
@@ -184,24 +187,30 @@ export function BenchmarkPage() {
         </div>
       ) : (
         <>
-          <label className="mt-6 block text-sm font-semibold" htmlFor="comparison-audit">
-            비교할 진단
-          </label>
-          <select
-            id="comparison-audit"
-            className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm"
-            value={audit?.id ?? ""}
-            onChange={(event) => setParams({ audit: event.target.value })}
-          >
-            <option value="" disabled>
-              진단 선택
-            </option>
-            {summary.data?.audits.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          {audit?.demoPreset ? (
+            <DemoJourney step={3} />
+          ) : (
+            <>
+              <label className="mt-6 block text-sm font-semibold" htmlFor="comparison-audit">
+                비교할 진단
+              </label>
+              <select
+                id="comparison-audit"
+                className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm"
+                value={audit?.id ?? ""}
+                onChange={(event) => setParams({ audit: event.target.value })}
+              >
+                <option value="" disabled>
+                  진단 선택
+                </option>
+                {summary.data?.audits.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
           {audit ? (
             <Comparison key={audit.id} audit={audit} />
           ) : (

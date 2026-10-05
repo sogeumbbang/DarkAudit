@@ -5,28 +5,33 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
 
 import * as auditApi from "@/api/audits";
+import type { AuditDto } from "@/entities/audit/types";
 import { dashboardFixture } from "@/mocks/fixtures/dashboard";
 import { server } from "@/mocks/server";
 import { DemoRecheckPanel } from "./DemoRecheckPanel";
 
-function setup(source: "screenshots" | "website" | "figma" | "android" = "screenshots") {
+function setup(
+  source: "screenshots" | "website" | "figma" | "android" = "screenshots",
+  overrides: Partial<AuditDto> = {},
+) {
   const audit = structuredClone(dashboardFixture.audits[0]!);
   audit.status = "completed";
   audit.demoPreset = { scenario: "pet", source };
   audit.demoVariant = "risky";
+  Object.assign(audit, overrides);
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
       <MemoryRouter>
-        <DemoRecheckPanel audit={audit} manualForm={<p>Manual form</p>} />
+        <DemoRecheckPanel audit={audit} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
   return audit;
 }
 
-it("runs a partial screenshot demo on the original audit and preserves retry uploads", async () => {
+it("runs a fixed revised screenshot demo on the original audit and preserves retry uploads", async () => {
   let uploads = 0;
   let starts = 0;
   let metadata: Array<{ flowStep: string; demoVariant: string }> = [];
@@ -61,15 +66,17 @@ it("runs a partial screenshot demo on the original audit and preserves retry upl
   );
   const audit = setup();
   const user = userEvent.setup();
-  const button = screen.getByRole("button", { name: "선택한 데모 수정본 실행" });
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "내 파일로 재검사" })).not.toBeInTheDocument();
+  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
   await waitFor(() => expect(button).toBeEnabled());
   await user.click(button);
   expect(await screen.findByRole("alert")).toHaveTextContent("분석 접수 실패");
   await user.click(button);
-  await screen.findByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" });
+  await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
   expect(uploads).toBe(1);
   expect(metadata).toHaveLength(6);
-  expect(metadata.every((item) => item.demoVariant === "partial")).toBe(true);
+  expect(metadata.every((item) => item.demoVariant === "revised")).toBe(true);
   expect(metadata[0]!.flowStep).toBe("보장 소개");
 });
 
@@ -97,11 +104,10 @@ it("uses the revised public URL and the same audit for URL demos", async () => {
   );
   const audit = setup("website");
   const user = userEvent.setup();
-  await user.selectOptions(screen.getByLabelText("실행할 수정본"), "revised");
-  const button = screen.getByRole("button", { name: "선택한 데모 수정본 실행" });
+  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
   await waitFor(() => expect(button).toBeEnabled());
   await user.click(button);
-  await screen.findByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" });
+  await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
   expect(input).toMatchObject({ mode: "smart", profiles: ["mobile"], demoVariant: "revised" });
   expect(input!.url).toContain("scenario=pet&variant=revised&step=1");
 });
@@ -116,7 +122,7 @@ it("does not create a run when downloading a revised image fails", async () => {
     }),
   );
   setup();
-  const button = screen.getByRole("button", { name: "선택한 데모 수정본 실행" });
+  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
   await waitFor(() => expect(button).toBeEnabled());
   await userEvent.click(button);
   expect(await screen.findByRole("alert")).toHaveTextContent("올바르지 않습니다");
@@ -124,7 +130,7 @@ it("does not create a run when downloading a revised image fails", async () => {
 });
 
 it.each(["figma", "android"] as const)(
-  "rechecks %s partial and revised inputs on the same audit",
+  "rechecks the fixed revised %s input on the same audit",
   async (source) => {
     const versions: string[] = [];
     const assets: string[] = [];
@@ -179,15 +185,30 @@ it.each(["figma", "android"] as const)(
         : undefined;
     const audit = setup(source);
     const user = userEvent.setup();
-    for (const version of ["partial", "revised"]) {
-      await user.selectOptions(screen.getByLabelText("실행할 수정본"), version);
-      const button = screen.getByRole("button", { name: "선택한 데모 수정본 실행" });
-      await waitFor(() => expect(button).toBeEnabled());
-      await user.click(button);
-      await screen.findByRole("heading", { name: "데모 수정본 분석이 완료되었습니다" });
-    }
+    const button = screen.getByRole("button", { name: "수정본 실행해보기" });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
     androidSpy?.mockRestore();
-    expect(versions).toEqual(["partial", "revised"]);
-    if (source === "android") expect(assets).toEqual(["partial.apk", "revised.apk"]);
+    expect(versions).toEqual(["revised"]);
+    if (source === "android") expect(assets).toEqual(["revised.apk"]);
   },
 );
+
+it("opens comparison instead of offering a third run when a completed revision is revisited", () => {
+  const audit = setup("screenshots", {
+    demoVariant: "revised",
+    runs: [1, 2].map((version) => ({
+      id: `run-${version}`,
+      version,
+      status: "completed",
+      createdAt: "2026-10-05T00:00:00Z",
+      findingCount: 0,
+    })),
+  });
+  expect(screen.getByRole("link", { name: "비교하기" })).toHaveAttribute(
+    "href",
+    `/app/benchmark?audit=${encodeURIComponent(audit.id)}`,
+  );
+  expect(screen.queryByRole("button", { name: "수정본 실행해보기" })).not.toBeInTheDocument();
+});

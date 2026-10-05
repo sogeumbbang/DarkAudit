@@ -83,7 +83,7 @@
   min-width: 190px;
 }
 .audit-demo {
-  margin-top: 64px;
+  margin: 0 0 40px;
   background: var(--workspace-blue);
   padding: 32px;
   border: 0;

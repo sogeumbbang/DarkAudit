@@ -57,7 +57,7 @@
   padding: 10px 14px;
   white-space: nowrap;
 }
-.overview-actions > a {
+.overview-actions > a:not(.overview-demo-next) {
   background: white;
 }
 .overview-metrics {

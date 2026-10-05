@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
+import { DemoJourney } from "@/features/audit-create/DemoJourney";
 import { AnalysisNotice } from "@/features/audit-report/AnalysisNotice";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { orderFindings } from "@/entities/audit/orderFindings";
@@ -762,25 +763,48 @@ export function OverviewPage() {
           <p className="overview-subtitle">화면의 문제를 살펴보고, 개선의 다음 단계를 정하세요.</p>
         </div>
         <div className="overview-actions">
-          {audit.status !== "queued" && audit.status !== "analyzing" && (
+          {audit.demoPreset
+            ? audit.status === "completed" && (
+                <Button asChild className="overview-demo-next">
+                  {audit.demoVariant === "revised" &&
+                  (audit.runs ?? []).filter((run) => run.status === "completed").length >= 2 ? (
+                    <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
+                      비교하기
+                    </Link>
+                  ) : (
+                    <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                      수정본 실행해보기
+                    </Link>
+                  )}
+                </Button>
+              )
+            : audit.status !== "queued" &&
+              audit.status !== "analyzing" && (
+                <Button asChild variant="outline">
+                  <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                    <RefreshCw size={14} aria-hidden="true" />
+                    수정본 재검사
+                  </Link>
+                </Button>
+              )}
+          {!audit.demoPreset && (
             <Button asChild variant="outline">
-              <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
-                <RefreshCw size={14} aria-hidden="true" />
-                {audit.demoPreset ? "데모 수정본 실행" : "수정본 재검사"}
+              <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
+                <GitCompareArrows size={15} aria-hidden="true" />
+                전후 비교
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline">
-            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
-              <GitCompareArrows size={15} aria-hidden="true" />
-              전후 비교
-            </Link>
-          </Button>
-          <Button ref={reportButtonRef} onClick={() => setShowReport(true)}>
+          <Button
+            variant={audit.demoPreset ? "outline" : "primary"}
+            ref={reportButtonRef}
+            onClick={() => setShowReport(true)}
+          >
             <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
           </Button>
         </div>
       </header>
+      {audit.demoPreset && <DemoJourney step={audit.demoVariant === "revised" ? 2 : 1} />}
       {showReport && (
         <AuditReport
           audit={audit}
