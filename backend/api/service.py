@@ -46,6 +46,7 @@ from backend.app.rule_engine.severity import score as score_rule_findings
 
 from .schemas import ExplorationEventDto, JobDto
 from .demo_capture import demo_entry_screens
+from .demo_browser import bundled_demo_policy
 from .store import SessionLocal, new_id, touch_audit
 from . import jobs
 
@@ -235,8 +236,16 @@ def capture_and_analyze_url(
         computer_agent = None
         if mode is ScanMode.SMART:
             computer_agent = OpenAIComputerUseAgent(os.environ["DARKAUDIT_COMPUTER_MODEL"])
+        with SessionLocal() as session:
+            run = session.get(AuditRun, run_id)
+            if run is None:
+                raise ValueError("Capture run no longer exists")
+            demo_policy = bundled_demo_policy(url, run.audit.demo_preset,
+                                              (run.analysis_summary or {}).get("demoVariant"))
         explorer = HybridWebExplorer(
-            PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}"),
+            PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}",
+                                     url_policy=demo_policy,
+                                     static_routes=demo_policy.assets if demo_policy else None),
             computer_agent=computer_agent,
             on_event=lambda event: _record_exploration(job_id, event),
         )

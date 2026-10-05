@@ -196,6 +196,7 @@ class PlaywrightSessionFactory:
         navigation_timeout_ms: int = 30_000,
         settle_time_ms: int = 750,
         run_id: str | None = None,
+        static_routes: dict[str, Path] | None = None,
     ) -> None:
         self.output_root = Path(output_root)
         self.url_policy = url_policy or UrlSafetyPolicy()
@@ -203,6 +204,7 @@ class PlaywrightSessionFactory:
         self.navigation_timeout_ms = navigation_timeout_ms
         self.settle_time_ms = settle_time_ms
         self.run_id = run_id
+        self.static_routes = static_routes
 
     def __call__(self, audit_id: str, profile: DeviceProfile) -> "PlaywrightBrowserSession":
         target = self.output_root / _safe_segment(audit_id)
@@ -216,6 +218,7 @@ class PlaywrightSessionFactory:
             headless=self.headless,
             navigation_timeout_ms=self.navigation_timeout_ms,
             settle_time_ms=self.settle_time_ms,
+            static_routes=self.static_routes,
         )
 
 
@@ -229,6 +232,7 @@ class PlaywrightBrowserSession:
         headless: bool,
         navigation_timeout_ms: int,
         settle_time_ms: int,
+        static_routes: dict[str, Path] | None = None,
     ) -> None:
         self.profile = profile
         self.output_dir = output_dir
@@ -236,6 +240,7 @@ class PlaywrightBrowserSession:
         self.headless = headless
         self.navigation_timeout_ms = navigation_timeout_ms
         self.settle_time_ms = settle_time_ms
+        self.static_routes = static_routes
         self._manager: Any = None
         self._browser: Any = None
         self._context: Any = None
@@ -406,6 +411,20 @@ class PlaywrightBrowserSession:
         )
 
     def _route_request(self, route: Any, request: Any) -> None:
+        if getattr(self, "static_routes", None) is not None:
+            # No network fallback in bundled mode, even for same-host API URLs.
+            try:
+                self.url_policy.validate(request.url)
+                path = self.static_routes.get(urlsplit(request.url).path)
+                if path is None or request.method != "GET":
+                    raise UnsafeUrlError("Only bundled demo assets may be loaded")
+            except UnsafeUrlError as exc:
+                if request.is_navigation_request() and request.frame == self._page.main_frame:
+                    self._blocked_reason = str(exc)
+                route.abort("blockedbyclient")
+                return
+            route.fulfill(path=str(path))
+            return
         parsed = urlsplit(request.url)
         is_main_navigation = (
             request.is_navigation_request()

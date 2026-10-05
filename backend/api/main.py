@@ -27,6 +27,7 @@ from .chat import router as chat_router
 from .access import router as access_router, require_owner, authorized_image, sign_image
 from . import jobs
 from .demo_inputs import router as demo_router
+from .demo_browser import bundled_demo_policy
 from .figma_client import InvalidFigmaUrlError, parse_figma_url
 from .figma_import import import_and_analyze_figma
 from .schemas import (
@@ -268,18 +269,17 @@ def analyze(audit_id: str, background: BackgroundTasks, owner_id: str = Depends(
 def capture(audit_id: str, payload: CaptureAuditRequest, background: BackgroundTasks, owner_id: str = Depends(require_owner)) -> JobDto:
     if payload.mode == "smart" and not os.getenv("DARKAUDIT_COMPUTER_MODEL"):
         raise HTTPException(400, "smart 모드에는 DARKAUDIT_COMPUTER_MODEL 설정이 필요합니다.")
-    try:
-        UrlSafetyPolicy().validate(str(payload.url))
-        profiles = compatible_capture_profiles(str(payload.url), tuple(payload.profiles))
-    except UnsafeUrlError as exc:
-        raise HTTPException(400, str(exc))
-    except ValueError as exc:
-        raise HTTPException(400, str(exc))
     with SessionLocal() as session:
         try:
             audit = get_audit(session, audit_id, owner_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
+        try:
+            policy = bundled_demo_policy(str(payload.url), audit.demo_preset, payload.demoVariant)
+            (policy or UrlSafetyPolicy()).validate(str(payload.url))
+            profiles = compatible_capture_profiles(str(payload.url), tuple(payload.profiles))
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
         run = next_run(session, audit.id, f"URL: {payload.url}")
         if payload.demoVariant and audit.demo_preset:
             run.analysis_summary = {"demoVariant": payload.demoVariant}
