@@ -13,6 +13,9 @@ export default defineConfig({
     // Use the Chrome for Testing revision pinned by package-lock.json, not the
     // independently updated system Chrome installed on a developer/CI machine.
     channel: "chromium",
+    // CI fontconfig can enable RGB subpixel antialiasing, adding colored glyph
+    // edges that differ from local grayscale text despite identical geometry.
+    launchOptions: { args: ["--disable-lcd-text"] },
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

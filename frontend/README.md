@@ -54,6 +54,8 @@ Browser tests use Playwright's pinned Chrome for Testing (`channel: "chromium"`)
 CI runs use the same browser revision from `package-lock.json`. The `desktop-chrome` and
 `mobile-chrome` project names are retained for existing snapshot paths. Reinstall Chromium
 after updating Playwright. CI retains its HTML report, screenshots and traces for seven days.
+The frontend runner is pinned to Ubuntu 24.04. Browser tests disable LCD text antialiasing
+to avoid host-dependent RGB fringes on glyph edges while keeping pixel comparisons strict.
 
 Visual snapshots cover 1440px desktop and 412px mobile viewports. Run `npm run
 test:e2e:update` only after intentionally reviewing a UI change. Lighthouse expects a production

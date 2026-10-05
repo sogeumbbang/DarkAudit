@@ -15,7 +15,7 @@ jobs:
       - run: python -m unittest discover -s backend/tests -v
       - run: python rules/build_rules.py --summary
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
