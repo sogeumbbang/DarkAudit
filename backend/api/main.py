@@ -156,9 +156,13 @@ def delete_audit(audit_id: str) -> None:
 @app.get("/api/v1/audits/{audit_id}/regression", response_model=RegressionDto)
 def get_regression(
     audit_id: str,
-    from_version: int | None = Query(default=None, alias="from", ge=1),
-    to_version: int | None = Query(default=None, alias="to", ge=1),
+    from_alias: int | None = Query(default=None, alias="from", ge=1),
+    to_alias: int | None = Query(default=None, alias="to", ge=1),
+    from_version: int | None = Query(default=None, ge=1),
+    to_version: int | None = Query(default=None, ge=1),
 ) -> RegressionDto:
+    from_version = from_version or from_alias
+    to_version = to_version or to_alias
     with SessionLocal() as session:
         try:
             audit = get_audit(session, audit_id)
@@ -171,10 +175,11 @@ def get_regression(
                 raise HTTPException(409, "완료된 진단 회차가 없습니다.")
             to_version = done_versions[-1]
         if from_version is None:
+            # 수정본을 여러 번 올려도 기본 비교는 원본(최초 완료 회차)을 기준으로 한다.
             earlier = [v for v in done_versions if v < to_version]
             if not earlier:
                 raise HTTPException(409, "비교할 이전 회차가 없습니다. 재진단 후 다시 시도해주세요.")
-            from_version = earlier[-1]
+            from_version = earlier[0]
         if from_version not in done_versions or to_version not in done_versions:
             raise HTTPException(404, "지정한 회차를 찾을 수 없거나 아직 완료되지 않았습니다.")
 
@@ -185,6 +190,20 @@ def get_regression(
             raise HTTPException(404, str(exc))
 
         return to_regression_dto(session, report)
+
+
+@app.get("/api/v1/audits/{audit_id}/runs/{version}", response_model=AuditDto)
+def get_audit_run(audit_id: str, version: int) -> AuditDto:
+    """특정 완료 회차의 화면과 탐지 항목. 원본(v1) 결과를 수정본 이후에도 다시 볼 때 쓴다."""
+    with SessionLocal() as session:
+        try:
+            audit = get_audit(session, audit_id)
+        except KeyError:
+            raise HTTPException(404, "Audit not found")
+        run = next((r for r in audit.runs if r.version == version and r.status == RunStatus.DONE), None)
+        if run is None:
+            raise HTTPException(404, "지정한 회차를 찾을 수 없거나 아직 완료되지 않았습니다.")
+        return to_audit_dto(session, audit, rules_by_id(), run)
 
 
 @app.post("/api/v1/audits/{audit_id}/screens", response_model=AuditDto)

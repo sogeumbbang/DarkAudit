@@ -68,9 +68,9 @@ it("reuses the audit and preserves screen order and labels without creating anot
   );
   const audit = setup();
   const user = await chooseFiles();
-  await user.dblClick(screen.getByRole("button", { name: "수정본 재검사 시작" }));
+  await user.dblClick(screen.getByRole("button", { name: "수정본 검사 시작" }));
   expect(
-    await screen.findByRole("heading", { name: "수정본 재검사가 완료되었습니다" }),
+    await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" }),
   ).toBeInTheDocument();
   expect(metadata.map(({ id, flowStep }) => ({ id, flowStep }))).toEqual(
     audit.screens.map(({ id, flowStep }) => ({ id, flowStep })),
@@ -103,10 +103,10 @@ it("retries an analysis request failure without uploading another run", async ()
   );
   const audit = setup();
   const user = await chooseFiles();
-  await user.click(screen.getByRole("button", { name: "수정본 재검사 시작" }));
+  await user.click(screen.getByRole("button", { name: "수정본 검사 시작" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("일시적 오류");
   await user.click(screen.getByRole("button", { name: "분석 다시 시도" }));
-  await screen.findByRole("heading", { name: "수정본 재검사가 완료되었습니다" });
+  await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" });
   expect(uploads).toBe(1);
   expect(starts).toBe(2);
 });
@@ -119,16 +119,16 @@ it("keeps selected files after upload failure and permits retry", async () => {
   );
   setup();
   const user = await chooseFiles();
-  await user.click(screen.getByRole("button", { name: "수정본 재검사 시작" }));
+  await user.click(screen.getByRole("button", { name: "수정본 검사 시작" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("업로드 실패");
   expect(screen.getByText("선택됨: replacement-0.png")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "수정본 재검사 시작" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "수정본 검사 시작" })).toBeEnabled();
 });
 
 it("requires every replacement and blocks a currently running audit", async () => {
   setup("analyzing");
   await screen.findByText("진행 중인 회차가 있습니다. 완료 후 다시 열어 주세요.");
-  expect(screen.getByRole("button", { name: "수정본 재검사 시작" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "수정본 검사 시작" })).toBeDisabled();
   for (const input of screen.getAllByLabelText(/수정본$/)) expect(input).toBeDisabled();
 });
 
@@ -141,6 +141,6 @@ it("rejects oversized files before starting a request", async () => {
   await user.upload(inputs[0]!, file);
   expect(await screen.findByRole("alert")).toHaveTextContent("10 MiB 이하");
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "수정본 재검사 시작" })).toBeDisabled(),
+    expect(screen.getByRole("button", { name: "수정본 검사 시작" })).toBeDisabled(),
   );
 });

@@ -16,10 +16,10 @@ test("uploads replacements to the same audit and opens the latest comparison", a
   });
   await page.getByRole("link", { name: "수정본 재검사", exact: true }).click();
   await expect(page).toHaveURL(/\/audits\/audit-insurance-v1\/recheck$/);
-  await expect(page.getByRole("heading", { name: "수정본 재검사", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "수정본 검사", exact: true })).toBeVisible();
   const inputs = page.locator('input[type="file"]');
   await expect(inputs).toHaveCount(5);
-  await expect(page.getByRole("button", { name: "수정본 재검사 시작" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "수정본 검사 시작" })).toBeDisabled();
   for (let index = 0; index < (await inputs.count()); index++) {
     await inputs.nth(index).setInputFiles({
       name: `replacement-${index}.png`,
@@ -37,15 +37,15 @@ test("uploads replacements to the same audit and opens the latest comparison", a
       ["serious", "critical"].includes(item.impact ?? ""),
     ),
   ).toEqual([]);
-  await page.getByRole("button", { name: "수정본 재검사 시작" }).click();
-  await expect(page.getByRole("heading", { name: "수정본 재검사가 완료되었습니다" })).toBeVisible();
+  await page.getByRole("button", { name: "수정본 검사 시작" }).click();
+  await expect(page.getByRole("heading", { name: "수정본 검사가 완료되었습니다" })).toBeVisible();
   await page.getByRole("link", { name: "전후 비교 보기" }).click();
-  await expect(page.getByRole("heading", { name: "v1 → v2 비교" })).toBeVisible();
-  await expect(page.getByText("해결률 · 산출 보류")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "v1 원본 → v2 수정본 비교" })).toBeVisible();
+  await expect(page.getByText("산출 보류")).toBeVisible();
   await expect(
     page.getByText("모의 분석 결과이므로 실제 해결 여부를 확인할 수 없습니다."),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "유지 · 3건" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "남은 항목 3건" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const comparisonAccessibility = await new AxeBuilder({ page }).analyze();
   expect(

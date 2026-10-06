@@ -1,174 +1,294 @@
-import { useQuery } from "@tanstack/react-query";
+import { FileText } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { getAuditRegression } from "@/api/audits";
+import type { RegressionDto } from "@/api/schemas";
 import { PageHeading } from "@/components/common/PageHeading";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import type { AuditDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
-import { DemoJourney } from "@/features/audit-create/DemoJourney";
-import { guidelineCategories } from "./guidelines";
+import { RecheckSteps } from "@/features/recheck/RecheckSteps";
+import { completedRuns, displayName, ruleTitle, runLabel } from "@/features/recheck/runs";
+import { useRegression } from "@/features/recheck/useRecheckData";
+import { cn } from "@/lib/cn";
+import "@/features/recheck/recheck.css";
 
-const groups = [
-  ["resolved", "해결", "이전 항목이 동일 검사 범위에서 더 이상 탐지되지 않았습니다."],
-  ["persisted", "유지", "동일 항목이 이번에도 탐지되었습니다."],
-  ["improved", "개선", "동일 항목이 남아 있으나 심각도가 낮아졌습니다."],
+type Change = RegressionDto["resolved"][number];
+
+const severityLabels = { HIGH: "위험 높음", REVIEW: "검토 필요", LOW: "낮음" };
+const remainingKinds = [
   ["new", "신규", "이번 회차에 새로 탐지되었습니다."],
-  ["regressed", "재발", "과거 해결 기록이 있는 항목이 다시 탐지되었습니다."],
-  ["pending", "보류", "이전 항목이 보이지 않지만 해결을 확인할 근거가 부족합니다."],
+  ["regressed", "재발", "과거에 해결된 항목이 다시 탐지되었습니다."],
+  ["persisted", "유지", "원본 항목이 이번에도 탐지되었습니다."],
+  ["improved", "개선", "원본 항목이 남아 있으나 위험도가 낮아졌습니다."],
+  ["pending", "보류", "원본 항목이 보이지 않지만 해결을 확인할 근거가 부족합니다."],
 ] as const;
-const ruleNames = new Map(
-  guidelineCategories.flatMap((category) => category.types.map((rule) => [rule.id, rule.title])),
-);
-const severityLabels = { HIGH: "높음", REVIEW: "검토 필요", LOW: "낮음" };
+
+function where(change: Change) {
+  return [change.location, change.element].filter(Boolean).join(" · ") || "위치 정보 없음";
+}
+
+function Summary({
+  result,
+  before,
+  after,
+}: {
+  result: RegressionDto;
+  before: number;
+  after: number;
+}) {
+  const ratio =
+    result.comparisonStatus === "empty"
+      ? "비교할 항목 없음"
+      : result.comparisonStatus === "incomplete" || result.resolvedRatio === null
+        ? "산출 보류"
+        : `${Math.round(result.resolvedRatio * 100)}%`;
+  return (
+    <section className="rc-band" aria-label="비교 요약">
+      <div>
+        <p>탐지 항목</p>
+        <p className="rc-band-value">
+          {before} → {after}건
+        </p>
+      </div>
+      <div>
+        <p>원본 항목 해결률</p>
+        <p className="rc-band-value">{ratio}</p>
+      </div>
+      <div className="rc-band-cells">
+        {(
+          [
+            ["해결", result.resolved.length],
+            ["유지", result.persisted.length + result.improved.length],
+            ["신규", result.new.length],
+            ["재발", result.regressed.length],
+          ] as const
+        ).map(([label, count]) => (
+          <div key={label}>
+            <b>{count}</b>
+            <span>{label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function Comparison({ audit }: { audit: AuditDto }) {
-  const completed = (audit.runs ?? [])
-    .filter((run) => run.status === "completed")
-    .sort((a, b) => a.version - b.version);
-  const previous = completed.at(-2);
-  const current = completed.at(-1);
-  const comparison = useQuery({
-    queryKey: ["regression", audit.id, previous?.version, current?.version, audit.updatedAt],
-    queryFn: () => getAuditRegression(audit.id, previous!.version, current!.version),
-    enabled: Boolean(previous && current),
-    retry: false,
-  });
+  const [params, setParams] = useSearchParams();
+  const runs = completedRuns(audit);
+  const from = runs.find((run) => run.version === Number(params.get("from"))) ?? runs[0];
+  const to = runs.find((run) => run.version === Number(params.get("to"))) ?? runs.at(-1);
+  const comparison = useRegression(audit.id, from?.version, to?.version, audit.updatedAt);
   const result = comparison.data;
+  const id = encodeURIComponent(audit.id);
+
+  function choose(key: "from" | "to", version: string) {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      next.set(key, version);
+      return next;
+    });
+  }
+
   return (
     <div className="mt-6 space-y-5">
-      <div className="flex flex-wrap gap-3">
-        <Button asChild variant="outline">
-          <Link to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}>진단 결과 보기</Link>
-        </Button>
-        {!audit.demoPreset && (
-          <Button asChild>
-            <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>수정본 재검사</Link>
-          </Button>
-        )}
-      </div>
       {(audit.status === "queued" || audit.status === "analyzing" || audit.status === "failed") && (
-        <p className="text-sm text-muted">
+        <p className="rc-muted text-sm">
           최신 작업은 {audit.status === "failed" ? "실패했습니다" : "진행 중입니다"}. 비교에는
           완료된 회차만 사용합니다.
         </p>
       )}
-      {!previous || !current ? (
-        <Card className="p-6">
+      {runs.length < 2 || !from || !to ? (
+        <section className="rc-card">
           <h2 className="font-bold">비교할 완료 회차가 부족합니다</h2>
-          <p className="mt-2 text-sm text-muted">
+          <p className="rc-muted mt-2 text-sm">
             같은 진단에 수정본을 등록해 두 회차 이상 분석을 완료해 주세요.
           </p>
-        </Card>
-      ) : comparison.isPending ? (
-        <p role="status">비교 결과를 불러오는 중입니다.</p>
-      ) : comparison.isError ? (
-        <Card className="p-6">
-          <p role="alert">비교 결과를 불러오지 못했습니다. {comparison.error.message}</p>
-          <Button className="mt-3" onClick={() => void comparison.refetch()}>
-            다시 불러오기
-          </Button>
-        </Card>
-      ) : result ? (
+          <Link className="rc-gold-btn mt-4" to={`/app/audits/${id}/recheck`}>
+            수정본 검사로 이동
+          </Link>
+        </section>
+      ) : (
         <>
-          <Card className="p-6">
-            <h2 className="text-lg font-bold">
-              v{result.fromVersion} → v{result.toVersion} 비교
-            </h2>
-            <p className="mt-2 text-sm text-muted">최신 완료 두 회차 · {audit.name}</p>
-            {result.scopeDescription && (
-              <p className="mt-2 text-sm leading-6 text-muted">{result.scopeDescription}</p>
-            )}
-            <p className="mt-3 font-semibold">
-              탐지 항목 {previous.findingCount}건 → {current.findingCount}건
-            </p>
-            <p className="mt-4 text-xl font-bold">
-              해결률 ·{" "}
-              {result.comparisonStatus === "incomplete" || result.resolvedRatio === null
-                ? "산출 보류"
-                : `${Math.round(result.resolvedRatio * 100)}%`}
-            </p>
-            <p className="mt-2 text-xs text-muted">
-              이전 항목 중 해결된 비율입니다. 신규·재발 항목은 분모에 포함하지 않습니다.
-            </p>
-            {result.comparisonStatus === "incomplete" && (
-              <div role="status" className="mt-4 rounded-control bg-brand-50 p-4">
-                <h3 className="font-semibold">
-                  {result.resolved.length > 0
-                    ? "일부 항목의 해결 판정이 보류되었습니다"
-                    : "해결 판정이 보류되었습니다"}
-                </h3>
-                {result.resolved.length > 0 && (
-                  <p className="mt-2 text-sm">
-                    검사 근거가 확인된 {result.resolved.length}건은 해결로 구분했습니다. 전체
-                    해결률은 산출하지 않습니다.
+          <div className="rc-no-print flex flex-wrap items-end justify-end gap-3">
+            <label className="min-w-36 flex-1 text-xs font-semibold sm:flex-none">
+              비교 기준
+              <select
+                className="rc-select mt-1"
+                value={from.version}
+                onChange={(event) => choose("from", event.target.value)}
+              >
+                {runs.slice(0, -1).map((run) => (
+                  <option key={run.id} value={run.version} disabled={run.version >= to.version}>
+                    {runLabel(audit, run)} · {run.findingCount}건
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-36 flex-1 text-xs font-semibold sm:flex-none">
+              비교 대상
+              <select
+                className="rc-select mt-1"
+                value={to.version}
+                onChange={(event) => choose("to", event.target.value)}
+              >
+                {runs.slice(1).map((run) => (
+                  <option key={run.id} value={run.version} disabled={run.version <= from.version}>
+                    {runLabel(audit, run)} · {run.findingCount}건
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button variant="outline" onClick={() => window.print()}>
+              <FileText size={15} aria-hidden="true" /> PDF 보고서
+            </Button>
+          </div>
+          {comparison.isPending ? (
+            <p role="status">비교 결과를 불러오는 중입니다.</p>
+          ) : comparison.isError ? (
+            <section className="rc-card">
+              <p role="alert">비교 결과를 불러오지 못했습니다. {comparison.error.message}</p>
+              <Button className="mt-3" onClick={() => void comparison.refetch()}>
+                다시 불러오기
+              </Button>
+            </section>
+          ) : result ? (
+            <>
+              <h2 className="text-lg font-bold">
+                {runLabel(audit, from)} → {runLabel(audit, to)} 비교
+              </h2>
+              <Summary result={result} before={from.findingCount} after={to.findingCount} />
+              <p className="rc-muted text-xs leading-5">
+                해결률은 원본 항목 중 같은 기준으로 다시 검사했을 때 잡히지 않은 비율입니다.
+                신규·재발은 분모에 넣지 않습니다.
+              </p>
+              {result.scopeDescription && (
+                <p className="rc-muted text-sm leading-6">{result.scopeDescription}</p>
+              )}
+              {result.comparisonStatus === "empty" && (
+                <section className="rc-card" role="status">
+                  <h3 className="font-bold">비교할 항목 없음</h3>
+                  <p className="rc-muted mt-2 text-sm">
+                    두 회차 모두 탐지된 항목이 없어 해결·신규 여부를 나눌 항목이 없습니다.
                   </p>
-                )}
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                  {result.limitations.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </Card>
-          <div className="grid gap-4 md:grid-cols-2">
-            {groups.map(([key, label, description]) => (
-              <Card key={key} className="min-w-0 p-6">
-                <h3 className="font-bold">
-                  {label} · {result[key].length}건
-                </h3>
-                <p className="mt-2 text-xs leading-5 text-muted">{description}</p>
-                {result[key].length === 0 ? (
-                  <p className="mt-4 text-sm text-muted">해당 항목 없음</p>
-                ) : (
-                  <ul className="mt-4 space-y-4">
-                    {result[key].map((change, index) => (
-                      <li
-                        key={`${change.findingId}-${index}`}
-                        className="border-t border-border pt-3 text-sm"
-                      >
-                        <p className="font-semibold">
-                          {change.ruleId} · {ruleNames.get(change.ruleId) ?? "검토 항목"}
-                        </p>
-                        {(change.location || change.element) && (
-                          <p className="mt-2 leading-6">
-                            {[change.location, change.element].filter(Boolean).join(" · ")}
-                          </p>
-                        )}
-                        <p className="mt-1 text-muted">
-                          이전: {change.before ? severityLabels[change.before] : "항목 없음"} →
-                          이번:{" "}
-                          {change.after
-                            ? severityLabels[change.after]
-                            : key === "pending"
-                              ? "확인 보류"
-                              : "미탐지"}
-                        </p>
-                        {key === "pending" && change.verificationNote && (
-                          <p className="mt-2 text-xs leading-6 text-muted">
-                            확인 필요: {change.verificationNote}
-                          </p>
-                        )}
-                        {change.findingId &&
-                          audit.findings.some((finding) => finding.id === change.findingId) && (
-                            <Link
-                              className="mt-2 inline-block text-brand-700 underline"
-                              to={`/app/overview?audit=${encodeURIComponent(audit.id)}&finding=${encodeURIComponent(change.findingId)}&panel=1`}
-                            >
-                              현재 항목 검토
-                            </Link>
-                          )}
-                      </li>
+                </section>
+              )}
+              {result.comparisonStatus === "incomplete" && (
+                <div role="status" className="rc-warn">
+                  <h3 className="font-semibold">
+                    {result.resolved.length > 0
+                      ? "일부 항목의 해결 판정이 보류되었습니다"
+                      : "해결 판정이 보류되었습니다"}
+                  </h3>
+                  {result.resolved.length > 0 && (
+                    <p className="mt-1">
+                      검사 근거가 확인된 {result.resolved.length}건은 해결로 구분했습니다. 전체
+                      해결률은 산출하지 않습니다.
+                    </p>
+                  )}
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {result.limitations.map((reason) => (
+                      <li key={reason}>{reason}</li>
                     ))}
                   </ul>
-                )}
-              </Card>
-            ))}
-          </div>
+                </div>
+              )}
+              {result.comparisonStatus !== "empty" && (
+                <div className="rc-grid">
+                  <section className="rc-card" aria-labelledby="rc-resolved-title">
+                    <h3 id="rc-resolved-title" className="text-[#3f5a40]">
+                      해결 {result.resolved.length}건
+                    </h3>
+                    <p className="rc-muted mt-1 text-xs">원본 위치에서 문제가 사라짐</p>
+                    {result.resolved.length ? (
+                      <ul className="mt-3">
+                        {result.resolved.map((change, index) => (
+                          <li key={`${change.findingId}-${index}`} className="rc-row">
+                            <b>{change.ruleId}</b>
+                            <span className="min-w-0">
+                              <span className="block font-semibold">
+                                {ruleTitle(change.ruleId)}
+                              </span>
+                              <span className="rc-muted block break-words text-xs leading-5">
+                                {where(change)}
+                              </span>
+                            </span>
+                            <span className="rc-row-status">
+                              {change.before ? severityLabels[change.before] : "원본 항목"} → 해결
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="rc-chip mt-3">해결 0건</p>
+                    )}
+                  </section>
+                  <section className="rc-card" aria-labelledby="rc-remaining-title">
+                    <h3 id="rc-remaining-title">
+                      남은 항목{" "}
+                      {result.new.length +
+                        result.regressed.length +
+                        result.persisted.length +
+                        result.improved.length}
+                      건
+                    </h3>
+                    <ul className="mt-3 space-y-3">
+                      {remainingKinds.flatMap(([key, label, description]) =>
+                        result[key].map((change, index) => (
+                          <li
+                            key={`${key}-${change.findingId}-${index}`}
+                            className={cn(
+                              "rc-alert-card",
+                              key === "pending" && "border-[#e3e6e4] bg-[#fffdfc]",
+                            )}
+                          >
+                            <h4 className={cn(key === "pending" && "text-[#526168]")}>
+                              <span
+                                className={cn(
+                                  "rc-tag",
+                                  key === "pending" ? "rc-tag--pending" : "rc-tag--new",
+                                )}
+                              >
+                                {label}
+                              </span>
+                              {change.ruleId} · {ruleTitle(change.ruleId)}
+                            </h4>
+                            <p>{where(change)}</p>
+                            <p className="rc-muted">
+                              {key === "pending" && change.verificationNote
+                                ? `확인 필요: ${change.verificationNote}`
+                                : description}
+                            </p>
+                            {change.findingId &&
+                              key !== "pending" &&
+                              audit.findings.some((finding) => finding.id === change.findingId) && (
+                                <Link
+                                  className="rc-link mt-2 inline-block"
+                                  to={`/app/overview?audit=${id}&finding=${encodeURIComponent(change.findingId)}&panel=1`}
+                                >
+                                  검토하기
+                                </Link>
+                              )}
+                          </li>
+                        )),
+                      )}
+                    </ul>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {remainingKinds
+                        .filter(([key]) => result[key].length === 0)
+                        .map(([key, label]) => (
+                          <span key={key} className="rc-chip">
+                            {label} 0건
+                          </span>
+                        ))}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -181,11 +301,15 @@ export function BenchmarkPage() {
     summary.data?.audits.find((item) => item.id === (requested ?? summary.data.activeAuditId)) ??
     (!requested ? summary.data?.audits[0] : undefined);
   return (
-    <div className="workspace-page mx-auto max-w-6xl">
+    <div className="rc workspace-page mx-auto max-w-6xl">
       <PageHeading
         eyebrow="REVIEW / COMPARISON"
-        title="비교 분석"
-        description="수정 전후의 최신 완료 두 회차를 비교합니다."
+        title="전후 비교"
+        description={
+          audit
+            ? `${displayName(audit.name)} · 원본과 수정본을 같은 기준으로 비교합니다.`
+            : "원본과 수정본을 같은 기준으로 비교합니다."
+        }
       />
       {summary.isPending ? (
         <p className="mt-6" role="status">
@@ -200,16 +324,15 @@ export function BenchmarkPage() {
         </div>
       ) : (
         <>
-          {audit?.demoPreset ? (
-            <DemoJourney step={3} />
-          ) : (
-            <>
+          {audit && <RecheckSteps audit={audit} current={3} />}
+          {!audit?.demoPreset && (
+            <div className="rc-no-print">
               <label className="mt-6 block text-sm font-semibold" htmlFor="comparison-audit">
                 비교할 진단
               </label>
               <select
                 id="comparison-audit"
-                className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm"
+                className="rc-select mt-2"
                 value={audit?.id ?? ""}
                 onChange={(event) => setParams({ audit: event.target.value })}
               >
@@ -222,7 +345,7 @@ export function BenchmarkPage() {
                   </option>
                 ))}
               </select>
-            </>
+            </div>
           )}
           {audit ? (
             <Comparison key={audit.id} audit={audit} />

@@ -68,12 +68,12 @@ it("runs a fixed revised screenshot demo on the original audit and preserves ret
   const user = userEvent.setup();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "내 파일로 재검사" })).not.toBeInTheDocument();
-  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
+  const button = screen.getByRole("button", { name: "수정본 검사 시작" });
   await waitFor(() => expect(button).toBeEnabled());
   await user.click(button);
   expect(await screen.findByRole("alert")).toHaveTextContent("분석 접수 실패");
   await user.click(button);
-  await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
+  await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" });
   expect(uploads).toBe(1);
   expect(metadata).toHaveLength(6);
   expect(metadata.every((item) => item.demoVariant === "revised")).toBe(true);
@@ -104,10 +104,10 @@ it("uses the revised public URL and the same audit for URL demos", async () => {
   );
   const audit = setup("website");
   const user = userEvent.setup();
-  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
+  const button = screen.getByRole("button", { name: "수정본 검사 시작" });
   await waitFor(() => expect(button).toBeEnabled());
   await user.click(button);
-  await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
+  await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" });
   expect(input).toMatchObject({ mode: "smart", profiles: ["mobile"], demoVariant: "revised" });
   expect(input!.url).toContain("scenario=pet&variant=revised&step=1");
 });
@@ -122,7 +122,7 @@ it("does not create a run when downloading a revised image fails", async () => {
     }),
   );
   setup();
-  const button = screen.getByRole("button", { name: "수정본 실행해보기" });
+  const button = screen.getByRole("button", { name: "수정본 검사 시작" });
   await waitFor(() => expect(button).toBeEnabled());
   await userEvent.click(button);
   expect(await screen.findByRole("alert")).toHaveTextContent("올바르지 않습니다");
@@ -185,30 +185,55 @@ it.each(["figma", "android"] as const)(
         : undefined;
     const audit = setup(source);
     const user = userEvent.setup();
-    const button = screen.getByRole("button", { name: "수정본 실행해보기" });
+    const button = screen.getByRole("button", { name: "수정본 검사 시작" });
     await waitFor(() => expect(button).toBeEnabled());
     await user.click(button);
-    await screen.findByRole("heading", { name: "수정본 분석이 완료되었습니다" });
+    await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" });
     androidSpy?.mockRestore();
     expect(versions).toEqual(["revised"]);
     if (source === "android") expect(assets).toEqual(["revised.apk"]);
   },
 );
 
-it("opens comparison instead of offering a third run when a completed revision is revisited", () => {
+it("warns and asks before saving another revision when one already exists", async () => {
+  let uploads = 0;
+  server.use(
+    http.post("*/api/v1/audits/:id/screens", () => {
+      uploads++;
+      return HttpResponse.json(audit);
+    }),
+    http.post("*/api/v1/audits/:id/analyze", () =>
+      HttpResponse.json({ jobId: "third", auditId: audit.id, status: "queued", progress: 5 }),
+    ),
+    http.get("*/api/v1/analysis-jobs/third", () =>
+      HttpResponse.json({ jobId: "third", auditId: audit.id, status: "completed", progress: 100 }),
+    ),
+  );
   const audit = setup("screenshots", {
     demoVariant: "revised",
-    runs: [1, 2].map((version) => ({
+    runs: [
+      [1, 7],
+      [2, 1],
+    ].map(([version, findingCount]) => ({
       id: `run-${version}`,
-      version,
-      status: "completed",
+      version: version!,
+      status: "completed" as const,
       createdAt: "2026-10-05T00:00:00Z",
-      findingCount: 0,
+      findingCount: findingCount!,
     })),
   });
-  expect(screen.getByRole("link", { name: "비교하기" })).toHaveAttribute(
-    "href",
-    `/app/benchmark?audit=${encodeURIComponent(audit.id)}`,
+  const user = userEvent.setup();
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "이미 v2 결과가 있는 진단입니다. 다시 실행하면 v3로 저장되고, 전후 비교는 계속 v1 원본을 기준으로 합니다.",
   );
-  expect(screen.queryByRole("button", { name: "수정본 실행해보기" })).not.toBeInTheDocument();
+  const button = screen.getByRole("button", { name: "수정본 검사 시작" });
+  await waitFor(() => expect(button).toBeEnabled());
+  await user.click(button);
+  expect(screen.getByRole("alertdialog", { name: "v3로 다시 검사할까요?" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "취소" }));
+  expect(uploads).toBe(0);
+  await user.click(button);
+  await user.click(screen.getByRole("button", { name: "다시 검사" }));
+  await screen.findByRole("heading", { name: "수정본 검사가 완료되었습니다" });
+  expect(uploads).toBe(1);
 });

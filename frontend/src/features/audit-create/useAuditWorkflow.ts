@@ -44,6 +44,9 @@ export function useAnalysisStatus(jobId?: string) {
     queryKey: ["analysis-job", jobId],
     queryFn: () => getAnalysisStatus(jobId!),
     enabled: Boolean(jobId),
+    // A presenter often switches to slides mid-analysis; keep polling so the
+    // result button is ready when they return.
+    refetchIntervalInBackground: true,
     refetchInterval: (query) => {
       // A rejected request or a forgotten job will not recover by polling.
       const status = (query.state.error as { status?: number } | null)?.status;

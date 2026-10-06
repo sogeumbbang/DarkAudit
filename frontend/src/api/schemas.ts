@@ -95,6 +95,7 @@ export const auditSchema = z.object({
         note: z.string().nullable().optional(),
         createdAt: z.string().datetime({ offset: true }),
         findingCount: z.number().int().nonnegative(),
+        variant: z.enum(["risky", "partial", "revised"]).nullable().optional(),
       }),
     )
     .optional(),
@@ -110,7 +111,7 @@ export const auditSchema = z.object({
       analyzedScreenCount: z.number().int().nonnegative().optional(),
       regression: z
         .object({
-          comparisonStatus: z.enum(["complete", "incomplete"]),
+          comparisonStatus: z.enum(["complete", "incomplete", "empty"]),
           limitations: z.array(z.string()),
           pendingCount: z.number().int().nonnegative(),
           resolvedRatio: z.number().min(0).max(1).nullable(),
@@ -194,7 +195,7 @@ export const regressionSchema = z.object({
   auditId: z.string(),
   fromVersion: z.number().int().positive(),
   toVersion: z.number().int().positive(),
-  comparisonStatus: z.enum(["complete", "incomplete"]),
+  comparisonStatus: z.enum(["complete", "incomplete", "empty"]),
   limitations: z.array(z.string()),
   resolvedRatio: z.number().min(0).max(1).nullable(),
   resolved: z.array(regressionChangeSchema),
@@ -203,4 +204,17 @@ export const regressionSchema = z.object({
   new: z.array(regressionChangeSchema),
   regressed: z.array(regressionChangeSchema),
   pending: z.array(regressionChangeSchema),
+  screenChanges: z
+    .array(
+      z.object({
+        screenId: z.string(),
+        flowStep: z.string().nullable().optional(),
+        beforeCount: z.number().int().nonnegative(),
+        afterCount: z.number().int().nonnegative(),
+        status: z.enum(["resolved", "reduced", "persisted", "new", "clear"]),
+      }),
+    )
+    .default([]),
 });
+
+export type RegressionDto = z.infer<typeof regressionSchema>;

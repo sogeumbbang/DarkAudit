@@ -1,11 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { startAnalysis, uploadAuditScreens } from "@/api/audits";
 import { PageHeading } from "@/components/common/PageHeading";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { RecheckSteps } from "@/features/recheck/RecheckSteps";
+import { CompletedRevision, RecheckShell } from "@/features/recheck/RecheckShell";
+import { latestRun } from "@/features/recheck/runs";
+import "@/features/recheck/recheck.css";
 import type { AuditDto } from "@/entities/audit/types";
 import { useAnalysisStatus } from "@/features/audit-create/useAuditWorkflow";
 import { usePersistedJob } from "@/features/audit-create/usePersistedJob";
@@ -30,6 +33,15 @@ function RecheckForm({ audit }: { audit: AuditDto }) {
     !jobId && !uploaded && (audit.status === "queued" || audit.status === "analyzing");
   const busy = submitting || running || existingJob;
   const canUpload = original.length >= 1 && original.length <= 6;
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+  const previewUrls = useRef(previews);
+  useEffect(() => {
+    previewUrls.current = previews;
+  }, [previews]);
+  useEffect(
+    () => () => Object.values(previewUrls.current).forEach((url) => URL.revokeObjectURL(url)),
+    [],
+  );
 
   useEffect(() => {
     if (completed || failed) {
@@ -69,134 +81,132 @@ function RecheckForm({ audit }: { audit: AuditDto }) {
     }
   }
 
-  if (completed)
-    return (
-      <Card className="mt-6 p-6">
-        <h2 className="text-lg font-bold">수정본 재검사가 완료되었습니다</h2>
-        <p className="mt-2 text-sm text-muted">
-          비교 화면에서 해결·유지·신규·재발·보류 항목을 확인하세요.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>전후 비교 보기</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}>진단 결과 보기</Link>
-          </Button>
-        </div>
-      </Card>
-    );
+  if (completed) return <CompletedRevision audit={audit} version={latestRun(audit)?.version} />;
 
   return (
     <form
       noValidate
-      className="mt-6 space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
         void submit();
       }}
     >
-      <Card className="p-6">
-        <h2 className="font-bold">{audit.name}</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          기존 화면과 같은 순서로 전체 수정본을 등록합니다. 단계명은 유지되며 같은 진단에 새 회차가
-          저장됩니다. PNG·JPG·WEBP, 파일당 최대 10 MiB입니다.
-        </p>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          화면 수·탐색 경로나 분석 근거가 다르면 해결 판정이 보류될 수 있습니다.
-        </p>
-      </Card>
-      {!canUpload && <p role="alert">스크린샷 재검사는 기존 화면이 1~6개인 진단에서 지원합니다.</p>}
-      {existingJob && <p role="status">진행 중인 회차가 있습니다. 완료 후 다시 열어 주세요.</p>}
-      {canUpload && (
-        <fieldset disabled={busy} className="space-y-4">
-          <legend className="mb-3 font-semibold">단계별 수정본</legend>
-          {original.map((screen, index) => (
-            <Card key={screen.id} className="flex flex-wrap items-start gap-4 p-5">
-              <img
-                className="h-28 w-20 rounded-control border border-border object-contain"
-                src={screen.imageUrl}
-                alt={`이전 ${index + 1}단계: ${screen.flowStep}`}
-              />
-              <div className="min-w-0 flex-1 basis-48">
-                <label className="block text-sm font-bold" htmlFor={`replacement-${index}`}>
-                  {index + 1}. {screen.flowStep} 수정본
-                </label>
-                <input
-                  id={`replacement-${index}`}
-                  className="mt-3 block w-full text-sm"
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.webp"
-                  required={!uploaded}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    setUploaded(false);
-                    setJobId(undefined);
-                    setError("");
-                    const valid =
-                      file &&
-                      /\.(png|jpe?g|webp)$/i.test(file.name) &&
-                      file.size <= 10 * 1024 * 1024;
-                    setFiles((current) => {
-                      const next = { ...current };
-                      if (valid) next[screen.id] = file;
-                      else delete next[screen.id];
-                      return next;
-                    });
-                    if (file && !valid) {
-                      event.target.value = "";
-                      setError("PNG·JPG·WEBP 파일을 10 MiB 이하로 선택해 주세요.");
-                    }
-                  }}
-                />
-                {files[screen.id] && (
-                  <p className="mt-2 break-all text-xs text-muted">
-                    선택됨: {files[screen.id]!.name}
-                  </p>
-                )}
-              </div>
-            </Card>
-          ))}
-        </fieldset>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-      {running && <p role="status">수정본을 분석하고 있습니다. {job.data?.progress ?? 0}%</p>}
-      {job.isError && (
-        <div role="alert" className="text-sm text-danger">
-          작업 상태를 확인하지 못했습니다. 다시 조회해 주세요.
-          <Button type="button" variant="outline" onClick={() => void job.refetch()}>
-            상태 다시 확인
-          </Button>
-        </div>
-      )}
-      {failed && (
-        <p role="alert" className="text-sm text-danger">
-          분석에 실패했습니다. {job.data?.error} 같은 업로드로 다시 시도할 수 있습니다.
-        </p>
-      )}
-      <div className="flex flex-wrap gap-3">
-        <Button
-          type="submit"
-          disabled={busy || !canUpload || original.some((screen) => !files[screen.id])}
-        >
-          {submitting
+      <RecheckShell
+        audit={audit}
+        canStart={canUpload && original.every((screen) => files[screen.id])}
+        busy={busy}
+        startLabel={
+          submitting
             ? "재검사 요청 중…"
             : running
               ? "분석 중…"
               : uploaded
                 ? "분석 다시 시도"
-                : "수정본 재검사 시작"}
-        </Button>
-        <Button asChild variant="outline">
-          <Link to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}>
-            진단 결과로 돌아가기
-          </Link>
-        </Button>
-      </div>
+                : "수정본 검사 시작"
+        }
+        onStart={() => void submit()}
+        right={
+          <>
+            <h3 className="mt-1 font-bold">단계별 수정본 업로드</h3>
+            <p className="rc-muted mt-1 text-xs leading-5">
+              기존 화면과 같은 순서로 등록합니다. PNG·JPG·WEBP, 파일당 최대 10 MiB. 화면 수나 순서가
+              다르면 해결 판정이 보류될 수 있습니다.
+            </p>
+            {!canUpload && (
+              <p role="alert" className="mt-3 text-sm">
+                스크린샷 재검사는 기존 화면이 1~6개인 진단에서 지원합니다.
+              </p>
+            )}
+            {canUpload && (
+              <fieldset disabled={busy} className="mt-3 space-y-3">
+                <legend className="sr-only">단계별 수정본</legend>
+                {original.map((screen, index) => (
+                  <div key={screen.id} className="flex items-start gap-3">
+                    <img
+                      className="h-20 w-12 flex-none rounded border border-[#e3e6e4] bg-white object-cover object-top"
+                      src={previews[screen.id] ?? screen.imageUrl}
+                      alt={`${previews[screen.id] ? "수정본" : "이전"} ${index + 1}단계: ${screen.flowStep}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <label className="block text-sm font-bold" htmlFor={`replacement-${index}`}>
+                        {index + 1}. {screen.flowStep} 수정본
+                      </label>
+                      <input
+                        id={`replacement-${index}`}
+                        className="mt-2 block w-full text-xs"
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.webp"
+                        required={!uploaded}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          setUploaded(false);
+                          setJobId(undefined);
+                          setError("");
+                          const valid =
+                            file &&
+                            /\.(png|jpe?g|webp)$/i.test(file.name) &&
+                            file.size <= 10 * 1024 * 1024;
+                          setFiles((current) => {
+                            const next = { ...current };
+                            if (valid) next[screen.id] = file;
+                            else delete next[screen.id];
+                            return next;
+                          });
+                          setPreviews((current) => {
+                            const next = { ...current };
+                            if (next[screen.id]) URL.revokeObjectURL(next[screen.id]!);
+                            if (valid) next[screen.id] = URL.createObjectURL(file);
+                            else delete next[screen.id];
+                            return next;
+                          });
+                          if (file && !valid) {
+                            event.target.value = "";
+                            setError("PNG·JPG·WEBP 파일을 10 MiB 이하로 선택해 주세요.");
+                          }
+                        }}
+                      />
+                      {files[screen.id] && (
+                        <p className="mt-1 break-all text-xs text-muted">
+                          선택됨: {files[screen.id]!.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </fieldset>
+            )}
+          </>
+        }
+      >
+        {existingJob && (
+          <p role="status" className="mt-4 text-sm">
+            진행 중인 회차가 있습니다. 완료 후 다시 열어 주세요.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-danger">
+            {error}
+          </p>
+        )}
+        {running && (
+          <p role="status" className="mt-4 text-sm">
+            수정본을 분석하고 있습니다. {job.data?.progress ?? 0}%
+          </p>
+        )}
+        {job.isError && (
+          <div role="alert" className="mt-4 text-sm text-danger">
+            작업 상태를 확인하지 못했습니다. 다시 조회해 주세요.
+            <Button type="button" variant="outline" onClick={() => void job.refetch()}>
+              상태 다시 확인
+            </Button>
+          </div>
+        )}
+        {failed && (
+          <p role="alert" className="mt-4 text-sm text-danger">
+            분석에 실패했습니다. {job.data?.error} 같은 업로드로 다시 시도할 수 있습니다.
+          </p>
+        )}
+      </RecheckShell>
     </form>
   );
 }
@@ -206,15 +216,11 @@ export function AuditRecheckPage() {
   const summary = useDashboardSummary();
   const audit = summary.data?.audits.find((item) => item.id === auditId);
   return (
-    <div className="workspace-page mx-auto max-w-4xl">
+    <div className="workspace-page mx-auto max-w-6xl">
       <PageHeading
         eyebrow="REVIEW / RECHECK"
-        title={audit?.demoPreset ? "수정본 실행해보기" : "수정본 재검사"}
-        description={
-          audit?.demoPreset
-            ? "원본과 같은 흐름의 수정본이 준비되어 있습니다. 실행 후 전후 변화를 비교하세요."
-            : "기존 진단에 수정한 화면을 등록하고 변화를 확인하세요."
-        }
+        title="수정본 검사"
+        description="원본과 같은 기준으로 다시 검사합니다"
       />
       {summary.isPending ? (
         <p role="status" className="mt-6">
@@ -228,11 +234,16 @@ export function AuditRecheckPage() {
           </Button>
         </div>
       ) : audit ? (
-        audit.demoPreset ? (
-          <DemoRecheckPanel key={audit.id} audit={audit} />
-        ) : (
-          <RecheckForm key={audit.id} audit={audit} />
-        )
+        <>
+          <div className="rc">
+            <RecheckSteps audit={audit} current={2} />
+          </div>
+          {audit.demoPreset ? (
+            <DemoRecheckPanel key={audit.id} audit={audit} />
+          ) : (
+            <RecheckForm key={audit.id} audit={audit} />
+          )}
+        </>
       ) : (
         <p role="alert" className="mt-6">
           진단을 찾을 수 없습니다.
