@@ -2,16 +2,23 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
 .venv/
 venv/
 .env
 .env.local
+.env.*.local
 
 # Logs and caches
 *.log
 logs/
 .cache/
 cache/
+/.playwright-mcp/
 
 # Node
 node_modules/
@@ -30,20 +37,43 @@ data/figma/
 data/android/
 *.db
 *.sqlite3
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite3-journal
 
 # OS / IDE
 .DS_Store
 .idea/
 .vscode/
 
+# 로컬 도구 설정 및 저장소에서 제외하는 GitHub 설정
+/.codex/
+/.aws/
+/.agents/
+/.github/
+
 # 생성물 — config 로 언제든 재생성 가능
 data/synthetic/html/
 data/synthetic/review/
 data/synthetic/ui/
 
-# DB
-*.db
-data/darkaudit.db
-
 # 평가 예측 원본. 합성 데이터와 마찬가지로 생성물이라 요약 리포트만 남긴다.
 docs/eval/hybrid/
+docs/eval/hybrid_visual/
+docs/eval/clean_visual_*/
+docs/eval/clean_structured_*/
+
+# 루트에 보관한 로컬 참고 자료. docs/의 문서와 검증 이미지는 유지한다.
+/DarkAudit_기능명세서.pdf
+# macOS에서 저장된 한글 파일명의 NFC/NFD 형식을 모두 처리한다.
+/스크린샷*.png
+/스크린샷*.png
+
+# 현재 랜딩 화면에서 사용하지 않는 이미지 후보. 사용 중인 배포 자산은 유지한다.
+/frontend/public/landing/everyday-choice-1920.webp
+/frontend/public/landing/everyday-choice-960.webp
+/frontend/public/landing/pet-and-person-1280.webp
+/frontend/public/landing/pet-and-person-640.webp
