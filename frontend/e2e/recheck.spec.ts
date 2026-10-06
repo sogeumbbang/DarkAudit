@@ -14,7 +14,7 @@ test("uploads replacements to the same audit and opens the latest comparison", a
     dashboardFixture.audits[0].status = "completed";
     await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   });
-  await page.getByRole("link", { name: "수정본 재검사", exact: true }).click();
+  await page.getByRole("link", { name: "수정본 검사하기", exact: true }).click();
   await expect(page).toHaveURL(/\/audits\/audit-insurance-v1\/recheck$/);
   await expect(page.getByRole("heading", { name: "수정본 검사", exact: true })).toBeVisible();
   const inputs = page.locator('input[type="file"]');

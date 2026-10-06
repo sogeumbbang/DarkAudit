@@ -68,7 +68,13 @@ export function RecheckSteps({ audit, current }: { audit: AuditDto; current: 1 |
         </li>
         <li>
           <Step
-            to={`/app/audits/${id}/recheck`}
+            // With a revision on record this step opens its result; running a new
+            // revision is a separate "새 수정본 검사" action.
+            to={
+              hasRevision
+                ? `/app/overview?audit=${id}&version=${latest!.version}`
+                : `/app/audits/${id}/recheck`
+            }
             state={current === 2 ? "current" : hasRevision ? "done" : "next"}
             mark={hasRevision && current !== 2 ? <Check size={14} /> : "2"}
             title="수정본 검사"

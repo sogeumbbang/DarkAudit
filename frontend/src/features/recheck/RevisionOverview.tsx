@@ -1,3 +1,4 @@
+import { CheckCircle2, CircleAlert, Layers2, ListChecks } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AuditDto, AuditRunDto, AuditScreenDto } from "@/entities/audit/types";
@@ -78,49 +79,68 @@ export function RevisionMetrics({
   const first = remaining[0];
   const firstScreen = first && findingScreen(audit, first.change.findingId);
   const resolved = regression.resolved.length;
+  // Same cards as the original run's summary, so switching runs keeps the layout.
   return (
-    <section className="rc rc-kpis" aria-label="원본 대비 결과">
-      <div className="rc-kpi rc-kpi--navy">
-        <p>원본 대비 탐지</p>
-        <p className="rc-kpi-value">
+    <section className="overview-metrics" aria-label="원본 대비 결과">
+      <div className="overview-metric overview-metric--total">
+        <div className="overview-metric-label">
+          <span>원본 대비 탐지</span>
+          <ListChecks size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
           {base.findingCount} → {run.findingCount}
-          <small>건</small>
+          <span>건</span>
         </p>
-        <p className="rc-kpi-note">
+        <p className="overview-metric-note">
           v{base.version} {runKind(audit, base)} → v{run.version} {runKind(audit, run)}
         </p>
       </div>
-      <div className="rc-kpi rc-kpi--resolved">
-        <p>해결</p>
-        <p className="rc-kpi-value">
-          {resolved}
-          <small>건</small>
-        </p>
-        <p className="rc-kpi-note">
-          {resolved && resolved === base.findingCount
-            ? "원본 항목 전부"
-            : `원본 ${base.findingCount}건 중${regression.pending.length ? ` · 보류 ${regression.pending.length}건` : ""}`}
-        </p>
-      </div>
-      <div className={cn("rc-kpi", remaining.length && "rc-kpi--risk")}>
-        <p>새로 확인 필요</p>
-        <p className="rc-kpi-value">
+      <div className="overview-metric">
+        <div className="overview-metric-label">
+          <span>새로 확인 필요</span>
+          <CircleAlert size={18} aria-hidden="true" />
+        </div>
+        <p className={cn("overview-metric-value", remaining.length && "text-[#b01e1e]")}>
           {remaining.length}
-          <small>건</small>
+          <span>건</span>
         </p>
-        <p className="rc-kpi-note rc-muted">
+        <p className="overview-metric-note">
+          <i className="metric-dot metric-dot--warm" aria-hidden="true" />
           {first
             ? `${firstScreen ? `화면 ${firstScreen} · ` : ""}${first.change.ruleId} ${first.kind}${remaining.length > 1 ? ` 외 ${remaining.length - 1}건` : ""}`
             : "수정본에 남은 항목 없음"}
         </p>
       </div>
-      <div className="rc-kpi">
-        <p>등록 화면</p>
-        <p className="rc-kpi-value">
-          {audit.screens.length}
-          <small>개</small>
+      <div className="overview-metric overview-metric--resolved">
+        <div className="overview-metric-label">
+          <span>해결</span>
+          <CheckCircle2 size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {resolved}
+          <span>/ {base.findingCount}건</span>
         </p>
-        <p className="rc-kpi-note rc-muted">원본과 같은 순서로 비교</p>
+        <div className="overview-status-track" aria-hidden="true">
+          <span
+            style={{ width: `${base.findingCount ? (resolved / base.findingCount) * 100 : 0}%` }}
+          />
+        </div>
+        <p className="overview-metric-note">
+          {resolved && resolved === base.findingCount
+            ? "원본 항목 전부"
+            : `원본 ${base.findingCount}건 중${regression.pending.length ? ` · 보류 ${regression.pending.length}건` : ""}`}
+        </p>
+      </div>
+      <div className="overview-metric">
+        <div className="overview-metric-label">
+          <span>등록 화면</span>
+          <Layers2 size={18} aria-hidden="true" />
+        </div>
+        <p className="overview-metric-value">
+          {audit.screens.length}
+          <span>개</span>
+        </p>
+        <p className="overview-metric-note">원본과 같은 순서로 비교</p>
       </div>
     </section>
   );

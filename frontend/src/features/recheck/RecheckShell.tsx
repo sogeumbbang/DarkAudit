@@ -103,7 +103,9 @@ export function RecheckShell({
           disabled={!canStart || busy}
           onClick={() => (hasRevision ? setConfirming(true) : onStart())}
         >
-          {startLabel}
+          {hasRevision && startLabel === "수정본 검사 시작"
+            ? "새 수정본으로 다시 검사"
+            : startLabel}
         </button>
       </div>
       {confirming && (

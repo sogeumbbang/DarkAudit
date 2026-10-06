@@ -36,7 +36,7 @@ for (const [source, title] of [
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
     // ① Revision run
-    await page.getByRole("link", { name: "수정본 실행해보기", exact: true }).click();
+    await page.getByRole("link", { name: "수정본 검사하기", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/app/audits/${auditId}/recheck$`));
     await expect(page.getByRole("heading", { name: "수정본 검사", exact: true })).toBeVisible();
     const steps = page.getByRole("navigation", { name: "수정본 검사 단계" });
@@ -87,6 +87,12 @@ for (const [source, title] of [
     await expect(page.getByRole("combobox", { name: "비교 대상" })).toHaveValue("2");
     await expect(page.getByRole("region", { name: "비교 요약" })).toBeVisible();
     await expect(page.getByRole("button", { name: "PDF 보고서" })).toBeVisible();
+    // The revision step now opens its result; a new run has its own button.
+    await expect(
+      page
+        .getByRole("navigation", { name: "수정본 검사 단계" })
+        .getByRole("link", { name: /수정본 검사/ }),
+    ).toHaveAttribute("href", new RegExp(`version=2$`));
     if (source === "스크린샷") {
       await expect(page.getByRole("region", { name: "비교 요약" })).toContainText("7 → 1건");
       await expect(page.getByRole("region", { name: "비교 요약" })).toContainText("100%");
