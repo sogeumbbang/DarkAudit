@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from .classification import prediction_failure
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "ai/evaluation/clean_cases.json"
@@ -25,27 +26,15 @@ def summarize_clean_cases(cases, predictions: dict, rule_ids) -> dict:
         if any(label["rule_id"] in rules for label in case.labels):
             raise ValueError(f"Clean case has positive labels: {case.flow_id}")
         prediction = predictions.get(case.flow_id)
-        telemetry = (prediction or {}).get("telemetry") or {}
-        output = (prediction or {}).get("output")
-        detections = output.get("detections") if isinstance(output, dict) else None
-        failure = None
-        if prediction is None:
-            failure = "missing_prediction"
-        elif telemetry.get("failed") or prediction.get("error") or prediction.get("status") == "failed":
-            failure = "analysis_failed"
-        elif telemetry.get("provider") == "FakeMultimodalProvider" or "mock_analysis" in telemetry.get("warnings", []):
-            failure = "mock_analysis"
-        elif not isinstance(detections, list) or any(
-            not isinstance(item, dict) or not isinstance(item.get("rule_id"), str)
-            for item in detections
-        ):
-            failure = "invalid_prediction"
+        failure = prediction_failure(prediction)
         if failure:
             failures.append({"flow_id": case.flow_id, "reason": failure})
             for counts in per_rule.values():
                 counts["unassessed"] += 1
             continue
 
+        telemetry = prediction.get("telemetry") or {}
+        detections = prediction["output"]["detections"]
         findings = [item for item in detections if item["rule_id"] in rules]
         predicted = {item["rule_id"] for item in findings}
         assessments = telemetry.get("rule_assessments") or []

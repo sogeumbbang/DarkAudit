@@ -1,0 +1,7 @@
+{
+  "flow_id": "demo-risky",
+  "pair_id": "demo",
+  "variant": "risky",
+  "screens": [{"screen_index": 1}],
+  "labels": [{"rule_id": "DA-04", "primary": {"screen_index": 1, "bbox": [0.1, 0.2, 0.2, 0.1]}}]
+}

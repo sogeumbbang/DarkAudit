@@ -1,0 +1,6 @@
+{
+  "flow_id": "demo-risky",
+  "fixture_only": true,
+  "output": {"detections": [{"rule_id": "DA-04", "bbox": [0.1, 0.2, 0.2, 0.1], "where": {"screen_ids": ["screen-01"]}}]},
+  "telemetry": {"provider": "hand-authored-metric-fixture", "rule_assessments": [{"rule_id": "DA-04", "status": "detected"}]}
+}

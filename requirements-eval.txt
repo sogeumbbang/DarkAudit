@@ -1,0 +1,4 @@
+# Optional RAG judging; basic detection/regression evaluation uses the standard library.
+ragas==0.4.3
+# Ragas 0.4.3 still imports ChatVertexAI, removed in langchain-community 0.4.2.
+langchain-community==0.4.1

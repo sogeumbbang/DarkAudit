@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from .classification import prediction_failure, summarize_classification
 from .metrics import bbox_iou, prf, precision_recall_f1
 
 _SCREEN_NUMBER = re.compile(r"(\d+)$")
@@ -47,12 +48,25 @@ class Evaluator:
         return cases
 
     @staticmethod
-    def load_predictions(path: str | Path) -> dict[str, dict[str, Any]]:
-        root = Path(path); files = sorted(root.glob("*.json")) if root.is_dir() else [root]
+    def load_predictions(path: str | Path, expected_ids=None) -> dict[str, dict[str, Any]]:
+        root = Path(path)
+        files = ([root / f"{flow_id}.json" for flow_id in expected_ids] if expected_ids is not None
+                 and root.is_dir() else sorted(root.glob("*.json")) if root.is_dir() else [root])
         predictions = {}
         for file in files:
-            doc = json.loads(file.read_text(encoding="utf-8")); output = doc.get("output") or doc.get("analysis") or doc
-            flow_id = doc.get("flow_id") or output.get("audit_id") or file.stem
+            if not file.exists() and root.is_dir():
+                continue
+            try:
+                doc = json.loads(file.read_text(encoding="utf-8"))
+                output = doc.get("output", doc.get("analysis", doc))
+                flow_id = doc.get("flow_id") or output.get("audit_id") or file.stem
+                if expected_ids is not None and root.is_dir() and flow_id != file.stem:
+                    raise ValueError("prediction identity mismatch")
+            except (ValueError, TypeError, AttributeError):
+                predictions[file.stem] = {"output": {}, "error": "invalid_prediction"}
+                continue
+            if flow_id in predictions:
+                raise ValueError(f"Duplicate prediction: {flow_id}")
             predictions[flow_id] = {"output": output, "telemetry": doc.get("telemetry") or {},
                                     "error": doc.get("error"), "status": doc.get("status")}
         return predictions
@@ -64,13 +78,20 @@ class Evaluator:
         from .clean_regression import summarize_clean_cases
 
         if not 0 <= iou_threshold <= 1: raise ValueError("iou_threshold must be between 0 and 1")
+        cases = list(cases)
+        if len({case.flow_id for case in cases}) != len(cases):
+            raise ValueError("Dataset flow IDs must be unique")
         missing = sorted(case.flow_id for case in cases if case.flow_id not in predictions)
         rules = sorted(DEFAULT_EVALUATION_RULE_IDS if rule_ids is None else rule_ids)
+        if not rules:
+            raise ValueError("At least one evaluation rule is required")
+        classification = summarize_classification(cases, predictions, rules)
+        clean_summary = summarize_clean_cases(cases, predictions, rules)
+        valid_predictions = {case.flow_id: predictions[case.flow_id] for case in cases
+                             if prediction_failure(predictions.get(case.flow_id)) is None}
+        predictions = valid_predictions
         counts = {rule: [0, 0, 0] for rule in rules}
-        ious, location_hits, location_total = [], 0, 0
         for case in cases:
-            if case.flow_id not in predictions:
-                continue
             expected = {x["rule_id"] for x in case.labels if x["rule_id"] in rules}
             detections = [x for x in predictions.get(case.flow_id, {"output": {}})["output"].get("detections", [])
                           if x.get("rule_id") in rules]
@@ -79,15 +100,6 @@ class Evaluator:
                 if rule in predicted and rule in expected: counts[rule][0] += 1
                 elif rule in predicted: counts[rule][1] += 1
                 elif rule in expected: counts[rule][2] += 1
-            used_detections = set()
-            for label in (x for x in case.labels if x["rule_id"] in rules and x.get("primary", {}).get("bbox")):
-                location_total += 1; index = label["primary"]["screen_index"]
-                matches = [(i, bbox_iou(label["primary"]["bbox"], x["bbox"]))
-                           for i, x in enumerate(detections) if i not in used_detections
-                           and x.get("rule_id") == label["rule_id"] and index in self._screen_indices(x)]
-                best_index, best = max(matches, key=lambda pair: pair[1], default=(-1, 0.0))
-                if best_index >= 0: used_detections.add(best_index)
-                ious.append(best); location_hits += best >= iou_threshold
         per_rule = {rule: prf(*counts[rule]) for rule in rules}
         micro = prf(*(sum(counts[r][i] for r in rules) for i in range(3)))
         macro = {key: sum(float(per_rule[r][key]) for r in rules) / len(rules) if rules else 0.0
@@ -109,15 +121,18 @@ class Evaluator:
         retries = sum(int(x.get("schema_retries", 0)) for x in telemetry)
         retry_runs = sum(int(x.get("schema_retries", 0)) > 0 for x in telemetry if x.get("schema_attempts") is not None)
         measured_runs = sum(x.get("schema_attempts") is not None for x in telemetry)
+        instances = self._instance_detection(cases, predictions, rules, iou_threshold)
+        localization = instances.pop("localization")
         return {
-            "dataset_cases": len(cases), "evaluated_cases": len(cases) - len(missing), "missing_predictions": missing,
+            "report_version": 2,
+            "scope": "flow/rule presence; missing, failed and mock predictions count as misses for positive labels",
+            "dataset_cases": len(cases), "evaluated_cases": len(predictions), "missing_predictions": missing,
+            "classification": classification,
             "per_rule": per_rule, "micro": micro, "macro": macro,
-            "clean_regression": summarize_clean_cases(cases, predictions, rules),
-            "instance_detection": self._instance_detection(cases, predictions, rules, iou_threshold),
+            "clean_regression": clean_summary,
+            "instance_detection": instances,
             "counterfactual_consistency": self._counterfactual(cases, predictions, rules),
-            "localization": {"iou_threshold": iou_threshold, "mean_iou": sum(ious) / len(ious) if ious else None,
-                             "success_rate": location_hits / location_total if location_total else None,
-                             "evaluated_instances": location_total},
+            "localization": localization,
             "operations": {"url_exploration_success_rate": sum(url) / len(url) if url else None,
                            "average_response_time_seconds": sum(durations) / len(durations) if durations else None,
                            "model_cost_usd_per_screen": sum(x[0] for x in costs) / sum(x[1] for x in costs) if costs else None,
@@ -130,17 +145,19 @@ class Evaluator:
     def _instance_detection(cases, predictions, rules, threshold):
         """One-to-one rule/screen/box matching, including missing-case misses."""
         counts = {rule: [0, 0, 0] for rule in rules}
+        ious = []
         for case in cases:
             detections = predictions.get(case.flow_id, {}).get("output", {}).get("detections", [])
             for rule in rules:
                 labels = [label for label in case.labels if label["rule_id"] == rule
                           and label.get("primary", {}).get("bbox")]
                 found = [d for d in detections if d.get("rule_id") == rule]
-                edges = []
-                for label in labels:
+                edges, overlaps = [], {}
+                for label_index, label in enumerate(labels):
                     matches = [(i, bbox_iou(label["primary"]["bbox"], d["bbox"]))
                                for i, d in enumerate(found) if d.get("bbox")
                                and label["primary"]["screen_index"] in Evaluator._screen_indices(d)]
+                    overlaps.update({(label_index, i): overlap for i, overlap in matches})
                     edges.append([i for i, overlap in sorted(matches, key=lambda x: -x[1])
                                   if overlap >= threshold and overlap > 0])
                 assigned = {}
@@ -156,6 +173,21 @@ class Evaluator:
                 for i in range(len(labels)):
                     assign(i, set())
                 tp = len(assigned)
+                # Use the same maximum-cardinality assignment for hit rate and
+                # instance recall. A greedy match can wrongly lose an overlap.
+                matched = {label: i for i, label in assigned.items()}
+                used = set(assigned)
+                for label_index in range(len(labels)):
+                    if label_index in matched:
+                        ious.append(overlaps[label_index, matched[label_index]])
+                        continue
+                    best, index = max(
+                        ((overlaps.get((label_index, i), 0.0), i) for i in range(len(found)) if i not in used),
+                        default=(0.0, -1),
+                    )
+                    if best > 0:
+                        used.add(index)
+                    ious.append(best)
                 for i, value in enumerate((tp, len(found) - tp, len(labels) - tp)):
                     counts[rule][i] += value
         return {
@@ -164,14 +196,27 @@ class Evaluator:
             "per_rule": {rule: prf(*counts[rule]) for rule in rules},
             "micro": prf(*(sum(counts[r][i] for r in rules) for i in range(3))),
             "prediction_coverage": sum(c.flow_id in predictions for c in cases) / len(cases) if cases else None,
+            "localization": {
+                "iou_threshold": threshold,
+                "mean_iou": sum(ious) / len(ious) if ious else None,
+                "success_rate": sum(count[0] for count in counts.values()) / len(ious) if ious else None,
+                "evaluated_instances": len(ious),
+                "matching": "maximum-cardinality threshold matches; remaining overlaps matched greedily for mean IoU",
+            },
         }
 
     @staticmethod
     def _screen_indices(item):
         result = set()
-        for value in item.get("where", {}).get("screen_ids", []):
+        where = item.get("where") or {}
+        values = where.get("screen_ids", []) if isinstance(where, dict) else []
+        if not isinstance(values, (list, tuple)):
+            values = []
+        for value in values:
             match = _SCREEN_NUMBER.search(str(value))
             if match: result.add(int(match.group(1)))
+        if not result and isinstance(item.get("screen_index"), int):
+            result.add(item["screen_index"])
         return result
 
     @staticmethod
@@ -182,6 +227,7 @@ class Evaluator:
         for variants in pairs.values():
             if not {"clean", "risky"} <= variants.keys(): continue
             clean, risky = variants["clean"], variants["risky"]
+            total += len(rules)
             if clean.flow_id not in predictions or risky.flow_id not in predictions: continue
             complete += 1
             expected = ({x["rule_id"] for x in clean.labels}, {x["rule_id"] for x in risky.labels})
@@ -189,8 +235,9 @@ class Evaluator:
                               for case in (clean, risky))
             for rule in rules:
                 correct += ((rule in predicted[0], rule in predicted[1]) == (rule in expected[0], rule in expected[1]))
-                total += 1
-        return {"score": correct / total if total else None, "correct": correct, "comparisons": total, "pairs": complete}
+        return {"score": correct / total if total else None, "correct": correct, "comparisons": total,
+                "pairs": complete, "expected_pairs": total // len(rules),
+                "scope": "all risky/clean pairs; missing or failed pairs count as incorrect"}
 
 def report_json(report: dict[str, Any]) -> str:
     return json.dumps(report, ensure_ascii=False, indent=2)

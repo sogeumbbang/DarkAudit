@@ -186,6 +186,7 @@ def analyze_flow(flow_id: str, pipeline, visual: bool = False) -> dict:
         "output": {"detections": to_detections(
             output, candidates, elements, telemetry.get("bbox_localizations")
         )},
+        "analysis": output.to_dict(),
         "telemetry": telemetry,
     }
 
@@ -212,10 +213,14 @@ def run_once(flow_ids: list[str], run_index: int, out_dir: Path, visual: bool = 
                   f"  {result['telemetry'].get('response_time_seconds', 0):.1f}s")
         except Exception as exc:  # 한 flow 가 실패해도 나머지는 계속 잰다.
             print(f"  [{position}/{len(flow_ids)}] {flow_id}  실패: {str(exc)[:120]}")
+            target.write_text(json.dumps({
+                "flow_id": flow_id, "status": "failed", "error": type(exc).__name__,
+                "output": {"detections": []}, "telemetry": {"failed": True},
+            }), encoding="utf-8")
 
     evaluator = Evaluator()
     cases = [c for c in evaluator.load_dataset(LABELS) if c.flow_id in set(flow_ids)]
-    predictions = evaluator.load_predictions(predictions_dir)
+    predictions = evaluator.load_predictions(predictions_dir, flow_ids)
     return evaluator.evaluate_dataset(cases, predictions, rule_ids=TARGET)
 
 

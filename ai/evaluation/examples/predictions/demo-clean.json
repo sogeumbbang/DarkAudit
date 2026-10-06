@@ -1,0 +1,6 @@
+{
+  "flow_id": "demo-clean",
+  "fixture_only": true,
+  "output": {"detections": []},
+  "telemetry": {"provider": "hand-authored-metric-fixture", "rule_assessments": [{"rule_id": "DA-04", "status": "not_detected"}]}
+}

@@ -1,0 +1,7 @@
+{
+  "flow_id": "demo-clean",
+  "pair_id": "demo",
+  "variant": "clean",
+  "screens": [{"screen_index": 1}],
+  "labels": []
+}

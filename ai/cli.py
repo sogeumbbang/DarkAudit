@@ -66,9 +66,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_url_command(args)
     if args.command == "evaluate":
         evaluator = Evaluator()
+        cases = evaluator.load_dataset(args.dataset)
         report = evaluator.evaluate_dataset(
-            evaluator.load_dataset(args.dataset),
-            evaluator.load_predictions(args.predictions),
+            cases,
+            evaluator.load_predictions(args.predictions, [case.flow_id for case in cases]),
             iou_threshold=args.iou_threshold,
             input_usd_per_million=args.input_usd_per_million,
             output_usd_per_million=args.output_usd_per_million,

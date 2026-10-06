@@ -42,6 +42,7 @@ class DatasetEvaluationTest(unittest.TestCase):
         ]}}}
         result=Evaluator().evaluate_dataset([case],predictions,rule_ids={"DA-04"})
         self.assertEqual(result["instance_detection"]["micro"]["tp"],2)
+        self.assertEqual(result["localization"]["success_rate"],1)
 
     def test_loads_real_label_dataset(self):
         cases = Evaluator.load_dataset(Path("data/synthetic/labels"))

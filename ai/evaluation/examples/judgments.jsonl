@@ -1,0 +1,1 @@
+{"id":"fixture-consent","scores":{"groundedness":{"score":5,"reason":"예시 관찰에 명시된 체크 상태와 설명이 일치한다."},"rule_validity":{"score":4,"reason":"예시 규칙에 부합하지만 사용자가 초기 상태임을 확인할 근거를 함께 보여주면 좋다."},"actionability":{"score":4,"reason":"수정할 기본값을 명시한다. 영역 분리는 추가 권고임을 구분할 수 있다."}}}
