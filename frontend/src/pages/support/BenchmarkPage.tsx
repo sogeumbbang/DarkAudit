@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { FileText, RefreshCw } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import type { RegressionDto } from "@/api/schemas";
@@ -6,8 +6,9 @@ import { PageHeading } from "@/components/common/PageHeading";
 import { Button } from "@/components/ui/Button";
 import type { AuditDto } from "@/entities/audit/types";
 import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSummary";
+import { AuditFlowHeader } from "@/features/recheck/AuditFlowHeader";
 import { RecheckSteps } from "@/features/recheck/RecheckSteps";
-import { completedRuns, displayName, ruleTitle, runLabel } from "@/features/recheck/runs";
+import { completedRuns, ruleTitle, runLabel } from "@/features/recheck/runs";
 import { useRegression } from "@/features/recheck/useRecheckData";
 import { cn } from "@/lib/cn";
 import "@/features/recheck/recheck.css";
@@ -73,15 +74,12 @@ function Summary({
   );
 }
 
-function Comparison({ audit }: { audit: AuditDto }) {
+/** Both ends of the comparison live in the URL, shared by the header controls and the body. */
+function useComparisonRange(audit: AuditDto) {
   const [params, setParams] = useSearchParams();
   const runs = completedRuns(audit);
   const from = runs.find((run) => run.version === Number(params.get("from"))) ?? runs[0];
   const to = runs.find((run) => run.version === Number(params.get("to"))) ?? runs.at(-1);
-  const comparison = useRegression(audit.id, from?.version, to?.version, audit.updatedAt);
-  const result = comparison.data;
-  const id = encodeURIComponent(audit.id);
-
   function choose(key: "from" | "to", version: string) {
     setParams((current) => {
       const next = new URLSearchParams(current);
@@ -89,9 +87,56 @@ function Comparison({ audit }: { audit: AuditDto }) {
       return next;
     });
   }
+  return { runs, from, to, choose };
+}
+
+function CompareControls({ audit }: { audit: AuditDto }) {
+  const { runs, from, to, choose } = useComparisonRange(audit);
+  if (runs.length < 2 || !from || !to) return null;
+  return (
+    <>
+      <label className="rc-no-print min-w-36 flex-1 text-xs font-semibold sm:flex-none">
+        <span className="sr-only">비교 기준</span>
+        <select
+          aria-label="비교 기준"
+          className="rc-select"
+          value={from.version}
+          onChange={(event) => choose("from", event.target.value)}
+        >
+          {runs.slice(0, -1).map((run) => (
+            <option key={run.id} value={run.version} disabled={run.version >= to.version}>
+              기준 · {runLabel(audit, run)} {run.findingCount}건
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="rc-no-print min-w-36 flex-1 text-xs font-semibold sm:flex-none">
+        <span className="sr-only">비교 대상</span>
+        <select
+          aria-label="비교 대상"
+          className="rc-select"
+          value={to.version}
+          onChange={(event) => choose("to", event.target.value)}
+        >
+          {runs.slice(1).map((run) => (
+            <option key={run.id} value={run.version} disabled={run.version <= from.version}>
+              대상 · {runLabel(audit, run)} {run.findingCount}건
+            </option>
+          ))}
+        </select>
+      </label>
+    </>
+  );
+}
+
+function Comparison({ audit }: { audit: AuditDto }) {
+  const { runs, from, to } = useComparisonRange(audit);
+  const comparison = useRegression(audit.id, from?.version, to?.version, audit.updatedAt);
+  const result = comparison.data;
+  const id = encodeURIComponent(audit.id);
 
   return (
-    <div className="mt-6 space-y-5">
+    <div className="space-y-5">
       {(audit.status === "queued" || audit.status === "analyzing" || audit.status === "failed") && (
         <p className="rc-muted text-sm">
           최신 작업은 {audit.status === "failed" ? "실패했습니다" : "진행 중입니다"}. 비교에는
@@ -110,39 +155,6 @@ function Comparison({ audit }: { audit: AuditDto }) {
         </section>
       ) : (
         <>
-          <div className="rc-no-print flex flex-wrap items-end justify-end gap-3">
-            <label className="min-w-36 flex-1 text-xs font-semibold sm:flex-none">
-              비교 기준
-              <select
-                className="rc-select mt-1"
-                value={from.version}
-                onChange={(event) => choose("from", event.target.value)}
-              >
-                {runs.slice(0, -1).map((run) => (
-                  <option key={run.id} value={run.version} disabled={run.version >= to.version}>
-                    {runLabel(audit, run)} · {run.findingCount}건
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="min-w-36 flex-1 text-xs font-semibold sm:flex-none">
-              비교 대상
-              <select
-                className="rc-select mt-1"
-                value={to.version}
-                onChange={(event) => choose("to", event.target.value)}
-              >
-                {runs.slice(1).map((run) => (
-                  <option key={run.id} value={run.version} disabled={run.version <= from.version}>
-                    {runLabel(audit, run)} · {run.findingCount}건
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button variant="outline" onClick={() => window.print()}>
-              <FileText size={15} aria-hidden="true" /> PDF 보고서
-            </Button>
-          </div>
           {comparison.isPending ? (
             <p role="status">비교 결과를 불러오는 중입니다.</p>
           ) : comparison.isError ? (
@@ -300,62 +312,77 @@ export function BenchmarkPage() {
   const audit =
     summary.data?.audits.find((item) => item.id === (requested ?? summary.data.activeAuditId)) ??
     (!requested ? summary.data?.audits[0] : undefined);
+  if (!audit)
+    return (
+      <div className="rc workspace-page mx-auto max-w-6xl">
+        <PageHeading
+          eyebrow="BEFORE / AFTER"
+          title="전후 비교"
+          description="원본과 수정본을 같은 기준으로 비교합니다."
+        />
+        {summary.isPending ? (
+          <p className="mt-6" role="status">
+            진단 목록을 불러오는 중입니다.
+          </p>
+        ) : summary.isError ? (
+          <div className="mt-6">
+            <p role="alert">진단 목록을 불러오지 못했습니다.</p>
+            <Button className="mt-3" onClick={() => void summary.refetch()}>
+              다시 불러오기
+            </Button>
+          </div>
+        ) : (
+          <p className="mt-6" role="status">
+            {requested ? "선택한 진단을 찾을 수 없습니다." : "아직 등록된 진단이 없습니다."}
+          </p>
+        )}
+      </div>
+    );
+  const id = encodeURIComponent(audit.id);
+  // Same container, header and step bar as the result screen it is reached from.
   return (
-    <div className="rc workspace-page mx-auto max-w-6xl">
-      <PageHeading
-        eyebrow="REVIEW / COMPARISON"
-        title="전후 비교"
-        description={
-          audit
-            ? `${displayName(audit.name)} · 원본과 수정본을 같은 기준으로 비교합니다.`
-            : "원본과 수정본을 같은 기준으로 비교합니다."
+    <div className="rc overview-page workspace-page mx-auto max-w-[1800px]">
+      <AuditFlowHeader
+        audit={audit}
+        kicker="BEFORE / AFTER"
+        pageTitle="전후 비교"
+        subtitle="원본과 수정본을 같은 기준으로 비교합니다."
+        actions={
+          <>
+            <CompareControls key={audit.id} audit={audit} />
+            <Button asChild variant="outline" className="rc-no-print">
+              <Link to={`/app/audits/${id}/recheck`}>
+                <RefreshCw size={14} aria-hidden="true" />새 수정본 검사
+              </Link>
+            </Button>
+            <Button variant="outline" className="rc-no-print" onClick={() => window.print()}>
+              <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+            </Button>
+          </>
         }
-      />
-      {summary.isPending ? (
-        <p className="mt-6" role="status">
-          진단 목록을 불러오는 중입니다.
-        </p>
-      ) : summary.isError ? (
-        <div className="mt-6">
-          <p role="alert">진단 목록을 불러오지 못했습니다.</p>
-          <Button className="mt-3" onClick={() => void summary.refetch()}>
-            다시 불러오기
-          </Button>
-        </div>
-      ) : (
-        <>
-          {audit && <RecheckSteps audit={audit} current={3} />}
-          {!audit?.demoPreset && (
-            <div className="rc-no-print">
-              <label className="mt-6 block text-sm font-semibold" htmlFor="comparison-audit">
-                비교할 진단
-              </label>
-              <select
-                id="comparison-audit"
-                className="rc-select mt-2"
-                value={audit?.id ?? ""}
-                onChange={(event) => setParams({ audit: event.target.value })}
-              >
-                <option value="" disabled>
-                  진단 선택
+      >
+        {!audit.demoPreset && (
+          <div className="rc-no-print mt-3 max-w-md">
+            <label className="sr-only" htmlFor="comparison-audit">
+              비교할 진단
+            </label>
+            <select
+              id="comparison-audit"
+              className="rc-select"
+              value={audit.id}
+              onChange={(event) => setParams({ audit: event.target.value })}
+            >
+              {summary.data?.audits.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
                 </option>
-                {summary.data?.audits.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {audit ? (
-            <Comparison key={audit.id} audit={audit} />
-          ) : (
-            <p className="mt-6" role="status">
-              {requested ? "선택한 진단을 찾을 수 없습니다." : "아직 등록된 진단이 없습니다."}
-            </p>
-          )}
-        </>
-      )}
+              ))}
+            </select>
+          </div>
+        )}
+      </AuditFlowHeader>
+      <RecheckSteps audit={audit} current={3} />
+      <Comparison key={audit.id} audit={audit} />
     </div>
   );
 }

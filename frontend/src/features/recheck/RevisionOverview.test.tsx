@@ -10,7 +10,7 @@ import { server } from "@/mocks/server";
 import { OverviewPage } from "@/pages/overview/OverviewPage";
 
 // v1 original: every fixture finding. v2 revision: one new finding on the consent screen.
-function setup(path: string) {
+function setup(path: string, extraRun = false) {
   const fixture = structuredClone(dashboardFixture);
   const original = fixture.audits[0]!;
   original.name = "스크린샷 데모 · 모루 반려동물 보험 · 문제 포함 원본";
@@ -32,6 +32,15 @@ function setup(path: string) {
       variant: "revised",
     },
   ];
+  if (extraRun)
+    original.runs.push({
+      id: "run-3",
+      version: 3,
+      status: "completed",
+      createdAt: original.updatedAt,
+      findingCount: 1,
+      variant: "revised",
+    });
   const revision: AuditDto = structuredClone(original);
   const kept = { ...revision.findings[1]!, id: "finding-new-consent" };
   revision.findings = [kept];
@@ -98,14 +107,12 @@ it("shows a revision against the original with changes per screen", async () => 
     await screen.findByRole("heading", { name: "스크린샷 데모 · 모루 반려동물 보험" }),
   ).toBeInTheDocument();
   expect(screen.getByText("v2 수정본", { selector: ".rc-badge" })).toBeInTheDocument();
-  const switcher = within(screen.getByRole("navigation", { name: "회차 전환" }));
-  expect(switcher.getByRole("link", { name: "v1 원본 3건" })).toHaveAttribute(
+  // With only the original and one revision, the steps are the run navigation.
+  expect(screen.queryByRole("navigation", { name: "회차 전환" })).not.toBeInTheDocument();
+  const steps = within(screen.getByRole("navigation", { name: "수정본 검사 단계" }));
+  expect(steps.getByRole("link", { name: /원본 검사/ })).toHaveAttribute(
     "href",
     `/app/overview?audit=${audit.id}&version=1`,
-  );
-  expect(switcher.getByRole("link", { name: "v2 수정본 1건" })).toHaveAttribute(
-    "aria-current",
-    "page",
   );
 
   const metrics = within(await screen.findByRole("region", { name: "원본 대비 결과" }));
@@ -137,4 +144,17 @@ it("reopens the original run with its own findings", async () => {
   expect(await screen.findByText("v1 원본", { selector: ".rc-badge" })).toBeInTheDocument();
   expect(screen.getByRole("region", { name: "진단 현황" })).toHaveTextContent("3건");
   expect(screen.queryByRole("region", { name: "원본 대비 결과" })).not.toBeInTheDocument();
+});
+
+it("lists every run when an intermediate revision exists", async () => {
+  const audit = setup("/app/overview?audit=audit-insurance-v1", true);
+  const switcher = within(await screen.findByRole("navigation", { name: "회차 전환" }));
+  expect(switcher.getByRole("link", { name: "v2 수정본 1건" })).toHaveAttribute(
+    "href",
+    `/app/overview?audit=${audit.id}&version=2`,
+  );
+  expect(switcher.getByRole("link", { name: "v3 수정본 1건" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });

@@ -62,8 +62,7 @@ for (const [source, title] of [
     await page.getByRole("link", { name: "수정본 결과 보기", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`version=2`));
     await expect(page.locator(".rc-badge", { hasText: "v2 수정본" })).toBeVisible();
-    const switcher = page.getByRole("navigation", { name: "회차 전환" });
-    await expect(switcher.getByRole("link", { name: /^v1 원본/ })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "회차 전환" })).toHaveCount(0);
     await expect(page.getByRole("region", { name: "원본 대비 결과" })).toBeVisible();
     const panel = page.getByRole("complementary", { name: "원본 대비 변화" });
     await expect(panel).toBeVisible();
@@ -86,7 +85,7 @@ for (const [source, title] of [
     await expect(page.getByRole("combobox", { name: "비교 기준" })).toHaveValue("1");
     await expect(page.getByRole("combobox", { name: "비교 대상" })).toHaveValue("2");
     await expect(page.getByRole("region", { name: "비교 요약" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "PDF 보고서" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "PDF 보고서 출력" })).toBeVisible();
     // The revision step now opens its result; a new run has its own button.
     await expect(
       page

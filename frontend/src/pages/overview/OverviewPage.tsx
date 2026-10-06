@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
+import { AuditFlowHeader } from "@/features/recheck/AuditFlowHeader";
 import { RecheckSteps } from "@/features/recheck/RecheckSteps";
 import { AnalysisNotice } from "@/features/audit-report/AnalysisNotice";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
@@ -39,28 +40,11 @@ import {
   RunSwitch,
   ScreenChangeTag,
 } from "@/features/recheck/RevisionOverview";
-import {
-  baseRun,
-  displayName,
-  largestChange,
-  latestRun,
-  type ScreenChange,
-} from "@/features/recheck/runs";
+import { baseRun, largestChange, latestRun, type ScreenChange } from "@/features/recheck/runs";
 import { useAuditRun, useRegression } from "@/features/recheck/useRecheckData";
 
 import "./overview.css";
 import "@/features/recheck/recheck.css";
-
-const auditStatusPresentation: Record<
-  AuditDto["status"],
-  { label: string; variant: "neutral" | "progress" | "success" | "danger" }
-> = {
-  draft: { label: "준비 중", variant: "neutral" },
-  queued: { label: "대기 중", variant: "progress" },
-  analyzing: { label: "진단 중", variant: "progress" },
-  completed: { label: "완료", variant: "success" },
-  failed: { label: "실패", variant: "danger" },
-};
 
 type FindingFilter = "all" | "needs-review" | "resolved";
 const findingFilters: { value: FindingFilter; label: string }[] = [
@@ -623,6 +607,7 @@ export function OverviewPage() {
     historical && runResult.data ? { ...runResult.data, runs: summaryAudit!.runs } : summaryAudit!;
   const changes = revision ? regression.data?.screenChanges : undefined;
   const hasRevision = Boolean(base && latest && latest.version > base.version);
+  const completedCount = (audit.runs ?? []).filter((run) => run.status === "completed").length;
   const changeByScreen = changes && new Map(changes.map((item) => [item.screenId, item]));
   if (!audit.screens.length) {
     return (
@@ -696,7 +681,6 @@ export function OverviewPage() {
       : "이 화면에 해당하는 점검 항목이 없습니다";
   const needsReview = orderedFindings.filter((item) => item.status !== "resolved").length;
   const resolved = orderedFindings.filter((item) => item.status === "resolved").length;
-  const auditStatus = auditStatusPresentation[audit.status];
   function closeDetail() {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
@@ -795,55 +779,44 @@ export function OverviewPage() {
 
   return (
     <div className="overview-page workspace-page mx-auto max-w-[1800px]">
-      <header className="overview-header">
-        <div className="overview-heading">
-          <Link
-            className="mb-2 inline-flex items-center gap-1 text-xs text-muted hover:text-brand-600"
-            to="/app/audits"
-          >
-            <ChevronLeft size={14} />
-            진단 관리
-          </Link>
-          <p className="overview-kicker">AUDIT OVERVIEW</p>
-          <h1 className="sr-only">진단 결과 상세</h1>
-          <div className="overview-title-row rc">
-            <Badge variant={auditStatus.variant}>{auditStatus.label}</Badge>
-            <h2 className="review-audit-title font-display">{displayName(audit.name)}</h2>
-            {viewRun &&
-              (audit.runs ?? []).filter((run) => run.status === "completed").length > 1 && (
-                <RunBadge audit={audit} run={viewRun} />
-              )}
+      <AuditFlowHeader
+        audit={audit}
+        kicker="AUDIT OVERVIEW"
+        pageTitle="진단 결과 상세"
+        subtitle="화면의 문제를 살펴보고, 개선의 다음 단계를 정하세요."
+        badge={viewRun && completedCount > 1 ? <RunBadge audit={audit} run={viewRun} /> : undefined}
+        actions={
+          <>
+            {audit.status !== "queued" && audit.status !== "analyzing" && (
+              <Button asChild variant={audit.demoPreset && !hasRevision ? "primary" : "outline"}>
+                <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                  <RefreshCw size={14} aria-hidden="true" />
+                  {hasRevision ? "새 수정본 검사" : "수정본 검사하기"}
+                </Link>
+              </Button>
+            )}
+            {hasRevision && (
+              <Button asChild className="overview-demo-next">
+                <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
+                  <GitCompareArrows size={15} aria-hidden="true" />
+                  전후 비교
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" ref={reportButtonRef} onClick={() => setShowReport(true)}>
+              <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+            </Button>
+          </>
+        }
+      >
+        {/* The steps already link the original and latest revision; list runs only when more exist. */}
+        {viewRun && completedCount > 2 && (
+          <div className="rc">
+            <RunSwitch audit={audit} current={viewRun.version} />
           </div>
-          <p className="overview-subtitle">화면의 문제를 살펴보고, 개선의 다음 단계를 정하세요.</p>
-          {viewRun && (
-            <div className="rc">
-              <RunSwitch audit={audit} current={viewRun.version} />
-            </div>
-          )}
-        </div>
-        <div className="overview-actions">
-          {audit.status !== "queued" && audit.status !== "analyzing" && (
-            <Button asChild variant={audit.demoPreset && !hasRevision ? "primary" : "outline"}>
-              <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
-                <RefreshCw size={14} aria-hidden="true" />
-                {hasRevision ? "새 수정본 검사" : "수정본 검사하기"}
-              </Link>
-            </Button>
-          )}
-          {hasRevision && (
-            <Button asChild className="overview-demo-next">
-              <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
-                <GitCompareArrows size={15} aria-hidden="true" />
-                전후 비교
-              </Link>
-            </Button>
-          )}
-          <Button variant="outline" ref={reportButtonRef} onClick={() => setShowReport(true)}>
-            <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
-          </Button>
-        </div>
-      </header>
-      {audit.demoPreset && (
+        )}
+      </AuditFlowHeader>
+      {(audit.demoPreset || hasRevision) && (
         <div className="rc">
           <RecheckSteps audit={audit} current={revision ? 2 : 1} />
         </div>

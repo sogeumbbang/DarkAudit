@@ -1,13 +1,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { FileSearch, GitCompareArrows } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 
 import { startAnalysis, uploadAuditScreens } from "@/api/audits";
 import { PageHeading } from "@/components/common/PageHeading";
 import { Button } from "@/components/ui/Button";
+import { AuditFlowHeader } from "@/features/recheck/AuditFlowHeader";
 import { RecheckSteps } from "@/features/recheck/RecheckSteps";
 import { CompletedRevision, RecheckShell } from "@/features/recheck/RecheckShell";
-import { latestRun } from "@/features/recheck/runs";
+import { baseRun, latestRun } from "@/features/recheck/runs";
 import "@/features/recheck/recheck.css";
 import type { AuditDto } from "@/entities/audit/types";
 import { useAnalysisStatus } from "@/features/audit-create/useAuditWorkflow";
@@ -211,43 +213,77 @@ function RecheckForm({ audit }: { audit: AuditDto }) {
   );
 }
 
+function RecheckHeaderActions({ audit }: { audit: AuditDto }) {
+  const base = baseRun(audit);
+  const latest = latestRun(audit);
+  const id = encodeURIComponent(audit.id);
+  return (
+    <>
+      {base && (
+        <Button asChild variant="outline">
+          <Link to={`/app/overview?audit=${id}&version=${base.version}`}>
+            <FileSearch size={15} aria-hidden="true" />
+            원본 결과 보기
+          </Link>
+        </Button>
+      )}
+      {base && latest && latest.version > base.version && (
+        <Button asChild className="overview-demo-next">
+          <Link to={`/app/benchmark?audit=${id}`}>
+            <GitCompareArrows size={15} aria-hidden="true" />
+            전후 비교
+          </Link>
+        </Button>
+      )}
+    </>
+  );
+}
+
 export function AuditRecheckPage() {
   const { auditId } = useParams();
   const summary = useDashboardSummary();
   const audit = summary.data?.audits.find((item) => item.id === auditId);
-  return (
-    <div className="workspace-page mx-auto max-w-6xl">
-      <PageHeading
-        eyebrow="REVIEW / RECHECK"
-        title="수정본 검사"
-        description="원본과 같은 기준으로 다시 검사합니다"
-      />
-      {summary.isPending ? (
-        <p role="status" className="mt-6">
-          진단을 불러오는 중입니다.
-        </p>
-      ) : summary.isError ? (
-        <div className="mt-6">
-          <p role="alert">진단을 불러오지 못했습니다.</p>
-          <Button className="mt-3" onClick={() => void summary.refetch()}>
-            다시 불러오기
-          </Button>
-        </div>
-      ) : audit ? (
-        <>
-          <div className="rc">
-            <RecheckSteps audit={audit} current={2} />
+  if (!audit)
+    return (
+      <div className="workspace-page mx-auto max-w-6xl">
+        <PageHeading
+          eyebrow="RECHECK"
+          title="수정본 검사"
+          description="원본과 같은 기준으로 다시 검사합니다"
+        />
+        {summary.isPending ? (
+          <p role="status" className="mt-6">
+            진단을 불러오는 중입니다.
+          </p>
+        ) : summary.isError ? (
+          <div className="mt-6">
+            <p role="alert">진단을 불러오지 못했습니다.</p>
+            <Button className="mt-3" onClick={() => void summary.refetch()}>
+              다시 불러오기
+            </Button>
           </div>
-          {audit.demoPreset ? (
-            <DemoRecheckPanel key={audit.id} audit={audit} />
-          ) : (
-            <RecheckForm key={audit.id} audit={audit} />
-          )}
-        </>
+        ) : (
+          <p role="alert" className="mt-6">
+            진단을 찾을 수 없습니다.
+          </p>
+        )}
+      </div>
+    );
+  // Same container, header and step bar as the result and comparison screens.
+  return (
+    <div className="rc overview-page workspace-page mx-auto max-w-[1800px]">
+      <AuditFlowHeader
+        audit={audit}
+        kicker="RECHECK"
+        pageTitle="수정본 검사"
+        subtitle="원본과 같은 기준으로 다시 검사합니다"
+        actions={<RecheckHeaderActions audit={audit} />}
+      />
+      <RecheckSteps audit={audit} current={2} />
+      {audit.demoPreset ? (
+        <DemoRecheckPanel key={audit.id} audit={audit} />
       ) : (
-        <p role="alert" className="mt-6">
-          진단을 찾을 수 없습니다.
-        </p>
+        <RecheckForm key={audit.id} audit={audit} />
       )}
     </div>
   );

@@ -4,9 +4,10 @@
   --rc-gold: #b89252;
   --rc-gold-ink: #7d5c2b;
   --rc-bg: #f5f3ed;
-  --rc-card: #fffdfc;
-  --rc-line: #e3e6e4;
-  --rc-muted: #526168;
+  /* Surfaces follow the workspace theme so these screens match the result screen. */
+  --rc-card: var(--color-surface, #fffdfc);
+  --rc-line: var(--color-border, #e3e6e4);
+  --rc-muted: var(--color-muted, #526168);
   --rc-blue: #dde9ed;
   --rc-resolved-bg: #e1e6dc;
   --rc-resolved-line: #c9d3c4;
