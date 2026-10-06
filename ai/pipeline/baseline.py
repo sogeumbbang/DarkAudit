@@ -3,7 +3,7 @@ import json
 import time
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from ai.providers.base import MultimodalProvider
 from ai.rules.rule_loader import RuleLoader
 from ai.schemas.audit_schema import (
@@ -52,6 +52,14 @@ class BaselineAuditPipeline:
         self.text_grounding_config = TextGroundingConfig.from_env()
         self.last_run_telemetry: dict[str, Any] = {}
         self._grounding_usage: list[dict[str, int]] = []
+        # Receives the completed share (0-1) of one analyze() call. OCR and
+        # grounding take most of the time on small hosts, so callers that
+        # report progress need these intermediate steps.
+        self.on_progress: Callable[[float], None] | None = None
+
+    def _report(self, fraction: float) -> None:
+        if self.on_progress is not None:
+            self.on_progress(min(1.0, max(0.0, fraction)))
 
     def analyze(
         self, request: LLMAuditRequest,
@@ -62,7 +70,7 @@ class BaselineAuditPipeline:
         rejected_evidence = []
         self._grounding_usage = []
         enriched_screens = []
-        for screen in request.screens:
+        for position, screen in enumerate(request.screens, 1):
             if screen.evidence:
                 enriched_screens.append(screen)
                 continue
@@ -72,6 +80,7 @@ class BaselineAuditPipeline:
             enriched_screens.append(replace(screen, evidence=tuple(
                 {"text":a.text, "bbox":list(a.bbox), "source":"ocr", "confidence":a.confidence} for a in anchors
             )))
+            self._report(0.35 * position / len(request.screens))
         request = replace(request, screens=tuple(enriched_screens))
         parsed_candidates = [
             item if isinstance(item, RuleCandidate) else RuleCandidate.from_dict(item)
@@ -129,6 +138,7 @@ class BaselineAuditPipeline:
                         ))
 
                 result = self._filter_and_deduplicate(output)
+                self._report(0.7)
                 result, localizations = self._ground_visual_bboxes(result, request)
                 self.last_run_telemetry = {
                     "response_time_seconds": time.perf_counter() - started,
@@ -195,7 +205,8 @@ class BaselineAuditPipeline:
         telemetry: list[dict[str, Any]] = []
         anchor_cache: dict[Path, list] = {}
         text_anchor_cache: dict[Path, list] = {}
-        for finding in output.semantic_findings:
+        for position, finding in enumerate(output.semantic_findings, 1):
+            self._report(0.7 + 0.3 * (position - 1) / len(output.semantic_findings))
             if finding.rule_id in TEXT_GROUNDING_RULE_IDS:
                 findings.append(self._ground_text_finding(
                     finding, screens, text_anchor_cache, selector, telemetry,

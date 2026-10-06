@@ -135,6 +135,35 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             self.assertEqual([r.rule_id for r in report.pending], ["DA-15"])
             self.assertIsNone(report.resolved_ratio)
 
+    def test_rule_scoped_evidence_warnings_hold_back_only_their_rule(self):
+        # The original run could not ground DA-03 evidence and DA-07's location;
+        # the revised run detects nothing. Only DA-03 and DA-07 lack a verdict.
+        with service.SessionLocal() as session:
+            audit = self.make_audit(session)
+            for run in audit.runs:
+                summary = deepcopy(run.analysis_summary)
+                batch = summary["batches"][1]
+                ids = [f"screen-{i:02d}" for i in range(1, 7)]
+                batch["screens"] = ids
+                for row in batch["telemetry"]["rule_assessments"]:
+                    row["screen_ids"] = ids
+                summary["batches"] = [batch]
+                summary["warnings"] = []
+                if run.version == 1:
+                    telemetry = batch["telemetry"]
+                    telemetry["warnings"] = ["evidence_contract:DA-03"]
+                    telemetry["bbox_localizations"] = [
+                        {"rule_id": "DA-07", "screen_id": "screen-05", "warning": "text_match_failed"}]
+                    summary["warnings"] = ["evidence_contract:DA-03", "text_match_failed"]
+                run.analysis_summary = summarize(summary)
+            report = compare(session, audit.id, 1, 2, update_statuses=True)
+            self.assertEqual({r.rule_id for r in report.pending}, {"DA-03", "DA-07"})
+            self.assertEqual({r.rule_id for r in report.resolved}, {"DA-04", "DA-12", "DA-15"})
+            self.assertIsNone(report.resolved_ratio)
+            statuses = {f.rule_id: f.status for f in audit.runs[0].findings}
+            self.assertEqual(statuses["DA-04"], FindingStatus.RESOLVED)
+            self.assertEqual(statuses["DA-03"], FindingStatus.OPEN)
+
     def test_url_assessment_ids_and_archived_full_page_do_not_invalidate_coverage(self):
         with service.SessionLocal() as session:
             audit = self.make_audit(session)

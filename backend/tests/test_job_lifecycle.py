@@ -1,6 +1,7 @@
 import io
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
@@ -45,6 +46,37 @@ class JobLifecycleTest(IsolatedApiTestCase):
         response = self.client.post(f"/api/v1/audits/{self.audit_id}/analyze")
         self.assertEqual(response.status_code, 409)
         self.assertEqual(self.client.delete(f"/api/v1/audits/{self.audit_id}").status_code, 409)
+
+    def test_analysis_reports_progress_between_start_and_completion(self):
+        seen = []
+        update = service._update_job
+        def record(job_id, **changes):
+            if "progress" in changes:
+                seen.append(changes["progress"])
+            update(job_id, **changes)
+        with patch("backend.api.service._update_job", side_effect=record):
+            job = run_verified_analysis(self.client, self.audit_id, detecting=False)
+        self.assertEqual(service.get_job(job["jobId"]).status, "completed")
+        steps = [value for value in seen if 20 < value < 100]
+        self.assertGreaterEqual(len(steps), 2, seen)
+        self.assertEqual(seen, sorted(seen))
+
+    def test_second_job_waits_for_the_heavy_work_slot(self):
+        job = main.analyze(self.audit_id, BackgroundTasks())
+        with store.SessionLocal() as session:
+            run_id = store.get_audit(session, self.audit_id).runs[-1].id
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with service._HEAVY_WORK:
+                worker = pool.submit(service.analyze_uploaded_screens, job.jobId, run_id,
+                                     [service.DATA_DIR / "01.png"])
+                deadline = time.monotonic() + 5
+                while service.get_job(job.jobId).status != "queued" and time.monotonic() < deadline:
+                    time.sleep(0.02)
+                self.assertEqual(service.get_job(job.jobId).status, "queued")
+            worker.result(timeout=10)
+        # The missing image fails the analysis, but only once the slot was free.
+        self.assertEqual(service.get_job(job.jobId).status, "failed")
+        self.assertFalse(service._HEAVY_WORK.locked())
 
     def test_progress_survives_module_reload_and_interruption_is_queryable(self):
         job = main.analyze(self.audit_id, BackgroundTasks())

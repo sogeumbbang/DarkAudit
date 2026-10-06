@@ -2,6 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# The free instance has 512MB. Background jobs run on threadpool threads, and
+# glibc otherwise gives each thread its own malloc arena that is rarely returned.
+# Tesseract's OpenMP threads only add memory on a fraction of one CPU.
+ENV MALLOC_ARENA_MAX=2 \
+    OMP_THREAD_LIMIT=1
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && playwright install --with-deps chromium \

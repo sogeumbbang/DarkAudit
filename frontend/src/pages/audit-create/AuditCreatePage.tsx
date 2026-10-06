@@ -416,6 +416,7 @@ export function AuditCreatePage() {
         progress={analysis.data?.progress ?? 5}
         completed={analysis.data?.status === "completed"}
         failed={analysis.data?.status === "failed" || analysis.isError}
+        queued={analysis.data?.status === "queued"}
         error={analysis.data?.error ?? analysis.error?.message}
         exploration={
           (analysis.data?.source ?? source) === "website"

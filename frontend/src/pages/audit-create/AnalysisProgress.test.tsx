@@ -35,6 +35,15 @@ describe("AnalysisProgress", () => {
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "12");
   });
 
+  it("explains that a queued job waits for the earlier one", () => {
+    const { rerender } = renderProgress({ queued: true, progress: 20 });
+    expect(screen.getByText("순서 대기 중")).toBeInTheDocument();
+    expect(screen.getByText(/앞서 시작한 진단이 끝나면/)).toBeInTheDocument();
+    rerender(<AnalysisProgress {...props} progress={41} />);
+    expect(screen.getByText("분석 진행 중")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "41");
+  });
+
   it("stops animation and timers once the server reports completion", () => {
     const { rerender, container } = renderProgress({ progress: 100 });
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "99");

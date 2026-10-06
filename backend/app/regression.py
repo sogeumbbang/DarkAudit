@@ -151,6 +151,34 @@ def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
     return list(dict.fromkeys(limitations))
 
 
+def _rule_scoped_warnings(summary: dict) -> dict[str, set[str]]:
+    """Map warnings that concern only some rules to those rules.
+
+    An evidence contract failure names its rule, and a bbox localization warning
+    is recorded on one finding. Neither says anything about other rules, so
+    they must not hold back an otherwise verified recheck of those rules.
+    """
+    scoped: dict[str, set[str]] = {}
+    for batch in summary.get("batches", []):
+        telemetry = batch.get("telemetry", {})
+        for warning in telemetry.get("warnings", []):
+            if warning.startswith("evidence_contract:"):
+                scoped.setdefault(warning, set()).add(warning.split(":", 1)[1])
+        for item in telemetry.get("bbox_localizations", []):
+            if item.get("warning") and item.get("rule_id"):
+                scoped.setdefault(item["warning"], set()).add(item["rule_id"])
+    for warning in summary.get("warnings", []):
+        if warning.startswith("evidence_contract:"):
+            scoped.setdefault(warning, set()).add(warning.split(":", 1)[1])
+    return scoped
+
+
+def _blocks_rule(warning: str, rule_id: str, scoped: dict[str, set[str]]) -> bool:
+    if warning == LONG_FLOW_WARNING:
+        return rule_id not in SCREEN_LOCAL_RULES
+    return rule_id in scoped.get(warning, {rule_id})
+
+
 def _verified_rule(run: AuditRun, rule_id: str) -> bool:
     """Verify each rule independently when collection and scope are intact.
 
@@ -161,7 +189,8 @@ def _verified_rule(run: AuditRun, rule_id: str) -> bool:
     """
     summary = run.analysis_summary or {}
     warnings = set(summary.get("warnings", []))
-    if warnings - {LONG_FLOW_WARNING} or (rule_id not in SCREEN_LOCAL_RULES and LONG_FLOW_WARNING in warnings):
+    scoped = _rule_scoped_warnings(summary)
+    if any(_blocks_rule(warning, rule_id, scoped) for warning in warnings):
         return False
     if summary.get("complete") is not True and not warnings and not any(
         assessment.get("status") in {"insufficient_evidence", "not_supported"}
@@ -182,7 +211,9 @@ def _verified_rule(run: AuditRun, rule_id: str) -> bool:
     for batch in summary.get("batches", []):
         screens = set(batch.get("screens", []))
         telemetry = batch.get("telemetry", {})
-        if not screens or not screens <= expected or telemetry.get("warnings"):
+        if not screens or not screens <= expected or any(
+            _blocks_rule(warning, rule_id, scoped) for warning in telemetry.get("warnings", [])
+        ):
             return False
         provider = str(telemetry.get("provider") or "")
         if not provider or "fake" in provider.lower():

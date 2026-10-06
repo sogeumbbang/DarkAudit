@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import threading
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -102,6 +104,25 @@ def compatible_capture_profiles(url: str, profiles: tuple[str, ...]) -> tuple[st
     return tuple(profile for profile in profiles if profile != "desktop")
 
 
+# One screenshot analysis peaks near 265MB (each OCR call starts a ~120MB
+# tesseract process) and a URL capture adds a Chromium browser. Overlapping
+# jobs can exceed the 512MB free Render instance; its restart fails every
+# running job. Heavy work therefore runs one job at a time.
+_HEAVY_WORK = threading.Lock()
+
+
+@contextmanager
+def _heavy_work_slot(job_id: str):
+    if not _HEAVY_WORK.acquire(blocking=False):
+        _update_job(job_id, status="queued")
+        _HEAVY_WORK.acquire()
+        _update_job(job_id, status="analyzing")
+    try:
+        yield
+    finally:
+        _HEAVY_WORK.release()
+
+
 def _update_job(job_id: str, **changes: object) -> None:
     def change(job: JobDto) -> None:
         for key, value in changes.items():
@@ -185,13 +206,26 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
     수집기별로 진행률 갱신(_mark_running)을 먼저 마친 뒤 호출해야 하며,
     예외 처리는 호출부 책임이다(각 수집기가 자기 맥락으로 _fail_job 을 부른다).
     """
-    with SessionLocal() as session:
+    with _heavy_work_slot(job_id), SessionLocal() as session:
         run = session.get(AuditRun, run_id)
         if run is None:
             raise ValueError("Analysis run no longer exists")
         ordered = list(zip(run.screens, local_paths, strict=True))
         groups = (run.analysis_summary or {}).get("paths") or [[s.screen_index for s, _ in ordered]]
         lookup = {s.screen_index: (s, p) for s, p in ordered}
+        # A batch takes minutes on the free Render instance; report its steps so
+        # the polling client does not sit at the collector's starting value.
+        planned = [positions for group in groups for positions in batch_indices(len(group))]
+        start = get_job(job_id).progress
+        shown = [start]
+
+        def report(done_batches: int, fraction: float) -> None:
+            value = int(start + (80 - start) * (done_batches + fraction) / max(1, len(planned)))
+            if value > shown[0]:
+                shown[0] = value
+                _update_job(job_id, progress=value)
+
+        done = 0
         for group in groups:
             if len(group) > MAX_ANALYSIS_SCREENS:
                 run.analysis_summary = {**(run.analysis_summary or {}), "warnings": [
@@ -205,6 +239,7 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
                     _audit_screen(s, p) for s, p in batch
                 ))
                 pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=True)
+                pipeline.on_progress = lambda fraction, done=done: report(done, fraction)
                 output = pipeline.analyze(request)
                 _record_analysis(run, pipeline, request)
                 grounded_visuals = {
@@ -212,7 +247,8 @@ def analyze_run_screens(job_id: str, run_id: int, local_paths: list[Path]) -> No
                     for item in pipeline.last_run_telemetry.get("bbox_localizations", [])
                     if item.get("applied") is True
                 }
-                _update_job(job_id, progress=80)
+                done += 1
+                report(done, 0)
                 _store_output(session, run, output, grounded_visuals=grounded_visuals,
                               analysis_screens=[s for s, _ in batch])
         _apply_regression(session, run)
@@ -242,98 +278,100 @@ def capture_and_analyze_url(
                 raise ValueError("Capture run no longer exists")
             demo_policy = bundled_demo_policy(url, run.audit.demo_preset,
                                               (run.analysis_summary or {}).get("demoVariant"))
-        explorer = HybridWebExplorer(
-            PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}",
-                                     url_policy=demo_policy,
-                                     static_routes=demo_policy.assets if demo_policy else None),
-            computer_agent=computer_agent,
-            action_policy=DEMO_ACTION_POLICY if demo_policy else None,
-            on_event=lambda event: _record_exploration(job_id, event),
-        )
-        capture = URLCapturePipeline(explorer).run(
-            audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
-        )
-        _update_job(job_id, explorationStage="analyzing", progress=55)
-        with SessionLocal() as session:
-            run = session.get(AuditRun, run_id)
-            demo_requested = bool(run and (run.audit.demo_preset or {}).get("source") == "website")
-            canonical = demo_entry_screens(capture.artifacts, url, run.audit.demo_preset,
-                                           (run.analysis_summary or {}).get("demoVariant")) if run else None
-        selected = prepare_analysis_artifacts(canonical or capture.artifacts)
-        # All live frames remain in the job history. Demo comparisons use the
-        # six actual first-entry captures, not an agent-dependent action count.
-        persisted = list(canonical or capture.artifacts)
-        persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
-        for artifact in selected:
-            if artifact.image_path.resolve() not in persisted_paths:
-                persisted.append(artifact)
-                persisted_paths.add(artifact.image_path.resolve())
-        with SessionLocal() as session:
-            run = session.get(AuditRun, run_id)
-            if run is None:
-                raise ValueError("Capture run no longer exists")
-            screens: list[Screen] = []
-            screen_by_path: dict[Path, Screen] = {}
-            selected_paths = {a.image_path.resolve() for a in selected}
-            for index, artifact in enumerate(persisted, 1):
-                screen = Screen(
-                    flow_type=FlowType.join,
-                    screen_index=index,
-                    flow_step=artifact.flow_step,
-                    image_path=public_image_path(artifact.image_path),
-                    viewport_w=artifact.viewport_width,
-                    viewport_h=artifact.viewport_height,
-                    analysis_context={
-                        "profile": artifact.profile, "path_id": artifact.path_id,
-                        "state_id": artifact.state_id, "analysis_screen_id": artifact.screen_id,
-                        "analysis_included": artifact.image_path.resolve() in selected_paths,
-                    },
-                )
-                run.screens.append(screen)
-                screens.append(screen)
-                screen_by_path[artifact.image_path.resolve()] = screen
+        # The browser and the analysis share one slot; see _HEAVY_WORK.
+        with _heavy_work_slot(job_id):
+            explorer = HybridWebExplorer(
+                PlaywrightSessionFactory(CAPTURE_DIR, run_id=f"run-{run_id}",
+                                         url_policy=demo_policy,
+                                         static_routes=demo_policy.assets if demo_policy else None),
+                computer_agent=computer_agent,
+                action_policy=DEMO_ACTION_POLICY if demo_policy else None,
+                on_event=lambda event: _record_exploration(job_id, event),
+            )
+            capture = URLCapturePipeline(explorer).run(
+                audit_id=audit_id, url=url, profiles=profiles, mode=mode, goal=goal
+            )
+            _update_job(job_id, explorationStage="analyzing", progress=55)
+            with SessionLocal() as session:
+                run = session.get(AuditRun, run_id)
+                demo_requested = bool(run and (run.audit.demo_preset or {}).get("source") == "website")
+                canonical = demo_entry_screens(capture.artifacts, url, run.audit.demo_preset,
+                                               (run.analysis_summary or {}).get("demoVariant")) if run else None
+            selected = prepare_analysis_artifacts(canonical or capture.artifacts)
+            # All live frames remain in the job history. Demo comparisons use the
+            # six actual first-entry captures, not an agent-dependent action count.
+            persisted = list(canonical or capture.artifacts)
+            persisted_paths = {artifact.image_path.resolve() for artifact in persisted}
+            for artifact in selected:
+                if artifact.image_path.resolve() not in persisted_paths:
+                    persisted.append(artifact)
+                    persisted_paths.add(artifact.image_path.resolve())
+            with SessionLocal() as session:
+                run = session.get(AuditRun, run_id)
+                if run is None:
+                    raise ValueError("Capture run no longer exists")
+                screens: list[Screen] = []
+                screen_by_path: dict[Path, Screen] = {}
+                selected_paths = {a.image_path.resolve() for a in selected}
+                for index, artifact in enumerate(persisted, 1):
+                    screen = Screen(
+                        flow_type=FlowType.join,
+                        screen_index=index,
+                        flow_step=artifact.flow_step,
+                        image_path=public_image_path(artifact.image_path),
+                        viewport_w=artifact.viewport_width,
+                        viewport_h=artifact.viewport_height,
+                        analysis_context={
+                            "profile": artifact.profile, "path_id": artifact.path_id,
+                            "state_id": artifact.state_id, "analysis_screen_id": artifact.screen_id,
+                            "analysis_included": artifact.image_path.resolve() in selected_paths,
+                        },
+                    )
+                    run.screens.append(screen)
+                    screens.append(screen)
+                    screen_by_path[artifact.image_path.resolve()] = screen
 
-            analysis_screens = [
-                screen_by_path[artifact.image_path.resolve()] for artifact in selected
-            ]
+                analysis_screens = [
+                    screen_by_path[artifact.image_path.resolve()] for artifact in selected
+                ]
 
-            # URL 캡처만 DOM 을 갖고 있으므로 Rule Engine 은 이 경로에서만 돈다.
-            element_lookup = _persist_dom_elements(session, analysis_screens, selected)
-            # Capture is useful on its own and must survive an optional AI failure.
-            # Without this commit, a missing/invalid model setting rolled the screenshots
-            # back together with the analysis transaction, leaving the UI with no evidence.
-            session.commit()
-            run.analysis_summary = {**(run.analysis_summary or {}), "source": "url", "warnings": [
-                f"{p.profile}: {p.stop_reason}" for p in capture.profiles
-                if p.stop_reason != "Computer Use completed exploration"
-            ]}
-            if canonical:
-                run.analysis_summary = {**run.analysis_summary, "comparisonScope": "demo-step-entry"}
-            elif demo_requested:
-                run.analysis_summary["warnings"].append("demo_journey_incomplete")
-            if any(sum(a.profile == b.profile and a.path_id == b.path_id for b in selected) > MAX_ANALYSIS_SCREENS for a in selected):
-                run.analysis_summary = {**run.analysis_summary, "warnings": [
-                    *run.analysis_summary["warnings"], "long_flow_comparison_limited"]}
-            for batch in analysis_batches(selected):
-                batch_screens = [screen_by_path[a.image_path.resolve()] for a in batch]
-                rule_findings = _run_rule_engine(run.audit_id, batch_screens, batch)
-                request = LLMAuditRequest(audit_id, tuple(
-                    AuditScreen(a.screen_id, a.flow_step, a.image_path, a.profile,
-                                a.path_id, a.state_id or a.screen_id, a.dom_elements) for a in batch
-                ))
-                candidates = _candidate_payload(rule_findings, batch_screens, batch)
-                # A missing DOM falls back to explicit visual checks, with the
-                # evidence limitation preserved in the result.
-                pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=any(not a.dom_elements for a in batch))
-                analysis = pipeline.analyze(request, candidates)
-                _record_analysis(run, pipeline, request, [w for a in batch for w in a.warnings])
-                _update_job(job_id, progress=78)
-                grounded = {(item["rule_id"], item["screen_id"])
-                            for item in pipeline.last_run_telemetry.get("bbox_localizations", []) if item.get("applied")}
-                _store_output(session, run, analysis, rule_findings, element_lookup, candidates,
-                              analysis_screens=batch_screens, grounded_visuals=grounded)
-            _apply_regression(session, run)
-            session.commit()
+                # URL 캡처만 DOM 을 갖고 있으므로 Rule Engine 은 이 경로에서만 돈다.
+                element_lookup = _persist_dom_elements(session, analysis_screens, selected)
+                # Capture is useful on its own and must survive an optional AI failure.
+                # Without this commit, a missing/invalid model setting rolled the screenshots
+                # back together with the analysis transaction, leaving the UI with no evidence.
+                session.commit()
+                run.analysis_summary = {**(run.analysis_summary or {}), "source": "url", "warnings": [
+                    f"{p.profile}: {p.stop_reason}" for p in capture.profiles
+                    if p.stop_reason != "Computer Use completed exploration"
+                ]}
+                if canonical:
+                    run.analysis_summary = {**run.analysis_summary, "comparisonScope": "demo-step-entry"}
+                elif demo_requested:
+                    run.analysis_summary["warnings"].append("demo_journey_incomplete")
+                if any(sum(a.profile == b.profile and a.path_id == b.path_id for b in selected) > MAX_ANALYSIS_SCREENS for a in selected):
+                    run.analysis_summary = {**run.analysis_summary, "warnings": [
+                        *run.analysis_summary["warnings"], "long_flow_comparison_limited"]}
+                for batch in analysis_batches(selected):
+                    batch_screens = [screen_by_path[a.image_path.resolve()] for a in batch]
+                    rule_findings = _run_rule_engine(run.audit_id, batch_screens, batch)
+                    request = LLMAuditRequest(audit_id, tuple(
+                        AuditScreen(a.screen_id, a.flow_step, a.image_path, a.profile,
+                                    a.path_id, a.state_id or a.screen_id, a.dom_elements) for a in batch
+                    ))
+                    candidates = _candidate_payload(rule_findings, batch_screens, batch)
+                    # A missing DOM falls back to explicit visual checks, with the
+                    # evidence limitation preserved in the result.
+                    pipeline = BaselineAuditPipeline(create_provider(), allow_visual_fallback=any(not a.dom_elements for a in batch))
+                    analysis = pipeline.analyze(request, candidates)
+                    _record_analysis(run, pipeline, request, [w for a in batch for w in a.warnings])
+                    _update_job(job_id, progress=78)
+                    grounded = {(item["rule_id"], item["screen_id"])
+                                for item in pipeline.last_run_telemetry.get("bbox_localizations", []) if item.get("applied")}
+                    _store_output(session, run, analysis, rule_findings, element_lookup, candidates,
+                                  analysis_screens=batch_screens, grounded_visuals=grounded)
+                _apply_regression(session, run)
+                session.commit()
         _update_job(job_id, status="completed", progress=100, explorationStage="completed")
     except Exception as exc:
         _update_job(job_id, explorationStage="failed")

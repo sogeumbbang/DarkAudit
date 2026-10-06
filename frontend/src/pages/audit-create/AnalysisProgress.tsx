@@ -39,6 +39,7 @@ export function AnalysisProgress({
   progress,
   completed,
   failed,
+  queued = false,
   error,
   onBack,
   demo = false,
@@ -50,6 +51,7 @@ export function AnalysisProgress({
   progress: number;
   completed: boolean;
   failed: boolean;
+  queued?: boolean;
   error?: string | null;
   onBack: () => void;
   demo?: boolean;
@@ -120,7 +122,9 @@ export function AnalysisProgress({
               ? "수집한 화면과 AI 진단 결과를 대시보드에서 확인할 수 있습니다."
               : failed
                 ? (error ?? "연동 설정과 서버 로그를 확인해주세요.")
-                : "아직 분석 중입니다. 완료되면 ‘결과 확인하기’ 버튼이 나타납니다."}
+                : queued
+                  ? "앞서 시작한 진단이 끝나면 바로 이어서 분석합니다."
+                  : "아직 분석 중입니다. 완료되면 ‘결과 확인하기’ 버튼이 나타납니다."}
           </p>
         </div>
         {exploration && <ExplorationViewer exploration={exploration} running={running} />}
@@ -135,7 +139,7 @@ export function AnalysisProgress({
                     size={14}
                   />
                 )}
-                {running ? "분석 진행 중" : "분석 완료"}
+                {!running ? "분석 완료" : queued ? "순서 대기 중" : "분석 진행 중"}
               </span>
               <strong>{shownProgress}%</strong>
             </div>

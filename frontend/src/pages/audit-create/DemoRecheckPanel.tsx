@@ -120,6 +120,7 @@ export function DemoRecheckPanel({ audit }: { audit: AuditDto }) {
         progress={job.data?.progress ?? 0}
         completed={false}
         failed={failed || job.isError}
+        queued={job.data?.status === "queued"}
         error={job.data?.error ?? job.error?.message}
         demo
         demoStep={2}
