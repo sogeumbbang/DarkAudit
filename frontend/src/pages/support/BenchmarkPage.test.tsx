@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
@@ -193,4 +193,40 @@ it("allows retry after a comparison error", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("일시적 오류");
   await userEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
   expect(await screen.findByText("50%")).toBeInTheDocument();
+});
+
+it("opens the comparison in the same print preview as the audit report", async () => {
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+    configurable: true,
+    value: function (this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  server.use(
+    http.get("*/api/v1/audits/:auditId/regression", () =>
+      HttpResponse.json({
+        ...response,
+        screenChanges: [
+          { screenId: "screen-option", beforeCount: 1, afterCount: 0, status: "resolved" },
+        ],
+      }),
+    ),
+    http.get("*/api/v1/audits/:auditId/runs/:version", () =>
+      HttpResponse.json(dashboardFixture.audits[0]),
+    ),
+  );
+  setup();
+  const button = await screen.findByRole("button", { name: "PDF 보고서 출력" });
+  await waitFor(() => expect(button).toBeEnabled());
+  await userEvent.click(button);
+  const preview = within(screen.getByRole("dialog", { name: "PDF 보고서 미리보기" }));
+  expect(preview.getByRole("heading", { name: "전후 비교 보고서" })).toBeInTheDocument();
+  expect(preview.getByRole("button", { name: "인쇄 / PDF 저장" })).toBeInTheDocument();
+  expect(preview.getByRole("heading", { name: "03. 해결 항목 1건" })).toBeInTheDocument();
+  expect(preview.getByRole("heading", { name: "04. 남은 항목 1건" })).toBeInTheDocument();
+  expect(preview.getByText("1 → 0 · 해결")).toBeInTheDocument();
 });

@@ -1,4 +1,5 @@
 import { FileText, RefreshCw } from "lucide-react";
+import { useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import type { RegressionDto } from "@/api/schemas";
@@ -9,7 +10,8 @@ import { useDashboardSummary } from "@/features/audit-dashboard/useDashboardSumm
 import { AuditFlowHeader } from "@/features/recheck/AuditFlowHeader";
 import { RecheckSteps } from "@/features/recheck/RecheckSteps";
 import { completedRuns, ruleTitle, runLabel } from "@/features/recheck/runs";
-import { useRegression } from "@/features/recheck/useRecheckData";
+import { useAuditRun, useRegression } from "@/features/recheck/useRecheckData";
+import { ComparisonReport } from "@/features/recheck/ComparisonReport";
 import { cn } from "@/lib/cn";
 import "@/features/recheck/recheck.css";
 
@@ -125,6 +127,49 @@ function CompareControls({ audit }: { audit: AuditDto }) {
           ))}
         </select>
       </label>
+    </>
+  );
+}
+
+/** Opens the comparison in the same print preview the result screen uses. */
+function ComparisonReportButton({ audit }: { audit: AuditDto }) {
+  const { from, to } = useComparisonRange(audit);
+  const latest = completedRuns(audit).at(-1);
+  const comparison = useRegression(audit.id, from?.version, to?.version, audit.updatedAt);
+  const fromRun = useAuditRun(audit.id, from?.version);
+  const toRun = useAuditRun(
+    audit.id,
+    to && to.version !== latest?.version ? to.version : undefined,
+  );
+  const toScreens = to && to.version === latest?.version ? audit.screens : toRun.data?.screens;
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const ready = Boolean(comparison.data && from && to && fromRun.data && toScreens);
+  return (
+    <>
+      <Button
+        ref={buttonRef}
+        variant="outline"
+        className="rc-no-print"
+        disabled={!ready}
+        onClick={() => setOpen(true)}
+      >
+        <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
+      </Button>
+      {open && ready && (
+        <ComparisonReport
+          audit={audit}
+          from={from!}
+          to={to!}
+          result={comparison.data!}
+          fromScreens={fromRun.data!.screens}
+          toScreens={toScreens!}
+          onClose={() => {
+            setOpen(false);
+            requestAnimationFrame(() => buttonRef.current?.focus());
+          }}
+        />
+      )}
     </>
   );
 }
@@ -355,9 +400,7 @@ export function BenchmarkPage() {
                 <RefreshCw size={14} aria-hidden="true" />새 수정본 검사
               </Link>
             </Button>
-            <Button variant="outline" className="rc-no-print" onClick={() => window.print()}>
-              <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
-            </Button>
+            <ComparisonReportButton key={`report-${audit.id}`} audit={audit} />
           </>
         }
       >
