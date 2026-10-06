@@ -7,12 +7,69 @@ import type {
   AnalysisJobDto,
   AuditDto,
   CreateAuditDto,
+  FindingDto,
   FindingStatus,
   ImportFigmaAuditDto,
   DemoVariant,
 } from "@/entities/audit/types";
 
 const jobs = new Map<string, AnalysisJobDto>();
+// Completed run results by `${auditId}#${version}`; the summary keeps only the latest.
+export const runSnapshots = new Map<string, AuditDto>();
+
+function completedVersions(audit: AuditDto) {
+  return (audit.runs ?? [])
+    .filter((run) => run.status === "completed")
+    .map((run) => run.version)
+    .sort((a, b) => a - b);
+}
+
+function runSnapshot(audit: AuditDto, version: number) {
+  const latest = completedVersions(audit).at(-1);
+  return runSnapshots.get(`${audit.id}#${version}`) ?? (version === latest ? audit : undefined);
+}
+
+// Fixed demo results so the original → revision → comparison flow has something to show.
+const demoFindingPlan: Record<DemoVariant, Array<[FindingDto["ruleId"], number]>> = {
+  risky: [
+    ["DA-04", 2],
+    ["DA-04", 2],
+    ["DA-04", 2],
+    ["DA-07", 1],
+    ["DA-07", 5],
+    ["DA-12", 4],
+    ["DA-15", 6],
+  ],
+  partial: [
+    ["DA-03", 3],
+    ["DA-07", 5],
+    ["DA-12", 4],
+  ],
+  revised: [["DA-03", 3]],
+};
+
+function mockDemoFindings(audit: AuditDto, version: number): FindingDto[] {
+  const template = dashboardFixture.audits
+    .flatMap((item) => item.findings)
+    .find((item) => item.bbox);
+  if (!template || !audit.demoVariant) return audit.findings;
+  return demoFindingPlan[audit.demoVariant].flatMap(([ruleId, order], index) => {
+    const screen = audit.screens.find((item) => item.order === order);
+    if (!screen) return [];
+    return [
+      {
+        ...structuredClone(template),
+        id: `${audit.id}-v${version}-${index + 1}`,
+        ruleId,
+        title: `${ruleId} 모의 탐지`,
+        screenIds: [screen.id],
+        bbox: { ...template.bbox!, screenId: screen.id },
+        relatedElements: [],
+        status: "open" as const,
+      },
+    ];
+  });
+}
 
 function addMockRun(audit: AuditDto) {
   if (!audit.runs?.length && audit.status === "completed") {
@@ -26,6 +83,9 @@ function addMockRun(audit: AuditDto) {
       },
     ];
   }
+  const latest = completedVersions(audit).at(-1);
+  if (latest && !runSnapshots.has(`${audit.id}#${latest}`))
+    runSnapshots.set(`${audit.id}#${latest}`, structuredClone(audit));
   const version = Math.max(0, ...(audit.runs ?? []).map((run) => run.version)) + 1;
   const run = {
     id: `${audit.id}-run-${version}`,
@@ -278,10 +338,15 @@ export const handlers = [
       audit.status = job.status === "completed" ? "completed" : "analyzing";
       audit.updatedAt = new Date().toISOString();
       const run = audit.runs?.find((item) => item.id === job.runId);
+      if (run && job.status === "completed" && audit.demoPreset)
+        audit.findings = mockDemoFindings(audit, run.version);
       if (run) {
         run.status = audit.status;
         run.findingCount = audit.findings.length;
-        if (run.status === "completed") audit.latestRunId = run.id;
+        if (run.status === "completed") {
+          audit.latestRunId = run.id;
+          runSnapshots.set(`${audit.id}#${run.version}`, structuredClone(audit));
+        }
       }
     }
     return HttpResponse.json(job);
@@ -306,31 +371,80 @@ export const handlers = [
     if (audit) audit.updatedAt = new Date().toISOString();
     return HttpResponse.json({ id: finding.id, status });
   }),
+  http.get("*/api/v1/audits/:auditId/runs/:version", ({ params }) => {
+    const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
+    const run = audit && runSnapshot(audit, Number(params.version));
+    if (!run) return HttpResponse.json({ detail: "Run not found" }, { status: 404 });
+    return HttpResponse.json({ ...run, runs: audit!.runs });
+  }),
   http.get("*/api/v1/audits/:auditId/regression", ({ params, request }) => {
     const audit = dashboardFixture.audits.find((item) => item.id === params.auditId);
     if (!audit) return HttpResponse.json({ detail: "Audit not found" }, { status: 404 });
-    const completed = (audit.runs ?? []).filter((run) => run.status === "completed");
+    const completed = completedVersions(audit);
     if (completed.length < 2)
       return HttpResponse.json({ detail: "비교할 이전 회차가 없습니다." }, { status: 409 });
     const query = new URL(request.url).searchParams;
+    const toVersion = Number(query.get("to_version") ?? query.get("to") ?? completed.at(-1));
+    const fromVersion = Number(query.get("from_version") ?? query.get("from") ?? completed[0]);
+    const before = runSnapshot(audit, fromVersion)?.findings ?? [];
+    const after = runSnapshot(audit, toVersion)?.findings ?? [];
+    const key = (finding: (typeof before)[number]) =>
+      `${finding.ruleId}|${finding.screenIds.join()}`;
+    const afterKeys = new Set(after.map(key));
+    const beforeKeys = new Set(before.map(key));
+    const change = (finding: (typeof before)[number], kept: boolean) => ({
+      ruleId: finding.ruleId,
+      findingId: finding.id,
+      before: beforeKeys.has(key(finding)) ? finding.severity : null,
+      after: kept ? finding.severity : null,
+      location: finding.title,
+      element: finding.element,
+    });
+    // Mock reruns return the same findings, so they cannot show a real resolution.
+    const unchanged =
+      before.length === after.length && before.every((finding) => afterKeys.has(key(finding)));
+    const counts = (findings: typeof before) => {
+      const out = new Map<string, number>();
+      findings.forEach((finding) =>
+        finding.screenIds.forEach((id) => out.set(id, (out.get(id) ?? 0) + 1)),
+      );
+      return out;
+    };
+    const beforeCounts = counts(before);
+    const afterCounts = counts(after);
     return HttpResponse.json({
       auditId: audit.id,
-      fromVersion: Number(query.get("from") ?? completed.at(-2)!.version),
-      toVersion: Number(query.get("to") ?? completed.at(-1)!.version),
-      comparisonStatus: "incomplete",
-      limitations: ["모의 분석 결과이므로 실제 해결 여부를 확인할 수 없습니다."],
-      resolvedRatio: null,
-      resolved: [],
+      fromVersion,
+      toVersion,
+      comparisonStatus:
+        !before.length && !after.length ? "empty" : unchanged ? "incomplete" : "complete",
+      limitations: unchanged ? ["모의 분석 결과이므로 실제 해결 여부를 확인할 수 없습니다."] : [],
+      resolvedRatio:
+        unchanged || !before.length
+          ? null
+          : before.filter((f) => !afterKeys.has(key(f))).length / before.length,
+      resolved: before
+        .filter((finding) => !afterKeys.has(key(finding)))
+        .map((f) => change(f, false)),
       improved: [],
-      new: [],
+      new: after.filter((finding) => !beforeKeys.has(key(finding))).map((f) => change(f, true)),
       regressed: [],
       pending: [],
-      persisted: audit.findings.map((finding) => ({
-        ruleId: finding.ruleId,
-        findingId: finding.id,
-        before: finding.severity,
-        after: finding.severity,
-      })),
+      persisted: after
+        .filter((finding) => beforeKeys.has(key(finding)))
+        .map((f) => change(f, true)),
+      screenChanges: audit.screens.map((screen) => {
+        const b = beforeCounts.get(screen.id) ?? 0;
+        const a = afterCounts.get(screen.id) ?? 0;
+        return {
+          screenId: screen.id,
+          flowStep: screen.flowStep,
+          beforeCount: b,
+          afterCount: a,
+          status:
+            !b && !a ? "clear" : !b ? "new" : !a ? "resolved" : a < b ? "reduced" : "persisted",
+        };
+      }),
     });
   }),
 ];

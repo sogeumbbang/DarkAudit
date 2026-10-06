@@ -38,7 +38,8 @@ class DemoRecheckTest(IsolatedApiTestCase):
             self.assertEqual(audit["findings"], [])
             self.assertFalse(audit["analysisSummary"]["complete"])
         comparison = self.client.get(f"/api/v1/audits/{audit_id}/regression").json()
-        self.assertEqual((comparison["fromVersion"], comparison["toVersion"]), (2, 3))
+        # Repeated revisions are still compared with the original run.
+        self.assertEqual((comparison["fromVersion"], comparison["toVersion"]), (1, 3))
         self.assertIsNone(comparison["resolvedRatio"])
 
     def test_demo_metadata_validation_and_existing_database_migration(self):

@@ -106,11 +106,18 @@ export function deleteAudit(auditId: string) {
   return apiRequest<void>(`/api/v1/audits/${auditId}`, { method: "DELETE" });
 }
 
-export async function getAuditRegression(auditId: string, from: number, to: number) {
+export async function getAuditRun(auditId: string, version: number) {
+  return auditSchema.parse(
+    await apiRequest<unknown>(`/api/v1/audits/${encodeURIComponent(auditId)}/runs/${version}`),
+  );
+}
+
+export async function getAuditRegression(auditId: string, from?: number, to?: number) {
+  const query = new URLSearchParams();
+  if (from) query.set("from_version", String(from));
+  if (to) query.set("to_version", String(to));
   return regressionSchema.parse(
-    await apiRequest<unknown>(
-      `/api/v1/audits/${encodeURIComponent(auditId)}/regression?from=${from}&to=${to}`,
-    ),
+    await apiRequest<unknown>(`/api/v1/audits/${encodeURIComponent(auditId)}/regression?${query}`),
   );
 }
 

@@ -76,6 +76,7 @@ export type AuditRunDto = {
   note?: string | null;
   createdAt: string;
   findingCount: number;
+  variant?: DemoVariant | null;
 };
 
 export type AnalysisSummary = {
@@ -86,7 +87,7 @@ export type AnalysisSummary = {
   limitations?: string[];
   analyzedScreenCount?: number;
   regression?: {
-    comparisonStatus: "complete" | "incomplete";
+    comparisonStatus: "complete" | "incomplete" | "empty";
     limitations: string[];
     pendingCount: number;
     resolvedRatio: number | null;

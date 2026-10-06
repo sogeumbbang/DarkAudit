@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { AuditReport } from "@/features/audit-report/AuditReport";
-import { DemoJourney } from "@/features/audit-create/DemoJourney";
+import { RecheckSteps } from "@/features/recheck/RecheckSteps";
 import { AnalysisNotice } from "@/features/audit-report/AnalysisNotice";
 import type { AuditDto, AuditScreenDto, FindingDto } from "@/entities/audit/types";
 import { orderFindings } from "@/entities/audit/orderFindings";
@@ -31,8 +31,25 @@ import { guidelineCategories } from "@/pages/support/guidelines";
 import { FindingDecisionNote } from "@/features/finding-review/FindingDecisionNote";
 import { useFindingStatus } from "@/features/finding-review/useFindingStatus";
 import { cn } from "@/lib/cn";
+import {
+  BeforeAfterPreview,
+  ChangePanel,
+  RevisionMetrics,
+  RunBadge,
+  RunSwitch,
+  ScreenChangeTag,
+} from "@/features/recheck/RevisionOverview";
+import {
+  baseRun,
+  displayName,
+  largestChange,
+  latestRun,
+  type ScreenChange,
+} from "@/features/recheck/runs";
+import { useAuditRun, useRegression } from "@/features/recheck/useRecheckData";
 
 import "./overview.css";
+import "@/features/recheck/recheck.css";
 
 const auditStatusPresentation: Record<
   AuditDto["status"],
@@ -148,11 +165,13 @@ function FlowOverview({
   selectedScreenId,
   onSelect,
   onShowAll,
+  changes,
 }: {
   screens: AuditScreenDto[];
   selectedScreenId: string;
   onSelect: (screenId: string) => void;
   onShowAll: () => void;
+  changes?: Map<string, ScreenChange>;
 }) {
   return (
     <aside className="map-screens" aria-label="가입 흐름 요약">
@@ -191,9 +210,13 @@ function FlowOverview({
             />
             <div className="map-screen-copy">
               <p>{screen.flowStep}</p>
-              <span>
-                {screen.findingCount ? `검토 후보 ${screen.findingCount}건` : "탐지 항목 없음"}
-              </span>
+              {changes?.get(screen.id) ? (
+                <ScreenChangeTag change={changes.get(screen.id)!} />
+              ) : (
+                <span>
+                  {screen.findingCount ? `검토 후보 ${screen.findingCount}건` : "탐지 항목 없음"}
+                </span>
+              )}
             </div>
           </button>
         ))}
@@ -533,8 +556,30 @@ export function OverviewPage() {
   const [showReport, setShowReport] = useState(false);
   const reportButtonRef = useRef<HTMLButtonElement>(null);
   const detailOpen = Boolean(searchParams.get("finding") || searchParams.get("panel"));
+  const summaryAudit =
+    data?.audits.find((item) => item.id === searchParams.get("audit")) ??
+    data?.audits.find((item) => item.id === data.activeAuditId) ??
+    data?.audits[0];
+  // ?version=N reopens a completed run; the summary itself only holds the latest one.
+  const latest = summaryAudit && latestRun(summaryAudit);
+  const base = summaryAudit && baseRun(summaryAudit);
+  const requestedVersion = Number(searchParams.get("version")) || undefined;
+  const viewRun =
+    (summaryAudit?.runs ?? []).find(
+      (run) => run.version === requestedVersion && run.status === "completed",
+    ) ?? latest;
+  const historical = Boolean(viewRun && latest && viewRun.version !== latest.version);
+  const runResult = useAuditRun(summaryAudit?.id, historical ? viewRun?.version : undefined);
+  const revision = Boolean(viewRun && base && viewRun.version > base.version);
+  const regression = useRegression(
+    summaryAudit?.id,
+    revision ? base?.version : undefined,
+    revision ? viewRun?.version : undefined,
+    summaryAudit?.updatedAt,
+  );
+  const originalResult = useAuditRun(summaryAudit?.id, revision ? base?.version : undefined);
 
-  if (isPending) {
+  if (isPending || (historical && runResult.isPending)) {
     return <DashboardLoading />;
   }
 
@@ -574,10 +619,10 @@ export function OverviewPage() {
     );
   }
 
-  const audit =
-    data.audits.find((item) => item.id === searchParams.get("audit")) ??
-    data.audits.find((item) => item.id === data.activeAuditId) ??
-    data.audits[0]!;
+  const audit: AuditDto =
+    historical && runResult.data ? { ...runResult.data, runs: summaryAudit!.runs } : summaryAudit!;
+  const changes = revision ? regression.data?.screenChanges : undefined;
+  const changeByScreen = changes && new Map(changes.map((item) => [item.screenId, item]));
   if (!audit.screens.length) {
     return (
       <Card className="mx-auto mt-20 max-w-lg p-10 text-center">
@@ -618,9 +663,13 @@ export function OverviewPage() {
       : filteredFindings[0]);
   // 화면을 명시하지 않았다면 선택된 항목이 있는 화면을 띄운다. 둘을 각각 고르면
   // 첫 진입에서 "1번 화면 + 2번 화면의 탐지 항목"처럼 어긋나 위치 강조가 안 보인다.
+  const biggest = changes && largestChange(changes);
   const screen =
     (selectedFinding || !requestedFinding
       ? orderedScreens.find((item) => item.id === requestedScreen)
+      : undefined) ??
+    (!requestedFinding && biggest
+      ? orderedScreens.find((item) => item.id === biggest.screenId)
       : undefined) ??
     orderedScreens.find((item) => item.id === finding?.bbox?.screenId) ??
     orderedScreens.find((item) => item.id === finding?.screenIds[0]) ??
@@ -756,11 +805,20 @@ export function OverviewPage() {
           </Link>
           <p className="overview-kicker">AUDIT OVERVIEW</p>
           <h1 className="sr-only">진단 결과 상세</h1>
-          <div className="overview-title-row">
+          <div className="overview-title-row rc">
             <Badge variant={auditStatus.variant}>{auditStatus.label}</Badge>
-            <h2 className="review-audit-title font-display">{audit.name}</h2>
+            <h2 className="review-audit-title font-display">{displayName(audit.name)}</h2>
+            {viewRun &&
+              (audit.runs ?? []).filter((run) => run.status === "completed").length > 1 && (
+                <RunBadge audit={audit} run={viewRun} />
+              )}
           </div>
           <p className="overview-subtitle">화면의 문제를 살펴보고, 개선의 다음 단계를 정하세요.</p>
+          {viewRun && (
+            <div className="rc">
+              <RunSwitch audit={audit} current={viewRun.version} />
+            </div>
+          )}
         </div>
         <div className="overview-actions">
           {audit.demoPreset
@@ -804,7 +862,11 @@ export function OverviewPage() {
           </Button>
         </div>
       </header>
-      {audit.demoPreset && <DemoJourney step={audit.demoVariant === "revised" ? 2 : 1} />}
+      {audit.demoPreset && (
+        <div className="rc">
+          <RecheckSteps audit={audit} current={revision ? 2 : 1} />
+        </div>
+      )}
       {showReport && (
         <AuditReport
           audit={audit}
@@ -814,7 +876,11 @@ export function OverviewPage() {
           }}
         />
       )}
-      <ReviewSummary audit={audit} />
+      {revision && regression.data && base && viewRun ? (
+        <RevisionMetrics audit={audit} base={base} run={viewRun} regression={regression.data} />
+      ) : (
+        <ReviewSummary audit={audit} />
+      )}
       <AnalysisNotice summary={audit.analysisSummary} />
       <section aria-label="진단 요약" className="map-toolbar">
         <div role="group" aria-label="점검 항목 필터" className="overview-filters">
@@ -858,34 +924,57 @@ export function OverviewPage() {
           selectedScreenId={screen.id}
           onSelect={selectScreen}
           onShowAll={() => setShowFlow(true)}
+          changes={changeByScreen}
         />
         <section
           id="finding-review-detail"
           aria-label="선택한 항목 검토"
           className="review-workspace"
         >
-          <ScreenPreview
-            key={screen.id}
-            finding={detailOpen ? finding : undefined}
-            screen={screen}
-            visibleFindingCount={
-              filteredFindings.filter((item) => isFindingOnScreen(item, screen.id)).length
-            }
-            findings={orderedFindings.flatMap((item, index) =>
-              matchesFilter(item, filter) ? [{ finding: item, number: index + 1 }] : [],
-            )}
-            onSelect={selectImageFinding}
-          />
-          <FindingsList
-            findings={filteredFindings}
-            allFindings={orderedFindings}
-            selectedFindingId={detailOpen ? finding?.id : undefined}
-            onSelect={selectListFinding}
-            onStep={stepFinding}
-            onResolved={afterResolved}
-            hasNextReview={Boolean(nextReview)}
-            emptyMessage={emptyMessage}
-          />
+          {revision && !detailOpen && regression.data && base && viewRun ? (
+            <>
+              <BeforeAfterPreview
+                screen={screen}
+                original={originalResult.data?.screens.find((item) => item.id === screen.id)}
+                change={changeByScreen?.get(screen.id)}
+                base={base}
+                run={viewRun}
+              />
+              <ChangePanel
+                audit={audit}
+                regression={regression.data}
+                onReview={(findingId) => {
+                  const target = orderedFindings.find((item) => item.id === findingId);
+                  if (target) selectListFinding(target);
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <ScreenPreview
+                key={screen.id}
+                finding={detailOpen ? finding : undefined}
+                screen={screen}
+                visibleFindingCount={
+                  filteredFindings.filter((item) => isFindingOnScreen(item, screen.id)).length
+                }
+                findings={orderedFindings.flatMap((item, index) =>
+                  matchesFilter(item, filter) ? [{ finding: item, number: index + 1 }] : [],
+                )}
+                onSelect={selectImageFinding}
+              />
+              <FindingsList
+                findings={filteredFindings}
+                allFindings={orderedFindings}
+                selectedFindingId={detailOpen ? finding?.id : undefined}
+                onSelect={selectListFinding}
+                onStep={stepFinding}
+                onResolved={afterResolved}
+                hasNextReview={Boolean(nextReview)}
+                emptyMessage={emptyMessage}
+              />
+            </>
+          )}
         </section>
       </div>
       {showFlow && (

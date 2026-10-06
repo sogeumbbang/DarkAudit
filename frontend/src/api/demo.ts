@@ -80,7 +80,11 @@ export async function getDemoScreens(
 ): Promise<UploadAuditScreen[]> {
   return Promise.all(
     variant.screens.map(async (screen, index) => {
-      const response = await fetch(screen.url, { signal: AbortSignal.timeout(30_000) });
+      // A preview <img> may have cached the file without CORS headers; bypass it.
+      const response = await fetch(screen.url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(30_000),
+      });
       if (!response.ok) throw new Error("데모 이미지를 불러오지 못했습니다. 다시 시도해 주세요.");
       const bytes = new Uint8Array(await response.arrayBuffer());
       const signature = [137, 80, 78, 71, 13, 10, 26, 10];

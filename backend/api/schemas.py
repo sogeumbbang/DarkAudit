@@ -134,6 +134,8 @@ class AuditRunDto(BaseModel):
     note: str | None = None
     createdAt: datetime
     findingCount: int = 0
+    # 데모 회차의 버전(원본/일부 수정/수정본). 일반 업로드 회차는 None 이다.
+    variant: DemoVariant | None = None
 
 
 class AuditDto(BaseModel):
@@ -226,6 +228,15 @@ class RegressionChangeDto(BaseModel):
     verificationNote: str | None = None
 
 
+class RegressionScreenChangeDto(BaseModel):
+    """같은 순서의 화면에서 두 회차의 탐지 건수가 어떻게 바뀌었는지."""
+    screenId: str
+    flowStep: str | None = None
+    beforeCount: int
+    afterCount: int
+    status: Literal["resolved", "reduced", "persisted", "new", "clear"]
+
+
 class RegressionDto(BaseModel):
     auditId: str
     fromVersion: int
@@ -237,9 +248,11 @@ class RegressionDto(BaseModel):
     regressed: list[RegressionChangeDto] = Field(default_factory=list)
     pending: list[RegressionChangeDto] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
-    comparisonStatus: Literal["complete", "incomplete"] = "complete"
+    # empty: 두 회차 모두 탐지 항목이 없어 비교할 항목이 없다.
+    comparisonStatus: Literal["complete", "incomplete", "empty"] = "complete"
     resolvedRatio: float | None = None
     scopeDescription: str | None = None
+    screenChanges: list[RegressionScreenChangeDto] = Field(default_factory=list)
 
 
 class FindingDecisionRequest(BaseModel):

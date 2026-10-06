@@ -36,7 +36,11 @@ class RegressedFindingTest(IsolatedApiTestCase):
         self._run(audit_id, detecting=False)   # v2: 해결
         self._run(audit_id, detecting=True)    # v3: 같은 문제가 다시 나타남
 
-        body = self.client.get(f"/api/v1/audits/{audit_id}/regression").json()
+        # 기본 비교는 원본(v1) 기준이라 v1 의 같은 문제는 '유지'다. 재발은 직전 회차와 비교한다.
+        baseline = self.client.get(f"/api/v1/audits/{audit_id}/regression").json()
+        self.assertEqual((baseline["fromVersion"], baseline["toVersion"]), (1, 3))
+        self.assertEqual([c["ruleId"] for c in baseline["persisted"]], ["DA-12"])
+        body = self.client.get(f"/api/v1/audits/{audit_id}/regression?from_version=2&to_version=3").json()
         self.assertEqual((body["fromVersion"], body["toVersion"]), (2, 3))
         self.assertEqual([c["ruleId"] for c in body["regressed"]], ["DA-12"])
         self.assertEqual(body["new"], [])

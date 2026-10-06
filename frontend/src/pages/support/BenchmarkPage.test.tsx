@@ -60,20 +60,24 @@ const response = {
 it("shows the comparison and links only findings available in the current result", async () => {
   server.use(http.get("*/api/v1/audits/:auditId/regression", () => HttpResponse.json(response)));
   setup();
-  expect(await screen.findByText("해결률 · 50%")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "해결 · 1건" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "유지 · 1건" })).toBeInTheDocument();
-  expect(screen.getAllByRole("link", { name: "현재 항목 검토" })).toHaveLength(1);
+  expect(await screen.findByText("50%")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "해결 1건" })).toBeInTheDocument();
+  expect(screen.getByText("원본 위치에서 문제가 사라짐")).toBeInTheDocument();
+  expect(screen.getByText("위험 높음 → 해결")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "남은 항목 1건" })).toBeInTheDocument();
+  expect(screen.getByText("신규 0건")).toBeInTheDocument();
+  expect(screen.getAllByRole("link", { name: "검토하기" })).toHaveLength(1);
+  expect(screen.queryByText(/미탐지/)).not.toBeInTheDocument();
 });
 
-it("shows null resolution as deferred and uses the last two completed runs", async () => {
+it("compares the original with the latest run by default and shows deferred items", async () => {
   let query = "";
   server.use(
     http.get("*/api/v1/audits/:auditId/regression", ({ request }) => {
       query = new URL(request.url).search;
       return HttpResponse.json({
         ...response,
-        fromVersion: 3,
+        fromVersion: 1,
         toVersion: 7,
         comparisonStatus: "incomplete",
         limitations: ["검사 근거 부족"],
@@ -84,11 +88,44 @@ it("shows null resolution as deferred and uses the last two completed runs", asy
     }),
   );
   setup([1, 3, 7], "failed");
-  expect(await screen.findByText("해결률 · 산출 보류")).toBeInTheDocument();
-  expect(screen.queryByText("해결률 · 0%")).not.toBeInTheDocument();
+  expect(await screen.findByText("산출 보류")).toBeInTheDocument();
   expect(screen.getByText("검사 근거 부족")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "보류 · 1건" })).toBeInTheDocument();
-  expect(query).toBe("?from=3&to=7");
+  expect(screen.getByText("보류")).toBeInTheDocument();
+  expect(query).toBe("?from_version=1&to_version=7");
+  expect(screen.getByRole("combobox", { name: "비교 기준" })).toHaveValue("1");
+  expect(screen.getByRole("combobox", { name: "비교 대상" })).toHaveValue("7");
+});
+
+it("lets the reviewer pick both ends of the comparison", async () => {
+  const queries: string[] = [];
+  server.use(
+    http.get("*/api/v1/audits/:auditId/regression", ({ request }) => {
+      queries.push(new URL(request.url).search);
+      return HttpResponse.json(response);
+    }),
+  );
+  setup([1, 2, 3]);
+  await screen.findByText("50%");
+  await userEvent.selectOptions(screen.getByRole("combobox", { name: "비교 대상" }), "2");
+  await screen.findByRole("heading", { name: /→ v2 수정본 비교/ });
+  expect(queries.at(-1)).toBe("?from_version=1&to_version=2");
+});
+
+it("shows a separate state when neither run has findings", async () => {
+  server.use(
+    http.get("*/api/v1/audits/:auditId/regression", () =>
+      HttpResponse.json({
+        ...response,
+        comparisonStatus: "empty",
+        resolvedRatio: null,
+        resolved: [],
+        persisted: [],
+      }),
+    ),
+  );
+  setup();
+  expect(await screen.findByRole("heading", { name: "비교할 항목 없음" })).toBeInTheDocument();
+  expect(screen.getAllByText("비교할 항목 없음")).toHaveLength(2);
 });
 
 it("does not request comparison when only one completed run exists", async () => {
@@ -132,10 +169,9 @@ it("distinguishes verified resolutions from rules still awaiting evidence", asyn
   setup();
   expect(await screen.findByText("일부 항목의 해결 판정이 보류되었습니다")).toBeInTheDocument();
   expect(screen.getByText(/검사 근거가 확인된 1건은 해결/)).toBeInTheDocument();
-  expect(screen.getByText("해결률 · 산출 보류")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "해결 · 1건" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "보류 · 1건" })).toBeInTheDocument();
-  expect(screen.getByText("탐지 항목 1건 → 1건")).toBeInTheDocument();
+  expect(screen.getByText("산출 보류")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "해결 1건" })).toBeInTheDocument();
+  expect(screen.getByText("1 → 1건")).toBeInTheDocument();
   expect(
     screen.getByText("각 데모 단계에 처음 진입한 6개 화면끼리 비교합니다."),
   ).toBeInTheDocument();
@@ -156,5 +192,5 @@ it("allows retry after a comparison error", async () => {
   setup();
   expect(await screen.findByRole("alert")).toHaveTextContent("일시적 오류");
   await userEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
-  expect(await screen.findByText("해결률 · 50%")).toBeInTheDocument();
+  expect(await screen.findByText("50%")).toBeInTheDocument();
 });

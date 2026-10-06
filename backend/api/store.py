@@ -35,7 +35,7 @@ from backend.app.regression import RegressionReport
 
 from . import compat
 from .schemas import (
-    AuditDto, AuditRunDto, BBox, ElementRef, FindingDto, RegressionChangeDto,
+    AuditDto, AuditRunDto, BBox, ElementRef, FindingDto, RegressionChangeDto, RegressionScreenChangeDto,
     RegressionDto, ScreenDto,
 )
 
@@ -275,10 +275,11 @@ def to_finding_dto(
     )
 
 
-def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
+def to_audit_dto(session: Session, audit: Audit, rules: dict, run: AuditRun | None = None) -> AuditDto:
+    """진단 요약. run 을 주면 그 회차의 화면·탐지 항목을, 없으면 최신 완료 회차를 담는다."""
     from .access import sign_image
     from . import jobs
-    run = latest_completed_run(audit)
+    run = run or latest_completed_run(audit)
 
     screens_src = run.screens if run else (audit.runs[-1].screens if audit.runs else [])
     screens_by_id = {s.id: s for s in screens_src}
@@ -318,6 +319,7 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict) -> AuditDto:
             status={"PENDING": "queued", "RUNNING": "analyzing",
                     "DONE": "completed", "FAILED": "failed"}[r.status.value],
             note=r.note, createdAt=aware(r.created_at), findingCount=len(r.findings),
+            variant=(r.analysis_summary or {}).get("demoVariant"),
         )
         for r in sorted(audit.runs, key=lambda x: x.version)
     ]
@@ -386,6 +388,7 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
             verificationNote=note,
         )
 
+    empty = not (from_run and from_run.findings) and not (to_run and to_run.findings)
     return RegressionDto(
         auditId=f"audit-{report.audit_id}",
         fromVersion=report.from_version,
@@ -397,12 +400,35 @@ def to_regression_dto(session: Session, report: RegressionReport) -> RegressionD
         regressed=[change_dto(c, to_id_by_fp) for c in report.regressed],
         pending=[change_dto(c, from_id_by_fp, pending=True) for c in report.pending],
         limitations=report.limitations,
-        comparisonStatus="incomplete" if report.limitations else "complete",
+        comparisonStatus="empty" if empty else "incomplete" if report.limitations else "complete",
         resolvedRatio=round(report.resolved_ratio, 3) if report.resolved_ratio is not None else None,
         scopeDescription=("각 데모 단계에 처음 진입한 6개 화면끼리 비교합니다. 추가 클릭·스크롤은 탐색 기록에서 확인할 수 있습니다."
                           if all(run and (run.analysis_summary or {}).get("comparisonScope") == "demo-step-entry"
                                  for run in (from_run, to_run)) else None),
+        screenChanges=_screen_changes(from_run, to_run),
     )
+
+
+def _screen_changes(from_run: AuditRun | None, to_run: AuditRun | None) -> list[RegressionScreenChangeDto]:
+    """같은 순서의 화면끼리 두 회차의 탐지 건수를 맞댄다."""
+    def counts(run: AuditRun | None) -> dict[int, int]:
+        out: dict[int, int] = {}
+        for finding in run.findings if run else []:
+            for index in set(finding.screen_indices or []):
+                out[index] = out.get(index, 0) + 1
+        return out
+
+    before, after = counts(from_run), counts(to_run)
+    steps = {s.screen_index: s.flow_step for run in (from_run, to_run) if run for s in run.screens}
+    changes = []
+    for index in sorted(steps):
+        b, a = before.get(index, 0), after.get(index, 0)
+        status = ("clear" if not b and not a else "new" if not b else "resolved" if not a
+                  else "reduced" if a < b else "persisted")
+        changes.append(RegressionScreenChangeDto(
+            screenId=f"screen-{index:02d}", flowStep=steps[index], beforeCount=b, afterCount=a, status=status,
+        ))
+    return changes
 
 
 def audit_pk(audit_id: str) -> int:
