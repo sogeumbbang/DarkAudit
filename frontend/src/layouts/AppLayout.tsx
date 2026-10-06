@@ -170,6 +170,8 @@ function MobileNavigation({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+const reviewFlowPath = /^\/app\/(overview|benchmark|audits\/[^/]+\/recheck)$/;
+
 export function AppLayout() {
   const { pathname } = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -179,7 +181,8 @@ export function AppLayout() {
     <div
       className={cn(
         "workspace min-h-screen bg-background",
-        pathname === "/app/overview" && "workspace--overview",
+        // Result, revision and comparison are one flow; keep one palette and spacing.
+        reviewFlowPath.test(pathname) && "workspace--overview",
         isCollapsed ? "lg:pl-[88px]" : "lg:pl-[240px]",
       )}
     >
