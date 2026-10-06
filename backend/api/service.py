@@ -46,7 +46,7 @@ from backend.app.rule_engine.severity import score as score_rule_findings
 
 from .schemas import ExplorationEventDto, JobDto
 from .demo_capture import demo_entry_screens
-from .demo_browser import bundled_demo_policy
+from .demo_browser import DEMO_ACTION_POLICY, bundled_demo_policy
 from .store import SessionLocal, new_id, touch_audit
 from . import jobs
 
@@ -247,6 +247,7 @@ def capture_and_analyze_url(
                                      url_policy=demo_policy,
                                      static_routes=demo_policy.assets if demo_policy else None),
             computer_agent=computer_agent,
+            action_policy=DEMO_ACTION_POLICY if demo_policy else None,
             on_event=lambda event: _record_exploration(job_id, event),
         )
         capture = URLCapturePipeline(explorer).run(

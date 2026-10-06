@@ -97,6 +97,16 @@ class ActionSafetyPolicyTest(unittest.TestCase):
                 target={"tag": "button", "text": "결제하기"},
             )
 
+    def test_sandbox_allowance_lifts_only_the_named_term(self):
+        click = BrowserAction(BrowserActionType.CLICK, x=10, y=10)
+        sandbox = ActionSafetyPolicy(allowed_click_terms=frozenset({"동의"}))
+        sandbox.validate(click, viewport_width=390, viewport_height=844,
+                         target={"tag": "button", "text": "동의하지 않고 계속"})
+        for policy, text in ((ActionSafetyPolicy(), "동의하고 계속"), (sandbox, "동의하고 가입하기")):
+            with self.subTest(text=text), self.assertRaises(UnsafeActionError):
+                policy.validate(click, viewport_width=390, viewport_height=844,
+                                target={"tag": "button", "text": text})
+
 
 class RenderQualityTest(unittest.TestCase):
     def test_rejects_large_document_using_browser_default_styles(self):

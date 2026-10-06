@@ -343,6 +343,19 @@ class FigmaClientTest(unittest.TestCase):
             client.get_file("abc")
         self.assertEqual(ctx.exception.status, 404)
 
+    def test_expired_token_error_names_the_token(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(403, json={"status": 403, "err": "Token expired"})
+
+        client = FigmaClient(
+            self._settings(),
+            client=httpx.Client(base_url="https://api.figma.com/v1", transport=httpx.MockTransport(handler)),
+        )
+        with self.assertRaises(FigmaError) as ctx:
+            client.get_file("abc")
+        self.assertEqual(ctx.exception.status, 403)
+        self.assertIn("FIGMA_ACCESS_TOKEN", str(ctx.exception))
+
 
 class StubFigmaClient:
     """FigmaClient 대역: 네트워크 없이 file tree + PNG 다운로드를 흉내낸다."""
