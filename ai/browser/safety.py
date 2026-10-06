@@ -92,6 +92,9 @@ _RISKY_CLICK_TERMS = (
 @dataclass(frozen=True, slots=True)
 class ActionSafetyPolicy:
     max_scroll_factor: int = 2
+    # Only for sandboxes with no network egress (the bundled synthetic demo),
+    # where e.g. a consent button cannot have a real-world effect.
+    allowed_click_terms: frozenset[str] = frozenset()
 
     def validate(
         self,
@@ -136,8 +139,7 @@ class ActionSafetyPolicy:
             if not action.keys or any(key.upper() not in safe_keys for key in action.keys):
                 raise UnsafeActionError("Only navigation and dismissal keys are allowed")
 
-    @staticmethod
-    def _validate_click_target(target: dict[str, Any] | None) -> None:
+    def _validate_click_target(self, target: dict[str, Any] | None) -> None:
         if not target:
             return
         element_type = str(target.get("type", "")).lower()
@@ -146,5 +148,6 @@ class ActionSafetyPolicy:
         label = " ".join(
             str(target.get(key, "")) for key in ("text", "ariaLabel", "title", "value")
         ).casefold()
-        if any(term.casefold() in label for term in _RISKY_CLICK_TERMS):
+        blocked = (term for term in _RISKY_CLICK_TERMS if term not in self.allowed_click_terms)
+        if any(term.casefold() in label for term in blocked):
             raise UnsafeActionError("Potentially consequential click is blocked")

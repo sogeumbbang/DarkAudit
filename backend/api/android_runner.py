@@ -242,13 +242,17 @@ class BrowserStackAndroidRunner:
                 current_path = current_path[:current_path.index(index) + 1]
             else:
                 current_path.append(index)
+            tried = attempted.setdefault(state_id, set())
             if len(captures) >= self.settings.max_screens:
-                self.last_warnings.append("android_screen_limit")
+                # Reaching the budget on a journey's last screen is not a cut;
+                # only warn when a further safe step really leads somewhere new.
+                if self._leads_to_unseen_screen(session_id, source, tried, goal, seen_states,
+                                                scrollable=state_id not in scrolled):
+                    self.last_warnings.append("android_screen_limit")
                 break
             if step >= self.settings.max_actions:
                 self.last_warnings.append("android_action_limit")
                 break
-            tried = attempted.setdefault(state_id, set())
             candidates = _tap_candidates(source, tried, goal)
             if candidates:
                 candidate = candidates[0]
@@ -274,6 +278,16 @@ class BrowserStackAndroidRunner:
             self.last_paths.append(current_path)
         self.last_warnings = sorted(set(self.last_warnings))
         return captures
+
+    def _leads_to_unseen_screen(self, session_id: str, source: str, tried: set[str], goal: str | None,
+                                seen_states: set[str], *, scrollable: bool) -> bool:
+        candidates = _tap_candidates(source, tried, goal)
+        if not candidates:
+            # Unscrolled content may hold more controls; stay conservative.
+            return scrollable and 'scrollable="true"' in source
+        self._tap(session_id, candidates[0].x, candidates[0].y)
+        following = self._stable_source(session_id)
+        return hashlib.sha256(following.encode()).hexdigest() not in seen_states
 
     def _screenshot(self, session_id: str) -> bytes:
         response = self._request("GET", f"{self.webdriver_url}/session/{session_id}/screenshot")

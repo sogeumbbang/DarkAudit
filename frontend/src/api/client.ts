@@ -12,7 +12,14 @@ const API_WARMUP_FRESH_MS = 10 * 60_000;
 let warmupPromise: Promise<void> | undefined;
 let lastReadyAt = 0;
 const WORKSPACE_KEY = `darkaudit.workspace:${API_BASE_URL || "same-origin"}`;
+export const WORKSPACE_REJECTED_EVENT = "darkaudit:workspace-rejected";
 let workspacePromise: Promise<string> | undefined;
+
+// A stored key is never swapped silently: that would hide the user's audits.
+// Recovery is an explicit choice offered by the layout banner.
+export function resetWorkspace() {
+  localStorage.removeItem(WORKSPACE_KEY);
+}
 
 async function workspaceToken() {
   const existing = localStorage.getItem(WORKSPACE_KEY);
@@ -130,6 +137,8 @@ export async function apiRequest<T>(
     });
 
     if (!response.ok) {
+      if (response.status === 401 && headers.has("Authorization"))
+        window.dispatchEvent(new Event(WORKSPACE_REJECTED_EVENT));
       const body = (await response.json().catch(() => undefined)) as ApiErrorBody | undefined;
       throw new ApiError(errorMessage(body), response.status, body);
     }

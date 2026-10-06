@@ -94,4 +94,18 @@ describe("workspace authentication", () => {
       "a".repeat(43),
     );
   });
+
+  it("announces a rejected workspace and resets it only on request", async () => {
+    localStorage.setItem("darkaudit.workspace:https://api.workspace.test", "a".repeat(43));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+    const { apiRequest, resetWorkspace, WORKSPACE_REJECTED_EVENT } = await import("@/api/client");
+    const listener = vi.fn();
+    window.addEventListener(WORKSPACE_REJECTED_EVENT, listener);
+    await expect(apiRequest("/api/v1/dashboard/summary")).rejects.toMatchObject({ status: 401 });
+    window.removeEventListener(WORKSPACE_REJECTED_EVENT, listener);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem("darkaudit.workspace:https://api.workspace.test")).not.toBeNull();
+    resetWorkspace();
+    expect(localStorage.getItem("darkaudit.workspace:https://api.workspace.test")).toBeNull();
+  });
 });

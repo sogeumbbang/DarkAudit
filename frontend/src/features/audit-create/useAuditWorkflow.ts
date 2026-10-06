@@ -44,7 +44,11 @@ export function useAnalysisStatus(jobId?: string) {
     queryKey: ["analysis-job", jobId],
     queryFn: () => getAnalysisStatus(jobId!),
     enabled: Boolean(jobId),
-    refetchInterval: (query) =>
-      ["completed", "failed"].includes(query.state.data?.status ?? "") ? false : 800,
+    refetchInterval: (query) => {
+      // A rejected workspace or a forgotten job will not recover by polling.
+      const status = (query.state.error as { status?: number } | null)?.status;
+      if (status === 401 || status === 404) return false;
+      return ["completed", "failed"].includes(query.state.data?.status ?? "") ? false : 800;
+    },
   });
 }

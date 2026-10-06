@@ -177,6 +177,14 @@ class FigmaClient:
                 last_error = FigmaError("retryable Figma error", status=response.status_code)
                 self._backoff(attempt)
                 continue
+            if response.status_code in {401, 403}:
+                # Figma reports an expired PAT as 403 on /files, so the generic
+                # status alone does not tell an operator what to fix.
+                raise FigmaError(
+                    f"Figma API error {response.status_code}: FIGMA_ACCESS_TOKEN이 만료되었거나 "
+                    "이 파일을 읽을 권한(file_content:read)이 없습니다. 토큰을 다시 발급해 주세요.",
+                    status=response.status_code,
+                )
             if response.status_code >= 400:
                 raise FigmaError(f"Figma API error {response.status_code}", status=response.status_code)
             return response.json()

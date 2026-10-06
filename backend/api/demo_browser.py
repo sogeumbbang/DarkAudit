@@ -1,10 +1,14 @@
-"""Serve the bundled local demo in the capture browser without private-network access."""
+"""Serve the bundled demo in the capture browser without any network access."""
 from urllib.parse import parse_qs, urlsplit
 
-from ai.browser.safety import UnsafeUrlError, UrlSafetyPolicy
+from ai.browser.safety import ActionSafetyPolicy, UnsafeUrlError, UrlSafetyPolicy
 from .demo_inputs import WEB_DIR
 
 ASSETS = {"index.html", "style.css", "scenarios.js", "variants.js", "demo.js"}
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+# Every request is fulfilled from WEB_DIR or aborted, so the synthetic consent
+# buttons ("동의하고 계속") have no real-world effect and must not end the journey.
+DEMO_ACTION_POLICY = ActionSafetyPolicy(allowed_click_terms=frozenset({"동의"}))
 
 
 class BundledDemoPolicy(UrlSafetyPolicy):
@@ -35,7 +39,11 @@ class BundledDemoPolicy(UrlSafetyPolicy):
 
 def bundled_demo_policy(url: str, preset: dict | None, variant: str | None) -> BundledDemoPolicy | None:
     parsed = urlsplit(url)
-    if (parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1", "::1"}
+    local = parsed.scheme == "http" and parsed.hostname in LOCAL_HOSTS
+    # A deployed demo is served from the API's own public origin. Its page is
+    # replayed from the bundled files too, so the browser never fetches it.
+    deployed = parsed.scheme in {"http", "https"} and parsed.path == "/demo/web/index.html"
+    if (not (local or deployed)
             or not preset or preset.get("source") != "website"
             or preset.get("scenario") not in {"pet", "travel", "credit"}
             or variant not in {"risky", "partial", "revised"}):

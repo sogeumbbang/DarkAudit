@@ -84,8 +84,10 @@ class AndroidTapCandidateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             captures = runner._explore("session", Path(directory))
         self.assertEqual(len(captures), 3)
-        self.assertEqual(runner.taps, 2)
+        # Two taps to fill the budget, one probe showing a fourth screen exists.
+        self.assertEqual(runner.taps, 3)
         self.assertEqual(len({c.state_id for c in captures}), 3)
+        self.assertIn("android_screen_limit", runner.last_warnings)
 
         runner = Runner(AndroidRunnerSettings("user", "key", max_actions=4))
         runner._tap = lambda *args: None
@@ -93,6 +95,26 @@ class AndroidTapCandidateTest(unittest.TestCase):
             captures = runner._explore("session", Path(directory))
         self.assertEqual(len(captures), 1)
         self.assertIn("android_no_safe_navigation", runner.last_warnings)
+
+    def test_journey_ending_exactly_at_the_budget_is_not_reported_as_cut(self) -> None:
+        class Runner(BrowserStackAndroidRunner):
+            def __init__(self, settings, final_label):
+                super().__init__(settings)
+                self.state, self.final_label = 0, final_label
+            def _stable_source(self, session_id):
+                label = self.final_label if self.state == 5 else "다음"
+                return (f'<hierarchy><node text="step {self.state}" />'
+                        f'<node clickable="true" enabled="true" text="{label}" bounds="[0,600][390,680]" /></hierarchy>')
+            def _screenshot(self, session_id): return _TINY_PNG
+            def _tap(self, session_id, x, y): self.state = 0 if self.state == 5 else self.state + 1
+
+        # Result screen offers only a blocked action, or a restart that loops back.
+        for final_label in ("가입하기", "처음으로 보기"):
+            runner = Runner(AndroidRunnerSettings("user", "key", max_screens=6), final_label)
+            with self.subTest(final_label=final_label), tempfile.TemporaryDirectory() as directory:
+                captures = runner._explore("session", Path(directory))
+                self.assertEqual(len(captures), 6)
+                self.assertNotIn("android_screen_limit", runner.last_warnings)
 
     def test_goal_affects_safe_navigation_ranking(self) -> None:
         source = ('<hierarchy><node clickable="true" text="상품 보기" bounds="[0,100][390,180]" />'

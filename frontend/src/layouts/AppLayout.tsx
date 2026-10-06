@@ -13,6 +13,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Brand } from "@/components/common/Brand";
 import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
 import { cn } from "@/lib/cn";
+import { WorkspaceRecoveryBanner } from "./WorkspaceRecoveryBanner";
 import "./workspace.css";
 
 const navigation = [
@@ -212,6 +213,7 @@ export function AppLayout() {
             DarkAudit 소개 <ArrowUpRight size={13} aria-hidden="true" />
           </Link>
         </div>
+        <WorkspaceRecoveryBanner />
         <Outlet />
       </main>
       <ChatbotWidget />
