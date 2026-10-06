@@ -32,8 +32,8 @@ export function SettingsPage() {
           관리됩니다.
         </p>
         <p className="mt-3 text-sm leading-6 text-muted">
-          진단 기록은 이 브라우저의 작업공간에 연결됩니다. 같은 브라우저에서 다시 열면 이어서 확인할
-          수 있으며, 브라우저 데이터를 삭제하면 기존 기록에 접근할 수 없게 됩니다.
+          모든 방문자가 같은 진단 기록과 결과 이미지를 보는 공용 작업공간입니다. 다른 브라우저나
+          기기에서도 기록을 확인하고, 재진단·검토·삭제할 수 있습니다.
         </p>
         <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
           <div className="rounded-control bg-brand-50 p-4">

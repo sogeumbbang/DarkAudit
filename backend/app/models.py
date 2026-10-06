@@ -100,6 +100,7 @@ class AuditSequence(Base):
 
 
 class Workspace(Base):
+    """Legacy browser identities retained for existing database compatibility."""
     __tablename__ = "workspace"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
@@ -111,6 +112,7 @@ class Audit(Base):
     __tablename__ = "audit"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Legacy attribution only; audits are shared publicly across browsers.
     owner_id: Mapped[str | None] = mapped_column(ForeignKey("workspace.id"), nullable=True, index=True)
     artifact_secret: Mapped[str | None] = mapped_column(String(64), default=lambda: secrets.token_hex(32))
     name: Mapped[str] = mapped_column(String(200))

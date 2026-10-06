@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import re
+import secrets
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -83,6 +84,13 @@ def init_db() -> None:
         if column not in existing:
             with _engine.begin() as connection:
                 connection.execute(text(f"ALTER TABLE finding ADD COLUMN {column} {sql_type}"))
+
+    # Records created before image signing also belong to the public workspace.
+    # Preserve existing secrets so already-issued image URLs keep working.
+    with SessionLocal() as session:
+        for audit in session.scalars(select(Audit).where(Audit.artifact_secret.is_(None))):
+            audit.artifact_secret = secrets.token_hex(32)
+        session.commit()
 
 
 def utcnow() -> datetime:
@@ -407,13 +415,13 @@ def audit_pk(audit_id: str) -> int:
         raise KeyError(audit_id) from exc
 
 
-def get_audit(session: Session, audit_id: str, owner_id: str | None = None) -> Audit:
+def get_audit(session: Session, audit_id: str) -> Audit:
     a = session.get(Audit, audit_pk(audit_id))
-    if a is None or (owner_id is not None and a.owner_id != owner_id):
+    if a is None:
         raise KeyError(audit_id)
     return a
 
 
-def list_audits(session: Session, owner_id: str) -> list[Audit]:
-    return list(session.scalars(select(Audit).where(Audit.owner_id == owner_id)
+def list_audits(session: Session) -> list[Audit]:
+    return list(session.scalars(select(Audit)
                                .order_by(Audit.updated_at.desc(), Audit.id.desc())))

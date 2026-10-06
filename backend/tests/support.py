@@ -55,7 +55,3 @@ class IsolatedApiTestCase(unittest.TestCase):
                     directory.mkdir(exist_ok=True)
                     resources.enter_context(patch.object(module, key, directory))
         self.client = resources.enter_context(TestClient(main.app))
-        self.token = self.client.post("/api/v1/sessions").json()["token"]
-        self.client.headers["Authorization"] = f"Bearer {self.token}"
-        from backend.api.access import require_owner
-        self.owner_id = require_owner(f"Bearer {self.token}")

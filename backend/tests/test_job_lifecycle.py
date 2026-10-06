@@ -47,7 +47,7 @@ class JobLifecycleTest(IsolatedApiTestCase):
         self.assertEqual(self.client.delete(f"/api/v1/audits/{self.audit_id}").status_code, 409)
 
     def test_progress_survives_module_reload_and_interruption_is_queryable(self):
-        job = main.analyze(self.audit_id, BackgroundTasks(), self.owner_id)
+        job = main.analyze(self.audit_id, BackgroundTasks())
         service._update_job(job.jobId, progress=42, explorationMode="smart", explorationStage="capturing")
         output = subprocess.check_output([
             sys.executable, "-c",

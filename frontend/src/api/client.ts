@@ -11,33 +11,6 @@ const API_WARMUP_TIMEOUT_MS = 120_000;
 const API_WARMUP_FRESH_MS = 10 * 60_000;
 let warmupPromise: Promise<void> | undefined;
 let lastReadyAt = 0;
-const WORKSPACE_KEY = `darkaudit.workspace:${API_BASE_URL || "same-origin"}`;
-let workspacePromise: Promise<string> | undefined;
-
-async function workspaceToken() {
-  const existing = localStorage.getItem(WORKSPACE_KEY);
-  if (existing) return existing;
-  if (!workspacePromise) {
-    workspacePromise = (async () => {
-      const response = await fetch(resolveApiUrl("/api/v1/sessions"), {
-        method: "POST",
-        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-      });
-      if (!response.ok)
-        throw new ApiError("작업공간을 만들지 못했습니다. 다시 시도해 주세요.", response.status);
-      const body = (await response.json()) as { token?: string };
-      if (!body.token || !/^[A-Za-z0-9_-]{43}$/.test(body.token))
-        throw new ApiError("작업공간 응답을 확인할 수 없습니다.", 502);
-      // Another tab may have created the workspace while this request was in flight.
-      const token = localStorage.getItem(WORKSPACE_KEY) || body.token;
-      localStorage.setItem(WORKSPACE_KEY, token);
-      return token;
-    })().finally(() => {
-      workspacePromise = undefined;
-    });
-  }
-  return workspacePromise;
-}
 
 export type ApiErrorBody = {
   message?: string;
@@ -121,8 +94,6 @@ export async function apiRequest<T>(
   try {
     const headers = new Headers(init?.headers);
     if (!isFormData) headers.set("Content-Type", "application/json");
-    if (path !== "/api/v1/demo-inputs")
-      headers.set("Authorization", `Bearer ${await workspaceToken()}`);
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       signal: init?.signal ?? controller.signal,

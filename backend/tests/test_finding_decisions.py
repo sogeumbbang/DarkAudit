@@ -9,7 +9,7 @@ class FindingDecisionTest(IsolatedApiTestCase):
     def setUp(self):
         super().setUp()
         with store.SessionLocal() as session:
-            audit = Audit(name="Decision test", owner_id=self.owner_id)
+            audit = Audit(name="Decision test")
             run = AuditRun(version=1, status=RunStatus.DONE)
             audit.runs.append(run)
             finding = Finding(rule_id="DA-04", label_unit="screen", fingerprint="test",

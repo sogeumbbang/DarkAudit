@@ -3,10 +3,11 @@ import shutil
 from urllib.parse import parse_qs, urlencode, urlsplit
 from unittest.mock import patch
 
+from fastapi.testclient import TestClient
 from PIL import Image
 
-from backend.api import access, service, store
-from backend.app.models import Audit, AuditRun, Finding, RunStatus, Severity
+from backend.api import access, main, service, store
+from backend.app.models import Audit, Finding, Severity, Workspace
 from backend.tests.support import IsolatedApiTestCase
 
 
@@ -16,7 +17,7 @@ class WorkspaceAccessTest(IsolatedApiTestCase):
         self.other_token = self.client.post("/api/v1/sessions").json()["token"]
         self.other_headers = {"Authorization": f"Bearer {self.other_token}"}
         self.audit_id = self.client.post("/api/v1/audits", json={
-            "name": "Private audit", "platform": "mobile-web",
+            "name": "Shared audit", "platform": "mobile-web",
         }).json()["id"]
 
     def upload(self):
@@ -27,45 +28,46 @@ class WorkspaceAccessTest(IsolatedApiTestCase):
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()["screens"][0]["imageUrl"]
 
-    def test_anonymous_and_forged_credentials_cannot_read_or_mutate(self):
-        for authorization in ("", "Bearer " + "x" * 43):
-            for method, path, body in (
-                ("GET", "/api/v1/dashboard/summary", None),
-                ("POST", "/api/v1/audits", {"name": "Forbidden", "platform": "app"}),
-                ("DELETE", f"/api/v1/audits/{self.audit_id}", None),
-            ):
-                response = self.client.request(method, path, json=body, headers={"Authorization": authorization})
-                self.assertEqual(response.status_code, 401)
-        self.assertEqual(self.client.get("/health", headers={"Authorization": ""}).status_code, 200)
-
-    def test_workspace_filters_dashboard_and_every_owned_entrypoint(self):
+    def test_independent_browsers_share_records_and_mutations(self):
         self.upload()
         job = self.client.post(f"/api/v1/audits/{self.audit_id}/analyze").json()
-        listing = self.client.get("/api/v1/dashboard/summary", headers=self.other_headers)
-        self.assertEqual(listing.json()["audits"], [])
-        for method, suffix, body in (
-            ("DELETE", "", None), ("GET", "/regression", None), ("POST", "/analyze", None),
-            ("POST", "/capture", {"url": "https://example.com", "profiles": ["mobile"]}),
-            ("POST", "/figma", {"fileUrl": "https://figma.com/design/abc/Example", "selectionMode": "all-frames", "target": "app"}),
-        ):
-            with patch("backend.api.main.UrlSafetyPolicy.validate"):
-                response = self.client.request(method, f"/api/v1/audits/{self.audit_id}{suffix}", json=body, headers=self.other_headers)
-            self.assertEqual(response.status_code, 404, response.text)
-        self.assertEqual(self.client.get(f"/api/v1/analysis-jobs/{job['jobId']}", headers=self.other_headers).status_code, 404)
-        response = self.client.post(f"/api/v1/audits/{self.audit_id}/screens", headers=self.other_headers,
-                                    files={"files": ("screen.png", b"not read", "image/png")})
-        self.assertEqual(response.status_code, 404)
-        with store.SessionLocal() as session:
-            audit = store.get_audit(session, self.audit_id)
-            finding = Finding(rule_id="DA-04", label_unit="screen", fingerprint="access",
-                              severity=Severity.HIGH, base_severity=Severity.HIGH)
-            audit.runs[-1].findings.append(finding)
-            session.commit()
-            fid = finding.id
-        for method, suffix, body in (("PATCH", "", {"status": "resolved"}), ("PUT", "/decision", {"decisionNote": "overwrite"})):
-            response = self.client.request(method, f"/api/v1/findings/finding-{fid}{suffix}", json=body, headers=self.other_headers)
-            self.assertEqual(response.status_code, 404)
-        self.assertEqual(self.client.get(f"/api/v1/analysis-jobs/{job['jobId']}").status_code, 200)
+        with TestClient(main.app) as other_browser:
+            listing = other_browser.get("/api/v1/dashboard/summary")
+            self.assertEqual(listing.status_code, 200)
+            self.assertEqual([audit["id"] for audit in listing.json()["audits"]], [self.audit_id])
+            image_url = listing.json()["audits"][0]["screens"][0]["imageUrl"]
+            self.assertEqual(other_browser.get(image_url).status_code, 200)
+            self.assertEqual(other_browser.get(f"/api/v1/analysis-jobs/{job['jobId']}").status_code, 200)
+            with store.SessionLocal() as session:
+                audit = store.get_audit(session, self.audit_id)
+                finding = Finding(rule_id="DA-04", label_unit="screen", fingerprint="access",
+                                  severity=Severity.HIGH, base_severity=Severity.HIGH)
+                audit.runs[-1].findings.append(finding)
+                session.commit()
+                fid = finding.id
+            for method, suffix, body in (
+                ("PATCH", "", {"status": "resolved"}),
+                ("PUT", "/decision", {"decisionNote": "Shared review"}),
+            ):
+                response = other_browser.request(method, f"/api/v1/findings/finding-{fid}{suffix}", json=body)
+                self.assertEqual(response.status_code, 200, response.text)
+            reviewed = self.client.get("/api/v1/dashboard/summary").json()["audits"][0]
+            result = next(item for item in reviewed["findings"] if item["id"] == f"finding-{fid}")
+            self.assertEqual(result["status"], "resolved")
+            self.assertEqual(result["decisionNote"], "Shared review")
+            self.assertEqual(other_browser.delete(f"/api/v1/audits/{self.audit_id}").status_code, 204)
+        self.assertEqual(self.client.get("/api/v1/dashboard/summary").json()["audits"], [])
+
+    def test_obsolete_browser_tokens_do_not_partition_records(self):
+        for authorization in ("", self.other_headers["Authorization"], "Bearer " + "x" * 43):
+            headers = {"Authorization": authorization}
+            listing = self.client.get("/api/v1/dashboard/summary", headers=headers)
+            self.assertEqual(listing.status_code, 200)
+            self.assertIn(self.audit_id, [audit["id"] for audit in listing.json()["audits"]])
+            created = self.client.post("/api/v1/audits", headers=headers,
+                                       json={"name": "Shared from old browser", "platform": "app"})
+            self.assertEqual(created.status_code, 201, created.text)
+            self.assertEqual(self.client.delete(f"/api/v1/audits/{created.json()['id']}").status_code, 204)
 
     def test_only_signed_exact_images_are_publicly_retrievable(self):
         url = self.upload()
@@ -90,14 +92,30 @@ class WorkspaceAccessTest(IsolatedApiTestCase):
         self.assertEqual(self.client.delete(f"/api/v1/audits/{self.audit_id}").status_code, 204)
         self.assertEqual(self.client.get(url).status_code, 404)
 
-    def test_legacy_unowned_records_and_id_aliases_are_not_claimed(self):
+    def test_existing_owned_and_unowned_records_are_shared_after_restart(self):
+        image_url = self.upload()
         with store.SessionLocal() as session:
-            legacy = Audit(name="Legacy private")
-            session.add(legacy)
+            session.add(Workspace(id="old-browser", token_hash="a" * 64))
+            owned = Audit(name="Old browser audit", owner_id="old-browser")
+            unowned = Audit(name="Legacy unowned")
+            session.add_all([owned, unowned])
+            session.flush()
+            # Simulate a database from before the image-signing migration.
+            unowned.artifact_secret = None
+            original = store.get_audit(session, self.audit_id)
+            original.artifact_secret = None
+            original.owner_id = "old-browser"
             session.commit()
-            legacy_id = legacy.id
-        self.assertEqual(self.client.delete(f"/api/v1/audits/audit-{legacy_id}").status_code, 404)
-        self.assertEqual(len(self.client.get("/api/v1/dashboard/summary").json()["audits"]), 1)
+            expected_ids = {self.audit_id, f"audit-{owned.id}", f"audit-{unowned.id}"}
+        store.init_db()
+        listing = self.client.get("/api/v1/dashboard/summary").json()["audits"]
+        self.assertEqual({audit["id"] for audit in listing}, expected_ids)
+        restored = next(audit for audit in listing if audit["id"] == self.audit_id)
+        restored_url = restored["screens"][0]["imageUrl"]
+        self.assertEqual(self.client.get(restored_url).status_code, 200)
+        self.assertEqual(self.client.get(image_url).status_code, 404)
+        store.init_db()
+        self.assertEqual(self.client.get(restored_url).status_code, 200)
         for alias in (self.audit_id.replace("audit-", "other-"), self.audit_id.replace("audit-", "audit-0")):
             self.assertEqual(self.client.delete(f"/api/v1/audits/{alias}").status_code, 404)
 

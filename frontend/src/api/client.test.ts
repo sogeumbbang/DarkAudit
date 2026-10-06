@@ -43,55 +43,45 @@ describe("warmUpApi", () => {
   });
 });
 
-describe("workspace authentication", () => {
+describe("public workspace", () => {
   beforeEach(() => {
     vi.resetModules();
     localStorage.clear();
     vi.stubEnv("VITE_API_BASE_URL", "https://api.workspace.test");
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
-  it("bootstraps once for concurrent requests and reuses the workspace after reload", async () => {
-    const token = "a".repeat(43);
-    const fetchMock = vi.fn(
-      async (url: string) =>
-        new Response(JSON.stringify(url.endsWith("/sessions") ? { token } : { ok: true }), {
-          status: url.endsWith("/sessions") ? 201 : 200,
-        }),
-    );
+  it("reads the shared records across fresh browsers without creating sessions", async () => {
+    const summary = { activeAuditId: "audit-1", audits: [{ id: "audit-1" }] };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(summary)));
     vi.stubGlobal("fetch", fetchMock);
     const { apiRequest } = await import("@/api/client");
-    await Promise.all([
-      apiRequest("/api/v1/dashboard/summary"),
-      apiRequest("/api/v1/dashboard/summary"),
-    ]);
-    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith("/sessions"))).toHaveLength(1);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      "https://api.workspace.test/api/v1/dashboard/summary",
-      expect.objectContaining({ headers: expect.any(Headers) }),
-    );
-    const headers = (fetchMock.mock.calls.at(-1) as unknown as [string, RequestInit])[1]
-      .headers as Headers;
-    expect(headers.get("Authorization")).toBe(`Bearer ${token}`);
+    expect(await apiRequest("/api/v1/dashboard/summary")).toEqual(summary);
+    localStorage.clear();
     vi.resetModules();
-    await (await import("@/api/client")).apiRequest("/api/v1/dashboard/summary");
-    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith("/sessions"))).toHaveLength(1);
+    expect(await (await import("@/api/client")).apiRequest("/api/v1/dashboard/summary")).toEqual(
+      summary,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [url, init] of fetchMock.mock.calls as unknown as [string, RequestInit][]) {
+      expect(url).toBe("https://api.workspace.test/api/v1/dashboard/summary");
+      expect((init.headers as Headers).has("Authorization")).toBe(false);
+    }
   });
 
-  it("does not replace an invalid workspace and silently hide existing audits", async () => {
+  it("does not depend on an old token or browser storage access", async () => {
     localStorage.setItem("darkaudit.workspace:https://api.workspace.test", "a".repeat(43));
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response('{"detail":"작업공간 인증 실패"}', { status: 401 }));
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("Storage unavailable");
+    });
+    const fetchMock = vi.fn(async () => new Response('{"audits":[]}'));
     vi.stubGlobal("fetch", fetchMock);
     const { apiRequest } = await import("@/api/client");
-    await expect(apiRequest("/api/v1/dashboard/summary")).rejects.toMatchObject({ status: 401 });
+    await expect(apiRequest("/api/v1/dashboard/summary")).resolves.toEqual({ audits: [] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem("darkaudit.workspace:https://api.workspace.test")).toBe(
-      "a".repeat(43),
-    );
   });
 });
