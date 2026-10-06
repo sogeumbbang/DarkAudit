@@ -226,7 +226,7 @@ it("warns and asks before saving another revision when one already exists", asyn
   expect(screen.getByRole("note")).toHaveTextContent(
     "이미 v2 결과가 있는 진단입니다. 다시 실행하면 v3로 저장되고, 전후 비교는 계속 v1 원본을 기준으로 합니다.",
   );
-  const button = screen.getByRole("button", { name: "수정본 검사 시작" });
+  const button = screen.getByRole("button", { name: "새 수정본으로 다시 검사" });
   await waitFor(() => expect(button).toBeEnabled());
   await user.click(button);
   expect(screen.getByRole("alertdialog", { name: "v3로 다시 검사할까요?" })).toBeInTheDocument();

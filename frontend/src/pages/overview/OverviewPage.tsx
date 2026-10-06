@@ -622,6 +622,7 @@ export function OverviewPage() {
   const audit: AuditDto =
     historical && runResult.data ? { ...runResult.data, runs: summaryAudit!.runs } : summaryAudit!;
   const changes = revision ? regression.data?.screenChanges : undefined;
+  const hasRevision = Boolean(base && latest && latest.version > base.version);
   const changeByScreen = changes && new Map(changes.map((item) => [item.screenId, item]));
   if (!audit.screens.length) {
     return (
@@ -821,43 +822,23 @@ export function OverviewPage() {
           )}
         </div>
         <div className="overview-actions">
-          {audit.demoPreset
-            ? audit.status === "completed" && (
-                <Button asChild className="overview-demo-next">
-                  {audit.demoVariant === "revised" &&
-                  (audit.runs ?? []).filter((run) => run.status === "completed").length >= 2 ? (
-                    <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
-                      비교하기
-                    </Link>
-                  ) : (
-                    <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
-                      수정본 실행해보기
-                    </Link>
-                  )}
-                </Button>
-              )
-            : audit.status !== "queued" &&
-              audit.status !== "analyzing" && (
-                <Button asChild variant="outline">
-                  <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
-                    <RefreshCw size={14} aria-hidden="true" />
-                    수정본 재검사
-                  </Link>
-                </Button>
-              )}
-          {!audit.demoPreset && (
-            <Button asChild variant="outline">
+          {audit.status !== "queued" && audit.status !== "analyzing" && (
+            <Button asChild variant={audit.demoPreset && !hasRevision ? "primary" : "outline"}>
+              <Link to={`/app/audits/${encodeURIComponent(audit.id)}/recheck`}>
+                <RefreshCw size={14} aria-hidden="true" />
+                {hasRevision ? "새 수정본 검사" : "수정본 검사하기"}
+              </Link>
+            </Button>
+          )}
+          {hasRevision && (
+            <Button asChild className="overview-demo-next">
               <Link to={`/app/benchmark?audit=${encodeURIComponent(audit.id)}`}>
                 <GitCompareArrows size={15} aria-hidden="true" />
                 전후 비교
               </Link>
             </Button>
           )}
-          <Button
-            variant={audit.demoPreset ? "outline" : "primary"}
-            ref={reportButtonRef}
-            onClick={() => setShowReport(true)}
-          >
+          <Button variant="outline" ref={reportButtonRef} onClick={() => setShowReport(true)}>
             <FileText size={16} aria-hidden="true" /> PDF 보고서 출력
           </Button>
         </div>
