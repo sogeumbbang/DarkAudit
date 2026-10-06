@@ -249,7 +249,6 @@ export function ScreenCanvas({
                           box.tone === "related" ? "outline-dashed" : "outline-solid",
                         ]
                       : ["border-2", "border-danger", box.tone === "related" && "border-dashed"],
-                  active ? "z-10" : "z-0",
                   active && !compact && box.tone === "primary" && "bg-danger/10",
                 )}
                 style={
@@ -297,10 +296,11 @@ export function ScreenCanvas({
                   onSelect(box.finding);
                 }}
               >
+                {/* Keep all numbers above every region without a button stacking context. */}
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "absolute -left-0.5 flex size-7 items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-text shadow-sm",
+                    "absolute -left-0.5 z-10 flex size-7 items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-text shadow-sm",
                     "border-danger",
                     active && "bg-brand-600 text-white border-brand-600",
                   )}
