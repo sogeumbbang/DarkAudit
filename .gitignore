@@ -20,6 +20,10 @@ logs/
 cache/
 /.playwright-mcp/
 
+# 로컬 출력 및 제출 산출물
+/output/
+/outputs/
+
 # Node
 node_modules/
 dist/
