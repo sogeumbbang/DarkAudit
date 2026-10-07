@@ -355,6 +355,8 @@ docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
 
 </details>
 
+**테스트** — API 키 없이 실행됩니다.
+
 ```bash
 python -m playwright install chromium          # 브라우저 테스트용 (처음 한 번)
 python -m unittest discover -s backend/tests   # 백엔드
