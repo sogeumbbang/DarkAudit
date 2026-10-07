@@ -119,12 +119,12 @@ sequenceDiagram
     Note over J: 근거 부족 규칙은 버리지 않고<br/>insufficient_evidence로 표시
 ```
 
-| 구성 (2026-10-06, `gpt-6-luna`) | Precision | Recall | F1 |
-| --- | ---: | ---: | ---: |
-| Rule Engine 후보만 (모두 양성 처리) | 47.1% | 100.0% | 64.0% |
-| **Rule Engine 후보 + LLM 검증** | **89.6%** | **100.0%** | **94.3%** |
+| 구성 (2026-10-02, `gpt-5.6-luna`) | 검토 대상 | 오탐 | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rule Engine 단독 | 34 | 18 | 0.47 | 1.00 | 0.64 |
+| **Rule Engine 후보 + LLM 검증** | **16.7** | **0.7** | **0.96** | **1.00** | **0.98** |
 
-같은 재현율을 유지하면서 LLM 검증이 오탐을 걸러 정밀도를 높입니다. 측정 조건은 [성능](#성능)을 참고하세요.
+같은 재현율을 유지하면서 LLM 검증이 오탐을 18건에서 1건 미만으로 걸러 정밀도를 높입니다. 측정 조건은 [성능](#성능)을 참고하세요.
 
 ## 지원 유형
 
@@ -166,28 +166,47 @@ sequenceDiagram
 
 ## 성능
 
-**출처:** [docs/performance-measurement-2026-10-06.md](docs/performance-measurement-2026-10-06.md) (요약 JSON: [`docs/eval/performance-2026-10-06.json`](docs/eval/performance-2026-10-06.json))
+**출처:** [docs/eval-results.md](docs/eval-results.md) §15.4 (측정 과정 §15.3)
 
 | 항목 | 값 |
 | --- | --- |
-| 측정일 · 모델 | 2026-10-06 · `gpt-6-luna` (시연 서버의 `gpt-5.6-luna`와 다른 모델입니다. 시연 서버 모델의 측정값은 아래 ‘이전 측정’에 있습니다) |
-| 평가셋 | 합성 보험·예적금 가입 흐름 22개(정상·문제 포함 11쌍), 110화면 |
-| 반복 | 같은 데이터셋을 경로별 3회 분석, 3회 평균 |
+| 측정일 · 모델 | 2026-10-02 · `gpt-5.6-luna` (시연 서버와 같은 모델) |
+| 평가셋 | 합성 보험·예적금 가입 흐름 22개(정상·문제 포함 11쌍), 110화면, 정답 16개 flow-규칙 쌍 |
+| 반복 | 같은 데이터셋을 3회 분석, 3회 평균 |
 | 집계 단위 | ‘한 흐름에 특정 규칙이 존재하는가’(flow-규칙), 지원 5개 유형 |
+
+| 구성 | 검토 대상 | 실제 문제 | 오탐 | 놓친 문제 | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Rule Engine 단독 | 34 | 16 | 18 | 0 | 0.47 | 1.00 | 0.64 |
+| **Hybrid: 규칙 후보 + LLM** | **16.7** | **16.0** | **0.7** | **0.0** | **0.96** | **1.00** | **0.98** |
+| 이미지 분석: LLM 단독 (스크린샷 경로)\* | 52.7 | 15.7 | 37.0 | 0.3 | 0.30 | 0.98 | 0.46 |
+
+정상 흐름 오탐률(정상 11흐름 × 5규칙 = 55쌍): Rule Engine 20.0%, **Hybrid 0.6%**, 이미지 분석 39.4%. Hybrid 유형별(3회 평균): DA-03 Precision 0.87·Recall 1.00, DA-04·07·12·15 모두 1.00·1.00.
+
+<sub>\* 이미지 분석 경로는 Hybrid 프롬프트 변경 전에 측정한 값입니다(§14.4).</sub>
+
+> [!WARNING]
+> - 높은 F1이 모든 규칙을 판정했다는 뜻은 아닙니다. 실패·미판정을 미탐으로 반영한 2026-10-06 재측정(다른 모델)에서는 Hybrid가 판정할 수 있었던 flow-규칙 쌍이 69.7%였습니다. 판정하지 못한 규칙은 결과에 ‘근거 부족’으로 표시합니다.
+> - 이미지 분석 경로는 정상 흐름에서도 DA-03·DA-07 후보를 많이 냅니다. 이 경로의 결과는 검토 후보로 읽어야 합니다.
+> - 정답 라벨은 생성기가 심은 패턴 기준인 개발용 합성 데이터이고, DA-03·07·12·15는 정답이 각 3건뿐입니다. 실제 금융 서비스 전체의 성능을 대표하지 않습니다.
+
+<details>
+<summary>최신 재측정: 2026-10-06 · <code>gpt-6-luna</code> — 다른 모델, 새 평가기 (직접 비교 불가)</summary>
+
+출처: [docs/performance-measurement-2026-10-06.md](docs/performance-measurement-2026-10-06.md) (요약 JSON: [`docs/eval/performance-2026-10-06.json`](docs/eval/performance-2026-10-06.json)). 같은 22흐름·110화면을 경로별 3회 분석했고, 실패·미판정은 정상으로 세지 않으며 정답 양성은 미탐으로 반영합니다.
 
 | 구성 | Precision | Recall | F1 | 판정 가능한 쌍 비율 |
 | --- | ---: | ---: | ---: | ---: |
 | Rule Engine 후보만 (기준선) | 47.1% | 100.0% | 64.0% | — |
-| **Hybrid: 규칙 후보 + LLM** | **89.6%** | **100.0%** | **94.3%** | 69.7% |
-| 이미지 분석: LLM 단독 (스크린샷 경로) | 27.1% | 85.4% | 41.0% | 96.4% |
+| Hybrid: 규칙 후보 + LLM | 89.6% | 100.0% | 94.3% | 69.7% |
+| 이미지 분석: LLM 단독 | 27.1% | 85.4% | 41.0% | 96.4% |
 
-> [!WARNING]
-> - Hybrid의 높은 F1은 모든 규칙을 판정했다는 뜻이 아닙니다. 판정 가능한 쌍은 69.7%이고, 모든 지원 규칙을 검사한 흐름은 12.1%입니다. 판정하지 못한 규칙은 ‘근거 부족’으로 표시합니다.
-> - 이미지 분석 경로는 정상 흐름에서도 DA-03·DA-07 후보를 많이 냅니다(정상 흐름 규칙별 오탐률 38.8%). 이 경로의 결과는 검토 후보로 읽어야 합니다.
-> - 정답 라벨은 생성기가 심은 패턴 기준인 개발용 합성 데이터입니다. 실제 금융 서비스 전체의 성능을 대표하지 않습니다.
+모든 지원 규칙을 검사한 흐름 비율: Hybrid 12.1%, 이미지 분석 93.9%. 정상 흐름 규칙별 오탐률: Hybrid 4.6%, 이미지 분석 38.8%.
+
+</details>
 
 <details>
-<summary>유형별 성능 (2026-10-06)</summary>
+<summary>유형별 성능 (2026-10-06 재측정)</summary>
 
 | 유형 | 이미지 분석 P / R / F1 | 규칙 후보 + LLM P / R / F1 | 규칙 후보 + LLM 판정 비율 |
 | --- | --- | --- | ---: |
@@ -199,28 +218,13 @@ sequenceDiagram
 
 </details>
 
-<details>
-<summary>이전 측정: 2026-10-02 · <code>gpt-5.6-luna</code> — 시연 서버와 같은 모델 (집계 기준이 달라 직접 비교 불가)</summary>
-
-출처: [docs/eval-results.md](docs/eval-results.md) §15.4. 같은 22흐름·110화면, 정답 16개 flow-규칙 쌍, 3회 평균입니다. 이 측정은 실패·보류를 미탐으로 세지 않아 2026-10-06 측정보다 기준이 느슨합니다.
-
-| 구분 | Precision | Recall | F1 |
-| --- | ---: | ---: | ---: |
-| Rule Engine 단독 | 0.47 | 1.00 | 0.64 |
-| Hybrid 구조 입력 | 0.96 | 1.00 | 0.98 |
-| 스크린샷 경로 (LLM 단독) | 0.30 | 0.98 | 0.46 |
-
-정상 흐름 오탐률(55쌍): Rule Engine 20.0%, Hybrid 0.6%, 스크린샷 경로 39.4%.
-
-</details>
-
-**재현** — 합성 입력을 만든 뒤(`data/generator/`, [평가 실행 가이드](docs/evaluation-framework.md)) 실제 모델 API를 호출해 분석하고 채점합니다.
+**재현** — 합성 입력을 만든 뒤(`data/generator/`, [평가 이력](docs/eval-results.md) §5.3) `DARKAUDIT_MODEL`·`OPENAI_API_KEY`를 설정하고 실행합니다. 실제 모델 API를 호출합니다.
 
 ```bash
-python -m backend.eval_hybrid --runs 3 --output-dir /tmp/darkaudit-new-run && python -m ai.evaluation detection --predictions /tmp/darkaudit-new-run/run-1 --output /tmp/darkaudit-new-run/evaluation-v2.json
+cd backend && python eval_hybrid.py --runs 3
 ```
 
-이미지 분석 경로는 `--visual`을 추가합니다. API 없이 채점기만 확인하려면 `python -m ai.evaluation detection --dataset ai/evaluation/examples/labels --predictions ai/evaluation/examples/predictions --rule-id DA-04`를 실행합니다.
+이미지 분석 경로는 `--visual`을 추가합니다. 2026-10-06 방식의 엄격한 채점은 `python -m ai.evaluation detection --predictions <run 디렉터리>`로 합니다([평가 실행 가이드](docs/evaluation-framework.md)). API 없이 채점기만 확인하려면 `python -m ai.evaluation detection --dataset ai/evaluation/examples/labels --predictions ai/evaluation/examples/predictions --rule-id DA-04`를 실행합니다.
 
 ## 결과 예시
 
