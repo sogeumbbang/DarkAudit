@@ -99,7 +99,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 636px;
+  min-height: 584px;
 }
 .lp-evidence-extract {
   padding: 24px;
@@ -221,7 +221,7 @@
   position: relative;
   border-radius: 20px;
   overflow: hidden;
-  min-height: 660px;
+  min-height: 600px;
   background: var(--lp-light-blue);
   color: var(--lp-ink);
   isolation: isolate;
@@ -249,7 +249,7 @@
 }
 .lp-story-copy {
   position: relative;
-  padding: 72px 0 70px 56px;
+  padding: 60px 0 58px 56px;
   width: 52%;
 }
 .lp-story-copy .lp-eyebrow {
@@ -424,7 +424,7 @@
     font-size: 23px;
   }
   .lp-story-scene {
-    min-height: 650px;
+    min-height: 600px;
   }
   .lp-story-copy {
     padding: 55px 0 60px 32px;
@@ -572,7 +572,7 @@
   .lp-story-photo {
     position: relative;
     inset: auto;
-    height: 330px;
+    height: 300px;
     z-index: auto;
   }
   .lp-story-photo .lp-photo {

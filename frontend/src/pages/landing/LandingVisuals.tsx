@@ -391,26 +391,6 @@ export function ChoiceStory() {
             <br />
             선택의 순간을 더 명확하게 만듭니다.
           </p>
-          <a href="#finding-experience" className="lp-text-link">
-            근거가 보이는 검토 살펴보기 <ArrowRight size={17} aria-hidden="true" />
-          </a>
-          <div className="lp-story-principle">
-            <span>01</span>
-            <p>
-              화면 너머의 사람을
-              <br />
-              <strong>생각합니다.</strong>
-            </p>
-          </div>
-        </div>
-        <div className="lp-story-choice">
-          <div className="lp-card-meta">
-            <span className="lp-tiny">A CLEARER CHOICE</span>
-            <Check size={17} aria-hidden="true" />
-          </div>
-          <p>필요한 보장만, 직접 선택.</p>
-          <OptionRow selected={false} compact />
-          <span>선택권을 돌려주는 개선 방향 예시</span>
         </div>
       </div>
     </section>

@@ -13,7 +13,7 @@
   background: var(--color-brand-100);
 }
 .lp-process-copy {
-  padding: 48px 48px 36px;
+  padding: 40px 48px 28px;
 }
 .lp-process-copy h2 {
   margin-top: 20px;
@@ -31,7 +31,7 @@
 .lp-process-photo {
   position: relative;
   flex: 1;
-  min-height: 330px;
+  min-height: 300px;
   margin: 0;
   overflow: hidden;
 }
@@ -60,7 +60,7 @@
 }
 .lp-process-steps {
   align-self: center;
-  padding: 34px 40px;
+  padding: 28px 40px;
 }
 .lp-process-steps ol {
   display: grid;
@@ -75,7 +75,7 @@
   grid-template-columns: 30px minmax(0, 1fr) 180px;
   align-items: center;
   gap: 14px;
-  padding-block: 24px;
+  padding-block: 20px;
 }
 .lp-process-steps li + li {
   border-top: 1px solid #19213d0d;
@@ -242,7 +242,7 @@
     font-size: 32px;
   }
   .lp-process-photo {
-    min-height: 300px;
+    min-height: 280px;
   }
   .lp-process-photo figcaption {
     left: 24px;
@@ -273,7 +273,7 @@
     font-size: 13px;
   }
   .lp-process-photo {
-    min-height: 260px;
+    min-height: 240px;
   }
   .lp-process-steps {
     padding: 12px 24px 28px;
@@ -281,7 +281,7 @@
   .lp-process-steps li {
     grid-template-columns: 26px minmax(0, 1fr);
     gap: 12px;
-    padding-block: 24px;
+    padding-block: 20px;
   }
   .lp-process-steps li > div:last-child {
     grid-column: 2;

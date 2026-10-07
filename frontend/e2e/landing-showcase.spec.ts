@@ -52,10 +52,14 @@ test("feature tabs change the preview and support keyboard navigation", async ({
     await tabs.getByRole("tab", { name: label, exact: true }).click();
     const panel = page.getByRole("tabpanel", { name: label, exact: true });
     await expect(panel.getByRole("heading", { name: title })).toBeVisible();
-    await expect(panel.getByRole("link")).toHaveAttribute(
-      "href",
-      label === "검토 기준" ? "/app/guidelines" : "/app/audits/new",
-    );
+    if (label === "검토 기준") {
+      await expect(panel.getByRole("link", { name: "검토 기준 살펴보기" })).toHaveAttribute(
+        "href",
+        "/app/guidelines",
+      );
+    } else {
+      await expect(panel.getByRole("link")).toHaveCount(0);
+    }
     await page.evaluate(async () => {
       await document.fonts.ready;
       for (const image of document.images) image.loading = "eager";

@@ -154,11 +154,7 @@ export function ProductShowcase() {
             세심한 검토에서.
           </h2>
         </div>
-        <p>
-          하나의 화면을 여러 관점으로.
-          <br />
-          작은 선택 상태부터 수정의 근거까지, 함께 살펴봅니다.
-        </p>
+        <p>하나의 화면을 여러 관점으로. 작은 선택 상태부터 수정의 근거까지, 함께 살펴봅니다.</p>
       </div>
       <div className="lp-product-explorer">
         <div role="tablist" aria-label="DarkAudit 기능 둘러보기" className="lp-product-tabs">
@@ -215,13 +211,12 @@ export function ProductShowcase() {
                 </li>
               ))}
             </ul>
-            <Link
-              to={feature.id === "rule" ? "/app/guidelines" : "/app/audits/new"}
-              className="lp-feature-link"
-            >
-              {feature.id === "rule" ? "검토 기준 살펴보기" : "내 화면으로 시작하기"}
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
+            {feature.id === "rule" && (
+              <Link to="/app/guidelines" className="lp-feature-link">
+                검토 기준 살펴보기
+                <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
           </div>
           <div className="lp-feature-visual">
             <FeatureVisual id={feature.id} />
