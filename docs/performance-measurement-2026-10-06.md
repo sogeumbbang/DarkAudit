@@ -92,9 +92,11 @@ Flow 안에 규칙이 존재하는지를 분류 단위로 사용했다. 전체 �
 ## 산출물
 
 - [요약 JSON](eval/performance-2026-10-06.json)
-- [입력·코드 해시 및 실행 조건](eval/hybrid/performance-20261006T030055Z/manifest.json)
-- [회차별 탐지 보고서](eval/hybrid/performance-20261006T030055Z/detection-summary.json)
-- [라벨 변경 비교](eval/hybrid/performance-20261006T030055Z/label-differences.json)
+- 입력·코드 해시 및 실행 조건: `eval/hybrid/performance-20261006T030055Z/manifest.json`
+- 회차별 탐지 보고서: `eval/hybrid/performance-20261006T030055Z/detection-summary.json`
+- 라벨 변경 비교: `eval/hybrid/performance-20261006T030055Z/label-differences.json`
+
+요약 JSON 외 세 파일은 로컬 생성물 디렉터리에 있으며 Git에 포함되어 있지 않다.
 
 입력·평가 코드 해시와 원본 라벨 보존을 확인했다. 132개 실제 응답에서 TP/FP/FN, 판정 비율, 전체 Accuracy를 별도로 재계산해 평가기와 대조했고 일치했다. RAG 12문항과 설명 58건의 평가 완료도 확인했다.
 

@@ -579,7 +579,7 @@ python -m backend.eval_hybrid --clean-only --visual --runs 1 --output-dir /tmp/d
 
 보고서·검사 안내·수정본 재검사 브라우저 테스트를 CI 명령에 추가했다. 실제 모델 평가와 정상 사례 CLI의 모델 품질 기준을 CI에서 자동 실행하도록 연결하지는 않았다. 고정 목록·집계 계약의 단위테스트와 실모델 품질 검사는 구분한다.
 
-근거: [CI](../.github/workflows/validation.yml), [정상 사례 테스트](../ai/tests/test_clean_regression.py), [재검증 테스트](../backend/tests/test_regression_regressed.py), [검토 상태·수정 시각 테스트](../backend/tests/test_review_state.py), [안내 E2E](../frontend/e2e/analysis-notice.spec.ts), [재검사·비교 E2E](../frontend/e2e/recheck.spec.ts).
+근거: CI 설정 `.github/workflows/validation.yml`(현재 저장소에 포함되어 있지 않음), [정상 사례 테스트](../ai/tests/test_clean_regression.py), [재검증 테스트](../backend/tests/test_regression_regressed.py), [검토 상태·수정 시각 테스트](../backend/tests/test_review_state.py), [안내 E2E](../frontend/e2e/analysis-notice.spec.ts), [재검사·비교 E2E](../frontend/e2e/recheck.spec.ts).
 
 ## 14. 현재 한계와 후속 범위
 
