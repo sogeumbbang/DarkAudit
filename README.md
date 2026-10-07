@@ -297,7 +297,7 @@ npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173` → **새 진단** → **스크린샷 데모 실행**으로 원본 검사부터 결과 화면까지 확인할 수 있습니다.
+브라우저에서 `http://localhost:5173` → **새 진단** → **스크린샷 데모 실행**으로 원본 검사부터 결과 화면까지 확인할 수 있습니다. URL·Figma·APK 데모는 API 키나 외부 계정이 있어야 합니다.
 
 <details>
 <summary><b>Windows PowerShell 명령</b></summary>
@@ -333,7 +333,7 @@ docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
 
 | 모드 | 설정 | 되는 것 |
 | :-- | :-- | :-- |
-| API 키 없이 (모의 분석) | `DARKAUDIT_PROVIDER=fake` (`.env` 없을 때 기본값) | 화면·업로드·결과·재검사·PDF 흐름 확인 (탐지 결과는 모의 값) |
+| API 키 없이 (모의 분석) | `DARKAUDIT_PROVIDER=fake` (`.env` 없을 때 기본값) | 화면·업로드·결과·재검사·전후 비교·PDF 흐름 확인 (실제 탐지는 하지 않아 0건으로 표시) |
 | 실제 AI 분석 | `.env`에 키 입력 | 실제 탐지 |
 
 <details>
@@ -356,6 +356,7 @@ docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
 </details>
 
 ```bash
+python -m playwright install chromium          # 브라우저 테스트용 (처음 한 번)
 python -m unittest discover -s backend/tests   # 백엔드
 python -m unittest discover -s ai/tests        # AI
 cd frontend && npm run test                    # 프런트엔드
