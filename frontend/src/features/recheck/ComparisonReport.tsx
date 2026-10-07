@@ -1,3 +1,4 @@
+import { brandLogo } from "@/components/common/brandLogo";
 import type { RegressionDto } from "@/api/schemas";
 import type { AuditDto, AuditRunDto, AuditScreenDto } from "@/entities/audit/types";
 import { ReportDialog } from "@/features/audit-report/ReportDialog";
@@ -78,7 +79,7 @@ export function ComparisonReport({
       <article className="audit-report-document">
         <header className="audit-report-cover">
           <div className="audit-report-masthead">
-            <span>DarkAudit</span>
+            <img alt="DarkAudit" className="audit-report-logo" src={brandLogo({ dark: true })} />
             <span>금융상품 UX 진단</span>
           </div>
           <h1>전후 비교 보고서</h1>

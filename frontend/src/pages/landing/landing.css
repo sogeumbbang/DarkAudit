@@ -1471,3 +1471,11 @@
     font-size: 23px;
   }
 }
+/* Logo artwork in the product mockups scales with the label it replaced and
+   stays inline so the original line height is kept. */
+.lp-brand-logo {
+  display: inline-block;
+  vertical-align: middle;
+  width: auto;
+  height: 1.3em;
+}

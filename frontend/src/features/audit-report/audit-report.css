@@ -70,6 +70,14 @@
   font-size: 16px;
   font-weight: 700;
 }
+/* Outrank `.audit-report-document img`, which centers report screenshots.
+   The vertical margin keeps the 28px line box of the former 16px wordmark. */
+.audit-report-masthead .audit-report-logo {
+  align-self: center;
+  width: auto;
+  height: 22px;
+  margin: 3px 0;
+}
 .audit-report-brand {
   color: var(--color-muted);
   font-size: 11px;

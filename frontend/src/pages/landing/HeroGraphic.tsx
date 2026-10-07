@@ -1,3 +1,4 @@
+import { brandLogo } from "@/components/common/brandLogo";
 import { ArrowUpRight, ScanLine } from "lucide-react";
 import { LandingPhoto } from "./LandingPhoto";
 import { MiniScreen, Status } from "./LandingVisuals";
@@ -13,7 +14,7 @@ export function HeroGraphic() {
       <div className="lp-hero-device lp-review-window">
         <div className="lp-review-chrome">
           <strong>
-            DarkAudit<span>.</span>
+            <img alt="DarkAudit" className="lp-brand-logo" src={brandLogo()} />
           </strong>
           <span>
             펫보험 가입 흐름 <span className="lp-review-example">예시</span>

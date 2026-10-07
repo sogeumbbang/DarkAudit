@@ -1,17 +1,11 @@
 import { Link } from "react-router-dom";
 
-type BrandProps = { dark?: boolean };
+import { brandLogo, type BrandTone } from "@/components/common/brandLogo";
 
-export function Brand({ dark = false }: BrandProps) {
+export function Brand({ dark = false, compact = false }: BrandTone) {
   return (
-    <Link
-      className={`inline-flex items-center font-display text-xl font-semibold tracking-[-0.055em] ${dark ? "text-text" : "text-white"}`}
-      to="/landing"
-    >
-      Dark<span>Audit</span>
-      <span aria-hidden="true" className="ml-1 text-accent-ink">
-        .
-      </span>
+    <Link className="inline-flex shrink-0 items-center" to="/landing">
+      <img alt="DarkAudit" className="h-7 w-auto" src={brandLogo({ dark, compact })} />
     </Link>
   );
 }

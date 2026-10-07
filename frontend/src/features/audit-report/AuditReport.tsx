@@ -1,3 +1,4 @@
+import { brandLogo } from "@/components/common/brandLogo";
 import type { AuditDto, FindingDto } from "@/entities/audit/types";
 import { orderFindings } from "@/entities/audit/orderFindings";
 import { ReportScreen } from "./ReportScreen";
@@ -75,7 +76,7 @@ export function AuditReport({ audit, onClose }: { audit: AuditDto; onClose: () =
       <article className="audit-report-document">
         <header className="audit-report-cover">
           <div className="audit-report-masthead">
-            <span>DarkAudit</span>
+            <img alt="DarkAudit" className="audit-report-logo" src={brandLogo({ dark: true })} />
             <span>금융상품 UX 진단</span>
           </div>
           <h1>다크패턴 분석 보고서</h1>
