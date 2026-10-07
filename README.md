@@ -3,9 +3,16 @@
 </p>
 
 <p align="center">
-  <a href="https://dark-audit-seven.vercel.app"><img src="https://img.shields.io/badge/서비스_바로가기-2563EB?style=for-the-badge&logoColor=white" alt="서비스 바로가기"></a>
-  <a href="docs/evaluation.md"><img src="https://img.shields.io/badge/평가_결과-141B34?style=for-the-badge" alt="평가 결과"></a>
-  <a href="docs/architecture.md"><img src="https://img.shields.io/badge/시스템_구성도-141B34?style=for-the-badge" alt="시스템 구성도"></a>
+  <a href="https://dark-audit-seven.vercel.app"><img src="https://img.shields.io/badge/서비스_바로가기_→-2563EB?style=for-the-badge" alt="서비스 바로가기 →" width="218"></a>
+</p>
+
+<p align="center">
+  로그인 없이 바로 사용할 수 있고, 준비된 데모 진단 결과를 바로 볼 수 있습니다 · <a href="https://dark-audit-seven.vercel.app/app/overview?audit=audit-41&amp;version=1"><b>데모 결과 바로 보기</b></a>
+</p>
+
+<p align="center">
+  <a href="docs/evaluation.md"><img src="https://img.shields.io/badge/평가_결과-141B34?style=flat-square" alt="평가 결과"></a>
+  <a href="docs/architecture.md"><img src="https://img.shields.io/badge/시스템_구성도-141B34?style=flat-square" alt="시스템 구성도"></a>
 </p>
 
 <p align="center">
