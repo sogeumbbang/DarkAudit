@@ -269,6 +269,102 @@
 
 <br>
 
+## 🛠️ 로컬 실행
+
+배포 서비스로 바로 확인할 수 있습니다. 소스코드로 직접 실행하려면 아래를 따르세요.
+
+| 요구사항 | 버전 |
+| :-- | :-- |
+| Python | 3.10 이상 |
+| Node.js | 22.22 이상 (22.x) · 24.15 이상 (24.x) · 26 이상 |
+| Docker | 선택 · 백엔드만 컨테이너로 실행할 때 |
+
+**방법 A. 직접 실행** — 압축을 푼 폴더(저장소 루트)에서 터미널 두 개를 엽니다. `.env` 없이 실행하면 API 키 없는 모의 분석으로 동작합니다.
+
+```bash
+# 터미널 1 · 백엔드 (http://localhost:8000)
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m uvicorn backend.api.main:app --port 8000
+```
+
+```bash
+# 터미널 2 · 프런트엔드 (http://localhost:5173)
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+브라우저에서 `http://localhost:5173` → **새 진단** → **스크린샷 데모 실행**으로 원본 검사부터 결과 화면까지 확인할 수 있습니다.
+
+<details>
+<summary><b>Windows PowerShell 명령</b></summary>
+
+```powershell
+# 터미널 1 · 백엔드
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m uvicorn backend.api.main:app --port 8000
+```
+
+```powershell
+# 터미널 2 · 프런트엔드
+cd frontend
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+</details>
+
+<details>
+<summary><b>방법 B. Docker로 백엔드 실행</b></summary>
+
+이미지에 Chromium과 한국어·영어 OCR이 포함됩니다. 프런트엔드는 방법 A의 터미널 2로 실행합니다.
+
+```bash
+docker build -t darkaudit-backend .
+docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
+```
+
+</details>
+
+| 모드 | 설정 | 되는 것 |
+| :-- | :-- | :-- |
+| API 키 없이 (모의 분석) | `DARKAUDIT_PROVIDER=fake` (`.env` 없을 때 기본값) | 화면·업로드·결과·재검사·PDF 흐름 확인 (탐지 결과는 모의 값) |
+| 실제 AI 분석 | `.env`에 키 입력 | 실제 탐지 |
+
+<details>
+<summary><b>환경변수</b></summary>
+
+저장소 루트의 `.env.example`을 `.env`로 복사한 뒤 값을 채웁니다. 프런트엔드 변수는 `frontend/.env.local`에 둡니다.
+
+| 변수 | 설명 |
+| :-- | :-- |
+| `DARKAUDIT_PROVIDER` | 분석 방식. `fake`(모의 분석) 또는 `openai`(실제 분석) |
+| `DARKAUDIT_MODEL` | 실제 분석에 쓸 모델 이름 |
+| `OPENAI_API_KEY` | 모델 API 키 |
+| `DARKAUDIT_COMPUTER_MODEL` | URL 스마트 탐색에 쓸 모델 |
+| `DARKAUDIT_OCR_PROVIDER` | 화면 글자 인식. `tesseract` 또는 `none` |
+| `FIGMA_ACCESS_TOKEN` | Figma 화면 가져오기 |
+| `BROWSERSTACK_USERNAME` · `BROWSERSTACK_ACCESS_KEY` | Android APK 실행 |
+| `VITE_API_BASE_URL` | 프런트엔드가 호출할 백엔드 주소 |
+| `VITE_USE_MOCKS` | `false`면 실제 백엔드, 그 외에는 브라우저 안의 목업 API 사용 |
+
+</details>
+
+```bash
+python -m unittest discover -s backend/tests   # 백엔드
+python -m unittest discover -s ai/tests        # AI
+cd frontend && npm run test                    # 프런트엔드
+```
+
+설치 옵션, 전체 환경변수, API·CLI는 [개발 안내](docs/DEVELOPMENT.md)에 정리했습니다.
+
+<br>
+
 ## 👥 팀 소금빵
 
 | 이름 | 역할 | 담당 |
