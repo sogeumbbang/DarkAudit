@@ -64,6 +64,7 @@ export const auditSchema = z.object({
     .nullable()
     .optional(),
   demoVariant: z.enum(["risky", "partial", "revised"]).nullable().optional(),
+  deletionProtected: z.boolean().optional(),
   productType: z
     .enum(["insurance", "deposit", "loan", "investment", "other"])
     .nullable()

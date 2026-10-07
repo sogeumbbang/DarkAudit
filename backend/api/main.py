@@ -27,6 +27,7 @@ from .access import router as access_router, authorized_image, sign_image
 from . import jobs
 from .demo_inputs import router as demo_router
 from .demo_browser import bundled_demo_policy
+from .protection import PROTECTED_MESSAGE, is_protected_audit
 from .figma_client import InvalidFigmaUrlError, parse_figma_url
 from .figma_import import import_and_analyze_figma
 from .schemas import (
@@ -133,9 +134,9 @@ def delete_audit(audit_id: str) -> None:
             audit = get_audit(session, audit_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
-        # 데모 버튼으로 만든 진단은 평가자가 공용으로 보는 결과라 누구도 지울 수 없게 한다.
-        if audit.demo_preset:
-            raise HTTPException(403, "데모 진단은 삭제할 수 없습니다.")
+        # PROTECTED_AUDIT_IDS 에 든 대표 데모 진단만 막는다. 그 밖의 데모 진단은 지울 수 있다.
+        if is_protected_audit(f"audit-{audit.id}"):
+            raise HTTPException(403, PROTECTED_MESSAGE)
         if jobs.has_active(DATA_DIR, f"audit-{audit.id}"):
             raise HTTPException(409, "진행 중인 검사가 끝난 뒤 삭제해 주세요.")
         delete_audit_records(session, audit)

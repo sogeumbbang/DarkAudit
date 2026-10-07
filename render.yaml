@@ -31,3 +31,5 @@ services:
         value: "20"
       - key: DARKAUDIT_CORS_ORIGINS
         sync: false
+      - key: PROTECTED_AUDIT_IDS
+        value: audit-47

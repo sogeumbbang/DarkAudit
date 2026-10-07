@@ -354,8 +354,8 @@ export const handlers = [
   http.delete("*/api/v1/audits/:auditId", async ({ params }) => {
     const index = dashboardFixture.audits.findIndex((audit) => audit.id === params.auditId);
     if (index < 0) return HttpResponse.json({ message: "Audit not found" }, { status: 404 });
-    if (dashboardFixture.audits[index]!.demoPreset) {
-      return HttpResponse.json({ detail: "데모 진단은 삭제할 수 없습니다." }, { status: 403 });
+    if (dashboardFixture.audits[index]!.deletionProtected) {
+      return HttpResponse.json({ detail: "대표 데모 진단은 삭제할 수 없습니다." }, { status: 403 });
     }
     dashboardFixture.audits.splice(index, 1);
     if (dashboardFixture.activeAuditId === params.auditId) {

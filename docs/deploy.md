@@ -40,6 +40,7 @@
    | `ANDROID_MAX_ACTIONS` | 심사용 `20` | 화면 수와 별개인 탐색 동작 한도 |
    | `DARKAUDIT_CORS_ORIGINS` | 선택 | 커스텀 도메인을 쓸 때만. 비워도 `*.vercel.app`은 허용된다 |
    | `DARKAUDIT_FRONTEND_CONTRACT` | 선택 | 기본값 `v2`(전체 개방). 프런트가 모르는 값을 막아야 할 때만 `v1`로 내린다 |
+   | `PROTECTED_AUDIT_IDS` | 심사용 `audit-47` | 화면·API에서 삭제를 막을 진단 ID(쉼표 구분). 비우면 모든 진단을 지울 수 있다. [데모 진단 관리](#데모-진단-관리) 참고 |
 
 4. **디스크를 붙인다.** 대시보드 → **Disks → Add Disk**, Mount Path를
    **`/app/data`** 로 지정한다(1GB면 충분).
@@ -136,20 +137,45 @@ curl http://localhost:8000/health
 
 ## 데모 진단 관리
 
-데모 버튼으로 만든 진단(`demo_preset`이 있는 진단)은 평가자가 함께 보는 결과라 화면의
-삭제 버튼이 잠겨 있고, `DELETE /api/v1/audits/{audit_id}`도 403으로 거부한다.
-분석에 실패한 데모 진단처럼 꼭 지워야 할 때만 Render 대시보드 → **Shell**에서
-관리용 스크립트를 실행한다. 이 스크립트는 API·화면에 노출되지 않는다.
+평가자가 함께 보는 대표 데모 진단만 삭제를 막는다. 대상은 환경변수
+`PROTECTED_AUDIT_IDS`로 지정하며, 여기에 든 진단은 진단 기록 화면의 삭제 버튼이 잠기고
+("대표 데모 진단은 삭제할 수 없습니다" 툴팁) `DELETE /api/v1/audits/{audit_id}`도 403으로
+거부한다. 그 밖의 진단은 데모 버튼으로 만든 것이라도 화면과 API에서 지울 수 있다.
+
+### 보호 목록 설정
+
+Render 대시보드 → 서비스 → **Environment**에서 값을 넣고 저장한다(저장하면 재배포된다).
+
+```text
+PROTECTED_AUDIT_IDS=audit-47
+```
+
+- 쉼표로 여러 개를 넣을 수 있다: `audit-47,audit-52`. 숫자만 써도(`47`) 같다.
+- 기본값은 비어 있다. 비워 두면 보호되는 진단이 없어 모든 진단을 지울 수 있다(로컬 개발 기본값).
+- 값은 요청마다 읽지만 Render는 환경변수를 바꾸면 재시작하므로 저장 후 배포가 끝날 때까지 기다린다.
+- `render.yaml`에도 같은 값을 적어 두었지만, 대시보드에서 관리하는 기존 서비스는
+  저장소 파일만으로 바뀌지 않을 수 있으므로 대시보드 값을 확인한다.
+- 확인: `curl https://<서비스명>.onrender.com/api/v1/dashboard/summary`에서 대상 진단의
+  `deletionProtected`가 `true`인지 본다.
+
+### 관리용 삭제 스크립트
+
+진단을 서버에서 정리할 때는 Render 대시보드 → **Shell**에서 관리용 스크립트를 실행한다.
+이 스크립트는 API·화면에 노출되지 않는다. 보호된 진단은 `--force`를 함께 붙여야 지운다.
 
 ```bash
-# dry-run: 이름·회차·데모 여부만 출력하고 지우지 않는다
+# dry-run: 이름·회차·데모·보호 여부만 출력하고 지우지 않는다
 python -m backend.admin_delete_audit audit-46
 
 # 확인한 뒤 실제로 지운다 (DB 기록, 업로드·캡처 파일, 작업 기록)
 python -m backend.admin_delete_audit audit-46 --apply
+
+# 보호된 진단(PROTECTED_AUDIT_IDS)은 --force 가 있어야 지운다
+python -m backend.admin_delete_audit audit-47 --apply --force
 ```
 
 진단 ID는 여러 개를 한 번에 넘길 수 있다. 검사가 진행 중인 진단은 건너뛴다.
+보호 진단을 지웠다면 `PROTECTED_AUDIT_IDS`에서도 빼거나 새 대표 진단 ID로 바꾼다.
 
 ## 알아둘 것
 

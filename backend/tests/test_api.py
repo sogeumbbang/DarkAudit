@@ -592,22 +592,57 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         self.assertNotIn(audit_id, listed)
         self.assertFalse(upload_dir.exists())
 
-    def test_demo_audit_cannot_be_deleted(self) -> None:
-        audit_id = self.client.post(
-            "/api/v1/audits",
-            json={
-                "name": "데모 진단",
-                "platform": "mobile-web",
-                "demoPreset": {"scenario": "pet", "source": "screenshots"},
-            },
+    def _demo_audit(self, name: str, audit_id: int | None = None) -> str:
+        """데모 버튼으로 만든 진단. audit_id 를 주면 그 번호로 만든다(대표 데모 audit-47 재현)."""
+        preset = {"scenario": "pet", "source": "screenshots"}
+        if audit_id is None:
+            return self.client.post(
+                "/api/v1/audits",
+                json={"name": name, "platform": "mobile-web", "demoPreset": preset},
+            ).json()["id"]
+        with service.SessionLocal() as session:
+            session.add(Audit(id=audit_id, name=name, product_name="mobile-web", demo_preset=preset))
+            session.commit()
+        return f"audit-{audit_id}"
+
+    def _listed(self) -> dict[str, dict]:
+        return {a["id"]: a for a in self.client.get("/api/v1/dashboard/summary").json()["audits"]}
+
+    def test_protected_audit_cannot_be_deleted(self) -> None:
+        protected = self._demo_audit("펫케어 대표 데모", audit_id=47)
+        other = self._demo_audit("다른 데모")
+
+        with patch.dict(os.environ, {"PROTECTED_AUDIT_IDS": "audit-47"}):
+            listed = self._listed()
+            response = self.client.delete(f"/api/v1/audits/{protected}")
+
+        self.assertTrue(listed[protected]["deletionProtected"])
+        self.assertFalse(listed[other]["deletionProtected"])
+        self.assertEqual(response.status_code, 403, response.text)
+        self.assertEqual(response.json()["detail"], "대표 데모 진단은 삭제할 수 없습니다.")
+        self.assertIn(protected, self._listed())
+
+    def test_unprotected_demo_audit_can_be_deleted(self) -> None:
+        self._demo_audit("펫케어 대표 데모", audit_id=47)
+        other = self._demo_audit("다른 데모")
+
+        with patch.dict(os.environ, {"PROTECTED_AUDIT_IDS": "audit-47"}):
+            response = self.client.delete(f"/api/v1/audits/{other}")
+
+        self.assertEqual(response.status_code, 204, response.text)
+        self.assertEqual(list(self._listed()), ["audit-47"])
+
+    def test_every_audit_can_be_deleted_without_protected_ids(self) -> None:
+        demo = self._demo_audit("펫케어 대표 데모", audit_id=47)
+        regular = self.client.post(
+            "/api/v1/audits", json={"name": "일반 진단", "platform": "mobile-web"}
         ).json()["id"]
 
-        response = self.client.delete(f"/api/v1/audits/{audit_id}")
-
-        self.assertEqual(response.status_code, 403, response.text)
-        self.assertEqual(response.json()["detail"], "데모 진단은 삭제할 수 없습니다.")
-        listed = [a["id"] for a in self.client.get("/api/v1/dashboard/summary").json()["audits"]]
-        self.assertIn(audit_id, listed)
+        self.assertFalse(any(a["deletionProtected"] for a in self._listed().values()))
+        for audit_id in (demo, regular):
+            response = self.client.delete(f"/api/v1/audits/{audit_id}")
+            self.assertEqual(response.status_code, 204, response.text)
+        self.assertEqual(self._listed(), {})
 
     def test_delete_missing_audit_returns_404(self) -> None:
         response = self.client.delete("/api/v1/audits/audit-999999")

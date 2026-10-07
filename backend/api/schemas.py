@@ -159,6 +159,8 @@ class AuditDto(BaseModel):
     analysisSummary: dict = Field(default_factory=dict)
     demoPreset: DemoPreset | None = None
     demoVariant: DemoVariant | None = None
+    # PROTECTED_AUDIT_IDS 에 든 진단이면 true. 화면이 삭제 버튼을 잠그는 기준이다.
+    deletionProtected: bool = False
 
 
 class ExplorationEventDto(BaseModel):
