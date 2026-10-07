@@ -1,0 +1,186 @@
+{
+  "recordedAt": "2026-10-07",
+  "model": "gpt-5.6-luna",
+  "ocr": "Tesseract 5.4.0 (tessdata_fast kor+eng)",
+  "scenario": "pet",
+  "source": "screenshots",
+  "inputs": {
+    "original": "frontend/public/demo-cases/pet/risky/01-06.png",
+    "revised": "frontend/public/demo-cases/pet/revised/01-06.png"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "audit": "audit-3",
+      "comparisonStatus": "complete",
+      "resolvedRatio": 1.0,
+      "limitations": [],
+      "counts": {
+        "resolved": 8,
+        "improved": 0,
+        "persisted": 0,
+        "new": 0,
+        "regressed": 0,
+        "pending": 0
+      },
+      "v1": {
+        "findingCount": 8,
+        "warnings": [],
+        "findings": [
+          {
+            "ruleId": "DA-03",
+            "screens": [
+              "screen-03"
+            ],
+            "confidence": 0.98
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-02"
+            ],
+            "confidence": 0.97
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-02"
+            ],
+            "confidence": 0.97
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-02"
+            ],
+            "confidence": 0.98
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-03"
+            ],
+            "confidence": 0.95
+          },
+          {
+            "ruleId": "DA-07",
+            "screens": [
+              "screen-05"
+            ],
+            "confidence": 0.94
+          },
+          {
+            "ruleId": "DA-12",
+            "screens": [
+              "screen-04"
+            ],
+            "confidence": 0.99
+          },
+          {
+            "ruleId": "DA-15",
+            "screens": [
+              "screen-01",
+              "screen-06"
+            ],
+            "confidence": 0.98
+          }
+        ]
+      },
+      "v2": {
+        "findingCount": 0,
+        "warnings": [],
+        "findings": []
+      }
+    },
+    {
+      "run": 2,
+      "audit": "audit-5",
+      "comparisonStatus": "complete",
+      "resolvedRatio": 0.857,
+      "limitations": [],
+      "counts": {
+        "resolved": 6,
+        "improved": 0,
+        "persisted": 1,
+        "new": 0,
+        "regressed": 0,
+        "pending": 0
+      },
+      "v1": {
+        "findingCount": 7,
+        "warnings": [],
+        "findings": [
+          {
+            "ruleId": "DA-03",
+            "screens": [
+              "screen-03"
+            ],
+            "confidence": 0.98
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-02"
+            ],
+            "confidence": 0.91
+          },
+          {
+            "ruleId": "DA-04",
+            "screens": [
+              "screen-03"
+            ],
+            "confidence": 0.93
+          },
+          {
+            "ruleId": "DA-07",
+            "screens": [
+              "screen-01"
+            ],
+            "confidence": 0.94
+          },
+          {
+            "ruleId": "DA-07",
+            "screens": [
+              "screen-05"
+            ],
+            "confidence": 0.96
+          },
+          {
+            "ruleId": "DA-12",
+            "screens": [
+              "screen-04"
+            ],
+            "confidence": 0.98
+          },
+          {
+            "ruleId": "DA-15",
+            "screens": [
+              "screen-01",
+              "screen-06"
+            ],
+            "confidence": 0.97
+          }
+        ]
+      },
+      "v2": {
+        "findingCount": 1,
+        "warnings": [],
+        "findings": [
+          {
+            "ruleId": "DA-07",
+            "screens": [
+              "screen-05"
+            ],
+            "confidence": 0.79
+          }
+        ]
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "audit": "audit-4",
+      "reason": "original run failed output validation twice: DA-15 requires at least two distinct screens"
+    }
+  ]
+}
