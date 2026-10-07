@@ -36,7 +36,15 @@ for (const [source, title] of [
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
     // ① Revision run
-    await page.getByRole("link", { name: "수정본 검사하기", exact: true }).click();
+    const recheckLink = page.getByRole("link", { name: "수정본 검사하기", exact: true });
+    // The primary next step must keep its navy fill, not the white fill of outline actions.
+    const recheckColors = await recheckLink.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, text: style.color };
+    });
+    expect(recheckColors.background).not.toBe("rgb(255, 255, 255)");
+    expect(recheckColors.background).not.toBe(recheckColors.text);
+    await recheckLink.click();
     await expect(page).toHaveURL(new RegExp(`/app/audits/${auditId}/recheck$`));
     await expect(page.getByRole("heading", { name: "수정본 검사", exact: true })).toBeVisible();
     const steps = page.getByRole("navigation", { name: "수정본 검사 단계" });

@@ -57,7 +57,8 @@
   padding: 10px 14px;
   white-space: nowrap;
 }
-.overview-actions > a:not(.overview-demo-next) {
+/* Only outline links get a white fill; primary links keep their navy fill. */
+.overview-actions > a[data-variant="outline"] {
   background: white;
 }
 .overview-metrics {
