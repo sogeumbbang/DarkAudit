@@ -89,7 +89,7 @@
 
 ### STEP 2 · 화면 등록하고 분석 시작
 
-<img src="docs/images/readme/step2.png" alt="스크린샷 업로드 영역과 분석 시작하기 버튼" width="100%">
+<img src="docs/images/readme/step2-marked.png" alt="스크린샷 업로드 영역과 분석 시작하기 버튼" width="100%">
 
 1. 스크린샷으로 점검할 때는 **스크린샷**을 선택합니다
 2. 가입 순서대로 **1~6장** 등록 · PNG·JPG·WEBP, 장당 10MB 이하 · 등록 후에는 순서를 바꿀 수 없어요
@@ -119,7 +119,7 @@
 
 2. 검토 후보 · 검토 필요 · 해결 표시 · 등록 화면 수를 한눈에 확인
 
-<img src="docs/images/readme/step3-scope.png" alt="검사 범위와 추가 확인 사항" width="100%">
+<img src="docs/images/readme/step3-scope-marked.png" alt="검사 범위와 추가 확인 사항" width="100%">
 
 3. **검사 범위와 추가 확인 사항**을 먼저 읽으세요 · 미지원 규칙과 근거 부족 항목이 여기 나옵니다
 4. 화면 흐름에서 화면을 고르면 그 화면의 후보만 볼 수 있습니다
@@ -130,7 +130,7 @@
 
 1. 항목을 고르면 **화면 위 위치**가 강조됩니다
 
-<img src="docs/images/readme/step4-detail.png" alt="펼친 항목의 근거와 개선안" width="100%">
+<img src="docs/images/readme/step4-detail-marked.png" alt="펼친 항목의 근거와 개선안" width="100%">
 
 2. **WHERE · OBSERVATION · RULE · WHY** · 어디서 무엇을 보고 어떤 기준으로 판단했는지
 3. **FIX** · 문구·선택 상태·정보 공개 방식을 어떻게 바꿀지 개선 권고안
@@ -178,7 +178,7 @@
 
 ### STEP 6 · PDF 보고서로 공유
 
-<img src="docs/images/readme/step6-summary.png" alt="PDF 보고서 미리보기 머리글과 진단 요약" width="100%">
+<img src="docs/images/readme/step6-summary-marked.png" alt="PDF 보고서 미리보기 머리글과 진단 요약" width="100%">
 
 1. **PDF 보고서 출력 → 인쇄 / PDF 저장** · 인쇄 대상에서 ‘PDF로 저장’을 고릅니다
 2. 진단 요약 · 대상 화면 · 탐지 · 검토 필요 · 해결 건수

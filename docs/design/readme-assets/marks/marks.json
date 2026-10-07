@@ -1,0 +1,22 @@
+{
+  "_note": "좌표는 원본 이미지 픽셀(2배율) 기준 [left, top, right, bottom]. measure.cjs로 배포 화면 DOM에서 잰 값이다. step4-detail은 원본이 다시 찍은 화면보다 1px 아래에 있어 top·bottom에 1을 더했다. anchor는 번호 배지 위치(tl: 왼쪽 위, tr: 오른쪽 위)로, 배지가 화면 글자를 가리지 않는 쪽을 골랐다.",
+  "images": {
+    "step2": [
+      { "n": 1, "box": [886, 289, 1135, 486], "anchor": "tl" },
+      { "n": 2, "box": [90, 913, 1147, 1329], "anchor": "tl" },
+      { "n": 3, "box": [833, 1435, 1213, 1523], "anchor": "tl" }
+    ],
+    "step3-scope": [
+      { "n": 3, "box": [86, 30, 1184, 150], "anchor": "tr" }
+    ],
+    "step4-detail": [
+      { "n": 2, "box": [44, 253, 844, 1076], "anchor": "tr" },
+      { "n": 3, "box": [44, 1120, 844, 1404], "anchor": "tr" },
+      { "n": 4, "box": [44, 1500, 844, 1716], "anchor": "tr" }
+    ],
+    "step6-summary": [
+      { "n": 1, "box": [813, 49, 1075, 137], "anchor": "tl" },
+      { "n": 2, "box": [66, 1042, 1208, 1303], "anchor": "tr" }
+    ]
+  }
+}
