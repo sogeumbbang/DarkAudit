@@ -192,7 +192,7 @@
 .workspace-chat > header {
   background: var(--workspace-sage);
   border-radius: 23px 23px 0 0;
-  padding: 24px;
+  padding: 20px;
 }
 .workspace-chat > header h2 {
   font-family: var(--font-display);
