@@ -179,6 +179,27 @@ it("distinguishes verified resolutions from rules still awaiting evidence", asyn
   expect(screen.getByText("확인 필요: v2: 초기 가격을 확인하지 못했습니다.")).toBeInTheDocument();
 });
 
+it("shows the ratio of verified items and how many pending items it excludes", async () => {
+  server.use(
+    http.get("*/api/v1/audits/:auditId/regression", () =>
+      HttpResponse.json({
+        ...response,
+        comparisonStatus: "incomplete",
+        resolvedRatio: 0.5,
+        limitations: [
+          "v2: DA-07 판정 일부가 근거 기준을 충족하지 못해 해당 규칙의 해결 여부만 보류합니다.",
+        ],
+        pending: [{ ruleId: "DA-07", findingId: "terms-before", before: "HIGH", after: null }],
+      }),
+    ),
+  );
+  setup();
+  expect(await screen.findByText("50%")).toBeInTheDocument();
+  expect(screen.getByText("보류 1건 제외")).toBeInTheDocument();
+  expect(screen.getByText(/해결률은 보류 1건을 제외하고 계산했습니다/)).toBeInTheDocument();
+  expect(screen.queryByText("산출 보류")).not.toBeInTheDocument();
+});
+
 it("allows retry after a comparison error", async () => {
   let calls = 0;
   server.use(

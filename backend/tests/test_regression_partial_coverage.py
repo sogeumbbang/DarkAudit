@@ -44,13 +44,13 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
         session.flush()
         return audit
 
-    def test_local_rules_resolve_but_price_and_overall_ratio_stay_pending(self):
+    def test_local_rules_resolve_and_ratio_excludes_pending_price(self):
         with service.SessionLocal() as session:
             audit = self.make_audit(session)
             result = compare(session, audit.id, 1, 2)
             self.assertEqual({r.rule_id for r in result.resolved}, set(RULES) - {"DA-15"})
             self.assertEqual([r.rule_id for r in result.pending], ["DA-15"])
-            self.assertIsNone(result.resolved_ratio)
+            self.assertEqual(result.resolved_ratio, 1)
             self.assertTrue(all(f.status == FindingStatus.OPEN for f in audit.runs[0].findings))
             service._apply_regression(session, audit.runs[-1])
             self.assertEqual(audit.runs[-1].analysis_summary["regression"]["pendingCount"], 1)
@@ -65,7 +65,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
         self.assertEqual(len(body["resolved"]), 4)
         self.assertEqual(len(body["pending"]), 1)
         self.assertEqual(body["comparisonStatus"], "incomplete")
-        self.assertIsNone(body["resolvedRatio"])
+        self.assertEqual(body["resolvedRatio"], 1)
 
     def test_missing_rule_evidence_in_either_run_is_not_overridden_by_clean_batch(self):
         for version in (1, 2):
@@ -91,7 +91,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                     self.assertEqual(next(f for f in audit.runs[0].findings if f.rule_id == "DA-04").status, FindingStatus.OPEN)
 
     def test_other_warnings_collection_gaps_fake_and_scope_changes_block_all(self):
-        for defect in ("mock", "warning", "batch_warning", "fake_provider", "missing_provider", "missing_batch", "extra_screen",
+        for defect in ("mock", "warning", "unnamed_drop", "batch_warning", "fake_provider", "missing_provider", "missing_batch", "extra_screen",
                        "different_step", "different_rules", "failed"):
             with self.subTest(defect=defect), service.SessionLocal() as session:
                 audit = self.make_audit(session)
@@ -101,6 +101,10 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                     summary["warnings"].append("mock_analysis")
                 elif defect == "warning":
                     summary["warnings"].append("semantic_findings_dropped")
+                elif defect == "unnamed_drop":
+                    # A drop that does not name its rules cannot be scoped.
+                    summary["warnings"].append("semantic_findings_dropped")
+                    summary["batches"][0]["telemetry"]["warnings"] = ["semantic_findings_dropped"]
                 elif defect == "batch_warning":
                     summary["batches"][0]["telemetry"]["warnings"] = ["analysis_failed"]
                 elif defect == "fake_provider":
@@ -121,6 +125,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                 report = compare(session, audit.id, 1, 2, update_statuses=True)
                 self.assertFalse(report.resolved)
                 self.assertEqual(len(report.pending), 5)
+                self.assertIsNone(report.resolved_ratio)
                 self.assertTrue(all(f.status == FindingStatus.OPEN for f in audit.runs[0].findings))
 
     def test_one_inconclusive_rule_does_not_block_other_verified_rules(self):
@@ -133,7 +138,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             report = compare(session, audit.id, 1, 2)
             self.assertEqual({r.rule_id for r in report.resolved}, set(RULES) - {"DA-15"})
             self.assertEqual([r.rule_id for r in report.pending], ["DA-15"])
-            self.assertIsNone(report.resolved_ratio)
+            self.assertEqual(report.resolved_ratio, 1)
 
     def test_rule_scoped_evidence_warnings_hold_back_only_their_rule(self):
         # The original run could not ground DA-03 evidence and DA-07's location;
@@ -159,10 +164,36 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             report = compare(session, audit.id, 1, 2, update_statuses=True)
             self.assertEqual({r.rule_id for r in report.pending}, {"DA-03", "DA-07"})
             self.assertEqual({r.rule_id for r in report.resolved}, {"DA-04", "DA-12", "DA-15"})
-            self.assertIsNone(report.resolved_ratio)
+            self.assertEqual(report.resolved_ratio, 1)
             statuses = {f.rule_id: f.status for f in audit.runs[0].findings}
             self.assertEqual(statuses["DA-04"], FindingStatus.RESOLVED)
             self.assertEqual(statuses["DA-03"], FindingStatus.OPEN)
+
+    def test_dropped_semantic_findings_hold_back_only_the_dropped_rule(self):
+        # The URL path drops a DA-07 semantic finding from the revised run; the
+        # other rules were still assessed on every screen and can be verified.
+        with service.SessionLocal() as session:
+            audit = self.make_audit(session)
+            for run in audit.runs:
+                summary = deepcopy(run.analysis_summary)
+                batch = summary["batches"][1]
+                ids = [f"screen-{i:02d}" for i in range(1, 7)]
+                batch["screens"] = ids
+                for row in batch["telemetry"]["rule_assessments"]:
+                    row["screen_ids"] = ids
+                summary["batches"] = [batch]
+                summary["warnings"] = []
+                if run.version == 2:
+                    batch["telemetry"]["warnings"] = ["semantic_findings_dropped"]
+                    batch["telemetry"]["dropped_semantic_rule_ids"] = ["DA-07"]
+                    summary["warnings"] = ["semantic_findings_dropped"]
+                run.analysis_summary = summarize(summary)
+            report = compare(session, audit.id, 1, 2)
+            self.assertEqual([r.rule_id for r in report.pending], ["DA-07"])
+            self.assertEqual({r.rule_id for r in report.resolved}, set(RULES) - {"DA-07"})
+            self.assertEqual(report.resolved_ratio, 1)
+            self.assertEqual(len(report.limitations), 1)
+            self.assertIn("DA-07", report.limitations[0])
 
     def test_url_assessment_ids_and_archived_full_page_do_not_invalidate_coverage(self):
         with service.SessionLocal() as session:
