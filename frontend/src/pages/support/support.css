@@ -45,6 +45,30 @@
   justify-content: flex-end;
   max-width: 300px;
 }
+.audit-delete-locked {
+  position: relative;
+  display: inline-flex;
+}
+.audit-delete-locked > [role="tooltip"] {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 10;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-navy, #18313f);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.audit-delete-locked:hover > [role="tooltip"],
+.audit-delete-locked:focus-within > [role="tooltip"] {
+  opacity: 1;
+}
 .guidelines-page nav {
   background: var(--color-background);
 }
