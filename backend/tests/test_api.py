@@ -592,6 +592,23 @@ class ApiIntegrationTest(IsolatedApiTestCase):
         self.assertNotIn(audit_id, listed)
         self.assertFalse(upload_dir.exists())
 
+    def test_demo_audit_cannot_be_deleted(self) -> None:
+        audit_id = self.client.post(
+            "/api/v1/audits",
+            json={
+                "name": "데모 진단",
+                "platform": "mobile-web",
+                "demoPreset": {"scenario": "pet", "source": "screenshots"},
+            },
+        ).json()["id"]
+
+        response = self.client.delete(f"/api/v1/audits/{audit_id}")
+
+        self.assertEqual(response.status_code, 403, response.text)
+        self.assertEqual(response.json()["detail"], "데모 진단은 삭제할 수 없습니다.")
+        listed = [a["id"] for a in self.client.get("/api/v1/dashboard/summary").json()["audits"]]
+        self.assertIn(audit_id, listed)
+
     def test_delete_missing_audit_returns_404(self) -> None:
         response = self.client.delete("/api/v1/audits/audit-999999")
         self.assertEqual(response.status_code, 404, response.text)

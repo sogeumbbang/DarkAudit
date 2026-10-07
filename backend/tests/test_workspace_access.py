@@ -138,7 +138,7 @@ class WorkspaceAccessTest(IsolatedApiTestCase):
                 self.assertEqual(self.client.get(f"/api/v1/analysis-jobs/{job['jobId']}", headers=self.other_headers).status_code, 404)
                 self.assertEqual(self.client.get(image_url).status_code, 404)
             original_rmtree(path, **kwargs)
-        with patch("backend.api.main.shutil.rmtree", side_effect=interleave):
+        with patch("backend.api.service.shutil.rmtree", side_effect=interleave):
             self.assertEqual(self.client.delete(f"/api/v1/audits/{self.audit_id}").status_code, 204)
         store.init_db()
         newest = self.client.post("/api/v1/audits", json={"name": "After restart", "platform": "app"}).json()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import threading
 from contextlib import contextmanager
 from pathlib import Path
@@ -29,6 +30,7 @@ from ai.schemas.audit_schema import (
 )
 from backend.app.fingerprint import make as make_fingerprint
 from backend.app.models import (
+    Audit,
     AuditRun,
     Element,
     Evidence,
@@ -58,6 +60,22 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 CAPTURE_DIR = DATA_DIR / "captures"
 FIGMA_DIR = DATA_DIR / "figma"
 ANDROID_DIR = DATA_DIR / "android"
+
+def delete_audit_records(session, audit: Audit) -> None:
+    """
+    진단 하나를 회차·화면·탐지, 업로드·캡처 파일, 작업 기록까지 함께 지운다.
+
+    지워도 되는지(데모 여부, 진행 중 검사)는 부르는 쪽이 먼저 확인한다. 파일이
+    남으면 /artifacts 로 계속 노출되고 디스크만 차지한다. 경로는 사용자가 넘긴
+    문자열이 아니라 DB 의 audit.id 로 만들어 상위 디렉터리로 빠져나가지 않게 한다.
+    """
+    audit_id = f"audit-{audit.id}"
+    session.delete(audit)
+    session.commit()
+    for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR, ANDROID_DIR):
+        shutil.rmtree(base / audit_id, ignore_errors=True)
+    jobs.delete_for_audit(DATA_DIR, audit_id)
+
 
 def rules_by_id() -> dict[str, dict]:
     return {rule["rule_id"]: rule for rule in RuleLoader().rules()}

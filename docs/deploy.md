@@ -134,6 +134,23 @@ curl http://localhost:8000/health
 실제 모델 응답까지 보려면 `openai`로 바꾸고 `DARKAUDIT_MODEL`/`OPENAI_API_KEY`를 같이
 넘긴다.
 
+## 데모 진단 관리
+
+데모 버튼으로 만든 진단(`demo_preset`이 있는 진단)은 평가자가 함께 보는 결과라 화면의
+삭제 버튼이 잠겨 있고, `DELETE /api/v1/audits/{audit_id}`도 403으로 거부한다.
+분석에 실패한 데모 진단처럼 꼭 지워야 할 때만 Render 대시보드 → **Shell**에서
+관리용 스크립트를 실행한다. 이 스크립트는 API·화면에 노출되지 않는다.
+
+```bash
+# dry-run: 이름·회차·데모 여부만 출력하고 지우지 않는다
+python -m backend.admin_delete_audit audit-46
+
+# 확인한 뒤 실제로 지운다 (DB 기록, 업로드·캡처 파일, 작업 기록)
+python -m backend.admin_delete_audit audit-46 --apply
+```
+
+진단 ID는 여러 개를 한 번에 넘길 수 있다. 검사가 진행 중인 진단은 건너뛴다.
+
 ## 알아둘 것
 
 - 계정 구분 없이 모든 방문자가 같은 공용 작업공간을 사용한다. 진단 목록·결과·작업
@@ -151,4 +168,5 @@ curl http://localhost:8000/health
 - 시연용 진단을 미리 하나 만들어 두면 첫 화면이 빈 대시보드가 되지 않는다. 대시보드는
   가장 최근에 만든 진단을 기본으로 보여준다.
 - 잘못 만든 진단은 `DELETE /api/v1/audits/{audit_id}`로 지운다. 회차·화면·탐지와 업로드·
-  캡처 이미지 파일까지 함께 정리된다.
+  캡처 이미지 파일까지 함께 정리된다. 데모 진단은 이 API가 403으로 거부하므로 아래
+  [데모 진단 관리](#데모-진단-관리)의 스크립트를 쓴다.

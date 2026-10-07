@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import io
 import os
-import shutil
 import tempfile
 import zipfile
 from pathlib import Path
@@ -53,6 +52,7 @@ from .service import (
     capture_and_analyze_url,
     compatible_capture_profiles,
     create_job,
+    delete_audit_records,
     get_job,
     recover_interrupted_runs,
     next_run,
@@ -127,30 +127,18 @@ def dashboard_summary() -> DashboardSummaryDto:
 
 @app.delete("/api/v1/audits/{audit_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_audit(audit_id: str) -> None:
-    """
-    진단 하나를 회차·화면·탐지까지 통째로 지운다.
-
-    DB 는 relationship cascade(all, delete-orphan)가 정리하고, 화면 이미지는
-    별도 파일이라 여기서 함께 지운다. 파일이 남으면 /artifacts 로 계속 노출되고
-    디스크만 차지한다.
-
-    경로는 URL 이 아니라 DB 에서 확인한 audit.id 로 만든다. 사용자가 넘긴
-    문자열을 그대로 경로에 붙이면 상위 디렉터리로 빠져나갈 수 있다.
-    """
+    """진단 하나를 회차·화면·탐지와 관련 파일까지 통째로 지운다(delete_audit_records)."""
     with SessionLocal() as session:
         try:
             audit = get_audit(session, audit_id)
         except KeyError:
             raise HTTPException(404, "Audit not found")
-        directory_name = f"audit-{audit.id}"
-        if jobs.has_active(DATA_DIR, audit_id):
+        # 데모 버튼으로 만든 진단은 평가자가 공용으로 보는 결과라 누구도 지울 수 없게 한다.
+        if audit.demo_preset:
+            raise HTTPException(403, "데모 진단은 삭제할 수 없습니다.")
+        if jobs.has_active(DATA_DIR, f"audit-{audit.id}"):
             raise HTTPException(409, "진행 중인 검사가 끝난 뒤 삭제해 주세요.")
-        session.delete(audit)
-        session.commit()
-
-    for base in (UPLOAD_DIR, CAPTURE_DIR, FIGMA_DIR, ANDROID_DIR):
-        shutil.rmtree(base / directory_name, ignore_errors=True)
-    jobs.delete_for_audit(DATA_DIR, audit_id)
+        delete_audit_records(session, audit)
 
 
 @app.get("/api/v1/audits/{audit_id}/regression", response_model=RegressionDto)

@@ -146,6 +146,22 @@ function AuditRow({ audit }: { audit: AuditDto }) {
               취소
             </Button>
           </div>
+        ) : audit.demoPreset ? (
+          // Demo audits are shared with reviewers; the API rejects their deletion too.
+          <span className="audit-delete-locked">
+            <Button
+              aria-label={`${audit.name} 삭제`}
+              aria-disabled="true"
+              aria-describedby={`demo-delete-${audit.id}`}
+              className="flex cursor-not-allowed items-center gap-2 px-3 py-2 text-xs opacity-50"
+              variant="outline"
+            >
+              <Trash2 size={14} /> 삭제
+            </Button>
+            <span role="tooltip" id={`demo-delete-${audit.id}`}>
+              데모 진단은 삭제할 수 없습니다
+            </span>
+          </span>
         ) : (
           <Button
             aria-label={`${audit.name} 삭제`}
