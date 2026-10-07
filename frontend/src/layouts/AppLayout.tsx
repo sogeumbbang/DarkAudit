@@ -34,58 +34,81 @@ function Sidebar({
   onCollapse?: () => void;
   onNavigate?: () => void;
 }) {
+  // The mobile drawer always shows the full menu.
+  const compact = collapsed && !mobile;
   return (
     <aside
       className={cn(
-        "workspace-sidebar flex-col bg-surface p-5 text-text transition-[width]",
-        collapsed && !mobile ? "w-[88px]" : "w-[240px]",
+        "workspace-sidebar flex-col bg-surface text-text transition-[width]",
+        compact ? "is-collapsed w-[88px] px-3 py-5" : "w-[240px] p-5",
         mobile ? "relative flex h-full" : "fixed inset-y-0 left-0 z-20 hidden lg:flex",
       )}
     >
-      <div className="flex items-center justify-between px-2 py-2">
-        {!collapsed || mobile ? (
-          <Brand dark />
-        ) : (
+      <div
+        className={cn(
+          "flex py-2",
+          compact ? "flex-col items-center gap-3" : "items-center justify-between px-2",
+        )}
+      >
+        {compact ? (
           <img alt="DarkAudit" className="h-6 w-auto" src={brandLogo({ compact: true })} />
+        ) : (
+          <Brand dark />
         )}
         <button
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
+          aria-expanded={!collapsed}
           className={cn(
-            "rounded-control border border-border p-2 text-muted",
+            "workspace-sidebar-toggle relative grid shrink-0 place-items-center rounded-control border border-border p-2 text-muted",
             mobile && "invisible",
           )}
           onClick={onCollapse}
         >
-          <Menu size={17} />
+          <Menu aria-hidden="true" size={17} />
+          {compact && (
+            <span aria-hidden="true" className="workspace-sidebar-tooltip">
+              사이드바 펼치기
+            </span>
+          )}
         </button>
       </div>
       <nav aria-label="주요 메뉴" className="mt-8 space-y-1 border-t border-border pt-6">
         {navigation.map(({ label, icon: Icon, to, nested }) => (
           <Fragment key={to}>
-            {label === "새 진단" && (!collapsed || mobile) && (
-              <p className="px-4 pb-1 pt-5 text-xs font-semibold text-muted">진단 관리</p>
-            )}
+            {label === "새 진단" &&
+              (compact ? (
+                <hr aria-hidden="true" className="mx-auto !my-3 w-8 border-border" />
+              ) : (
+                <p className="px-4 pb-1 pt-5 text-xs font-semibold text-muted">진단 관리</p>
+              ))}
             <NavLink
               end
               aria-label={label}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 border-l-2 border-transparent px-4 py-3.5 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
+                  "flex items-center border-l-2 border-transparent text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600",
+                  compact ? "relative mx-auto h-12 w-12 justify-center" : "gap-3 px-4 py-3.5",
                   isActive && "border-brand-600 bg-brand-50 text-brand-600",
-                  nested && (!collapsed || mobile) && "ml-4 border-l border-border",
+                  nested && !compact && "ml-4 border-l border-border",
                 )
               }
               key={to}
               onClick={onNavigate}
               to={to}
             >
-              <Icon aria-hidden="true" size={19} />
-              {(!collapsed || mobile) && label}
+              <Icon aria-hidden="true" className="shrink-0" size={19} />
+              {compact ? (
+                <span aria-hidden="true" className="workspace-sidebar-tooltip">
+                  {label}
+                </span>
+              ) : (
+                label
+              )}
             </NavLink>
           </Fragment>
         ))}
       </nav>
-      {(!collapsed || mobile) && (
+      {!compact && (
         <div className="mt-auto border-t border-border px-3 pt-5">
           <p className="text-[10px] tracking-[0.15em] text-brand-600">DARKAUDIT</p>
           <p className="mt-2 text-xs leading-6 text-muted">

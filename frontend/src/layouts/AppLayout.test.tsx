@@ -60,6 +60,35 @@ describe("AppLayout", () => {
     },
   );
 
+  it("collapses the desktop sidebar into named icon links", async () => {
+    const user = userEvent.setup();
+    const { container } = renderLayout("/app/audits");
+    const sidebar = container.querySelector<HTMLElement>("aside.workspace-sidebar")!;
+    const toggle = screen.getByRole("button", { name: "사이드바 접기" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(sidebar).toHaveTextContent("진단 관리");
+    expect(sidebar).toHaveTextContent("금융상품 화면을 검토하고");
+
+    await user.click(toggle);
+
+    expect(screen.getByRole("button", { name: "사이드바 펼치기" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(sidebar).toHaveClass("is-collapsed");
+    expect(sidebar).not.toHaveTextContent("진단 관리");
+    expect(sidebar).not.toHaveTextContent("금융상품 화면을 검토하고");
+    for (const name of ["대시보드", "새 진단", "진단 기록", "검토 기준"]) {
+      const link = screen.getByRole("link", { name });
+      expect(link.querySelector(".workspace-sidebar-tooltip")).toHaveTextContent(name);
+    }
+    expect(screen.getByRole("link", { name: "진단 기록" })).toHaveAttribute("aria-current", "page");
+    // Keyboard users move from the toggle straight into the icon links.
+    expect(screen.getByRole("button", { name: "사이드바 펼치기" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("link", { name: "대시보드" })).toHaveFocus();
+  });
+
   it("keeps mobile navigation available without the overview header", async () => {
     const user = userEvent.setup();
     renderLayout();
