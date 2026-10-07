@@ -63,9 +63,11 @@ export function ComparisonReport({
   const ratio =
     result.comparisonStatus === "empty"
       ? "비교할 항목 없음"
-      : result.resolvedRatio === null || result.comparisonStatus === "incomplete"
+      : result.resolvedRatio === null
         ? "산출 보류"
-        : `${Math.round(result.resolvedRatio * 100)}%`;
+        : `${Math.round(result.resolvedRatio * 100)}%${
+            result.pending.length ? ` (보류 ${result.pending.length}건 제외)` : ""
+          }`;
   const changed = result.screenChanges.filter((change) => change.status !== "clear");
   const pair = `${runLabel(audit, from)} → ${runLabel(audit, to)}`;
   return (
@@ -136,8 +138,8 @@ export function ComparisonReport({
             </div>
           </dl>
           <p>
-            해결률은 원본 항목 중 같은 기준으로 다시 검사했을 때 잡히지 않은 비율입니다. 신규·재발은
-            분모에 넣지 않습니다.
+            해결률은 원본 항목 중 같은 기준으로 다시 검사했을 때 잡히지 않은 비율입니다. 신규·재발과
+            판정 보류 항목은 분모에 넣지 않습니다.
           </p>
         </section>
         <section className="audit-report-scope">

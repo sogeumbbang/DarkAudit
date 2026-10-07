@@ -25,6 +25,7 @@ from .models import AuditRun, Finding, FindingStatus, RunStatus, Screen, Severit
 SEVERITY_ORDER = {Severity.LOW: 0, Severity.REVIEW: 1, Severity.HIGH: 2}
 SCREEN_LOCAL_RULES = {"DA-03", "DA-04", "DA-07", "DA-12"}
 LONG_FLOW_WARNING = "long_flow_comparison_limited"
+SEMANTIC_DROP_WARNING = "semantic_findings_dropped"
 
 
 @dataclass
@@ -60,10 +61,13 @@ class RegressionReport:
         """
         Resolved Finding Ratio — 기획서의 핵심 검증 지표.
         이전 회차 Finding 중 해소된 비율.
+
+        보류(pending) 항목은 분모에서 뺀다. 제약이 있으면 다시 검증한 항목만으로
+        계산하고, 검증한 항목이 하나도 없으면 산출하지 않는다.
         """
-        if self.limitations:
-            return None
         total = len(self.resolved) + len(self.persisted) + len(self.improved)
+        if self.limitations and not total:
+            return None
         return len(self.resolved) / total if total else 0.0
 
     def summary(self) -> dict:
@@ -140,11 +144,19 @@ def _comparison_limitations(previous: AuditRun, current: AuditRun) -> list[str]:
     limitations = _scope_limitations(previous, current)
     for run in (previous, current):
         summary = run.analysis_summary or {}
-        if summary.get("complete") is not True or summary.get("warnings"):
-            if set(summary.get("warnings", [])) == {LONG_FLOW_WARNING}:
+        warnings = set(summary.get("warnings", []))
+        if summary.get("complete") is not True or warnings:
+            scoped = _rule_scoped_warnings(summary)
+            if warnings == {LONG_FLOW_WARNING}:
                 limitations.append(
                     f"v{run.version}: 분할 검사로 화면 간 가격 비교(DA-15)가 제한됩니다. "
                     "화면별 규칙은 해당 규칙의 전체 화면 검사 근거가 있을 때만 해결로 구분합니다."
+                )
+            elif warnings and warnings <= scoped.keys():
+                rules = ", ".join(sorted(set().union(*(scoped[w] for w in warnings))))
+                limitations.append(
+                    f"v{run.version}: {rules} 판정 일부가 근거 기준을 충족하지 못해 "
+                    "해당 규칙의 해결 여부만 보류합니다."
                 )
             else:
                 limitations.append(f"v{run.version}: 검사 미완료 또는 근거 부족으로 해결 여부를 확인할 수 없습니다.")
@@ -157,19 +169,29 @@ def _rule_scoped_warnings(summary: dict) -> dict[str, set[str]]:
     An evidence contract failure names its rule, and a bbox localization warning
     is recorded on one finding. Neither says anything about other rules, so
     they must not hold back an otherwise verified recheck of those rules.
+    Dropped semantic findings likewise name their rules in telemetry; a batch
+    that drops findings without naming them keeps the warning unscoped.
     """
     scoped: dict[str, set[str]] = {}
+    unscoped: set[str] = set()
     for batch in summary.get("batches", []):
         telemetry = batch.get("telemetry", {})
         for warning in telemetry.get("warnings", []):
             if warning.startswith("evidence_contract:"):
                 scoped.setdefault(warning, set()).add(warning.split(":", 1)[1])
+            elif warning == SEMANTIC_DROP_WARNING:
+                if dropped := telemetry.get("dropped_semantic_rule_ids"):
+                    scoped.setdefault(warning, set()).update(dropped)
+                else:
+                    unscoped.add(warning)
         for item in telemetry.get("bbox_localizations", []):
             if item.get("warning") and item.get("rule_id"):
                 scoped.setdefault(item["warning"], set()).add(item["rule_id"])
     for warning in summary.get("warnings", []):
         if warning.startswith("evidence_contract:"):
             scoped.setdefault(warning, set()).add(warning.split(":", 1)[1])
+    for warning in unscoped:
+        scoped.pop(warning, None)
     return scoped
 
 

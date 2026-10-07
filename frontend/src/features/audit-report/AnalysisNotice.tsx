@@ -56,7 +56,11 @@ export function AnalysisNotice({ summary }: { summary?: AnalysisSummary }) {
       )}
       {summary?.regression?.comparisonStatus === "incomplete" && (
         <div className="mt-3 border-t border-border pt-3">
-          <p className="font-semibold">재검증 판정 보류 · 해결률을 계산하지 않았습니다.</p>
+          <p className="font-semibold">
+            {summary.regression.resolvedRatio === null
+              ? "재검증 판정 보류 · 해결률을 계산하지 않았습니다."
+              : "일부 재검증 판정 보류 · 해결률은 보류 항목을 제외하고 계산했습니다."}
+          </p>
           <p>해결 여부를 확인하지 못한 기존 항목: {summary.regression.pendingCount}건</p>
           <ul className="list-disc pl-5">
             {summary.regression.limitations.map((reason) => (

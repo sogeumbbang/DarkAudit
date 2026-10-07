@@ -42,7 +42,7 @@ function Summary({
   const ratio =
     result.comparisonStatus === "empty"
       ? "비교할 항목 없음"
-      : result.comparisonStatus === "incomplete" || result.resolvedRatio === null
+      : result.resolvedRatio === null
         ? "산출 보류"
         : `${Math.round(result.resolvedRatio * 100)}%`;
   return (
@@ -56,6 +56,9 @@ function Summary({
       <div>
         <p>원본 항목 해결률</p>
         <p className="rc-band-value">{ratio}</p>
+        {result.resolvedRatio !== null && result.pending.length > 0 && (
+          <p className="rc-muted text-xs">보류 {result.pending.length}건 제외</p>
+        )}
       </div>
       <div className="rc-band-cells">
         {(
@@ -217,7 +220,7 @@ function Comparison({ audit }: { audit: AuditDto }) {
               <Summary result={result} before={from.findingCount} after={to.findingCount} />
               <p className="rc-muted text-xs leading-5">
                 해결률은 원본 항목 중 같은 기준으로 다시 검사했을 때 잡히지 않은 비율입니다.
-                신규·재발은 분모에 넣지 않습니다.
+                신규·재발과 판정 보류 항목은 분모에 넣지 않습니다.
               </p>
               {result.scopeDescription && (
                 <p className="rc-muted text-sm leading-6">{result.scopeDescription}</p>
@@ -239,8 +242,9 @@ function Comparison({ audit }: { audit: AuditDto }) {
                   </h3>
                   {result.resolved.length > 0 && (
                     <p className="mt-1">
-                      검사 근거가 확인된 {result.resolved.length}건은 해결로 구분했습니다. 전체
-                      해결률은 산출하지 않습니다.
+                      검사 근거가 확인된 {result.resolved.length}건은 해결로 구분했습니다.
+                      {result.resolvedRatio !== null &&
+                        ` 해결률은 보류 ${result.pending.length}건을 제외하고 계산했습니다.`}
                     </p>
                   )}
                   <ul className="mt-2 list-disc space-y-1 pl-5">

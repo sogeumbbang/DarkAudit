@@ -68,8 +68,10 @@ v1 과 v2 의 Finding 을 "같은 문제"로 잇는 키. Regression Audit 의 �
 검사 요약이 없는 이전 결과는 보수적으로 판정을 보류합니다.
 
 `GET /api/v1/audits/{id}/regression`은 읽기만 수행합니다. 불완전한 비교는
-`comparisonStatus: "incomplete"`, `pending`, `limitations`, `resolvedRatio: null`을
-반환합니다. `null`을 해결률 0%로 표시하지 마세요. 분석 완료 시 저장된 보류 사유는
+`comparisonStatus: "incomplete"`, `pending`, `limitations`를 반환하고, 해결률은 보류
+항목을 뺀 나머지로 계산합니다. 다시 검증한 항목이 하나도 없으면 `resolvedRatio: null`입니다.
+규칙을 특정하는 경고(`evidence_contract:DA-xx`, 규칙이 기록된 `semantic_findings_dropped`)는
+해당 규칙만 보류합니다. `null`을 해결률 0%로 표시하지 마세요. 분석 완료 시 저장된 보류 사유는
 결과 화면과 PDF에도 표시됩니다. 화면의 의미적 대응이나 규칙 버전 비교까지 보장하는
 기능은 아니며, 화면 구성이 바뀐 경우에는 수동 확인이 필요합니다.
 
