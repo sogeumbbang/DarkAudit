@@ -1,159 +1,139 @@
-<!doctype html>
-<html><head><meta charset="utf-8">
-<style>
+<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:W;src:url(WantedSansVariable.woff2) format("woff2");font-weight:100 900}
 @font-face{font-family:J;src:url(plus-jakarta-sans-latin-800-normal.woff2);font-weight:800}
 @font-face{font-family:J;src:url(plus-jakarta-sans-latin-700-normal.woff2);font-weight:700}
-:root{--navy:#141B34;--blue:#2563EB;--soft:#86A3F2;--pale:#EEF2FD;--pale2:#F6F8FE;--line:#E3E8F4;--muted:#5B6478;--red:#D62828}
+:root{--navy:#141B34;--blue:#2563EB;--soft:#86A3F2;--pale:#EEF2FD;--pale2:#F6F8FE;--line:#E1E7F4;--muted:#4E5870}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:transparent;font-family:J,W,sans-serif;color:var(--navy);word-break:keep-all}
-.a{width:880px;padding:0;margin:0 0 40px}
-.card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden}
-.num{font-family:J,W;font-weight:800;letter-spacing:-0.02em}
+.a{width:600px;margin:0 0 40px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:22px;padding:30px 28px}
+.num{font-family:J;font-weight:800;letter-spacing:-0.02em}
+.cap{font-family:J;font-weight:800;font-size:14px;letter-spacing:.08em;color:var(--blue)}
+.h{font-family:W;font-weight:800;font-size:27px;letter-spacing:-0.03em;line-height:1.3;margin:6px 0 22px}
 /* banner */
-#banner .card{background:linear-gradient(135deg,#fff 0%,#F3F6FE 100%);padding:44px 48px 36px;position:relative}
-#banner .glow{position:absolute;right:-80px;top:-80px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#DCE6FD 0%,rgba(220,230,253,0) 70%)}
-#banner img{height:58px;position:relative}
-#banner h1{font-family:W;font-weight:700;font-size:30px;letter-spacing:-0.03em;margin:22px 0 6px;position:relative}
+#banner .card{background:linear-gradient(140deg,#fff 0%,#EEF3FE 100%);padding:34px 30px 30px}
+#banner img{height:50px}
+#banner h1{font-family:W;font-weight:800;font-size:31px;line-height:1.3;letter-spacing:-0.035em;margin:22px 0 8px}
 #banner h1 b{color:var(--blue)}
-#banner p.sub{font-family:W;font-weight:500;font-size:17px;color:var(--muted);position:relative}
-#banner .kpis{display:flex;gap:14px;margin-top:30px;position:relative}
-#banner .kpi{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-#banner .kpi .l{font-family:W;font-weight:600;font-size:13px;color:var(--muted)}
-#banner .kpi .v{font-size:34px;line-height:1.15;margin-top:4px}
-#banner .kpi .v small{font-size:17px;color:var(--muted);font-weight:700}
-#banner .kpi .d{font-family:W;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
-#banner .kpi.hl{background:var(--navy);border-color:var(--navy);color:#fff}
-#banner .kpi.hl .l,#banner .kpi.hl .d,#banner .kpi.hl small{color:#B9C7F5}
-/* section title inside asset */
-.cap{font-family:W;font-weight:700;font-size:13px;letter-spacing:.08em;color:var(--blue);text-transform:uppercase}
-.h{font-family:W;font-weight:700;font-size:24px;letter-spacing:-0.02em;margin:4px 0 22px}
+#banner .sub{font-family:W;font-weight:600;font-size:18px;color:var(--muted);line-height:1.45}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+.kpi{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:16px 18px}
+.kpi .l{font-family:W;font-weight:700;font-size:16px;color:var(--muted)}
+.kpi .v{font-size:40px;line-height:1.1;margin-top:4px}
+.kpi .v small{font-size:20px;color:var(--muted)}
+.kpi .d{font-family:W;font-weight:600;font-size:15px;color:var(--muted);margin-top:4px}
+.kpi.hl{background:var(--navy);border-color:var(--navy);color:#fff}
+.kpi.hl .l,.kpi.hl .d{color:#C3D0F7}
 /* flow */
-#flow .card{padding:32px 36px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 34px;position:relative}
-.step{background:var(--pale2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;min-height:104px}
-.step .n{width:28px;height:28px;border-radius:9px;background:var(--navy);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
-.step.ai .n{background:var(--blue)}
-.step .t{font-family:W;font-weight:700;font-size:18px;margin-top:10px}
-.step .s{font-family:W;font-weight:500;font-size:13.5px;color:var(--muted);margin-top:3px}
-.step .arrow{position:absolute;right:-26px;top:42px;color:var(--soft);font-size:20px;font-weight:800}
-.tag{display:inline-block;font-family:W;font-weight:700;font-size:11px;padding:2px 8px;border-radius:999px;background:#E3EBFE;color:var(--blue);margin-left:6px;vertical-align:2px}
-.loop{margin-top:14px;border:1.5px dashed var(--soft);border-radius:14px;padding:12px 18px;font-family:W;font-weight:600;font-size:14.5px;color:var(--navy);display:flex;align-items:center;gap:10px}
+.steps{display:flex;flex-direction:column;gap:10px}
+.st{display:flex;gap:14px;align-items:center;background:var(--pale2);border:1.5px solid var(--line);border-radius:14px;padding:13px 16px}
+.st .n{flex:none;width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center}
+.st.ai{background:#EAF0FE;border-color:#C9D7FB}.st.ai .n{background:var(--blue)}
+.st .t{font-family:W;font-weight:800;font-size:20px;min-width:150px}
+.st .s{font-family:W;font-weight:600;font-size:16px;color:var(--muted)}
+.tag{font-family:J;font-weight:800;font-size:12px;padding:3px 8px;border-radius:999px;background:var(--blue);color:#fff;margin-left:6px;vertical-align:3px}
+.loop{margin-top:12px;border:2px dashed var(--soft);border-radius:14px;padding:13px 16px;font-family:W;font-weight:700;font-size:17px;line-height:1.45}
 .loop b{color:var(--blue)}
 /* hybrid */
-#hybrid .card{padding:32px 36px}
-.hy{display:grid;grid-template-columns:1fr 60px 1fr;align-items:stretch}
-.box{border-radius:16px;padding:20px 22px;border:1px solid var(--line)}
-.box.rule{background:var(--pale2)}
+.hy{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{border-radius:16px;padding:18px;border:1.5px solid var(--line);background:var(--pale2)}
 .box.llm{background:var(--navy);color:#fff;border-color:var(--navy)}
-.box .k{font-size:20px}
-.box .r{font-family:W;font-weight:600;font-size:13px;margin-top:2px;color:var(--muted)}
-.box.llm .r{color:#B9C7F5}
-.box ul{list-style:none;margin-top:14px}
-.box li{font-family:W;font-weight:500;font-size:14.5px;padding:7px 0;border-top:1px solid var(--line)}
-.box.llm li{border-color:#2A3456}
-.box .m{margin-top:14px;display:flex;align-items:baseline;gap:8px}
-.box .m .v{font-size:30px}
-.box .m .u{font-family:W;font-weight:600;font-size:13px;color:var(--muted)}
-.box.llm .m .u{color:#B9C7F5}
-.mid{display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:28px;font-weight:800}
-.res{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.res div{background:var(--pale);border-radius:12px;padding:12px 16px;font-family:W;font-weight:600;font-size:13px;color:var(--muted)}
-.res div b{display:block;font-family:J;font-weight:800;font-size:22px;color:var(--navy);margin-top:2px}
-.res div b i{font-style:normal;color:var(--blue)}
+.box .k{font-size:22px}
+.box .r{font-family:W;font-weight:700;font-size:15px;color:var(--muted);margin-top:2px}
+.box.llm .r{color:#C3D0F7}
+.box ul{list-style:none;margin-top:12px}
+.box li{font-family:W;font-weight:600;font-size:16.5px;line-height:1.35;padding:8px 0;border-top:1.5px solid var(--line)}
+.box.llm li{border-color:#2D3A60}
+.res{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.res div{background:var(--pale);border-radius:14px;padding:12px 14px;font-family:W;font-weight:700;font-size:15px;color:var(--muted)}
+.res b{display:block;font-family:J;font-weight:800;font-size:23px;color:var(--navy);margin-top:3px}
+.res b i{font-style:normal;color:var(--blue)}
 /* arch */
-#arch .card{padding:32px 36px}
-.ar{display:grid;grid-template-columns:1fr 26px 1.15fr 26px 1.3fr 26px 1fr;align-items:stretch}
-.col{border-radius:16px;padding:16px;border:1px solid var(--line);background:var(--pale2)}
-.col.ai{background:#EDF2FE;border-color:#CFDCFB}
-.col .ct{font-family:W;font-weight:800;font-size:15px;margin-bottom:10px}
-.col .ct span{font-family:J;font-weight:700;font-size:11px;color:var(--muted);display:block;letter-spacing:.02em}
-.mod{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-top:8px}
-.mod .p{font-family:J;font-weight:700;font-size:11.5px;color:var(--blue)}
-.mod .d{font-family:W;font-weight:600;font-size:13.5px;margin-top:1px}
-.conn{display:flex;align-items:center;justify-content:center;color:var(--soft);font-weight:800;font-size:18px}
+.layer{display:flex;gap:12px;align-items:stretch;border:1.5px solid var(--line);background:var(--pale2);border-radius:16px;padding:12px}
+.layer.ai{background:#EAF0FE;border-color:#C9D7FB}
+.layer .lt{flex:none;width:118px;display:flex;flex-direction:column;justify-content:center;padding-left:4px}
+.layer .lt b{font-family:W;font-weight:800;font-size:19px}
+.layer .lt span{font-family:J;font-weight:700;font-size:13px;color:var(--muted);margin-top:2px}
+.mods{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod{background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:9px 11px}
+.mod .p{font-family:J;font-weight:700;font-size:13px;color:var(--blue)}
+.mod .d{font-family:W;font-weight:700;font-size:16px;margin-top:2px}
+.down{text-align:center;color:var(--soft);font-size:20px;font-weight:800;line-height:22px;margin:3px 0}
 /* types */
-#types .card{padding:32px 36px}
-.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.cat{border-radius:14px;border:1px solid var(--line);padding:14px;background:var(--pale2)}
-.cat .cn{font-family:W;font-weight:800;font-size:15px;margin-bottom:8px;display:flex;justify-content:space-between}
-.cat .cn span{font-family:J;font-size:12px;color:var(--muted);font-weight:700}
-.ty{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:9px;margin-top:4px;font-family:W;font-weight:500;font-size:13px;color:#8A93A6}
-.ty .id{font-family:J;font-weight:700;font-size:11px;min-width:38px;margin-top:1px}
-.ty.on{background:#fff;color:var(--navy);font-weight:700;box-shadow:0 0 0 1.5px var(--blue) inset}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cat{border-radius:16px;border:1.5px solid var(--line);padding:14px;background:var(--pale2)}
+.cat .cn{font-family:W;font-weight:800;font-size:19px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
+.cat .cn span{font-family:J;font-size:15px;color:var(--blue);font-weight:800}
+.ty{display:flex;gap:8px;align-items:baseline;padding:6px 8px;border-radius:9px;margin-top:3px;font-family:W;font-weight:600;font-size:15.5px;line-height:1.3;color:#8C95A8}
+.ty .id{flex:none;font-family:J;font-weight:700;font-size:12.5px;width:44px}
+.ty.on{background:#fff;color:var(--navy);font-weight:800;box-shadow:0 0 0 2px var(--blue) inset}
 .ty.on .id{color:var(--blue)}
-.leg{margin-top:16px;display:flex;gap:20px;font-family:W;font-weight:600;font-size:13px;color:var(--muted)}
-.leg i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:6px}
+.leg{margin-top:14px;display:flex;gap:18px;font-family:W;font-weight:700;font-size:15px;color:var(--muted)}
+.leg i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
 </style></head><body>
 
-<section class="a" id="banner"><div class="card"><div class="glow"></div>
+<section class="a" id="banner"><div class="card">
 <img src="logo.svg">
-<h1>금융상품 가입 화면의 다크패턴을 <b>출시 전에</b> 찾아드립니다</h1>
-<p class="sub">금융위원회 다크패턴 가이드라인 15개 유형 기준 · 화면 위 위치 · 근거 · 개선안까지</p>
+<h1>금융상품 가입 화면의 다크패턴을<br><b>출시 전에</b> 찾아드립니다</h1>
+<p class="sub">금융위원회 가이드라인 15개 유형 기준<br>화면 위 위치 · 근거 · 개선안까지</p>
 <div class="kpis">
-<div class="kpi hl"><div class="l">Hybrid F1</div><div class="v num">0.98</div><div class="d">P 0.96 · R 1.00</div></div>
+<div class="kpi hl"><div class="l">Hybrid F1</div><div class="v num">0.98</div><div class="d">Precision 0.96 · Recall 1.00</div></div>
 <div class="kpi"><div class="l">정상 흐름 오탐률</div><div class="v num">0.6<small>%</small></div><div class="d">규칙 단독 20.0%에서</div></div>
 <div class="kpi"><div class="l">자동 탐지 유형</div><div class="v num">5<small> / 15</small></div><div class="d">4개 범주 모두 포함</div></div>
-<div class="kpi"><div class="l">입력 방식</div><div class="v num" style="font-size:22px;line-height:1.6">4<small> 종</small></div><div class="d">스크린샷 · URL · Figma · APK</div></div>
+<div class="kpi"><div class="l">입력 방식</div><div class="v num">4<small> 종</small></div><div class="d">스크린샷 · URL · Figma · APK</div></div>
 </div></div></section>
 
 <section class="a" id="flow"><div class="card">
-<div class="cap">How it works</div><div class="h">화면을 올리면, 근거가 붙은 리포트까지</div>
+<div class="cap">HOW IT WORKS</div><div class="h">화면을 올리면,<br>근거가 붙은 리포트까지</div>
 <div class="steps">
-<div class="step"><div class="n num">1</div><div class="t">화면 입력</div><div class="s">스크린샷 · URL · Figma · APK<br>가입 흐름 순서대로</div><div class="arrow">→</div></div>
-<div class="step"><div class="n num">2</div><div class="t">화면 요소 추출</div><div class="s">OCR · DOM으로 문구, 버튼,<br>체크 상태, 가격 정리</div><div class="arrow">→</div></div>
-<div class="step"><div class="n num">3</div><div class="t">규칙 후보 탐지</div><div class="s">Rule Engine이 관찰 가능한<br>사실로 후보를 넓게 수집</div></div>
-<div class="step ai"><div class="n num">4</div><div class="t">의미 검증<span class="tag">LLM</span></div><div class="s">문구의 압박감, 선택지 관계로<br>실제 위험만 남김</div><div class="arrow">→</div></div>
-<div class="step"><div class="n num">5</div><div class="t">근거 매칭</div><div class="s">OCR 문구와 맞춰<br>화면 위 위치 보정</div><div class="arrow">→</div></div>
-<div class="step"><div class="n num">6</div><div class="t">리포트</div><div class="s">위치 · 근거 · 금융위 유형<br>· 개선안</div></div>
+<div class="st"><div class="n num">1</div><div class="t">화면 입력</div><div class="s">스크린샷 · URL · Figma · APK</div></div>
+<div class="st"><div class="n num">2</div><div class="t">화면 요소 추출</div><div class="s">문구 · 버튼 · 체크 상태 · 가격</div></div>
+<div class="st"><div class="n num">3</div><div class="t">규칙 후보 탐지</div><div class="s">관찰 가능한 사실로 넓게 수집</div></div>
+<div class="st ai"><div class="n num">4</div><div class="t">의미 검증<span class="tag">LLM</span></div><div class="s">실제 위험만 남김</div></div>
+<div class="st"><div class="n num">5</div><div class="t">근거 매칭</div><div class="s">화면 위 위치 보정</div></div>
+<div class="st"><div class="n num">6</div><div class="t">리포트</div><div class="s">위치 · 근거 · 유형 · 개선안</div></div>
 </div>
-<div class="loop">↻ <span>수정본을 다시 올리면 같은 기준으로 <b>해결 · 유지 · 신규 · 재발</b>을 자동 비교</span></div>
+<div class="loop">↻ 수정본을 다시 올리면 같은 기준으로<br><b>해결 · 유지 · 신규 · 재발</b>을 자동 비교</div>
 </div></section>
 
 <section class="a" id="hybrid"><div class="card">
-<div class="cap">Why Hybrid</div><div class="h">사실은 코드가 계산하고, 의미는 AI가 판단합니다</div>
+<div class="cap">WHY HYBRID</div><div class="h">사실은 코드가 계산하고,<br>의미는 AI가 판단합니다</div>
 <div class="hy">
-<div class="box rule"><div class="k num">Rule Engine</div><div class="r">결정적 계산 · 재현율 담당</div>
-<ul><li>체크박스 기본 선택 여부</li><li>단계별 가격 비교</li><li>버튼 크기 · 색 대비</li></ul>
-<div class="m"><span class="v num">1.00</span><span class="u">Recall · 놓치지 않음</span></div></div>
-<div class="mid">→</div>
+<div class="box"><div class="k num">Rule Engine</div><div class="r">결정적 계산 · 재현율 담당</div>
+<ul><li>체크박스 기본 선택</li><li>단계별 가격 비교</li><li>버튼 크기 · 색 대비</li></ul></div>
 <div class="box llm"><div class="k num">LLM 검증</div><div class="r">의미 해석 · 정밀도 담당</div>
-<ul><li>문구의 압박감 · 죄책감 유도</li><li>선택지 사이의 관계</li><li>정보의 중요도</li></ul>
-<div class="m"><span class="v num">0.96</span><span class="u">Precision · 실제 위험만</span></div></div>
+<ul><li>문구의 압박감</li><li>선택지 사이의 관계</li><li>정보의 중요도</li></ul></div>
 </div>
 <div class="res">
 <div>Precision<b>0.47 → <i>0.96</i></b></div>
 <div>오탐 건수<b>18 → <i>0.7</i></b></div>
-<div>Recall<b>1.00 → <i>1.00</i></b></div>
+<div>Recall<b><i>1.00</i> 유지</b></div>
 </div>
 </div></section>
 
 <section class="a" id="arch"><div class="card">
-<div class="cap">Architecture</div><div class="h">시스템 구성</div>
-<div class="ar">
-<div class="col"><div class="ct">Frontend<span>React · Vite</span></div>
+<div class="cap">ARCHITECTURE</div><div class="h">시스템 구성</div>
+<div class="layer"><div class="lt"><b>Frontend</b><span>React · Vite</span></div><div class="mods">
 <div class="mod"><div class="p">frontend/src</div><div class="d">진단 등록 · 결과</div></div>
-<div class="mod"><div class="p">frontend/src</div><div class="d">전후 비교 · 보고서</div></div></div>
-<div class="conn">→</div>
-<div class="col"><div class="ct">Backend<span>FastAPI</span></div>
-<div class="mod"><div class="p">api/main.py</div><div class="d">REST API</div></div>
+<div class="mod"><div class="p">frontend/src</div><div class="d">전후 비교 · 보고서</div></div></div></div>
+<div class="down">↓</div>
+<div class="layer"><div class="lt"><b>Backend</b><span>FastAPI</span></div><div class="mods">
 <div class="mod"><div class="p">api/service.py</div><div class="d">분석 오케스트레이션</div></div>
-<div class="mod"><div class="p">app/regression.py</div><div class="d">수정 전후 비교</div></div></div>
-<div class="conn">→</div>
-<div class="col ai"><div class="ct">AI 분석<span>Hybrid Pipeline</span></div>
-<div class="mod"><div class="p">ai/browser</div><div class="d">Playwright 캡처</div></div>
+<div class="mod"><div class="p">app/regression.py</div><div class="d">수정 전후 비교</div></div></div></div>
+<div class="down">↓</div>
+<div class="layer ai"><div class="lt"><b>AI 분석</b><span>Hybrid Pipeline</span></div><div class="mods">
 <div class="mod"><div class="p">app/rule_engine</div><div class="d">규칙 후보 탐지</div></div>
 <div class="mod"><div class="p">ai/pipeline</div><div class="d">LLM 검증 · 근거 계약</div></div>
-<div class="mod"><div class="p">ai/vision</div><div class="d">OCR · 위치 보정</div></div></div>
-<div class="conn">→</div>
-<div class="col"><div class="ct">Data<span>Rules · DB</span></div>
+<div class="mod"><div class="p">ai/vision</div><div class="d">OCR · 위치 보정</div></div>
+<div class="mod"><div class="p">ai/browser</div><div class="d">Playwright 캡처</div></div></div></div>
+<div class="down">↓</div>
+<div class="layer"><div class="lt"><b>Data</b><span>Rules · DB</span></div><div class="mods">
 <div class="mod"><div class="p">rules/*.yaml</div><div class="d">금융위 15개 유형</div></div>
-<div class="mod"><div class="p">SQLite</div><div class="d">SQLAlchemy</div></div></div>
-</div>
+<div class="mod"><div class="p">SQLite</div><div class="d">SQLAlchemy</div></div></div></div>
 </div></section>
 
 <section class="a" id="types"><div class="card">
-<div class="cap">Coverage</div><div class="h">금융위 15개 유형 중 5개 자동 탐지 · 4개 범주 모두 포함</div>
+<div class="cap">COVERAGE</div><div class="h">15개 유형 중 5개 자동 탐지<br>4개 범주 모두 포함</div>
 <div class="tg">
 <div class="cat"><div class="cn">오도형<span>2 / 5</span></div>
 <div class="ty"><span class="id">DA-01</span>설명절차의 과도한 축약</div>
@@ -175,7 +155,6 @@ body{background:transparent;font-family:J,W,sans-serif;color:var(--navy);word-br
 <div class="cat"><div class="cn">편취유도형<span>1 / 1</span></div>
 <div class="ty on"><span class="id">DA-15</span>순차공개 가격책정</div></div>
 </div>
-<div class="leg"><span><i style="background:#fff;box-shadow:0 0 0 1.5px #2563EB inset"></i>자동 탐지</span><span><i style="background:#E3E8F4"></i>예정 (규칙 정의 완료)</span></div>
+<div class="leg"><span><i style="background:#fff;box-shadow:0 0 0 2px #2563EB inset"></i>자동 탐지</span><span><i style="background:#E1E7F4"></i>예정 (규칙 정의 완료)</span></div>
 </div></section>
-
 </body></html>
