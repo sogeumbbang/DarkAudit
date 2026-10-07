@@ -2,6 +2,12 @@
   <img src="docs/images/readme/banner.png" alt="DarkAudit — 금융상품 가입 화면의 다크패턴을 출시 전에 찾아드립니다" width="880">
 </p>
 
+| 지금의 문제 | DarkAudit의 해결 |
+| --- | --- |
+| 「온라인 금융상품 판매 관련 다크패턴 가이드라인」이 2026년 4월 시행. 4개 범주 15개 유형을 화면마다 확인해야 함 | 15개 유형을 규칙으로 정리하고, 그중 5개 유형을 자동으로 찾아 화면 위 위치·근거·개선안을 제시 |
+| 여러 화면에 걸친 가입 흐름을 사람이 수작업으로 점검 | 스크린샷·URL·Figma·APK를 넣으면 흐름 전체를 한 번에 검사 |
+| 화면을 고칠 때마다 처음부터 다시 검토 | 같은 진단에 수정본을 올리면 해결·유지·신규·재발을 자동으로 비교 |
+
 <p align="center">
   <a href="https://dark-audit-seven.vercel.app"><img src="https://img.shields.io/badge/서비스_바로가기-2563EB?style=for-the-badge&logoColor=white" alt="서비스 바로가기"></a>
   <a href="docs/evaluation.md"><img src="https://img.shields.io/badge/평가_결과-141B34?style=for-the-badge" alt="평가 결과"></a>
@@ -37,6 +43,21 @@
 <td align="center"><sub>수정 전후 자동 비교 요약</sub></td>
 </tr>
 </table>
+
+**펫케어 보험 데모 전후 비교: 8건 중 8건 해결 (100%)**<br>
+<sub>출처 · 배포 서버 진단 audit-37, [`docs/eval/pet-recheck-2026-10-07.json`](docs/eval/pet-recheck-2026-10-07.json) 1회차</sub>
+
+<details>
+<summary><b>회차별 결과</b></summary>
+
+| 회차 | 원본 탐지 | 수정본 탐지 | 해결 | 유지 | 해결률 |
+| :-- | --: | --: | --: | --: | --: |
+| 1회차 | 8 | 0 | 8 | 0 | 100% |
+| 2회차 | 7 | 1 | 6 | 1 (화면 05 · DA-07) | 85.7% |
+
+2026-10-07 로컬 실행 · `gpt-5.6-luna` · Tesseract OCR. 원자료: [`docs/eval/pet-recheck-2026-10-07.json`](docs/eval/pet-recheck-2026-10-07.json)
+
+</details>
 
 <br>
 
@@ -137,18 +158,18 @@
 
 ## 🧭 심사 포인트별 코드 위치
 
-| 보고 싶은 것 | 위치 |
-| :-- | :-- |
-| 📜 금융위 15개 유형 규칙 정의 | [`rules/dark_pattern_rules.yaml`](rules/dark_pattern_rules.yaml) |
-| ⚖️ Rule Engine 판정 로직 | [`backend/app/rule_engine/checks.py`](backend/app/rule_engine/checks.py) |
-| 🤖 LLM 검증 프롬프트 | [`ai/prompts/`](ai/prompts/) |
-| 📐 LLM 출력 스키마·근거 계약 | [`ai/schemas/audit_schema.py`](ai/schemas/audit_schema.py) · [`ai/pipeline/assessment_contract.py`](ai/pipeline/assessment_contract.py) |
-| 🔗 Hybrid 파이프라인 | [`ai/pipeline/baseline.py`](ai/pipeline/baseline.py) |
-| 📍 근거 매칭·위치 보정 | [`ai/vision/text_grounding.py`](ai/vision/text_grounding.py) · [`ai/vision/candidate_grounding.py`](ai/vision/candidate_grounding.py) |
-| 🔁 수정 전후 재검증 | [`backend/app/regression.py`](backend/app/regression.py) · [`backend/app/fingerprint.py`](backend/app/fingerprint.py) |
-| 🧪 평가 스크립트 | [`backend/eval_hybrid.py`](backend/eval_hybrid.py) · [`ai/evaluation/`](ai/evaluation/) |
-| ✅ 테스트 | [`ai/tests/`](ai/tests/) · [`backend/tests/`](backend/tests/) · [`frontend/e2e/`](frontend/e2e/) |
-| 🛡️ 보안 정책 | [`ai/browser/safety.py`](ai/browser/safety.py) · [`backend/api/access.py`](backend/api/access.py) |
+| 보고 싶은 것 | 위치 | 한 줄 설명 |
+| :-- | :-- | :-- |
+| 📜 금융위 15개 유형 규칙 정의 | [`rules/dark_pattern_rules.yaml`](rules/dark_pattern_rules.yaml) | 유형별 정의·관찰 특징·결정적/의미 검사·완화 조건 |
+| ⚖️ Rule Engine 판정 로직 | [`backend/app/rule_engine/checks.py`](backend/app/rule_engine/checks.py) | 체크 상태·글자 크기·색 대비·단계별 가격 비교 |
+| 🤖 LLM 검증 프롬프트 | [`ai/prompts/`](ai/prompts/) | `system.md`, `audit_v1.md`, 입력별 `dom.md`·`visual.md` |
+| 📐 LLM 출력 스키마·근거 계약 | [`ai/schemas/audit_schema.py`](ai/schemas/audit_schema.py) · [`ai/pipeline/assessment_contract.py`](ai/pipeline/assessment_contract.py) | 지원 규칙, 규칙별 검사 결과 필수, 근거 계약 |
+| 🔗 Hybrid 파이프라인 | [`ai/pipeline/baseline.py`](ai/pipeline/baseline.py) | OCR → 후보 → LLM → 정제 → 위치 보정 |
+| 📍 근거 매칭·위치 보정 | [`ai/vision/text_grounding.py`](ai/vision/text_grounding.py) · [`ai/vision/candidate_grounding.py`](ai/vision/candidate_grounding.py) | OCR 문구 퍼지 매칭, 화면 후보 선택 |
+| 🔁 수정 전후 재검증 | [`backend/app/regression.py`](backend/app/regression.py) · [`backend/app/fingerprint.py`](backend/app/fingerprint.py) | fingerprint로 항목을 맞춰 해결·유지·신규·재발·보류 판정 |
+| 🧪 평가 스크립트 | [`backend/eval_hybrid.py`](backend/eval_hybrid.py) · [`ai/evaluation/`](ai/evaluation/) | 합성 데이터 분석 실행과 탐지·비교·설명·RAG 채점 |
+| ✅ 테스트 | [`ai/tests/`](ai/tests/) · [`backend/tests/`](backend/tests/) · [`frontend/e2e/`](frontend/e2e/) | 단위·API·E2E·접근성·시각 회귀 |
+| 🛡️ 보안 정책 | [`ai/browser/safety.py`](ai/browser/safety.py) · [`backend/api/access.py`](backend/api/access.py) | 브라우저 동작·주소 차단, 서명된 이미지 URL |
 
 <br>
 
@@ -160,6 +181,7 @@
 | **키 없이 테스트** | 백엔드는 `DARKAUDIT_PROVIDER=fake`와 임시 DB, E2E는 목업 API(MSW) |
 | **API 키 관리** | `.env`에만 보관, Git 제외 · 저장소에는 변수명만 있는 `.env.example` |
 | **자동 탐색 안전장치** | 입력·제출·결제·가입·동의 클릭, 사설망·교차 출처 이동, 다운로드, 팝업 차단 |
+| **결정적 계산과 AI 판단 분리** | 체크 상태·가격 같은 사실은 Rule Engine이 계산하고, LLM은 후보의 의미만 판정. 근거가 부족한 판정은 ‘근거 부족’으로 표시 |
 | **보수적 판정** | 근거가 부족하면 ‘근거 부족’ · 재검증에서 ‘해결’ 대신 ‘보류’ |
 
 <br>
@@ -183,6 +205,6 @@
 <br>
 
 <p align="center">
-  <sub>참고 · 금융위원회·금융감독원 「온라인 금융상품 판매 관련 다크패턴 가이드라인」 (2025.12.26)</sub><br>
-  <sub><a href="docs/user-guide.md">사용 안내</a> · <a href="docs/evaluation.md">평가</a> · <a href="docs/feature-spec.md">기능 명세</a> · <a href="docs/DEVELOPMENT.md">개발 안내</a></sub>
+  <sub>참고 · 금융위원회·금융감독원 <a href="https://www.fsc.go.kr/po010106/85942">「온라인 금융상품 판매 관련 다크패턴 가이드라인」 마련</a> (2025.12.26)</sub><br>
+  <sub><a href="docs/user-guide.md">사용 안내</a> · <a href="docs/evaluation.md">평가</a> · <a href="docs/feature-spec.md">기능 명세</a> · <a href="docs/DEVELOPMENT.md">개발 안내</a> · <a href="LICENSE">MIT License</a></sub>
 </p>
