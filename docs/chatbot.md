@@ -1,5 +1,7 @@
 # 다크패턴 챗봇 (RAG)
 
+> 현재 구현 기준 · 2026-10-08
+
 금융위원회·금융감독원 「온라인 금융상품 판매 관련 다크패턴 가이드라인」(2025.12)과 보도자료,
 금융정책 게시글, 그리고 DarkAudit Rule Base(DA-01~DA-15)를 근거로 다크패턴 질문에 답하는
 부가 기능이다. 주 사용자는 금융 앱 화면을 만드는 프론트엔드 개발자다. 진단(분석) 파이프라인과는
@@ -17,11 +19,14 @@
 | `backend/tests/test_chat.py` | API 테스트 |
 | `frontend/src/features/chatbot/` | 위젯, 답변 카드(`ChatAnswerCard`), API 클라이언트, on/off 스위치, MSW 목업, 테스트 |
 
-기존 코드와 맞닿는 곳은 아래 세 줄뿐이다.
+주요 연결 지점은 다음과 같다.
 
 - `backend/api/main.py`: `from .chat import router as chat_router`, `app.include_router(chat_router)`
-- `frontend/src/layouts/AppLayout.tsx`: `ChatbotWidget` import와 `<ChatbotWidget />`
+- `frontend/src/layouts/AppLayout.tsx`: 앱 화면의 `<ChatbotWidget />`
+- `frontend/src/layouts/PublicLayout.tsx`: 랜딩 화면의 `<ChatbotWidget compact />`
 - `frontend/src/mocks/handlers.ts`: `chatbotHandlers` import와 `...chatbotHandlers`
+
+위젯은 화면 오른쪽 아래에 표시된다. 대화는 위젯의 메모리 상태에만 보관하고 최근 6개 메시지를 다음 요청의 `history`로 보낸다. 새로고침 후 복원하지 않으며 진단·업로드 이미지를 자동으로 첨부하지 않는다. API는 질문 최대 1,000자, 기록 최대 20개, 기록당 최대 4,000자를 받는다.
 
 ## 답변 형식
 
@@ -56,29 +61,14 @@
 
 다시 켜려면 두 값을 지우거나 `true`로 되돌린다.
 
-## 완전히 제거
+## 검증과 평가
 
-1. 파일/폴더 삭제
+```bash
+python -m unittest ai.tests.test_rag backend.tests.test_chat -v
+```
 
-   ```bash
-   git rm -r ai/rag ai/knowledge ai/tests/test_rag.py \
-     backend/api/chat.py backend/tests/test_chat.py \
-     frontend/src/features/chatbot docs/chatbot.md
-   ```
+프런트 테스트는 `frontend/`에서 `npm run test -- src/features/chatbot`으로 실행한다. 답변·검색 품질 평가는 [평가 실행 가이드](evaluation-framework.md#4-rag-챗봇)를 따른다. UI 응답의 인용 excerpt만으로 전체 검색 품질을 계산하지 않고, `collect-rag`로 생성 모델에 전달한 검색 청크를 함께 저장한다.
 
-2. 연결 코드 삭제 (위 "기존 코드와 맞닿는 곳" 세 파일에서 챗봇 줄 제거)
-3. 설정 정리
-   - `.env.example`의 `DARKAUDIT_CHAT*`, `DARKAUDIT_EMBEDDING_MODEL` 줄
-   - `docs/deploy.md` 환경변수 표의 챗봇 행
-   - `frontend/src/vite-env.d.ts`의 `VITE_CHATBOT_ENABLED` 줄
-   - Render/Vercel 대시보드의 챗봇 환경변수
-4. 확인
+2026-10-06의 12문항 측정은 [성능 보고서](performance-measurement-2026-10-06.md)에 있다. 해당 측정은 당시 모델과 개발용 질문 기준이며 이번 문서 개정에서 재측정하지 않았다.
 
-   ```bash
-   git grep -n -i "chatbot\|/api/v1/chat\|ai.rag"   # 결과가 없어야 한다
-   python -m unittest discover -s backend/tests -v
-   cd frontend && npm run lint && npm run test && npm run build
-   ```
-
-`rules/dark_pattern_rules.yaml`은 진단 파이프라인의 원본이므로 지우지 않는다(챗봇은 읽기만 한다).
-DB 테이블이나 저장 파일은 만들지 않으므로(임베딩 색인은 메모리에만 둔다) 데이터 정리는 필요 없다.
+챗봇은 진단 DB 테이블이나 대화 저장 파일을 만들지 않는다. 검색 색인은 메모리에 두며 `rules/dark_pattern_rules.yaml`은 진단 파이프라인과 공유하는 원본이다.

@@ -1,5 +1,7 @@
 # DarkAudit 개발 안내
 
+> 현재 구현 기준 · 2026-10-08 · 기준 커밋 `5748f51`
+
 로컬 설치·실행, 환경변수, CLI, API, 프로젝트 구조, 테스트, 안전 정책을 정리했습니다. 서비스 소개는 [README](../README.md), 사용 방법은 [사용 안내](user-guide.md)를 참고하세요.
 
 ## 로컬 실행
@@ -44,7 +46,7 @@ python -m venv .venv
 DARKAUDIT_PROVIDER=fake
 ```
 
-모의 분석은 실제 문제를 판별하지 않으며 결과에 모의 분석으로 표시됩니다. 실제 분석은 `DARKAUDIT_PROVIDER=openai`와 함께 이미지 입력·구조화 응답을 지원하는 모델(`DARKAUDIT_MODEL`)과 `OPENAI_API_KEY`를 설정합니다.
+모의 분석은 실제 문제를 판별하지 않으며 결과에 모의 분석으로 표시됩니다. 후보 없는 이미지 분석은 0건이지만, DOM 경로에서 전달한 규칙 후보는 KEEP하므로 결과가 나올 수 있습니다. 실제 분석은 `DARKAUDIT_PROVIDER=openai`와 함께 이미지 입력·구조화 응답을 지원하는 모델(`DARKAUDIT_MODEL`)과 `OPENAI_API_KEY`를 설정합니다.
 
 > [!WARNING]
 > `.env`에는 API 키가 들어갑니다. Git에 커밋하지 마세요. 실제 분석은 화면과 분석 근거를 설정한 외부 모델 API로 보내며, 자동 개인정보 마스킹은 제공하지 않습니다.
@@ -114,11 +116,14 @@ Render·Vercel 배포와 영속 디스크 설정은 [배포 가이드](deploy.md
 | `BROWSERSTACK_USERNAME` · `BROWSERSTACK_ACCESS_KEY` | BrowserStack App Automate 계정 | APK 사용 시 필수 |
 | `BROWSERSTACK_ANDROID_DEVICE` · `BROWSERSTACK_ANDROID_VERSION` | 실행 기기·OS 버전 | 선택 |
 | `ANDROID_MAX_SCREENS` · `ANDROID_MAX_ACTIONS` | APK 수집 화면 수(최대 6)와 탐색 시도 횟수(최대 50) | 선택 |
+| `PROTECTED_AUDIT_IDS` | 삭제를 막을 대표 진단 ID(쉼표 구분). 기본 빈 목록이며 일반 데모는 자동 보호하지 않음 | 선택 |
 | `DARKAUDIT_DB_URL` | DB 주소 (기본 `sqlite:///data/darkaudit.db`) | 선택 |
 | `DARKAUDIT_CORS_ORIGINS` | 허용할 프런트 출처 | 선택 |
 | `VITE_API_BASE_URL` | 프런트가 호출할 백엔드 주소 (`frontend/.env.local`) | 프런트 실행 시 |
 | `VITE_USE_MOCKS` | `false`가 아니면 개발 서버에서 목업 API 사용 | 선택 |
 | `VITE_CHATBOT_ENABLED` | `false`면 챗봇 위젯을 숨김 | 선택 |
+
+`.env.example`의 `FIGMA_MAX_FRAMES=20`은 코드 기본값 6을 덮어씁니다. `ANDROID_MAX_SCREENS=10`은 코드 상한 때문에 실제로 6으로 제한됩니다. 모델 요청과 이미지 CLI는 최대 6장을 받으며 더 긴 수집 경로는 배치로 나눕니다.
 
 ## CLI
 
@@ -144,7 +149,7 @@ FastAPI 앱은 `backend/api/main.py`입니다. 실행 중에는 `/docs`에서 �
 | GET | `/health` | 상태 확인 |
 | POST | `/api/v1/audits` | 진단 생성 |
 | GET | `/api/v1/dashboard/summary` | 전체 진단 목록 |
-| DELETE | `/api/v1/audits/{audit_id}` | 진단과 회차·화면·탐지·이미지 삭제 |
+| DELETE | `/api/v1/audits/{audit_id}` | 진단·회차·화면·탐지·작업 기록·이미지 삭제. 보호 진단은 403, 진행 중이면 409 |
 | POST | `/api/v1/audits/{audit_id}/screens` | 스크린샷 1~6장 업로드(PNG·JPG·WEBP, 장당 10MB). 새 회차 생성 |
 | POST | `/api/v1/audits/{audit_id}/analyze` | 업로드한 화면 분석 시작 |
 | POST | `/api/v1/audits/{audit_id}/capture` | URL 캡처 후 분석 (`quick`·`smart`) |
@@ -152,7 +157,7 @@ FastAPI 앱은 `backend/api/main.py`입니다. 실행 중에는 `/docs`에서 �
 | POST | `/api/v1/audits/{audit_id}/mobile-app` | APK(100MB 이하)를 BrowserStack에서 실행·수집해 분석 |
 | GET | `/api/v1/analysis-jobs/{job_id}` | 분석 작업 상태 |
 | GET | `/api/v1/audits/{audit_id}/runs/{version}` | 특정 완료 회차의 화면과 탐지 결과 |
-| GET | `/api/v1/audits/{audit_id}/regression` | 두 회차 전후 비교 (`from_version`·`to_version`) |
+| GET | `/api/v1/audits/{audit_id}/regression` | 완료 회차 전후 비교 (`from_version`·`to_version`, 별칭 `from`·`to`). 기본은 최초 완료 → 최신 완료 |
 | PATCH | `/api/v1/findings/{finding_id}` | 검토 상태 변경 (`open`·`reviewing`·`resolved`) |
 | PUT | `/api/v1/findings/{finding_id}/decision` | 수정 결정 메모 저장 |
 | POST | `/api/v1/chat` | 가이드라인 챗봇 |
@@ -170,6 +175,18 @@ FastAPI 앱은 `backend/api/main.py`입니다. 실행 중에는 `/docs`에서 �
 | POST | `/api/v1/sessions` | 이전 프런트 번들 호환용. 접근 제어에는 쓰이지 않음 |
 
 </details>
+
+## 저장과 운영
+
+모든 방문자가 같은 공용 작업공간을 사용합니다. 사용자별 로그인·소유권 격리는 없으며 `/api/v1/sessions`의 호환 토큰도 접근 권한을 나누지 않습니다.
+
+진단은 기본 `data/darkaudit.db`, 작업 상태·탐색 기록은 `data/jobs.sqlite3`에 저장합니다. 서버 재시작 시 진행 중 작업과 회차는 실패로 정리하고 기존 작업 URL에서 기록을 조회할 수 있습니다. 자동 재개는 하지 않습니다. 실행기는 단일 프로세스이므로 Uvicorn `--workers`를 늘리지 않습니다.
+
+`/artifacts`는 이미지 경로·진단별 서명·만료 시각을 검증하며 DB·APK·JSON은 제공하지 않습니다. 서명은 다음 UTC 자정까지 유효합니다. 운영 기록을 보존하려면 `/app/data`에 영속 디스크를 연결합니다.
+
+`PROTECTED_AUDIT_IDS`에 든 대표 진단만 화면·API 삭제를 막습니다. 관리용 삭제는 [배포 가이드](deploy.md#관리용-삭제-스크립트)의 dry-run 후 실행 절차를 따릅니다.
+
+루트 `output/`·`outputs/`는 `.gitignore`에 포함된 로컬 산출물 경로입니다. 제출 ZIP·캡처·평가 원본을 문서와 함께 커밋하지 않습니다.
 
 ## 프로젝트 구조
 
@@ -218,8 +235,10 @@ npm run test:a11y
 ```
 
 - **API 키 불필요:** 백엔드 테스트는 `DARKAUDIT_PROVIDER=fake`, `DARKAUDIT_OCR_PROVIDER=none`, 임시 SQLite를 자동으로 사용합니다(`backend/tests/support.py`).
-- **E2E:** `frontend/.env.e2e`의 목업 API(MSW)로 실행합니다. 화면 변경 후 시각 스냅샷은 변경 내용을 확인한 뒤 `npm run test:e2e:update`로 갱신합니다.
+- **E2E:** `frontend/.env.e2e`의 목업 API(MSW)로 실행합니다. `channel: "chromium"`은 Playwright에 묶인 브라우저를 사용하며 `desktop-chrome`·`mobile-chrome` 프로젝트명은 스냅샷 호환을 위해 유지합니다. 화면 변경 후 시각 스냅샷은 변경 내용을 확인한 뒤 `npm run test:e2e:update`로 갱신합니다.
 - Ragas 기반 챗봇 평가 테스트는 `requirements-eval.txt`를 설치했을 때만 실행됩니다.
+
+다음은 기존 실행 기록이며 이번 문서 개정에서 재실행한 결과가 아닙니다. 현재 Git 추적 파일에는 GitHub Actions 워크플로가 없으므로 원격 CI 실행을 가정하지 않습니다.
 
 | 테스트 묶음 | 결과 (2026-10-07, Windows 로컬) |
 | --- | --- |
@@ -249,7 +268,7 @@ URL 탐색은 사람이 지켜보지 않아도 되돌릴 수 있는 이동만 �
 ## 출력 JSON 예시
 
 <details>
-<summary>탐지 항목 1건 (위 결과 화면의 DA-03, 일부 필드 생략)</summary>
+<summary>탐지 항목 1건 (DA-03 예시, 일부 필드 생략)</summary>
 
 ```json
 {

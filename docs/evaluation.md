@@ -1,5 +1,7 @@
 # DarkAudit 평가
 
+> 문서 확인 · 2026-10-08 · 아래 수치는 각 측정일의 기록이며 이번 개정에서 재측정하지 않음
+
 탐지 성능의 측정 방법, 결과, 유형별 상세와 펫케어 데모 전후 비교 기록을 정리했습니다. 회차별 원자료와 측정 이력은 [평가 이력](eval-results.md), 평가기 사용법은 [평가 실행 가이드](evaluation-framework.md)에 있습니다.
 
 ## 1. 평가 방법
@@ -76,10 +78,10 @@
 합성 입력을 만든 뒤(`data/generator/`, [평가 이력](eval-results.md) §5.3) `DARKAUDIT_MODEL`·`OPENAI_API_KEY`를 설정하고 실행합니다. 실제 모델 API를 호출합니다.
 
 ```bash
-cd backend && python eval_hybrid.py --runs 3
+python -m backend.eval_hybrid --runs 3 --output-dir /tmp/darkaudit-evaluation-new
 ```
 
-이미지 분석 경로는 `--visual`을 추가합니다. 2026-10-06 방식의 엄격한 채점은 `python -m ai.evaluation detection --predictions <run 디렉터리>`로 합니다([평가 실행 가이드](evaluation-framework.md)). API 없이 채점기만 확인하려면 다음을 실행합니다.
+저장소 루트에서 실행하며 출력 경로는 새 디렉터리를 사용합니다. 이미지 분석 경로는 `--visual`을 추가합니다. 2026-10-06 방식의 엄격한 채점은 `python -m ai.evaluation detection --predictions <run 디렉터리>`로 합니다([평가 실행 가이드](evaluation-framework.md)). API 없이 채점기만 확인하려면 다음을 실행합니다.
 
 ```bash
 python -m ai.evaluation detection --dataset ai/evaluation/examples/labels --predictions ai/evaluation/examples/predictions --rule-id DA-04

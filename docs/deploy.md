@@ -1,5 +1,7 @@
 # 배포 가이드 (Render + Vercel)
 
+> 저장소 설정 기준 · 2026-10-08 · 운영 서비스 상태는 이번 개정에서 확인하지 않음
+
 백엔드는 Render에 Docker로, 프런트엔드는 Vercel에 배포한다. 둘 다 GitHub 저장소를
 연결해 두면 `main`에 머지할 때마다 자동 배포된다.
 
@@ -24,7 +26,7 @@
 
    | 변수 | 필요 여부 | 설명 |
    | --- | --- | --- |
-   | `DARKAUDIT_PROVIDER` | 필수 | 실제 분석은 `openai`. `fake`면 호출 없이 배선만 확인되고 탐지는 항상 0건 |
+   | `DARKAUDIT_PROVIDER` | 필수 | 실제 분석은 `openai`. `fake`면 모델 호출 없이 흐름 확인. 이미지 분석은 0건이며 DOM 후보는 KEEP될 수 있음 |
    | `DARKAUDIT_MODEL` | 필수 | Responses API의 이미지 입력과 Structured Outputs를 지원하는 모델 |
    | `OPENAI_API_KEY` | 필수 | |
    | `DARKAUDIT_CHATBOT_ENABLED` | 선택 | 기본 `true`. `false`면 다크패턴 챗봇 API를 끈다([chatbot.md](chatbot.md)) |
@@ -43,7 +45,7 @@
    | `PROTECTED_AUDIT_IDS` | 심사용 `audit-47` | 화면·API에서 삭제를 막을 진단 ID(쉼표 구분). 비우면 모든 진단을 지울 수 있다. [데모 진단 관리](#데모-진단-관리) 참고 |
 
 4. **디스크를 붙인다.** 대시보드 → **Disks → Add Disk**, Mount Path를
-   **`/app/data`** 로 지정한다(1GB면 충분).
+   **`/app/data`** 로 지정한다(보관할 이미지·APK 용량에 맞춰 크기 선택).
 
    이걸 빼면 재배포·재시작할 때마다 진단 기록과 캡처 이미지가 전부 사라진다.
    SQLite(`data/darkaudit.db`)와 업로드·캡처 산출물이 모두 이 경로 아래에 있다.
@@ -102,7 +104,7 @@
 3. Figma·APK·URL·스크린샷 데모를 각각 실행한다. 작업의 `completed` 상태뿐 아니라
    결과 화면의 캡처 이미지가 로드되고, 6단계 데모의 마지막 금액 화면까지 수집됐는지 확인한다.
 4. 스크린샷·URL 데모의 수정본을 실행한다. 같은 진단에 다음 회차가 추가되고,
-   이전 회차의 이미지 주소와 내용이 유지돼야 한다.
+   이전 회차의 이미지 내용이 유지돼야 한다. 서명된 URL의 만료 시각·서명 값은 조회 시 바뀔 수 있다. 비교 화면에서 원본과 최신 수정본을 기본으로 표시하고 기준·대상 회차 선택과 비교 PDF도 확인한다.
 5. 새로고침 후 진단 기록·결과·이미지가 유지되고 CORS 오류가 없는지 확인한다.
 
 ### Docker 데모 파일 누락 검사
@@ -110,7 +112,7 @@
 `Dockerfile`의 `COPY`만 추가해도 `.dockerignore`에서 제외한 파일은 복사할 수 없다.
 특히 `frontend/public/*` 제외 규칙 아래에 `demo-cases/` 예외가 필요하다.
 배포 전에 다음 명령으로 실제 빌드 컨텍스트의 웹·스크린샷·APK 파일을 확인한다.
-이 검사는 GitHub Actions에서도 실행한다.
+현재 Git 추적 파일에는 GitHub Actions 워크플로가 없으므로 아래 명령으로 직접 검사하거나 별도 CI에 연결한다.
 
 ```bash
 docker build --file demo/Dockerfile.assets-check --tag darkaudit-assets-check .
@@ -131,7 +133,7 @@ docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
 curl http://localhost:8000/health
 ```
 
-`DARKAUDIT_PROVIDER=fake`면 OpenAI 호출 없이 배선만 확인한다(탐지 결과는 항상 0건).
+`DARKAUDIT_PROVIDER=fake`면 모델 호출 없이 흐름을 확인한다. 후보 없는 이미지 분석은 0건이며 DOM 규칙 후보가 전달되면 KEEP하므로 탐지 항목이 나올 수 있다. 실제 품질 측정으로 사용하지 않는다.
 실제 모델 응답까지 보려면 `openai`로 바꾸고 `DARKAUDIT_MODEL`/`OPENAI_API_KEY`를 같이
 넘긴다.
 
@@ -151,7 +153,7 @@ PROTECTED_AUDIT_IDS=audit-47
 ```
 
 - 쉼표로 여러 개를 넣을 수 있다: `audit-47,audit-52`. 숫자만 써도(`47`) 같다.
-- 기본값은 비어 있다. 비워 두면 보호되는 진단이 없어 모든 진단을 지울 수 있다(로컬 개발 기본값).
+- 기본값은 비어 있다. 비워 두면 보호되는 진단이 없으며 진행 중 작업이 없는 진단을 지울 수 있다(로컬 개발 기본값).
 - 값은 요청마다 읽지만 Render는 환경변수를 바꾸면 재시작하므로 저장 후 배포가 끝날 때까지 기다린다.
 - `render.yaml`에도 같은 값을 적어 두었지만, 대시보드에서 관리하는 기존 서비스는
   저장소 파일만으로 바뀌지 않을 수 있으므로 대시보드 값을 확인한다.
@@ -192,7 +194,7 @@ python -m backend.admin_delete_audit audit-47 --apply --force
 
 - 이미지가 2GB 정도로 크다(Chromium 포함). 빌드가 몇 분 걸릴 수 있다.
 - 시연용 진단을 미리 하나 만들어 두면 첫 화면이 빈 대시보드가 되지 않는다. 대시보드는
-  가장 최근에 만든 진단을 기본으로 보여준다.
+  가장 최근에 수정한 진단을 기본으로 보여준다.
 - 잘못 만든 진단은 `DELETE /api/v1/audits/{audit_id}`로 지운다. 회차·화면·탐지와 업로드·
-  캡처 이미지 파일까지 함께 정리된다. 데모 진단은 이 API가 403으로 거부하므로 아래
+  캡처 이미지와 작업 기록까지 함께 정리된다. 보호 목록에 든 대표 진단은 403, 검사 진행 중인 진단은 409로 거절한다. 보호 진단의 관리용 삭제는
   [데모 진단 관리](#데모-진단-관리)의 스크립트를 쓴다.
