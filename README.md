@@ -2,12 +2,6 @@
   <img src="docs/images/readme/banner.png" alt="DarkAudit — 금융상품 가입 화면의 다크패턴을 출시 전에 찾아드립니다" width="880">
 </p>
 
-| 지금의 문제 | DarkAudit의 해결 |
-| --- | --- |
-| 「온라인 금융상품 판매 관련 다크패턴 가이드라인」이 2026년 4월 시행. 4개 범주 15개 유형을 화면마다 확인해야 함 | 15개 유형을 규칙으로 정리하고, 그중 5개 유형을 자동으로 찾아 화면 위 위치·근거·개선안을 제시 |
-| 여러 화면에 걸친 가입 흐름을 사람이 수작업으로 점검 | 스크린샷·URL·Figma·APK를 넣으면 흐름 전체를 한 번에 검사 |
-| 화면을 고칠 때마다 처음부터 다시 검토 | 같은 진단에 수정본을 올리면 해결·유지·신규·재발을 자동으로 비교 |
-
 <p align="center">
   <a href="https://dark-audit-seven.vercel.app"><img src="https://img.shields.io/badge/서비스_바로가기-2563EB?style=for-the-badge&logoColor=white" alt="서비스 바로가기"></a>
   <a href="docs/evaluation.md"><img src="https://img.shields.io/badge/평가_결과-141B34?style=for-the-badge" alt="평가 결과"></a>
@@ -21,6 +15,12 @@
   <img src="https://img.shields.io/badge/Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white">
   <img src="https://img.shields.io/badge/tests-428_passed-2563EB?style=flat-square">
 </p>
+
+| 지금의 문제 | DarkAudit의 해결 |
+| --- | --- |
+| 「온라인 금융상품 판매 관련 다크패턴 가이드라인」이 2026년 4월 시행. 4개 범주 15개 유형을 화면마다 확인해야 함 | 15개 유형을 규칙으로 정리하고, 그중 5개 유형을 자동으로 찾아 화면 위 위치·근거·개선안을 제시 |
+| 여러 화면에 걸친 가입 흐름을 사람이 수작업으로 점검 | 스크린샷·URL·Figma·APK를 넣으면 흐름 전체를 한 번에 검사 |
+| 화면을 고칠 때마다 처음부터 다시 검토 | 같은 진단에 수정본을 올리면 해결·유지·신규·재발을 자동으로 비교 |
 
 > [!NOTE]
 > DarkAudit은 법령 위반을 판정하지 않습니다. 금융위원회 「온라인 금융상품 판매 관련 다크패턴 가이드라인」 기준으로 **담당자가 검토해야 할 위험**을 출시 전에 찾아줍니다.
