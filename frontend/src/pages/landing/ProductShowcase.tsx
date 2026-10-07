@@ -156,8 +156,9 @@ export function ProductShowcase() {
           </h2>
         </div>
         <p>
-          하나의 화면을 여러 관점에서 검토합니다. 선택 상태부터 수정이 필요한 근거까지 함께
-          살펴보세요.
+          하나의 화면을 여러 관점에서 검토합니다.
+          <br />
+          선택 상태부터 수정이 필요한 근거까지 함께 살펴보세요.
         </p>
       </div>
       <div className="lp-product-explorer">

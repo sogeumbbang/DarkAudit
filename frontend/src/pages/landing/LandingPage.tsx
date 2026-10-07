@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "@/components/common/Brand";
 import { Button } from "@/components/ui/Button";
+import { chatbotEnabled } from "@/features/chatbot/config";
 import { ProductShowcase } from "./ProductShowcase";
 import { WorkflowSection } from "./WorkflowSection";
 import { ChoiceStory, FindingWorkspace, MiniScreen, ReportPreview, Status } from "./LandingVisuals";
@@ -28,6 +29,7 @@ function BackToTop() {
     <button
       type="button"
       className="lp-back-to-top"
+      data-chatbot-enabled={chatbotEnabled()}
       aria-label="페이지 맨 위로"
       onClick={() => {
         document.getElementById("landing-title")?.focus({ preventScroll: true });

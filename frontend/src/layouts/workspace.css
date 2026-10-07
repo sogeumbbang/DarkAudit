@@ -207,53 +207,6 @@
 .workspace input[type="radio"] {
   accent-color: var(--color-brand-600);
 }
-.workspace-chat > header {
-  background: var(--workspace-light-blue);
-  border-radius: 23px 23px 0 0;
-  padding: 20px;
-}
-.workspace-chat > header h2 {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-}
-.workspace-chat {
-  bottom: max(16px, env(safe-area-inset-bottom));
-  max-height: min(
-    640px,
-    calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))
-  );
-}
-.workspace-chat-launcher {
-  bottom: max(16px, env(safe-area-inset-bottom));
-  right: max(16px, env(safe-area-inset-right));
-}
-@media (min-width: 640px) {
-  .workspace-chat-launcher {
-    bottom: max(20px, env(safe-area-inset-bottom));
-    right: max(20px, env(safe-area-inset-right));
-  }
-}
-.workspace-chat > header,
-.workspace-chat > form {
-  flex-shrink: 0;
-}
-.workspace-chat button {
-  min-height: 44px;
-}
-.workspace-chat button[aria-label] {
-  min-width: 44px;
-  flex-shrink: 0;
-}
-@media (max-width: 639px) {
-  .workspace-chat > header {
-    padding: 16px;
-  }
-  .workspace-chat > header p {
-    display: none;
-  }
-}
 /* The reserved scrollbar gutter takes the root background; match the review canvas below. */
 html:has(.workspace--overview) {
   background-color: var(--color-background);

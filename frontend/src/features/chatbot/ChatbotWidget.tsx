@@ -11,6 +11,7 @@ import {
 } from "@/features/chatbot/api";
 import { chatbotEnabled } from "@/features/chatbot/config";
 import { cn } from "@/lib/cn";
+import "./chatbot.css";
 
 type Message = ChatTurn & { id: number; sources?: ChatSource[]; structured?: ChatStructured };
 
@@ -21,11 +22,11 @@ const SUGGESTIONS = [
   "반복간섭은 몇 번부터 해당돼?",
 ];
 
-export function ChatbotWidget() {
-  return chatbotEnabled() ? <ChatbotPanel /> : null;
+export function ChatbotWidget({ compact = false }: { compact?: boolean }) {
+  return chatbotEnabled() ? <ChatbotPanel compact={compact} /> : null;
 }
 
-function ChatbotPanel() {
+function ChatbotPanel({ compact }: { compact: boolean }) {
   const inputId = useId();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -79,11 +80,14 @@ function ChatbotPanel() {
     return (
       <button
         aria-label="다크패턴 챗봇"
-        className="workspace-chat-launcher fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 rounded-control bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 sm:bottom-5 sm:right-5 sm:h-auto sm:w-auto sm:px-5 sm:py-3.5"
+        className={cn(
+          "workspace-chat-launcher fixed bottom-4 right-4 z-30 flex size-12 items-center justify-center gap-2 bg-brand-600 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400",
+          compact ? "rounded-full" : "rounded-control sm:h-auto sm:w-auto sm:px-5 sm:py-3.5",
+        )}
         onClick={() => setOpen(true)}
       >
         <MessageCircle aria-hidden="true" size={19} />
-        <span className="hidden sm:inline">다크패턴 챗봇</span>
+        {!compact && <span className="hidden sm:inline">다크패턴 챗봇</span>}
       </button>
     );
   }

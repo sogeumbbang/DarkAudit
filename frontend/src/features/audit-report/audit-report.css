@@ -252,16 +252,17 @@
 }
 .audit-report-annotations rect {
   fill: none;
-  stroke: #b4232c;
+  stroke: var(--color-annotation);
   stroke-width: 2px;
 }
 .audit-report-annotation-number {
   position: absolute;
   min-width: 18px;
   padding: 1px 4px;
-  border: 1px solid #b4232c;
-  background: white;
-  color: #b4232c;
+  border: 1px solid white;
+  background: var(--color-annotation);
+  color: var(--color-annotation-ink);
+  box-shadow: 0 1px 4px rgb(38 5 9 / 25%);
   font-size: 10px;
   font-weight: 700;
   line-height: 1.3;

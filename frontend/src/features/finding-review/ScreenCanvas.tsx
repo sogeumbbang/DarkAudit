@@ -245,11 +245,15 @@ export function ScreenCanvas({
                     : compact
                       ? [
                           "outline-[1.5px] outline-offset-2",
-                          "outline-danger",
+                          "outline-annotation",
                           box.tone === "related" ? "outline-dashed" : "outline-solid",
                         ]
-                      : ["border-2", "border-danger", box.tone === "related" && "border-dashed"],
-                  active && !compact && box.tone === "primary" && "bg-danger/10",
+                      : [
+                          "border-2",
+                          "border-annotation",
+                          box.tone === "related" && "border-dashed",
+                        ],
+                  active && !compact && box.tone === "primary" && "bg-annotation/10",
                 )}
                 style={
                   pin
@@ -300,9 +304,8 @@ export function ScreenCanvas({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "absolute -left-0.5 z-10 flex size-7 items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-text shadow-sm",
-                    "border-danger",
-                    active && "bg-brand-600 text-white border-brand-600",
+                    "absolute -left-0.5 z-10 flex size-7 items-center justify-center rounded-full border-2 border-white bg-annotation text-xs font-bold text-annotation-ink shadow-md",
+                    active && "ring-2 ring-annotation ring-offset-2 ring-offset-white",
                   )}
                   style={{
                     top: pin
@@ -339,10 +342,10 @@ export function ScreenCanvas({
                     ? [
                         "outline-[1.5px] outline-offset-2",
                         box.tone === "related" ? "outline-dashed" : "outline-solid",
-                        "outline-danger",
+                        "outline-annotation",
                       ]
-                    : ["border-[1.5px]", "border-danger"],
-                  !compact && box.tone === "primary" && "bg-danger/10",
+                    : ["border-[1.5px]", "border-annotation"],
+                  !compact && box.tone === "primary" && "bg-annotation/10",
                   box.tone === "related" && !compact && "border-dashed",
                 )}
                 key={box.key}
@@ -376,7 +379,7 @@ export function ScreenCanvasLegend({
         <span className="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
-            className={cn("h-3 w-4 rounded-sm border-[1.5px]", "border-danger")}
+            className={cn("h-3 w-4 rounded-sm border-[1.5px]", "border-annotation")}
           />
           {finding.ruleId} 탐지 영역
         </span>
@@ -385,7 +388,7 @@ export function ScreenCanvasLegend({
         <span className="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
-            className={cn("h-3 w-4 rounded-sm border-[1.5px] border-dashed", "border-danger")}
+            className={cn("h-3 w-4 rounded-sm border-[1.5px] border-dashed", "border-annotation")}
           />
           관련 영역
         </span>

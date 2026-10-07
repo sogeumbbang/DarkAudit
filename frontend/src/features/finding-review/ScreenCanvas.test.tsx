@@ -140,9 +140,9 @@ describe("ScreenCanvas", () => {
       "outline-[1.5px]",
       "outline-solid",
       "outline-offset-2",
-      "outline-danger",
+      "outline-annotation",
     );
-    expect(mark).not.toHaveClass("border-2", "bg-danger/10");
+    expect(mark).not.toHaveClass("border-2", "bg-annotation/10");
     expect(mark).toBeEmptyDOMElement();
     expect(screen.getByRole("img", { name: "관련 영역" })).toBeEmptyDOMElement();
     expect(screen.queryByText("DA-04")).not.toBeInTheDocument();

@@ -80,27 +80,33 @@ test("mobile navigation traps focus, closes and restores scrolling across a resi
   expect(await page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
 });
 
-test("chat input and close controls fit a narrow, short mobile viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 440 });
-  await page.goto("/app/dashboard");
-  await page.getByRole("button", { name: "다크패턴 챗봇", exact: true }).click();
-  const chat = page.getByRole("region", { name: "다크패턴 챗봇", exact: true });
-  for (const control of [
-    chat,
-    page.getByRole("textbox", { name: "질문", exact: true }),
-    page.getByRole("button", { name: "보내기", exact: true }),
-  ]) {
-    const box = await control.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.y).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(320);
-    expect(box!.y + box!.height).toBeLessThanOrEqual(440);
-  }
-  await page.getByRole("textbox", { name: "질문", exact: true }).fill("사전선택 기준이 궁금합니다");
-  await page.getByRole("button", { name: "챗봇 닫기", exact: true }).click();
-  await expect(chat).toHaveCount(0);
-});
+for (const route of ["/landing", "/app/dashboard"]) {
+  test(`chat input and close controls fit a narrow, short mobile viewport: ${route}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 440 });
+    await page.goto(route);
+    await page.getByRole("button", { name: "다크패턴 챗봇", exact: true }).click();
+    const chat = page.getByRole("region", { name: "다크패턴 챗봇", exact: true });
+    for (const control of [
+      chat,
+      page.getByRole("textbox", { name: "질문", exact: true }),
+      page.getByRole("button", { name: "보내기", exact: true }),
+    ]) {
+      const box = await control.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(440);
+    }
+    await page
+      .getByRole("textbox", { name: "질문", exact: true })
+      .fill("사전선택 기준이 궁금합니다");
+    await page.getByRole("button", { name: "챗봇 닫기", exact: true }).click();
+    await expect(chat).toHaveCount(0);
+  });
+}
 
 test("a swipe over the fitted preview scrolls the mobile page", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Requires the touch device project");

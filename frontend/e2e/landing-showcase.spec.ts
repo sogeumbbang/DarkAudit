@@ -5,18 +5,31 @@ test("landing navigation and floating arrow return to the page top", async ({ pa
   await expect(page.locator("h1")).toBeVisible();
   await expect(page.locator("header").getByRole("link", { name: "진단 시작하기" })).toHaveCount(0);
   const backToTop = page.getByRole("button", { name: "페이지 맨 위로" });
+  const chatbot = page.getByRole("button", { name: "다크패턴 챗봇", exact: true });
+  await expect(chatbot).toBeInViewport();
   await expect(backToTop).toHaveCount(0);
 
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
     await page.emulateMedia({ reducedMotion });
     await page.locator(".lp-closing").scrollIntoViewIfNeeded();
     await expect(backToTop).toBeInViewport();
+    await expect(chatbot).toBeInViewport();
+    const topBounds = (await backToTop.boundingBox())!;
+    const chatBounds = (await chatbot.boundingBox())!;
+    expect(topBounds.y + topBounds.height + 12).toBeLessThanOrEqual(chatBounds.y);
+    expect(topBounds.x).toBe(chatBounds.x);
     await backToTop.focus();
     await page.keyboard.press("Enter");
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     await expect(page.locator("h1")).toBeFocused();
     await expect(backToTop).toHaveCount(0);
+    await expect(chatbot).toBeInViewport();
   }
+
+  await chatbot.click();
+  await expect(page.getByRole("textbox", { name: "질문", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "챗봇 닫기" }).click();
+  await expect(chatbot).toBeInViewport();
 
   const menu = page.getByRole("button", { name: "랜딩 메뉴 열기" });
   if (await menu.isVisible()) await menu.click();
