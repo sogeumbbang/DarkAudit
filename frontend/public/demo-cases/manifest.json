@@ -101,7 +101,7 @@
               "fileName": "01.png",
               "flowStep": "보장 소개",
               "url": "/demo/cases/pet/revised/01.png",
-              "sha256": "46230ee491eba0fbc91a2f789524f0ebb2673916b7d7ad3e9b3c6a5d0ce8aa07"
+              "sha256": "2f4c3c5f7aa10e4d3c41c17c18da392d4d33602d19f1a526246dba08783d0b94"
             },
             {
               "fileName": "02.png",
@@ -113,13 +113,13 @@
               "fileName": "03.png",
               "flowStep": "개인정보 동의",
               "url": "/demo/cases/pet/revised/03.png",
-              "sha256": "13b76b64836da967bcb25f9c4d78bdbd2eca4148b9b572e9d8564459b2baf056"
+              "sha256": "66c1e0e06aa4dee02ad0c4cf6904b83d32e166379a676aa82d59a0810e3077e7"
             },
             {
               "fileName": "04.png",
               "flowStep": "특약 재권유",
               "url": "/demo/cases/pet/revised/04.png",
-              "sha256": "82d2cc88a98c4197ab73754ea97ebecf7bf5afc903bad4cd1b6b4cd9f9df8ee0"
+              "sha256": "0feee0e34988ee0fe8a339913f927ba555268584ec050a7924adba2a4cf8e324"
             },
             {
               "fileName": "05.png",

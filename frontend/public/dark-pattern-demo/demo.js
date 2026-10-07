@@ -40,7 +40,11 @@ document.querySelector("#progress").style.width = `${(step / 6) * 100}%`;
 const header = `<div class="section-tag">${copy(screen.tag)}</div><h1>${copy(screen.title)}</h1><p class="description">${copy(screen.description)}</p>`;
 let body = "";
 if (screen.kind === "offer") {
-  body = `<div class="hero-card"><div class="orb orb-one"></div><div class="orb orb-two"></div><span class="hero-kicker">${copy(screen.product)}</span><div class="hero-metric">${copy(screen.metric)}</div><span class="hero-label">${copy(screen.metricLabel)}</span><div class="hero-bottom"><span>나에게 맞는 금융의 시작</span><b>${scenario.symbol}</b></div></div><div class="price-inline"><span>${scenarioId === "credit" ? "체험 기간 이용료" : "월 이용료 총액"}</span><strong>${screen.amount}<small>${copy(screen.unit)}</small></strong></div>${list(screen.features)}<p class="fine-print">${copy(screen.fine)}</p>`;
+  const terms = screen.terms
+    ? `<aside class="info terms"><span>i</span><div><strong>${copy(screen.terms.title)}</strong>${list(screen.terms.items)}</div></aside>`
+    : "";
+  const fine = screen.fine ? `<p class="fine-print">${copy(screen.fine)}</p>` : "";
+  body = `<div class="hero-card"><div class="orb orb-one"></div><div class="orb orb-two"></div><span class="hero-kicker">${copy(screen.product)}</span><div class="hero-metric">${copy(screen.metric)}</div><span class="hero-label">${copy(screen.metricLabel)}</span><div class="hero-bottom"><span>나에게 맞는 금융의 시작</span><b>${scenario.symbol}</b></div></div>${terms}<div class="price-inline"><span>${scenarioId === "credit" ? "체험 기간 이용료" : "월 이용료 총액"}</span><strong>${screen.amount}<small>${copy(screen.unit)}</small></strong></div>${list(screen.features)}${fine}`;
 } else if (screen.kind === "options") {
   const saved = step === 2 ? readOptions() : null;
   body = `<div class="options">${screen.options.map(([title, detail, checked], index) => `<label class="option"><input type="checkbox" data-option="${index}" ${(saved?.[index] ?? checked) ? "checked" : ""}><span><strong>${copy(title)}</strong><small>${copy(detail)}</small></span><span class="option-mark">추천</span></label>`).join("")}</div><aside class="info"><span>i</span><p>${copy(screen.note)}</p></aside>`;
