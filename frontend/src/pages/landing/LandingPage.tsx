@@ -1,21 +1,9 @@
-import {
-  ArrowDownRight,
-  ArrowRight,
-  Check,
-  Globe,
-  Image,
-  Layers,
-  Menu,
-  Smartphone,
-  X,
-} from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowRight, ArrowUp, Check, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brand } from "@/components/common/Brand";
 import { Button } from "@/components/ui/Button";
-import { PhotoCredits } from "./LandingPhoto";
 import { ProductShowcase } from "./ProductShowcase";
-import { HeroGraphic } from "./HeroGraphic";
 import { WorkflowSection } from "./WorkflowSection";
 import { ChoiceStory, FindingWorkspace, MiniScreen, ReportPreview, Status } from "./LandingVisuals";
 import "./landing.css";
@@ -23,6 +11,38 @@ import "./photography.css";
 import "./showcase.css";
 import "./product-scenes.css";
 import "./workflow.css";
+
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setVisible(window.scrollY > 320);
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      type="button"
+      className="lp-back-to-top"
+      aria-label="페이지 맨 위로"
+      onClick={() => {
+        document.getElementById("landing-title")?.focus({ preventScroll: true });
+        window.scrollTo({
+          top: 0,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "instant"
+            : "smooth",
+        });
+      }}
+    >
+      <ArrowUp size={22} aria-hidden="true" />
+    </button>
+  );
+}
 
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,11 +77,6 @@ export function LandingPage() {
               대시보드
             </Link>
           </nav>
-          <Button asChild className="landing-header-cta">
-            <Link to="/app/audits/new">
-              진단 시작하기 <ArrowRight size={14} aria-hidden="true" />
-            </Link>
-          </Button>
           <button
             ref={menuButtonRef}
             type="button"
@@ -80,11 +95,7 @@ export function LandingPage() {
         <div className="lp-intro-stage">
           <section className="lp-intro lp-container" id="product">
             <div className="lp-intro-copy">
-              <p className="lp-eyebrow">
-                <span />
-                FINANCIAL UX, CAREFULLY REVIEWED
-              </p>
-              <h1>
+              <h1 id="landing-title" tabIndex={-1}>
                 다 만든 화면,
                 <br />
                 <span>다 살펴본 건가요?</span>
@@ -100,32 +111,7 @@ export function LandingPage() {
                   내 화면 점검하기 <ArrowRight size={18} aria-hidden="true" />
                 </Link>
               </Button>
-              <a href="#process" className="lp-text-link">
-                분석 과정 보기 <ArrowDownRight size={16} aria-hidden="true" />
-              </a>
-              <div className="lp-supported-inputs">
-                <span>익숙한 입력에서 시작하세요.</span>
-                <div>
-                  <span>
-                    <Globe size={20} aria-hidden="true" />
-                    Website
-                  </span>
-                  <span>
-                    <Layers size={20} aria-hidden="true" />
-                    Figma
-                  </span>
-                  <span>
-                    <Smartphone size={20} aria-hidden="true" />
-                    Android
-                  </span>
-                  <span>
-                    <Image size={20} aria-hidden="true" />
-                    Screenshot
-                  </span>
-                </div>
-              </div>
             </div>
-            <HeroGraphic />
           </section>
         </div>
         <ProductShowcase />
@@ -142,7 +128,9 @@ export function LandingPage() {
           <div className="lp-container">
             <div className="lp-section-heading">
               <div>
-                <p className="lp-eyebrow">03 / SEE IT. UNDERSTAND IT.</p>
+                <p className="lp-eyebrow">
+                  <span className="lp-chapter-number">03</span> 탐지 근거
+                </p>
                 <h2 id="finding-title">
                   문제의 위치에서,
                   <br />
@@ -165,13 +153,17 @@ export function LandingPage() {
 
         <section className="lp-section lp-comparison-section" aria-labelledby="comparison-title">
           <div className="lp-container">
-            <div className="lp-comparison-heading">
-              <p className="lp-eyebrow">04 / A SMALL CHANGE. A CLEARER CHOICE.</p>
-              <h2 id="comparison-title">
-                작은 수정으로,
-                <br />
-                분명해지는 선택.
-              </h2>
+            <div className="lp-comparison-heading lp-section-heading">
+              <div>
+                <p className="lp-eyebrow">
+                  <span className="lp-chapter-number">04</span> 개선 방향
+                </p>
+                <h2 id="comparison-title">
+                  작은 수정으로,
+                  <br />
+                  분명해지는 선택.
+                </h2>
+              </div>
               <p>기본 선택을 해제해 사용자가 직접 결정하도록.</p>
             </div>
             <div className="lp-comparison">
@@ -224,7 +216,9 @@ export function LandingPage() {
               </div>
             </div>
             <div className="lp-report-copy">
-              <p className="lp-eyebrow">05 / FROM FINDING TO RECORD</p>
+              <p className="lp-eyebrow">
+                <span className="lp-chapter-number">05</span> 검토 기록
+              </p>
               <h2 id="report-title">
                 발견에서
                 <br />
@@ -269,16 +263,6 @@ export function LandingPage() {
               <br />
               살펴볼 차례
             </h2>
-            <div className="lp-closing-device" aria-hidden="true">
-              <span />
-              <img
-                src="/sample-audit/02-preselected-addon.png"
-                alt=""
-                width="786"
-                height="1704"
-                loading="lazy"
-              />
-            </div>
             <div className="lp-closing-copy">
               <p>
                 사용자에게 닿기 전,
@@ -292,13 +276,13 @@ export function LandingPage() {
             </div>
           </div>
           <footer className="lp-footer lp-container">
-            <Brand />
+            <Brand dark />
             <p>금융 화면을 더 명확하게. 선택을 더 공정하게.</p>
             <span>Financial UX · Consumer Protection</span>
-            <PhotoCredits />
           </footer>
         </section>
       </main>
+      <BackToTop />
     </div>
   );
 }

@@ -82,8 +82,8 @@ test("review and creation remain usable on tablet and narrow screens", async ({ 
         for (const selector of [
           ".lp-intro-copy",
           ".lp-intro-description",
-          ".lp-supported-inputs",
-          ".lp-hero-device",
+          ".lp-intro-copy > .lp-primary-action",
+          ".lp-intro h1",
         ]) {
           const bounds = await page.locator(selector).boundingBox();
           expect(bounds).not.toBeNull();

@@ -1,27 +1,10 @@
 /* Workspace shares the landing palette; print and public pages keep their own scope. */
 .workspace {
-  --color-background: #f5f2ea;
-  --color-background-secondary: #e9dfc9;
-  --color-surface: #fffdfc;
-  --color-text: #18313f;
-  --color-muted: #526168;
-  --color-border: #18313f1a;
-  --color-navy: #18313f;
-  --color-navy-hover: #102833;
-  --color-brand-50: #e1e6dc;
-  --color-brand-100: #dce4db;
-  --color-brand-500: #314e5e;
-  --color-brand-600: #18313f;
-  --color-brand-700: #18313f;
-  --color-brand-800: #102833;
-  --color-brand-900: #102833;
-  --color-gold: #b89252;
-  --color-risk: #e76f51;
-  --color-accent-soft: #f2e9d6;
-  --workspace-blue: #dde9ed;
-  --workspace-sage: #e1e6dc;
+  --workspace-blue: var(--color-brand-200);
+  --workspace-light-blue: var(--color-brand-100);
   --workspace-coral: #fbe5dd;
   color: var(--color-text);
+  background: var(--color-background);
 }
 .workspace-main {
   container: workspace / inline-size;
@@ -44,7 +27,7 @@
 }
 .workspace-topbar > span > span {
   margin-inline: 12px;
-  color: #92713b;
+  color: var(--color-accent-ink);
 }
 .workspace-topbar > a {
   display: flex;
@@ -125,8 +108,8 @@
   min-height: 48px;
 }
 .workspace-sidebar nav a[aria-current="page"] {
-  background: var(--color-navy);
-  color: var(--color-surface);
+  background: var(--color-brand-200);
+  color: var(--color-navy);
 }
 .workspace-sidebar nav a svg {
   width: 17px;
@@ -134,14 +117,14 @@
   stroke-width: 1.5;
 }
 .workspace-sidebar nav a:not([aria-current="page"]):hover {
-  background: var(--workspace-sage);
+  background: var(--workspace-light-blue);
 }
 .workspace-sidebar nav a[aria-current="page"]::after {
   content: "";
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--color-gold);
+  background: var(--color-sky);
   margin-left: auto;
 }
 /* Collapsed rail: icon-only squares; names appear as tooltips beside the rail. */
@@ -182,10 +165,10 @@
   max-width: 1280px;
 }
 .editorial-label {
-  color: #7d602e;
+  color: var(--color-accent-ink);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-weight: 750;
+  letter-spacing: 0.04em;
 }
 .workspace-heading {
   display: flex;
@@ -198,9 +181,9 @@
 .workspace-heading h1 {
   font-family: var(--font-display);
   font-size: clamp(32px, 3.8vw, 52px);
-  font-weight: 650;
-  letter-spacing: -0.055em;
-  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
   margin-top: 16px;
   word-break: keep-all;
 }
@@ -225,7 +208,7 @@
   accent-color: var(--color-brand-600);
 }
 .workspace-chat > header {
-  background: var(--workspace-sage);
+  background: var(--workspace-light-blue);
   border-radius: 23px 23px 0 0;
   padding: 20px;
 }
@@ -273,25 +256,7 @@
 }
 /* The reserved scrollbar gutter takes the root background; match the review canvas below. */
 html:has(.workspace--overview) {
-  background-color: #f3f6f8;
-}
-/* Keep the review canvas theme local to the overview route. */
-.workspace--overview {
-  --color-background: #f3f6f8;
-  --color-background-secondary: #e9f0f4;
-  --color-surface: #ffffff;
-  --color-text: #203b49;
-  --color-muted: #586e7a;
-  --color-border: #e0e7eb;
-  --color-navy: #173f50;
-  --color-brand-50: #eaf1f5;
-  --color-brand-100: #dce8ee;
-  --color-brand-500: #39667b;
-  --color-brand-600: #173f50;
-  --color-brand-700: #123747;
-  --color-accent-soft: #fbf0e7;
-  --color-accent-ink: #93562f;
-  --workspace-sage: #eaf1f5;
+  background-color: var(--color-background);
 }
 .workspace--overview .workspace-main {
   padding: 22px 32px 72px;
@@ -304,7 +269,7 @@ html:has(.workspace--overview) {
   margin-top: 24px;
 }
 .workspace--overview .workspace-sidebar {
-  border-color: #e0e7eb;
+  border-color: var(--color-border);
 }
 @media (max-width: 1199px) {
   .workspace-main {

@@ -143,13 +143,17 @@ export function ProductShowcase() {
   }
   return (
     <section className="lp-section lp-product-section" aria-labelledby="lp-product-title">
-      <div className="lp-product-intro lp-container">
-        <p className="lp-eyebrow">ONE SCREEN. A CLEARER PICTURE.</p>
-        <h2 id="lp-product-title">
-          좋은 금융 경험은,
-          <br />
-          세심한 검토에서.
-        </h2>
+      <div className="lp-product-intro lp-section-heading lp-container">
+        <div>
+          <p className="lp-eyebrow">
+            <span className="lp-chapter-number">01</span> 주요 기능
+          </p>
+          <h2 id="lp-product-title">
+            좋은 금융 경험은,
+            <br />
+            세심한 검토에서.
+          </h2>
+        </div>
         <p>
           하나의 화면을 여러 관점으로.
           <br />
@@ -224,7 +228,7 @@ export function ProductShowcase() {
           </div>
         </div>
       </div>
-      <p className="lp-example-note">
+      <p className="lp-example-note lp-container">
         가상 보험 가입 사례를 바탕으로 구성한 설명용 예시 · 최종 판단과 화면 수정은 담당자가
         진행합니다.
       </p>

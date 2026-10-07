@@ -21,46 +21,57 @@
   --font-display: "Wanted Sans Variable", "SUIT Variable", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  /* Surfaces and brand anchors. Ink variants keep small status text readable. */
-  --color-background: #f5f3ed;
-  --color-background-secondary: #ece8de;
-  --color-surface: #fffdfc;
-  --color-text: #1e2c35;
-  --color-muted: #5e6a6e;
-  --color-text-muted: #8b908b;
-  --color-border: #ddd7cb;
-  --color-navy: #213542;
-  --color-navy-hover: #182a34;
-  --color-sage: #8f9b8f;
-  --color-gold: #b79a63;
+  /* Presentation palette: white, blue light, bold ink, and restrained navy accents. */
+  --color-background: #f8faff;
+  --color-background-secondary: #e3efff;
+  --color-surface: #ffffff;
+  --color-text: #19213d;
+  --color-muted: #353e5c;
+  --color-text-muted: #6d758f;
+  --color-border: #d6e2f4;
+  --color-navy: #23346f;
+  --color-navy-hover: #19213d;
+  --color-periwinkle: #6477b4;
+  --color-sky: #2388ff;
   --color-risk: #c9744f;
   --color-safe: #6e8773;
 
-  --color-brand-50: #ece8de;
-  --color-brand-100: #e2e2d9;
-  --color-brand-300: #a8b1a7;
-  --color-brand-400: #768778;
-  --color-brand-500: #314a59;
-  --color-brand-600: #213542;
-  --color-brand-700: #1e303d;
-  --color-brand-800: #182a34;
-  --color-brand-900: #172832;
-  --color-brand-950: #12212a;
+  --color-brand-50: #f8faff;
+  --color-brand-100: #e3efff;
+  --color-brand-200: #c3ddff;
+  --color-brand-300: #b4b9c9;
+  --color-brand-400: #6477b4;
+  --color-brand-500: #2370ff;
+  --color-brand-600: #23346f;
+  --color-brand-700: #0f2678;
+  --color-brand-800: #19213d;
+  --color-brand-900: #002a79;
+  --color-brand-950: #19213d;
 
-  --color-accent: #b79a63;
-  --color-accent-hover: #a88b55;
-  --color-accent-soft: #f2e9d6;
-  --color-accent-ink: #7d602e;
+  --color-accent: #c3ddff;
+  --color-accent-hover: #e3efff;
+  --color-accent-soft: #e3efff;
+  --color-accent-ink: #0f2678;
   --color-danger: #a14b29;
   --color-warning: #7d602e;
   --color-success: #49644e;
 
-  --radius-card: 1.5rem;
-  --radius-control: 0.75rem;
-  --shadow-card: 0 1px 2px rgb(30 44 53 / 2%), 0 12px 36px rgb(30 44 53 / 4%);
-  --shadow-product: 0 4px 8px rgb(30 44 53 / 3%), 0 24px 64px rgb(30 44 53 / 8%);
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+  --shadow-card: 0 2px 8px rgb(25 33 61 / 3%);
+  --shadow-product: 0 2px 6px rgb(25 33 61 / 3%), 0 20px 48px rgb(35 112 255 / 7%);
   --spacing-section: clamp(88px, 10vw, 160px);
   --spacing-feature: clamp(96px, 12vw, 180px);
+}
+
+:root {
+  /* One gentle transition per large feature surface; controls stay solid. */
+  --section-gradient: linear-gradient(
+    120deg,
+    var(--color-surface) 0%,
+    #f1f7ff 65%,
+    var(--color-brand-100) 100%
+  );
 }
 
 @layer base {
@@ -88,7 +99,7 @@
 
   ::selection {
     color: var(--color-text);
-    background: var(--color-brand-50);
+    background: var(--color-brand-200);
   }
 
   button,

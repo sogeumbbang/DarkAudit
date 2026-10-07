@@ -59,17 +59,3 @@ export function LandingPhoto({
     />
   );
 }
-
-export function PhotoCredits() {
-  return (
-    <div className="lp-photo-credits">
-      <span>Photography</span>
-      {Object.values(photographs).map((photo) => (
-        <a href={photo.source} key={photo.source} target="_blank" rel="noreferrer">
-          {photo.photographer} <span className="sr-only">사진 원본 (새 창)</span>
-        </a>
-      ))}
-      <span>/ Unsplash</span>
-    </div>
-  );
-}

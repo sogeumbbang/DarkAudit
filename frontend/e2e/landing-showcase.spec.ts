@@ -1,5 +1,28 @@
 import { expect, test } from "@playwright/test";
 
+test("landing navigation and floating arrow return to the page top", async ({ page }) => {
+  await page.goto("/landing");
+  await expect(page.locator("h1")).toBeVisible();
+  await expect(page.locator("header").getByRole("link", { name: "진단 시작하기" })).toHaveCount(0);
+  const backToTop = page.getByRole("button", { name: "페이지 맨 위로" });
+  await expect(backToTop).toHaveCount(0);
+
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    await page.emulateMedia({ reducedMotion });
+    await page.locator(".lp-closing").scrollIntoViewIfNeeded();
+    await expect(backToTop).toBeInViewport();
+    await backToTop.focus();
+    await page.keyboard.press("Enter");
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.locator("h1")).toBeFocused();
+    await expect(backToTop).toHaveCount(0);
+  }
+
+  const menu = page.getByRole("button", { name: "랜딩 메뉴 열기" });
+  if (await menu.isVisible()) await menu.click();
+  await expect(page.getByRole("navigation", { name: "랜딩 메뉴" })).toBeVisible();
+});
+
 test("feature tabs change the preview and support keyboard navigation", async ({
   page,
 }, testInfo) => {

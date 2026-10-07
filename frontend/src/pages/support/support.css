@@ -1,6 +1,6 @@
 .audit-records {
   border: 1px solid var(--color-border);
-  border-radius: 24px;
+  border-radius: 16px;
   box-shadow: none;
   background: var(--color-surface);
 }
@@ -21,7 +21,7 @@
   height: 132px;
   display: grid;
   place-items: center;
-  background: var(--workspace-sage);
+  background: var(--workspace-light-blue);
   border-radius: 12px;
   padding: 12px;
   overflow: hidden;
@@ -35,7 +35,7 @@
   height: 108px;
   object-fit: contain;
   border-radius: 3px;
-  box-shadow: 0 3px 10px #18313f14;
+  box-shadow: 0 3px 10px #19213d14;
 }
 .audit-record-row > div:nth-child(2) > a {
   font-size: 19px;
@@ -102,7 +102,7 @@
   font-weight: 450;
   line-height: 1;
   letter-spacing: -0.07em;
-  color: #59727c;
+  color: var(--color-muted);
 }
 .guideline-category-heading h2 {
   font-size: 26px;
@@ -125,18 +125,18 @@
   font-weight: 550;
 }
 .guideline-entries h3 button[aria-expanded="true"] {
-  background: #f8f6f0;
+  background: var(--color-background);
 }
 .guideline-entries div[role="region"] {
   padding-top: 12px;
 }
 .guideline-checkpoint {
   padding: 20px;
-  background: var(--workspace-sage);
+  background: var(--workspace-light-blue);
   border-radius: 12px;
 }
 .guideline-source {
-  background: #e9dfc9;
+  background: var(--color-brand-100);
   padding: 28px;
   border-radius: 20px;
 }
@@ -167,7 +167,7 @@
   border-radius: 14px;
 }
 .support-surface dl > div:nth-child(2) {
-  background: var(--workspace-sage);
+  background: var(--workspace-light-blue);
 }
 @media (max-width: 1199px) {
   .audit-record-row {

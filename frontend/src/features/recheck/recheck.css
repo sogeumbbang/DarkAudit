@@ -1,14 +1,12 @@
 /* Recheck flow: run a revision, read its result, compare with the original. */
 .rc {
-  --rc-navy: #18313f;
-  --rc-gold: #b89252;
-  --rc-gold-ink: #7d5c2b;
-  --rc-bg: #f5f3ed;
+  --rc-navy: var(--color-navy);
+  --rc-bg: var(--color-background);
   /* Surfaces follow the workspace theme so these screens match the result screen. */
-  --rc-card: var(--color-surface, #fffdfc);
-  --rc-line: var(--color-border, #e3e6e4);
-  --rc-muted: var(--color-muted, #526168);
-  --rc-blue: #dde9ed;
+  --rc-card: var(--color-surface);
+  --rc-line: var(--color-border);
+  --rc-muted: var(--color-muted);
+  --rc-blue: var(--color-brand-200);
   --rc-resolved-bg: #e1e6dc;
   --rc-resolved-line: #c9d3c4;
   --rc-resolved-ink: #3f5a40;
@@ -203,7 +201,7 @@ a.rc-step:hover {
   font-weight: 700;
 }
 
-/* Navy action bar */
+/* Light blue action bar */
 .rc-bar {
   display: flex;
   flex-wrap: wrap;
@@ -212,9 +210,9 @@ a.rc-step:hover {
   gap: 1rem;
   margin-top: 1.25rem;
   border-radius: 1rem;
-  background: var(--rc-navy);
+  background: var(--rc-blue);
   padding: 1.1rem 1.25rem;
-  color: #fff;
+  color: var(--rc-navy);
 }
 .rc-bar strong {
   display: block;
@@ -223,7 +221,7 @@ a.rc-step:hover {
 .rc-bar span {
   display: block;
   margin-top: 0.25rem;
-  color: rgb(255 255 255 / 75%);
+  color: var(--rc-muted);
   font-size: 0.8rem;
 }
 .rc-gold-btn {
@@ -233,13 +231,13 @@ a.rc-step:hover {
   justify-content: center;
   gap: 0.4rem;
   border-radius: 0.75rem;
-  background: var(--rc-gold);
+  background: var(--rc-navy);
   padding: 0 1.25rem;
-  color: var(--rc-navy);
+  color: white;
   font-weight: 700;
 }
 .rc-gold-btn:hover {
-  background: #c9a465;
+  background: var(--color-navy-hover);
 }
 .rc-gold-btn:disabled {
   cursor: not-allowed;
@@ -252,7 +250,7 @@ a.rc-step:hover {
   border-radius: 0.75rem;
   background: var(--rc-warn-bg);
   padding: 0.9rem 1rem;
-  color: var(--rc-gold-ink);
+  color: var(--color-warning);
   font-size: 0.875rem;
   line-height: 1.6;
 }
@@ -447,9 +445,9 @@ a.rc-step:hover {
   gap: 1rem;
   margin-top: 1.25rem;
   border-radius: 1rem;
-  background: var(--rc-navy);
+  background: var(--section-gradient);
   padding: 1.25rem;
-  color: #fff;
+  color: var(--rc-navy);
 }
 @media (min-width: 900px) {
   .rc-band {
@@ -458,7 +456,7 @@ a.rc-step:hover {
   }
 }
 .rc-band p:first-child {
-  color: rgb(255 255 255 / 75%);
+  color: var(--rc-muted);
   font-size: 0.8rem;
 }
 .rc-band-value {
@@ -473,7 +471,7 @@ a.rc-step:hover {
 }
 .rc-band-cells div {
   border-radius: 0.75rem;
-  background: rgb(255 255 255 / 8%);
+  background: var(--rc-card);
   padding: 0.6rem;
   text-align: center;
 }
@@ -482,7 +480,7 @@ a.rc-step:hover {
   font-size: 1.35rem;
 }
 .rc-band-cells span {
-  color: rgb(255 255 255 / 75%);
+  color: var(--rc-muted);
   font-size: 0.75rem;
 }
 
@@ -541,7 +539,7 @@ dialog.rc-dialog {
   color: var(--rc-navy);
 }
 dialog.rc-dialog::backdrop {
-  background: rgb(16 40 51 / 45%);
+  background: rgb(25 33 61 / 45%);
 }
 
 @media print {

@@ -90,7 +90,9 @@ export function WorkflowSection() {
     >
       <div className="lp-process-story">
         <div className="lp-process-copy">
-          <p className="lp-eyebrow">02 / FROM SCREEN TO DECISION</p>
+          <p className="lp-eyebrow">
+            <span className="lp-chapter-number">02</span> 검토 과정
+          </p>
           <h2 id="process-title">
             화면 입력부터 <br />
             검토 결과 관리까지
