@@ -55,6 +55,7 @@ it("includes all findings, saved decisions and incomplete analysis in the report
   expect(screen.getByText(/검토 후보 · 이미지 중심/)).toBeVisible();
   expect(screen.getByText(/미지원 규칙 2개/)).toBeVisible();
   expect(screen.getByText(/재검증 판정 보류/)).toBeVisible();
+  expect(screen.queryByText(/탐지 0건이 전체 화면과 규칙에/)).not.toBeInTheDocument();
   expect(screen.getAllByRole("img", { name: /분석 대상 화면$/ })).toHaveLength(
     audit.screens.length,
   );
@@ -141,4 +142,5 @@ it("does not mistake an empty result for complete coverage", () => {
   render(<AuditReport audit={audit} onClose={vi.fn()} />);
   expect(screen.getByText(/탐지된 항목이 없습니다. 분석 범위/)).toBeInTheDocument();
   expect(screen.getByText(/분석 완료 여부를 확인/)).toBeInTheDocument();
+  expect(screen.getByText(/탐지 0건이 전체 화면과 규칙에/)).toBeInTheDocument();
 });
