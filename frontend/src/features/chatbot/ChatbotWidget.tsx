@@ -100,9 +100,10 @@ function ChatbotPanel() {
             금융위 다크패턴 가이드라인(2025.12)과 DarkAudit 규칙(DA-01~15)을 근거로 답합니다.
           </p>
         </div>
+        {/* The 44px hit area is offset so the icon sits on the title line and the right edge. */}
         <button
           aria-label="챗봇 닫기"
-          className="rounded-control p-1.5 text-muted hover:bg-black/5"
+          className="-my-2 -mr-3 flex items-center justify-center rounded-control text-muted hover:bg-black/5"
           onClick={() => setOpen(false)}
         >
           <X size={18} />
@@ -111,7 +112,7 @@ function ChatbotPanel() {
 
       <div
         aria-live="polite"
-        className="workspace-chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4"
+        className="workspace-chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5"
         ref={listRef}
       >
         {messages.length === 0 && (
@@ -161,7 +162,7 @@ function ChatbotPanel() {
       </div>
 
       <form
-        className="border-t border-border px-4 py-3"
+        className="border-t border-border px-4 py-3 sm:px-5"
         onSubmit={(event) => {
           event.preventDefault();
           void send(draft);
