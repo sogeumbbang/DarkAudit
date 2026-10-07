@@ -124,7 +124,7 @@ class RegressedFindingTest(IsolatedApiTestCase):
                         run.analysis_summary = {**run.analysis_summary, "complete": False}
                     service._apply_regression(session, run)
                     session.commit()
-                    self.assertEqual(audit.runs[0].findings[0].status, FindingStatus.OPEN)
+                    self.assertIsNone(audit.runs[0].findings[0].comparison_status)
                 body = self.client.get(f"/api/v1/audits/{audit_id}/regression").json()
                 self.assertEqual(body["resolved"], [])
                 self.assertEqual(len(body["pending"]), 1)
@@ -137,4 +137,4 @@ class RegressedFindingTest(IsolatedApiTestCase):
         self.client.get(f"/api/v1/audits/{audit_id}/regression?from=1&to=1")
         with service.SessionLocal() as session:
             audit = session.get(Audit, int(audit_id.split("-")[-1]))
-            self.assertEqual(audit.runs[0].findings[0].status, FindingStatus.RESOLVED)
+            self.assertEqual(audit.runs[0].findings[0].comparison_status, FindingStatus.RESOLVED)

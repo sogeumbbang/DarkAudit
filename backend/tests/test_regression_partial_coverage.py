@@ -51,12 +51,12 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             self.assertEqual({r.rule_id for r in result.resolved}, set(RULES) - {"DA-15"})
             self.assertEqual([r.rule_id for r in result.pending], ["DA-15"])
             self.assertEqual(result.resolved_ratio, 1)
-            self.assertTrue(all(f.status == FindingStatus.OPEN for f in audit.runs[0].findings))
+            self.assertTrue(all(f.comparison_status is None for f in audit.runs[0].findings))
             service._apply_regression(session, audit.runs[-1])
             self.assertEqual(audit.runs[-1].analysis_summary["regression"]["pendingCount"], 1)
             self.assertFalse(audit.runs[-1].analysis_summary["complete"])
             self.assertEqual(
-                {f.rule_id for f in audit.runs[0].findings if f.status == FindingStatus.RESOLVED},
+                {f.rule_id for f in audit.runs[0].findings if f.comparison_status == FindingStatus.RESOLVED},
                 set(RULES) - {"DA-15"},
             )
             session.commit()
@@ -88,7 +88,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                     report = compare(session, audit.id, 1, 2, update_statuses=True)
                     self.assertEqual({r.rule_id for r in report.pending}, {"DA-04", "DA-15"})
                     self.assertEqual(len(report.resolved), 3)
-                    self.assertEqual(next(f for f in audit.runs[0].findings if f.rule_id == "DA-04").status, FindingStatus.OPEN)
+                    self.assertIsNone(next(f for f in audit.runs[0].findings if f.rule_id == "DA-04").comparison_status)
 
     def test_other_warnings_collection_gaps_fake_and_scope_changes_block_all(self):
         for defect in ("mock", "warning", "unnamed_drop", "batch_warning", "fake_provider", "missing_provider", "missing_batch", "extra_screen",
@@ -126,7 +126,7 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
                 self.assertFalse(report.resolved)
                 self.assertEqual(len(report.pending), 5)
                 self.assertIsNone(report.resolved_ratio)
-                self.assertTrue(all(f.status == FindingStatus.OPEN for f in audit.runs[0].findings))
+                self.assertTrue(all(f.comparison_status is None for f in audit.runs[0].findings))
 
     def test_one_inconclusive_rule_does_not_block_other_verified_rules(self):
         with service.SessionLocal() as session:
@@ -165,9 +165,9 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             self.assertEqual({r.rule_id for r in report.pending}, {"DA-03", "DA-07"})
             self.assertEqual({r.rule_id for r in report.resolved}, {"DA-04", "DA-12", "DA-15"})
             self.assertEqual(report.resolved_ratio, 1)
-            statuses = {f.rule_id: f.status for f in audit.runs[0].findings}
+            statuses = {f.rule_id: f.comparison_status for f in audit.runs[0].findings}
             self.assertEqual(statuses["DA-04"], FindingStatus.RESOLVED)
-            self.assertEqual(statuses["DA-03"], FindingStatus.OPEN)
+            self.assertIsNone(statuses["DA-03"])
 
     def test_dropped_semantic_findings_hold_back_only_the_dropped_rule(self):
         # The URL path drops a DA-07 semantic finding from the revised run; the
@@ -241,4 +241,4 @@ class PartialCoverageRegressionTest(IsolatedApiTestCase):
             report = compare(session, audit.id, 2, 3, update_statuses=True)
             self.assertEqual([r.rule_id for r in report.regressed], ["DA-04"])
             self.assertFalse(report.new)
-            self.assertEqual(run.findings[0].status, FindingStatus.REGRESSED)
+            self.assertEqual(run.findings[0].comparison_status, FindingStatus.REGRESSED)

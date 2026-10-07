@@ -70,11 +70,11 @@ class Severity(str, enum.Enum):
 
 class FindingStatus(str, enum.Enum):
     """
-    사용자 검토 상태와 회차 간 비교 결과.
-      OPEN      이번 회차에서 발견됨
+    사용자 검토 상태(Finding.status)와 회차 간 비교 결과(Finding.comparison_status).
+      OPEN      미검토 / 다음 회차에도 남음
       REVIEWING 사용자가 검토 중으로 저장함
-      RESOLVED  이전 회차에 있었으나 이번 회차에서 사라짐
-      REGRESSED 해결됐던 문제가 다시 나타남
+      RESOLVED  사용자가 해결로 표시함 / 다음 회차에서 사라짐
+      REGRESSED 해결됐던 문제가 다시 나타남 (비교 결과 전용)
     """
     OPEN = "OPEN"
     REVIEWING = "REVIEWING"
@@ -253,8 +253,13 @@ class Finding(Base):
     mitigated_by: Mapped[list | None] = mapped_column(JSON, default=list)
     mitigated: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # 담당자가 표시한 검토 상태. 회차 비교는 이 값을 바꾸지 않는다.
     status: Mapped[FindingStatus] = mapped_column(
         Enum(FindingStatus), default=FindingStatus.OPEN
+    )
+    # 다음 회차와 비교한 시스템 판정(RESOLVED·OPEN·REGRESSED). 재발 판정의 근거로 남긴다.
+    comparison_status: Mapped[FindingStatus | None] = mapped_column(
+        Enum(FindingStatus, native_enum=False, length=16), nullable=True
     )
     decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     decision_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
