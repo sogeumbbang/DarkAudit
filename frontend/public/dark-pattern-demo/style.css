@@ -543,8 +543,20 @@ body[data-variant="revised"] button.secondary {
   font-size: 13px;
   font-weight: 700;
 }
-body[data-variant="revised"] .illustration {
-  height: 130px;
+.terms {
+  margin: 17px 0 0;
+}
+.terms strong {
+  display: block;
+  font-size: 12px;
+  color: var(--ink);
+}
+.terms .features {
+  margin: 4px 0 0;
+}
+.terms .features li {
+  margin-top: 6px;
+  color: var(--ink);
 }
 footer {
   text-align: center;

@@ -44,6 +44,15 @@ for (const variant of ["partial", "revised"]) {
         : id === "travel"
           ? "USD 평일 10만 원 이하 100%"
           : "점수 상승은 보장하지 않습니다";
+    if (id === "pet") {
+      // Qualify the headline rate and surface its limits before the price.
+      offer.metricLabel = "일부 상해 최대 90% · 질병 50%";
+      offer.terms = {
+        title: "보장 조건",
+        items: ["일부 상해만 90%", "질병 50%", "자기부담금 3만 원", "기존·슬개골 질환 제외"],
+      };
+      delete offer.fine;
+    }
     choice.cta = "동의하고 계속";
     choice.secondary = "동의하지 않고 계속";
     pressure.kind = "choice";
