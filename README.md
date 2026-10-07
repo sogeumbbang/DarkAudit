@@ -1,31 +1,160 @@
 # DarkAudit
 
-**금융상품 화면에서 소비자의 선택을 왜곡할 수 있는 요소를 찾고, 수정 전후까지 확인하는 AI 검토 서비스입니다.**
+**금융상품 온라인 가입 화면의 다크패턴을 출시 전에 점검하는 AI QA 도구**
 
-보험 가입, 예적금 신청, 옵션 선택처럼 여러 단계로 이어지는 화면을 등록하면 검토가 필요한 위치와 이유, 관련 기준, 개선 방향을 함께 보여줍니다. 기획자와 디자이너는 화면을 고칠 근거를 얻고, QA와 소비자보호 담당자는 검토 결과와 수정 결정을 기록할 수 있습니다.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](requirements.txt)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)](backend/api/main.py)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](frontend/package.json)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](frontend/package.json)
+[![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?logo=playwright&logoColor=white)](ai/browser/playwright_driver.py)
+[![Unit tests](https://img.shields.io/badge/unit%20tests-428%2F429%20passed-brightgreen)](#테스트)
 
-예를 들어 선택 동의가 처음부터 체크되어 있거나, 거절 버튼이 잘 보이지 않거나, 마지막 단계에서 비용이 추가되는 상황을 점검합니다. 한 화면의 문구뿐 아니라 등록된 화면의 순서와 선택지 사이의 관계도 살펴봅니다.
+화면 이미지나 URL, Figma 시안, Android 앱을 넣으면 검토가 필요한 위치와 이유, 관련 기준, 개선 방향을 화면 위에 표시합니다. 수정본을 다시 검사하면 문제가 실제로 사라졌는지도 비교합니다. 2026 금융 AI Challenge 출품작입니다.
 
-2026 금융 AI Challenge 출품작입니다. 현재는 초기 버전으로, **15개 다크패턴 유형에 대한 설명을 제공하고 그중 5개 유형을 자동 탐지**합니다. 결과는 담당자의 판단을 돕는 검토 자료입니다.
+**[데모 사이트 바로가기 →](https://dark-audit-seven.vercel.app/landing)** · 시연 서버 분석 모델: `gpt-5.6-luna`
 
-[사용 방법](#사용-방법) · [자동 탐지 범위](#어떤-문제를-찾나요) · [결과 해석](#결과를-어떻게-읽나요) · [성능과 한계](#현재-성능과-한계) · [로컬 실행](#로컬에서-실행하기)
+![결과 화면: 화면 위 탐지 위치와 항목별 관찰·기준·개선안](docs/images/result-finding.png)
 
-## 누구에게 도움이 되나요?
+<sub>로컬에서 실제 모델로 분석한 데모 진단(모루 펫케어 원본)의 결과 화면입니다. 왼쪽 화면의 번호가 오른쪽 항목과 연결됩니다.</sub>
 
-| 사용자 | 활용 방법 |
-| --- | --- |
-| 서비스 기획자·PM | 가입 과정에서 소비자가 혼동하거나 의도치 않은 선택을 할 수 있는 지점을 찾아 요구사항에 반영합니다. |
-| UX/UI 디자이너 | Figma 시안이나 화면 이미지에서 버튼의 강조 차이, 안내 문구의 가독성, 동의 표현을 검토합니다. |
-| 개발자·QA 담당자 | 구현된 웹사이트나 Android 앱을 점검하고, 수정본을 재검사해 문제가 남아 있는지 확인합니다. |
-| 소비자보호·컴플라이언스 담당자 | 화면 근거와 적용 기준을 확인하고 수정 결정 메모와 PDF 보고서를 검토 자료로 남깁니다. |
+> [!NOTE]
+> DarkAudit은 법령 위반을 판정하지 않습니다. 금융위 가이드라인 기준으로 추가 검토가 필요한 위험을 사전에 식별합니다.
 
-## 어떤 문제를 찾나요?
+## 왜 필요한가
 
-다크패턴은 화면 구성이나 표현을 통해 소비자가 충분히 이해하고 자유롭게 선택하기 어렵게 만드는 설계입니다. DarkAudit은 저장소에 정리한 「온라인 금융상품 판매 관련 다크패턴 가이드라인」 기반 규칙을 사용합니다.
+- 금융위원회·금융감독원은 「온라인 금융상품 판매 관련 다크패턴 가이드라인」을 2025년 12월 발표했고, 2026년 4월부터 시행합니다.
+- 가이드라인은 다크패턴을 **4개 범주(오도형·방해형·압박형·편취유도형) 15개 유형**으로 나눕니다. 가입 과정은 여러 화면에 걸쳐 있어 사람이 매번 전수 점검하기 어렵습니다.
+- DarkAudit은 이 기준으로 화면을 먼저 걸러, 기획·디자인·QA·소비자보호 담당자가 출시 전에 근거를 보고 고칠 수 있게 합니다.
 
-현재 자동 점검하는 항목은 다음과 같습니다. 아래 예시는 검토할 상황을 설명하며, 실제 판정에는 주변 문구와 선택 맥락을 함께 사용합니다.
+## 주요 기능
 
-| 자동 탐지 유형 | 이런 상황을 살펴봅니다 | 검토할 개선 방향 |
+| 기능 | 설명 | 관련 모듈 |
+| --- | --- | --- |
+| 4가지 입력 | 스크린샷 1~6장, 공개 URL 캡처(빠른 캡처·스마트 탐색), Figma 시안, Android APK | `backend/api/main.py`, `ai/browser/`, `backend/api/figma_import.py`, `backend/api/android_runner.py` |
+| 규칙 후보 탐지 | DOM의 선택 상태·글자 크기·색 대비·가격 등을 코드로 검사해 후보를 만듭니다(URL 경로) | `backend/app/rule_engine/`, `ai/pipeline/rule_candidates.py` |
+| LLM 의미 검증 | 후보를 유지·기각하고 규칙별 검사 결과(`rule_assessments`)를 남깁니다 | `ai/pipeline/baseline.py`, `ai/providers/` |
+| 근거 위치 매칭 | OCR 텍스트와 화면 후보로 탐지 위치(bbox)를 보정합니다 | `ai/vision/` |
+| 결과 리포트 | 위치·관찰·기준·검토 이유·개선안을 보여주고 PDF로 저장합니다 | `frontend/src/pages/overview/`, `frontend/src/features/audit-report/` |
+| 검토 기록 | 항목별 검토 상태(미검토·검토 중·해결됨)와 수정 결정 메모를 남깁니다 | `PATCH /api/v1/findings/{id}`, `frontend/src/features/finding-review/` |
+| 전후 비교 | 같은 진단에 수정본을 올려 해결·유지·개선·신규·재발·보류로 나누고 해결률을 계산합니다 | `backend/app/regression.py`, `frontend/src/features/recheck/` |
+| 가이드라인 챗봇 | 저장된 가이드라인 문서와 규칙을 검색해 답합니다(RAG) | `ai/rag/`, `backend/api/chat.py` |
+
+## 사용 흐름
+
+```mermaid
+flowchart LR
+    A["화면 입력<br/>스크린샷 · URL · Figma · APK"] --> B["화면 · 텍스트 · UI 요소 추출<br/>OCR · DOM"]
+    B --> C["Rule Engine<br/>후보 탐지"]
+    C --> D["LLM<br/>의미 검증"]
+    B -. "스크린샷 · Figma · APK<br/>(후보 없이)" .-> D
+    D --> E["근거 매칭<br/>위치 보정"]
+    E --> F["리포트<br/>위치 · 근거 · 개선안"]
+    F --> G["수정본 재업로드"]
+    G --> H["전후 비교<br/>해결 · 유지 · 신규 · 재발"]
+```
+
+Rule Engine 후보는 화면 구조(DOM)를 얻을 수 있는 URL 경로에서 만듭니다. 스크린샷·Figma·APK는 후보 없이 LLM이 이미지를 보고 판단합니다(`service.analyze_run_screens`, `allow_visual_fallback=True`).
+
+## 시스템 아키텍처
+
+```mermaid
+flowchart TB
+    subgraph FE["frontend/ — React + Vite"]
+        UI["pages · features<br/>등록 · 결과 · 전후 비교 · 보고서"]
+    end
+    subgraph API["backend/api/ — FastAPI"]
+        R["main.py<br/>REST 라우트"]
+        S["service.py<br/>분석 오케스트레이션"]
+    end
+    subgraph AN["분석"]
+        RE["backend/app/rule_engine<br/>규칙 후보"]
+        P["ai/pipeline<br/>LLM 검증 · 근거 계약"]
+        V["ai/vision<br/>OCR · 위치 보정"]
+        B["ai/browser<br/>Playwright 캡처"]
+        IMP["figma_import.py · android_runner.py<br/>Figma · APK 가져오기"]
+    end
+    subgraph ST["저장소 — data/"]
+        DB[("SQLAlchemy · SQLite<br/>darkaudit.db · jobs.sqlite3")]
+    end
+    LLM["OpenAI API<br/>DARKAUDIT_MODEL"]
+
+    UI <--> R
+    R --> S
+    R --> IMP
+    IMP --> S
+    S --> B
+    S --> RE
+    S --> P
+    P --> V
+    P <--> LLM
+    S <--> DB
+```
+
+- 분석 작업은 FastAPI `BackgroundTasks`로 실행되고, 무거운 작업은 한 번에 하나씩 처리합니다(`service.py`의 `_HEAVY_WORK`).
+- 작업 상태는 `data/jobs.sqlite3`에 저장됩니다. 서버가 재시작되면 진행 중이던 작업은 실패로 표시됩니다(`backend/api/jobs.py`의 `recover()`).
+- 진단 이미지는 서명된 `/artifacts` URL로만 내려갑니다(`backend/api/access.py`).
+
+## 하이브리드 탐지 파이프라인
+
+Rule Engine은 **놓치지 않도록(재현율)** 넓게 후보를 만들고, LLM은 **잘못 잡은 것을 걸러(정밀도)** 판정합니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant D as 화면 · DOM
+    participant RE as Rule Engine
+    participant O as OCR
+    participant L as LLM
+    participant G as 근거 매칭
+    participant J as 최종 판정
+    D->>RE: 선택 상태 · 글자 크기 · 색 · 가격
+    Note over RE: 재현율 담당 — 후보를 넓게 생성
+    RE->>L: 후보 목록 (DA-03/04/07/12/15)
+    D->>O: 화면 이미지
+    O->>L: 텍스트 앵커 (위치 · 문구)
+    Note over L: 정밀도 담당 — 후보 KEEP/REJECT,<br/>규칙별 검사 결과, 신뢰도 0.70 미만 제외
+    L->>G: 판정 + 근거 문구 · 위치
+    G->>G: OCR 퍼지 매칭 · 화면 후보로 bbox 보정
+    G->>J: KEEP 후보 · 근거 계약을 통과한 판정 저장
+    Note over J: 근거 부족 규칙은 버리지 않고<br/>insufficient_evidence로 표시
+```
+
+| 구성 (2026-10-02, `gpt-5.6-luna`) | 검토 대상 | 오탐 | Precision | Recall | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rule Engine 단독 | 34 | 18 | 0.47 | 1.00 | 0.64 |
+| **Rule Engine 후보 + LLM 검증** | **16.7** | **0.7** | **0.96** | **1.00** | **0.98** |
+
+같은 재현율을 유지하면서 LLM 검증이 오탐을 18건에서 1건 미만으로 걸러 정밀도를 높입니다. 측정 조건은 [성능](#성능)을 참고하세요.
+
+## 지원 유형
+
+규칙 정의는 [`rules/dark_pattern_rules.yaml`](rules/dark_pattern_rules.yaml)(15개 유형, `mvp_priority` 포함)에 있습니다. 자동 탐지 범위는 코드의 `MVP_RULE_IDS`(`ai/pipeline/baseline.py`) 5개입니다.
+
+| 범주 | ID | 유형 | 상태 | 우선순위 |
+| --- | --- | --- | --- | --- |
+| 오도형 | DA-01 | 설명절차의 과도한 축약 | ⬜ 미지원 | P2 |
+| 오도형 | DA-02 | 속임수 질문 | ⬜ 미지원 | P1 |
+| 오도형 | DA-03 | 잘못된 계층구조 | ✅ 자동 탐지 | P0 |
+| 오도형 | DA-04 | 특정옵션의 사전선택 | ✅ 자동 탐지 | P0 |
+| 오도형 | DA-05 | 허위광고 및 기만적인 유인행위 | ⬜ 미지원 | P1 |
+| 방해형 | DA-06 | 취소·탈퇴 등의 방해 | ⬜ 미지원 | P1 |
+| 방해형 | DA-07 | 숨겨진 정보 | ✅ 자동 탐지 | P0 |
+| 방해형 | DA-08 | 가격비교 방해 | ⬜ 미지원 | P2 |
+| 방해형 | DA-09 | 클릭 피로감 유발 | ⬜ 미지원 | P1 |
+| 압박형 | DA-10 | 계약과정 중 기습적 광고 | ⬜ 미지원 | P2 |
+| 압박형 | DA-11 | 반복간섭 | ⬜ 미지원 | P1 |
+| 압박형 | DA-12 | 감정적 언어사용 | ✅ 자동 탐지 | P0 |
+| 압박형 | DA-13 | 감각조작 | ⬜ 미지원 | P0 |
+| 압박형 | DA-14 | 다른 소비자의 활동 알림 | ⬜ 미지원 | P1 |
+| 편취유도형 | DA-15 | 순차공개 가격책정 | ✅ 자동 탐지 | P0 |
+
+- **검토 기준** 화면과 챗봇에서는 15개 유형 전체의 설명을 볼 수 있습니다.
+- DA-13은 Rule Engine에 검사 함수(`motion_emphasis`)가 있지만 파이프라인이 지원 5개로 실행 범위를 제한해 결과에 나오지 않습니다.
+
+<details>
+<summary>자동 탐지 5개 유형이 살펴보는 상황</summary>
+
+| 유형 | 이런 상황을 살펴봅니다 | 검토할 개선 방향 |
 | --- | --- | --- |
 | **잘못된 계층구조** `DA-03` | 가입·동의는 크고 선명하지만 거절·다른 선택지는 작고 흐리게 표시되어 있나요? | 대립하는 선택지를 비슷하게 인지할 수 있도록 크기와 강조 수준을 조정합니다. |
 | **특정옵션의 사전선택** `DA-04` | 선택 동의나 부가 옵션이 사용자가 고르기 전에 체크되어 있나요? | 초기 선택 상태를 검토하고 사용자가 직접 선택하도록 바꿉니다. |
@@ -33,192 +162,130 @@
 | **감정적 언어사용** `DA-12` | 거절 버튼에 ‘혜택을 포기할게요’처럼 손해나 죄책감을 자극하는 표현이 있나요? | 가입과 거절을 중립적으로 설명하는 문구로 바꿉니다. |
 | **순차공개 가격책정** `DA-15` | 처음 안내한 가격·이율과 마지막 조건이 달라지거나, 비용이 뒤늦게 나타나나요? | 같은 상품의 단계별 조건을 비교하고 비용과 변동 조건의 공개 시점을 검토합니다. |
 
-**검토 기준** 화면에서는 4개 범주·15개 유형 전체를 읽을 수 있습니다. 취소·탈퇴 방해, 허위 광고 등 나머지 10개 유형은 현재 자동 탐지 범위에 포함되지 않습니다. 전체 규칙은 [규칙 정의](rules/dark_pattern_rules.yaml)에 있습니다.
+</details>
 
-## 무엇을 등록할 수 있나요?
+## 성능
 
-준비된 자료와 검토하려는 단계에 맞춰 네 가지 입력 중 하나를 선택합니다.
+**출처:** [docs/eval-results.md](docs/eval-results.md) §15.4 (측정 과정 §15.3)
 
-| 입력 방법 | 이럴 때 사용하세요 | 준비할 자료와 조건 |
-| --- | --- | --- |
-| **스크린샷** | 로그인 뒤 화면이나 직접 확인한 가입 과정을 점검할 때 | PNG·JPG·JPEG·WEBP 이미지 **1~6장**, 파일당 **10 MiB 이하**. 실제 진행 순서대로 등록합니다. |
-| **웹사이트** | 공개된 금융상품 페이지나 웹 가입 과정을 점검할 때 | 공개 URL. 데스크톱·모바일 화면과 탐색 방식을 선택합니다. |
-| **Figma** | 디자인 도구 Figma에서 만든 시안을 개발 전에 점검할 때 | Figma 파일 또는 대상 영역 링크. 서버에 설정된 Figma 계정의 파일 접근 권한이 필요합니다. |
-| **Android 앱** | 설치 파일로 제공되는 앱의 화면을 점검할 때 | **100 MiB 이하 APK**(Android 앱 설치 파일). 서버의 원격 기기 서비스 BrowserStack 연동이 필요하며 iOS 앱은 지원하지 않습니다. |
-
-### 웹사이트: 빠른 캡처와 스마트 탐색
-
-**빠른 캡처**는 입력한 페이지의 첫 화면과 긴 페이지 내용을 수집합니다. 상품 안내 페이지처럼 한 페이지에 정보가 모여 있을 때 사용할 수 있습니다.
-
-**스마트 탐색**은 AI가 클릭·스크롤하며 화면을 수집합니다. ‘옵션 선택부터 최종 가격 확인 직전까지’처럼 탐색 목표를 적을 수 있고, 수집 과정을 화면에서 확인할 수 있습니다. 별도의 탐색 모델 설정이 필요합니다.
-
-자동 탐색에는 행동과 수집 범위의 제한이 있습니다. 로그인이나 실제 결제·가입 제출까지 대신 완료하는 기능은 제공하지 않습니다. 필요한 단계가 수집되지 않았다면 해당 화면을 직접 캡처해 스크린샷으로 등록할 수 있습니다.
-
-### Figma: 화면 전환 순서와 프레임 선택
-
-**프로토타입 Flow**는 시작점과 연결된 화면의 순서를 중심으로 가져오고, **전체 최상위 프레임**은 주요 프레임을 일괄 가져옵니다. 여기서 Flow는 ‘상품 안내 → 옵션 선택 → 최종 확인’처럼 사용자가 거치는 화면의 흐름을 뜻합니다.
-
-가격 변화처럼 앞뒤 비교가 중요한 항목은 화면 순서가 필요합니다. 연결 정보가 없거나 일부 화면·분기가 수집되지 않으면 결과의 검사 한계에 표시합니다. 사용할 수 있는 프레임 수와 외부 연동 여부는 서버 설정에 따라 달라집니다.
-
-## 사용 방법
-
-### 1. 새 진단을 만듭니다
-
-**새 진단**에서 이름, 상품 유형, 입력 방식을 선택합니다. 이름은 ‘반려동물 보험 가입 화면 1차’처럼 나중에 구분하기 쉽게 작성하면 됩니다.
-
-상품 유형은 보험·예적금·대출·투자·기타 중에서 선택할 수 있습니다. 이 분류는 기록을 구분하기 위한 정보이며, 모든 업권의 정확도가 검증되었다는 의미는 아닙니다.
-
-### 2. 화면을 등록하고 분석을 시작합니다
-
-스크린샷은 실제 사용 순서대로 추가하고 ‘상품 안내’, ‘동의 및 옵션 선택’, ‘최종 확인’처럼 단계명을 붙입니다. 서로 다른 상품의 화면이 섞이면 가격이나 조건을 비교하기 어려워집니다. 등록 후 화면 재정렬 기능은 없으므로 분석 전에 순서를 확인합니다.
-
-URL·Figma·APK를 선택했다면 주소나 파일과 필요한 옵션을 입력한 뒤 **분석 시작하기**를 누릅니다. 진행 화면에서 수집·분석 상태와 오류를 확인할 수 있습니다. 같은 브라우저에서 작업 주소를 다시 열거나 진단 기록의 **검사 과정 보기**로 돌아갈 수도 있습니다.
-
-### 3. 결과에서 화면 근거를 확인합니다
-
-결과 상단의 **검사 범위와 추가 확인 사항**을 먼저 읽습니다. 일부 규칙에 필요한 정보가 부족하거나 화면 수집이 제한되었다면 여기서 확인할 수 있습니다.
-
-이후 화면과 검토 후보를 선택하면 해당 위치가 강조됩니다. 두 버튼의 비교가 필요한 경우에는 관련 선택지도 함께 표시합니다. 각 항목에서 무엇을 관찰했는지, 왜 검토가 필요한지, 어떤 방향으로 수정할 수 있는지 확인합니다.
-
-### 4. 검토 상태와 수정 결정을 남깁니다
-
-항목별로 **검토 시작**, **해결됨으로 표시**를 사용하고 수정 결정 메모를 저장합니다. 예를 들어 ‘선택 동의의 초기 체크를 해제하고 다음 배포에서 확인’처럼 실제 조치와 판단 근거를 적을 수 있습니다.
-
-사용자가 지정하는 처리 상태는 **미검토 → 검토 중 → 해결됨**입니다. ‘해결됨’으로 표시해도 화면이 자동 수정되거나 새 분석이 실행되지는 않습니다. 수정이 반영됐는지 확인하려면 다음 단계의 재검사를 사용합니다.
-
-### 5. 수정본을 재검사하고 전후를 비교합니다
-
-결과 화면에서 **수정본 재검사**를 선택합니다. 현재 일반 재검사 화면은 기존 화면이 **1~6개인 진단**에서 단계별 수정본 스크린샷을 모두 등록하는 방식입니다. 기존 순서와 단계명을 유지하며, 같은 진단에 새 검사 회차가 저장됩니다.
-
-완료 후 **전후 비교 보기**에서 최신 완료 두 회차를 비교합니다. 별도의 ‘새 진단’을 만들면 기존 진단의 다음 회차로 연결되지 않습니다.
-
-| 비교 결과 | 의미 |
+| 항목 | 값 |
 | --- | --- |
-| 해결 | 같은 검사 범위에서 이전 항목이 더 이상 탐지되지 않았습니다. |
-| 유지 | 동일 항목이 다시 탐지됐습니다. |
-| 개선 | 항목은 남아 있지만 심각도가 낮아졌습니다. |
-| 신규 | 이번 회차에서 새로 탐지됐습니다. |
-| 재발 | 과거 해결 기록이 있는 항목이 다시 탐지됐습니다. |
-| 보류 | 이전 항목이 보이지 않지만 해결 여부를 확인할 근거가 부족합니다. |
+| 측정일 · 모델 | 2026-10-02 · `gpt-5.6-luna` (시연 서버와 같은 모델) |
+| 평가셋 | 합성 보험·예적금 가입 흐름 22개(정상·문제 포함 11쌍), 110화면, 정답 16개 flow-규칙 쌍 |
+| 반복 | 같은 데이터셋을 3회 분석, 3회 평균 |
+| 집계 단위 | ‘한 흐름에 특정 규칙이 존재하는가’(flow-규칙), 지원 5개 유형 |
 
-화면 수나 경로가 달라졌거나 필요한 규칙을 검사하지 못했다면 해결 판정이 보류될 수 있습니다. 이때 전체 해결률도 산출을 보류합니다. 현재 비교 화면은 최신 완료 두 회차를 대상으로 하며, 임의 회차 선택이나 전후 이미지 나란히 보기는 지원하지 않습니다.
-
-### 6. 보고서를 저장합니다
-
-**PDF 보고서 출력**에서 미리보기를 열고 **인쇄 / PDF 저장**을 선택합니다. 브라우저의 인쇄 대상에서 ‘PDF로 저장’을 고르면 화면 근거, 탐지 항목, 검사 한계, 저장된 수정 결정이 포함된 보고서를 받을 수 있습니다.
-
-공유할 자료는 PDF로 전달할 수 있습니다. 별도의 팀 공유 링크나 공동 편집 기능은 현재 제공하지 않습니다.
-
-## 결과를 어떻게 읽나요?
-
-### 한 항목에 담기는 정보
-
-| 정보 | 확인할 내용 |
-| --- | --- |
-| 위치와 관찰 | 어느 화면의 어떤 버튼·문구·옵션을 보고 판단했는지 |
-| 관련 기준 | 어떤 다크패턴 유형과 연결되는지 |
-| 검토가 필요한 이유 | 화면의 표현이나 선택 구조가 소비자에게 어떤 영향을 줄 수 있는지 |
-| 개선 권고안 | 문구, 선택 상태, 정보 공개 방식 등을 어떻게 바꿀 수 있는지 |
-| 위험도 | 모델과 규칙이 판단한 우선 검토 수준. 높음·검토 필요·낮음으로 표시 |
-| 검토 상태·수정 결정 | 담당자가 어디까지 검토했고 어떤 조치를 결정했는지 |
-
-위험도는 분석 결과이고, 검토 상태는 담당자의 처리 기록입니다. 예를 들어 위험도가 높은 항목이라도 아직 검토를 시작하지 않았다면 ‘미검토’로 남습니다. 개선 권고는 텍스트로 제공하며 디자인 파일이나 서비스 코드를 자동으로 수정하지 않습니다.
-
-### ‘탐지 없음’과 ‘검사하지 못함’은 다릅니다
-
-| 규칙별 상태 | 읽는 방법 |
-| --- | --- |
-| 탐지 | 검토할 후보를 찾았습니다. 표시된 화면 근거와 설명을 확인합니다. |
-| 미탐지 | 제공된 자료에서 해당 유형을 찾지 못했습니다. |
-| 근거 부족 | 필요한 정보가 부족해 판정하지 못했습니다. 추가 화면이나 직접 확인이 필요합니다. |
-| 미지원 | 현재 자동 탐지 범위 밖이거나 해당 분석에서 지원하지 못한 항목입니다. |
-
-**작업 완료나 탐지 0건만으로 모든 규칙에 문제가 없다고 해석하지 않습니다.** 검사 범위, 근거 부족 항목, 수집 한계를 함께 확인해야 합니다. 이미지 중심 결과에 표시되는 ‘검토 후보’도 담당자가 화면과 맥락을 확인할 대상입니다.
-
-### 예시: 선택 동의가 미리 체크된 가입 화면
-
-이해를 돕기 위한 예시이며 실제 진단 결과는 아닙니다.
-
-‘상품 안내 → 동의 및 옵션 선택 → 최종 확인’ 화면을 등록했다고 가정해 보겠습니다. 분석에서 선택 동의의 사전 체크를 발견하면 해당 체크박스 위치와 `DA-04` 기준, 사용자가 의도하지 않은 동의를 할 수 있다는 설명, 초기 상태를 미선택으로 바꾸라는 개선 방향을 보여줄 수 있습니다.
-
-담당자는 실제 동의 조건을 확인하고 수정 결정을 기록합니다. 이후 체크가 해제된 수정본을 같은 진단에 등록해 재검사합니다. 비교에 필요한 근거가 충분하고 같은 항목이 다시 발견되지 않으면 ‘해결’로 분류됩니다. 화면이 누락돼 확인할 수 없다면 ‘보류’로 남습니다.
-
-## 검토 기준과 챗봇
-
-**검토 기준**에서는 다크패턴 유형의 설명과 확인할 점을 찾아볼 수 있습니다. 앱의 챗봇에는 다음과 같이 물어볼 수 있습니다.
-
-- “선택 동의가 미리 체크되어 있으면 무엇을 확인해야 하나요?”
-- “잘못된 계층구조와 숨겨진 정보는 어떻게 다른가요?”
-- “DA-15를 확인하려면 어떤 단계의 화면이 필요한가요?”
-
-챗봇은 저장된 가이드라인 문서와 규칙을 검색해 답변하고, 관련 유형·확인할 점·출처를 함께 제공합니다. **현재 선택한 진단이나 업로드 화면을 자동으로 읽어 답하는 기능은 아닙니다.** 특정 화면에 대한 판정은 진단 결과에서 확인합니다. 챗봇의 출처와 설명도 검토자가 함께 확인할 수 있습니다.
-
-## 기록은 어디에 남나요?
-
-대시보드와 진단 기록에서 이전 결과를 다시 열어볼 수 있습니다. 계정 구분 없이 **모든 방문자가 같은 공용 작업공간**을 사용합니다. 다른 브라우저·기기에서도 기존 진단과 결과 이미지를 확인하고 재진단·검토·삭제할 수 있습니다. 기록은 서버에 저장되며, 재배포 후에도 보존하려면 영속 디스크가 필요합니다.
-
-진단 정보와 입력 파일은 서버에 보관됩니다. 진단 기록에서 삭제하면 해당 진단과 관련 입력 파일을 삭제합니다. 배포 환경에서는 서버의 영속 저장소가 설정되어 있어야 재시작·재배포 후에도 기록이 유지됩니다.
-
-실제 AI 분석은 화면과 분석 근거를 설정된 외부 모델 API로 전송합니다. Android 입력은 BrowserStack을 통해 수집합니다. 현재 자동 개인정보 마스킹은 제공하지 않으므로, 입력 자료에 포함된 정보와 외부 전송 가능 여부를 확인해 사용합니다.
-
-## 처음이라면 데모로 살펴보세요
-
-**새 진단 → 입력 유형별 데모 체험**에서 준비된 예시로 시작할 수 있습니다. 원본·일부 수정·전체 개선 버전을 통해 ‘원본 검사 → 수정본 검사 → 전후 비교’를 살펴볼 수 있습니다. Figma·APK 데모는 서버의 자료와 외부 연동이 준비된 경우에 사용할 수 있습니다.
-
-데모 자료를 사용하더라도 실제 AI를 연결한 환경에서는 모델 호출이 발생합니다. 로컬의 모의 분석 모드는 API 비용 없이 화면과 작업 흐름을 확인하는 용도이며, 실제 탐지 성능을 보여주는 결과와 구분됩니다.
-
-## 현재 성능과 한계
-
-시연 서버와 같은 모델인 `gpt-5.6-luna`로 **합성 22개 가입 흐름·110화면**(정상·문제 포함 11쌍, 정답 16건)을 3회씩 분석한 결과입니다(2026-10-02). 보험·예적금 예시를 사용한 개발용 평가이며 실제 금융 서비스 전체의 성능을 대표하지 않습니다.
-
-‘규칙 후보 + AI 검증’은 선택 상태나 글자 크기 같은 화면 정보를 코드로 먼저 검사하고, AI가 그 후보의 의미와 근거를 확인하는 방식입니다. URL로 화면 구조를 확보한 경우에 해당합니다. ‘이미지 중심 분석’은 후보 없이 AI가 화면을 보고 판단하는 방식으로, 스크린샷·Figma·APK에 해당합니다.
-
-| 구분 | 검토 대상 | 실제 문제 | 오탐 | 놓친 문제 | 정밀도 | 재현율 | F1 |
+| 구성 | 검토 대상 | 실제 문제 | 오탐 | 놓친 문제 | Precision | Recall | F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 규칙 검사만 사용 | 34 | 16 | 18 | 0 | 0.47 | 1.00 | 0.64 |
-| **규칙 후보 + AI 검증** (3회 평균) | **16.7** | **16.0** | **0.7** | **0.0** | **0.96** | **1.00** | **0.98** |
-| 이미지 중심 분석 (3회 평균) | 51.7 | 14.0 | 37.7 | 0.3 | 0.27 | 0.98 | 0.42 |
+| Rule Engine 단독 | 34 | 16 | 18 | 0 | 0.47 | 1.00 | 0.64 |
+| **Hybrid: 규칙 후보 + LLM** | **16.7** | **16.0** | **0.7** | **0.0** | **0.96** | **1.00** | **0.98** |
+| 이미지 분석: LLM 단독 (스크린샷 경로)\* | 52.7 | 15.7 | 37.0 | 0.3 | 0.30 | 0.98 | 0.46 |
 
-집계 단위는 ‘한 가입 흐름에 특정 규칙이 존재하는가’입니다. 이미지 중심 분석은 2회차에 분석이 실패한 흐름 1개(정답 5건)를 집계에서 제외해 실제 문제 수가 16보다 적습니다. 규칙 검사만 사용하면 문제를 빠짐없이 찾지만 오탐이 많고, AI가 근거를 확인하면 검토 대상이 34건에서 약 17건으로 줄고 오탐은 18건에서 1건 미만으로 줄어듭니다.
+정상 흐름 오탐률(정상 11흐름 × 5규칙 = 55쌍): Rule Engine 20.0%, **Hybrid 0.6%**, 이미지 분석 39.4%. Hybrid 유형별(3회 평균): DA-03 Precision 0.87·Recall 1.00, DA-04·07·12·15 모두 1.00·1.00.
 
-| 추가 지표 | 값 |
-| --- | --- |
-| 정상 흐름 오탐률 (정상 11흐름 × 5규칙 = 55쌍) | 규칙 검사만 20.0% → 규칙 후보 + AI 검증 0.6% / 이미지 중심 분석 40.0% |
-| 유형별 F1 (규칙 후보 + AI 검증) | DA-04·07·12·15 1.00, DA-03 0.92 (정밀도 0.87) |
-| 판정 일관성 (문제 포함·정상 쌍에서 판정이 맞게 갈린 비율) | 0.99 |
-| 흐름당 평균 분석 시간 (5화면, 규칙 후보 + AI 검증) | 18.4초 |
-| 이미지 중심 분석의 위치 적중 (IoU 0.5) | 버튼·체크박스 90.5% (19/21), 안내 문구 73.3% (22/30) |
+<sub>\* 이미지 분석 경로는 Hybrid 프롬프트 변경 전에 측정한 값입니다(§14.4).</sub>
 
-- 분석 시간은 OCR 이후의 분석 구간이며 화면 캡처·업로드·OCR은 포함하지 않습니다. 실제 대기 시간은 서버 사양에 따라 더 깁니다.
-- 이미지 중심 분석은 정상 화면에서도 DA-03·DA-07 후보를 많이 제시합니다. 이 경로의 결과는 확정이 아니라 검토 후보로 읽어야 합니다. 위치를 놓친 사례는 모두 탐지 누락이나 분석 실패였고, 찾은 안내 문구 22건은 모두 위치가 맞았습니다.
-- 정답 16건 중 DA-03·07·12·15는 각 3건뿐이라 한 건의 변화가 재현율을 0.33 움직입니다. 3회는 같은 데이터의 반복 측정이며, 정답 라벨은 생성기가 심은 패턴 기준이라 실제 화면에서는 담당자의 검토가 필요합니다.
-- 근거를 확인하지 못한 규칙은 버리지 않고 ‘근거 부족’으로 표시해 검토자가 직접 확인할 수 있게 합니다.
+> [!WARNING]
+> - 높은 F1이 모든 규칙을 판정했다는 뜻은 아닙니다. 실패·미판정을 미탐으로 반영한 2026-10-06 재측정(다른 모델)에서는 Hybrid가 판정할 수 있었던 flow-규칙 쌍이 69.7%였습니다. 판정하지 못한 규칙은 결과에 ‘근거 부족’으로 표시합니다.
+> - 이미지 분석 경로는 정상 흐름에서도 DA-03·DA-07 후보를 많이 냅니다. 이 경로의 결과는 검토 후보로 읽어야 합니다.
+> - 정답 라벨은 생성기가 심은 패턴 기준인 개발용 합성 데이터이고, DA-03·07·12·15는 정답이 각 3건뿐입니다. 실제 금융 서비스 전체의 성능을 대표하지 않습니다.
 
-측정 과정과 회차별 값은 [평가 이력](docs/eval-results.md) §15·§16에 정리했습니다.
+<details>
+<summary>최신 재측정: 2026-10-06 · <code>gpt-6-luna</code> — 다른 모델, 새 평가기 (직접 비교 불가)</summary>
 
-### 다른 모델(`gpt-6-luna`) 재측정 — 2026-10-06
+출처: [docs/performance-measurement-2026-10-06.md](docs/performance-measurement-2026-10-06.md) (요약 JSON: [`docs/eval/performance-2026-10-06.json`](docs/eval/performance-2026-10-06.json)). 같은 22흐름·110화면을 경로별 3회 분석했고, 실패·미판정은 정상으로 세지 않으며 정답 양성은 미탐으로 반영합니다.
 
-새 평가 프레임워크와 `gpt-6-luna`로 같은 데이터를 다시 측정한 결과입니다. 시연 서버의 모델과 다르고, 실패·보류를 미탐으로 세는 등 집계 기준이 더 엄격해 위 표와 직접 비교할 수 없습니다.
+| 구성 | Precision | Recall | F1 | 판정 가능한 쌍 비율 |
+| --- | ---: | ---: | ---: | ---: |
+| Rule Engine 후보만 (기준선) | 47.1% | 100.0% | 64.0% | — |
+| Hybrid: 규칙 후보 + LLM | 89.6% | 100.0% | 94.3% | 69.7% |
+| 이미지 분석: LLM 단독 | 27.1% | 85.4% | 41.0% | 96.4% |
 
-| 지표 | 이미지 중심 분석 | 규칙 후보 + AI 검증 |
-| --- | ---: | ---: |
-| 정밀도: 탐지한 유형 중 정답 비율 | 27.1% | 89.6% |
-| 재현율: 정답 유형 중 찾아낸 비율 | 85.4% | 100.0% |
-| F1: 정밀도와 재현율을 함께 보는 점수 | 41.0% | 94.3% |
-| Accuracy: 실패·보류를 포함한 전체 항목 중 올바른 판정 비율 | 63.6% | 67.9% |
-| 판정 가능한 항목 비율 | 96.4% | 69.7% |
-| 모든 지원 규칙을 검사한 흐름 비율 | 93.9% | 12.1% |
-| 성공한 분석의 평균 소요 시간 | 49.8초 | 34.0초 |
+모든 지원 규칙을 검사한 흐름 비율: Hybrid 12.1%, 이미지 분석 93.9%. 정상 흐름 규칙별 오탐률: Hybrid 4.6%, 이미지 분석 38.8%.
 
-이 측정에서 규칙 후보와 AI를 함께 사용한 방식은 오탐이 적었지만 판정하지 못한 항목이 많았습니다(판정 가능 69.7%). 챗봇 12문항과 설명·개선안 58건 평가를 포함한 측정값, 실패 사례, 평가 모델의 편향과 재현 방법은 [2026-10-06 성능 보고서](docs/performance-measurement-2026-10-06.md)에 정리했습니다.
+</details>
 
-현재 자동 탐지는 지원 5개 유형에 한정됩니다. 법적 위반 확정, 광고 내용의 사실 검증, 실제 금융 거래 완료, 디자인·코드 자동 수정은 서비스의 제공 범위가 아닙니다.
+<details>
+<summary>유형별 성능 (2026-10-06 재측정)</summary>
 
-## 로컬에서 실행하기
+| 유형 | 이미지 분석 P / R / F1 | 규칙 후보 + LLM P / R / F1 | 규칙 후보 + LLM 판정 비율 |
+| --- | --- | --- | ---: |
+| DA-03 | 11.4% / 77.8% / 19.8% | 67.6% / 100.0% / 78.3% | 42.4% |
+| DA-04 | 100.0% / 83.3% / 88.9% | 100.0% / 100.0% / 100.0% | 97.0% |
+| DA-07 | 12.4% / 88.9% / 21.8% | 100.0% / 100.0% / 100.0% | 13.6% |
+| DA-12 | 100.0% / 88.9% / 93.3% | 100.0% / 100.0% / 100.0% | 100.0% |
+| DA-15 | 100.0% / 88.9% / 93.3% | 100.0% / 100.0% / 100.0% | 95.5% |
 
-이하 내용은 서비스를 직접 실행하는 개발자와 운영자를 위한 안내입니다. 필요한 환경은 **Python 3.10 이상**, **Node.js 22.22.2+, 24.15.0+ 또는 26+**입니다. Node.js의 정확한 허용 범위는 [frontend/package.json](frontend/package.json)에 정의되어 있습니다.
+</details>
 
-### 1. Python 환경을 준비합니다
+**재현** — 합성 입력을 만든 뒤(`data/generator/`, [평가 이력](docs/eval-results.md) §5.3) `DARKAUDIT_MODEL`·`OPENAI_API_KEY`를 설정하고 실행합니다. 실제 모델 API를 호출합니다.
+
+```bash
+cd backend && python eval_hybrid.py --runs 3
+```
+
+이미지 분석 경로는 `--visual`을 추가합니다. 2026-10-06 방식의 엄격한 채점은 `python -m ai.evaluation detection --predictions <run 디렉터리>`로 합니다([평가 실행 가이드](docs/evaluation-framework.md)). API 없이 채점기만 확인하려면 `python -m ai.evaluation detection --dataset ai/evaluation/examples/labels --predictions ai/evaluation/examples/predictions --rule-id DA-04`를 실행합니다.
+
+## 결과 예시
+
+### 전후 비교
+
+![전후 비교 화면: 원본 8건이 수정본에서 모두 해결](docs/images/recheck-comparison.png)
+
+<sub>모루 펫케어 스크린샷 데모를 로컬에서 원본 → 수정본 순서로 실제 분석한 결과입니다(2026-10-07, `gpt-5.6-luna`, Tesseract OCR 사용). 모델 판정은 실행마다 달라질 수 있습니다.</sub>
+
+데모 시나리오는 버전별로 다음 패턴을 의도적으로 넣었습니다(`frontend/public/demo-cases/manifest.json`의 `expectedRules`). 실제 탐지 결과가 아니라 데모 설계입니다.
+
+| 데모 버전 | 의도한 패턴 | 주요 변경 |
+| --- | --- | --- |
+| 문제 포함 원본 (`risky`) | DA-03, DA-04, DA-07, DA-12, DA-15 | 특약 3개 사전 체크, 작은 회색 조건 문구, 거절 버튼 축소, 죄책감 문구, 마지막 화면에서 관리비 추가 |
+| 일부 수정본 (`partial`) | DA-03, DA-07, DA-12 | 사전 체크 해제, 필수 비용을 첫 화면부터 표시 |
+| 전체 개선본 (`revised`) | 없음 | 조건 문구를 본문 크기로, 동의·거절 버튼 동일 크기, 압박 문구를 중립 안내로 교체 |
+
+### 출력 JSON
+
+<details>
+<summary>탐지 항목 1건 (위 결과 화면의 DA-03, 일부 필드 생략)</summary>
+
+```json
+{
+  "ruleId": "DA-03",
+  "title": "잘못된 계층구조",
+  "severity": "HIGH",
+  "confidence": 0.98,
+  "screenIds": ["screen-03"],
+  "element": "'다음 · 모두 동의하고 계속'",
+  "observation": "화면에 '다음 · 모두 동의하고 계속'과 별도의 '제공하지 않고 계속'이 함께 표시된다. 두 선택지의 실제 색상·크기·배치가 비대칭이다.",
+  "recommendation": "전체 동의와 정보 제공 거절을 동일한 수준의 버튼 형태·대비·크기로 제공하고, 중립적인 라벨을 사용한다.",
+  "bbox": { "screenId": "screen-03", "x": 126.0, "y": 1436.0, "width": 513.0, "height": 104.1, "coordinateSystem": "image" },
+  "relatedElements": [
+    {
+      "screenId": "screen-03",
+      "description": "'제공하지 않고 계속'",
+      "bbox": { "screenId": "screen-03", "x": 323.0, "y": 1575.0, "width": 140.0, "height": 16.0, "coordinateSystem": "image" },
+      "elementType": "vision"
+    }
+  ]
+}
+```
+
+</details>
+
+결과 항목과 규칙별 상태(탐지·미탐지·근거 부족·미지원)를 읽는 방법은 [사용 안내](docs/user-guide.md#결과를-어떻게-읽나요)에 정리했습니다.
+
+## 빠른 시작
+
+### 요구사항
+
+| 항목 | 버전 · 조건 | 출처 |
+| --- | --- | --- |
+| Python | 3.10 이상 (Docker 이미지는 3.12) | `requirements.txt`, `Dockerfile` |
+| Node.js | `^22.22.2 \|\| ^24.15.0 \|\| >=26.0.0` | `frontend/package.json` `engines` |
+| Chromium | URL 캡처에 필요 (`python -m playwright install chromium`) | `ai/browser/` |
+| Tesseract OCR | 선택. `kor+eng` 언어 데이터. 없으면 OCR 없이 분석을 이어가며 위치 근거가 줄어듭니다 | `ai/vision/ocr.py` |
+| Docker | 선택. 이미지에 Chromium과 Tesseract(kor+eng)가 포함됩니다 | `Dockerfile` |
+
+### 1. 설치
 
 저장소 루트에서 실행합니다.
 
@@ -228,89 +295,188 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Windows PowerShell에서는 다음과 같이 가상환경의 Python을 직접 사용할 수 있습니다. 이후 백엔드 실행 명령의 `python`도 `.venv\Scripts\python.exe`로 바꿉니다.
+<details>
+<summary>Windows PowerShell</summary>
+
+가상환경의 Python을 직접 사용합니다. 이후 명령의 `python`도 `.venv\Scripts\python.exe`로 바꿉니다.
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-### 2. 분석 방식을 설정하고 백엔드를 실행합니다
+</details>
 
-루트의 [.env.example](.env.example)을 참고해 `.env`를 만듭니다. 모델 호출 없이 작업 흐름부터 확인하려면 다음 값을 설정합니다.
+### 2. `.env` 설정
+
+[.env.example](.env.example)을 복사해 `.env`를 만듭니다. 모델 호출 없이 작업 흐름만 확인하려면 다음처럼 설정합니다.
 
 ```dotenv
 DARKAUDIT_PROVIDER=fake
 ```
 
-모의 분석은 이미지에서 실제 문제를 판별하지 않으며 결과에 모의 분석으로 표시됩니다. 실제 AI를 사용하려면 다음과 같이 설정합니다.
+모의 분석은 실제 문제를 판별하지 않으며 결과에 모의 분석으로 표시됩니다. 실제 분석은 `DARKAUDIT_PROVIDER=openai`와 함께 이미지 입력·구조화 응답을 지원하는 모델(`DARKAUDIT_MODEL`)과 `OPENAI_API_KEY`를 설정합니다.
 
-```dotenv
-DARKAUDIT_PROVIDER=openai
-DARKAUDIT_MODEL=YOUR_VISION_CAPABLE_MODEL
-OPENAI_API_KEY=YOUR_KEY
-```
+> [!WARNING]
+> `.env`에는 API 키가 들어갑니다. Git에 커밋하지 마세요. 실제 분석은 화면과 분석 근거를 설정한 외부 모델 API로 보내며, 자동 개인정보 마스킹은 제공하지 않습니다.
 
-모델은 이미지 입력과 구조화된 응답을 지원해야 합니다. 키를 담은 `.env`는 Git에 커밋하지 않습니다.
+### 3. 백엔드 실행
 
 ```bash
 python -m uvicorn backend.api.main:app --reload --port 8000
 ```
 
-상태 확인은 `http://localhost:8000/health`, API 문서는 `http://localhost:8000/docs`에서 할 수 있습니다.
+상태 확인은 `http://localhost:8000/health`, API 문서는 `http://localhost:8000/docs`입니다.
 
-| 추가로 사용할 기능 | 필요한 설정 |
-| --- | --- |
-| URL 캡처 | Python 환경에서 `python -m playwright install chromium` 실행 |
-| 스마트 탐색 | `.env`에 `DARKAUDIT_COMPUTER_MODEL` 설정 |
-| Figma 가져오기 | 접근 권한이 있는 `FIGMA_ACCESS_TOKEN` 설정 |
-| Android APK | `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY` 설정 |
-| 한국어·영어 OCR | 로컬 Tesseract와 `kor+eng` 언어 데이터. Docker 이미지에는 포함됨 |
-| 문서 기반 챗봇 | 실제 응답·검색에는 모델 API 설정 사용. 세부 설정은 [챗봇 문서](docs/chatbot.md) 참고 |
+### 4. 프런트엔드 실행
 
-로컬에 Tesseract가 없으면 OCR 없이 분석을 이어가므로 위치 확인에 활용할 근거가 줄어듭니다. 설정 전체는 `.env.example`을 참고하세요.
-
-### 3. 프런트엔드를 실행합니다
-
-새 터미널에서 실행합니다.
+새 터미널에서 실행합니다. `frontend/.env.example`을 참고해 `frontend/.env.local`에 백엔드 주소를 지정합니다.
 
 ```bash
 cd frontend
 npm install
+npm run dev
 ```
-
-`frontend/.env.example`을 참고해 `frontend/.env.local`을 만들고 백엔드 주소를 지정합니다.
 
 ```dotenv
 VITE_API_BASE_URL=http://localhost:8000
 VITE_USE_MOCKS=false
 ```
 
+브라우저에서 `http://localhost:5173`을 엽니다. 개발 서버는 `VITE_USE_MOCKS`가 정확히 `false`가 아니면 브라우저 안의 목업 API(MSW)를 사용합니다. 실제 분석을 볼 때는 `false`로 둡니다.
+
+### 5. Docker (선택)
+
 ```bash
-npm run dev
+docker build -t darkaudit-backend .
+docker run -p 8000:8000 -e DARKAUDIT_PROVIDER=fake darkaudit-backend
 ```
 
-브라우저에서 **`http://localhost:5173`**을 엽니다. `VITE_USE_MOCKS=true`로 바꾸면 백엔드 없이 준비된 응답으로 프런트엔드를 둘러볼 수 있습니다. 실제 분석을 확인할 때는 `false`를 사용합니다.
+Render·Vercel 배포와 영속 디스크 설정은 [배포 가이드](docs/deploy.md)를 참고하세요.
 
-## 개발·검증 안내
+### 추가 기능 설정
 
-웹 화면 없이 이미지 1~6장을 분석할 수도 있습니다. 이 명령은 실제 모델 API를 호출하며 `DARKAUDIT_MODEL`, `OPENAI_API_KEY` 설정이 필요합니다.
+| 사용할 기능 | 필요한 설정 |
+| --- | --- |
+| URL 캡처 | `python -m playwright install chromium` |
+| 스마트 탐색 | `DARKAUDIT_COMPUTER_MODEL` |
+| Figma 가져오기 | 파일 접근 권한이 있는 `FIGMA_ACCESS_TOKEN` |
+| Android APK | `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY` |
+| 한국어·영어 OCR | 로컬 Tesseract와 `kor+eng` 언어 데이터 |
+| 문서 기반 챗봇 | 모델 API 설정을 사용. 세부 설정은 [챗봇 문서](docs/chatbot.md) |
 
-```bash
-python -m ai.cli audit \
-  --image ./screen_01.png --flow-step "상품 안내" \
-  --image ./screen_02.png --flow-step "최종 확인"
+### 환경변수
+
+값은 [.env.example](.env.example)을 참고하세요. 여기에는 이름과 용도만 적습니다.
+
+| 변수 | 설명 | 필수 여부 |
+| --- | --- | --- |
+| `DARKAUDIT_PROVIDER` | 분석 프로바이더 `fake` 또는 `openai` (코드 기본값 `fake`) | 선택 |
+| `DARKAUDIT_MODEL` | 분석 모델 이름. 이미지 입력·구조화 응답 지원 필요 | `openai` 사용 시 필수 |
+| `OPENAI_API_KEY` | 모델 API 키 | `openai` 사용 시 필수 |
+| `DARKAUDIT_COMPUTER_MODEL` | 스마트 탐색(Computer Use) 모델 | 스마트 탐색 시 필수 |
+| `DARKAUDIT_CHATBOT_ENABLED` | `false`면 `/api/v1/chat`을 끔 (기본 `true`) | 선택 |
+| `DARKAUDIT_CHAT_MODEL` · `DARKAUDIT_EMBEDDING_MODEL` | 챗봇 답변·검색 모델. 비우면 각각 `DARKAUDIT_MODEL`, `text-embedding-3-large` | 선택 |
+| `DARKAUDIT_OCR_PROVIDER` | `tesseract`(기본) 또는 `none` | 선택 |
+| `DARKAUDIT_TESSERACT_LANG` · `DARKAUDIT_TESSERACT_COMMAND` | OCR 언어(기본 `kor+eng`)와 실행 파일 경로 | 선택 |
+| `DARKAUDIT_FRONTEND_CONTRACT` | 프런트 응답 계약 버전 (기본 `v2`) | 선택 |
+| `FIGMA_ACCESS_TOKEN` | Figma 개인 액세스 토큰 | Figma 사용 시 필수 |
+| `DARKAUDIT_DEMO_FIGMA_URL` · `FIGMA_API_BASE_URL` · `FIGMA_HTTP_TIMEOUT_SECONDS` · `FIGMA_RENDER_SCALE` · `FIGMA_MAX_FRAMES` | Figma 데모 파일과 가져오기 설정 | 선택 |
+| `BROWSERSTACK_USERNAME` · `BROWSERSTACK_ACCESS_KEY` | BrowserStack App Automate 계정 | APK 사용 시 필수 |
+| `BROWSERSTACK_ANDROID_DEVICE` · `BROWSERSTACK_ANDROID_VERSION` | 실행 기기·OS 버전 | 선택 |
+| `ANDROID_MAX_SCREENS` · `ANDROID_MAX_ACTIONS` | APK 수집 화면 수(최대 6)와 탐색 시도 횟수(최대 50) | 선택 |
+| `DARKAUDIT_DB_URL` | DB 주소 (기본 `sqlite:///data/darkaudit.db`) | 선택 |
+| `DARKAUDIT_CORS_ORIGINS` | 허용할 프런트 출처 | 선택 |
+| `VITE_API_BASE_URL` | 프런트가 호출할 백엔드 주소 (`frontend/.env.local`) | 프런트 실행 시 |
+| `VITE_USE_MOCKS` | `false`가 아니면 개발 서버에서 목업 API 사용 | 선택 |
+| `VITE_CHATBOT_ENABLED` | `false`면 챗봇 위젯을 숨김 | 선택 |
+
+## CLI
+
+웹 화면 없이 분석할 수 있습니다. `audit`·`audit-url`은 실제 모델 API를 호출하므로 `DARKAUDIT_MODEL`과 `OPENAI_API_KEY`가 필요합니다.
+
+| 명령 | 용도 | 예시 |
+| --- | --- | --- |
+| `python -m ai.cli audit` | 스크린샷 1~6장 분석 | `python -m ai.cli audit --image ./screen_01.png --flow-step "상품 안내" --image ./screen_02.png --flow-step "최종 확인"` |
+| `python -m ai.cli capture-url` | URL 캡처만 수행 | `python -m ai.cli capture-url --url https://example.com --profile mobile` |
+| `python -m ai.cli audit-url` | URL 캡처 후 분석 (`--mode quick\|smart`) | `python -m ai.cli audit-url --url https://example.com --profile mobile --mode quick` |
+| `python -m ai.cli evaluate` | 예측 JSON을 정답 라벨과 비교 | `python -m ai.cli evaluate --predictions ai/evaluation/examples/predictions` |
+| `python -m ai.evaluation detection` | 탐지 평가 v2 (`regression`·`quality`·`rag` 하위 명령도 있음) | `python -m ai.evaluation detection --dataset ai/evaluation/examples/labels --predictions ai/evaluation/examples/predictions --rule-id DA-04` |
+| `python rules/build_rules.py` | 규칙 YAML 검증과 JSON 빌드 | `python rules/build_rules.py --summary` |
+
+`capture-url`·`audit-url`의 공통 옵션: `--profile {desktop,mobile}`(반복 가능), `--goal`, `--output-dir`(기본 `data/captures`), `--computer-model`(스마트 탐색), `--max-agent-turns`(기본 6), `--allow-private-network`, `--headful`.
+
+## API
+
+FastAPI 앱은 `backend/api/main.py`입니다. 실행 중에는 `/docs`에서 전체 스키마를 볼 수 있습니다.
+
+| Method | Path | 설명 |
+| --- | --- | --- |
+| GET | `/health` | 상태 확인 |
+| POST | `/api/v1/audits` | 진단 생성 |
+| GET | `/api/v1/dashboard/summary` | 전체 진단 목록 |
+| DELETE | `/api/v1/audits/{audit_id}` | 진단과 회차·화면·탐지·이미지 삭제 |
+| POST | `/api/v1/audits/{audit_id}/screens` | 스크린샷 1~6장 업로드(PNG·JPG·WEBP, 장당 10MB). 새 회차 생성 |
+| POST | `/api/v1/audits/{audit_id}/analyze` | 업로드한 화면 분석 시작 |
+| POST | `/api/v1/audits/{audit_id}/capture` | URL 캡처 후 분석 (`quick`·`smart`) |
+| POST | `/api/v1/audits/{audit_id}/figma` | Figma 화면을 가져와 분석 |
+| POST | `/api/v1/audits/{audit_id}/mobile-app` | APK(100MB 이하)를 BrowserStack에서 실행·수집해 분석 |
+| GET | `/api/v1/analysis-jobs/{job_id}` | 분석 작업 상태 |
+| GET | `/api/v1/audits/{audit_id}/runs/{version}` | 특정 완료 회차의 화면과 탐지 결과 |
+| GET | `/api/v1/audits/{audit_id}/regression` | 두 회차 전후 비교 (`from_version`·`to_version`) |
+| PATCH | `/api/v1/findings/{finding_id}` | 검토 상태 변경 (`open`·`reviewing`·`resolved`) |
+| PUT | `/api/v1/findings/{finding_id}/decision` | 수정 결정 메모 저장 |
+| POST | `/api/v1/chat` | 가이드라인 챗봇 |
+| GET | `/artifacts/{path}` | 서명된 진단 이미지 |
+
+<details>
+<summary>데모·호환용 엔드포인트</summary>
+
+| Method | Path | 설명 |
+| --- | --- | --- |
+| GET | `/api/v1/demo-inputs` | 데모 입력 카탈로그 |
+| GET | `/demo/cases/{scenario}/{variant}/{filename}` | 데모 스크린샷 |
+| GET | `/demo/web/{filename}` | 데모 웹사이트 자산 |
+| GET | `/demo/android/{variant}.apk` · `/demo/darkaudit-demo.apk` | 데모 APK |
+| POST | `/api/v1/sessions` | 이전 프런트 번들 호환용. 접근 제어에는 쓰이지 않음 |
+
+</details>
+
+## 프로젝트 구조
+
+```text
+DarkAudit/
+├── ai/                  # 분석 엔진
+│   ├── browser/         # Playwright 캡처 · 스마트 탐색 · 안전 정책
+│   ├── pipeline/        # 하이브리드 파이프라인 (BaselineAuditPipeline)
+│   ├── providers/       # OpenAI · fake · Computer Use 프로바이더
+│   ├── vision/          # OCR · 텍스트/위치 근거 매칭
+│   ├── rag/             # 가이드라인 챗봇
+│   ├── evaluation/      # 탐지 · 비교 · 설명 · RAG 평가
+│   └── tests/
+├── backend/
+│   ├── api/             # FastAPI 라우트 · 서비스 · 작업 저장 · Figma/APK 가져오기
+│   ├── app/             # DB 모델 · 전후 비교(regression) · rule_engine
+│   └── tests/
+├── frontend/
+│   ├── src/             # pages · features · components · api · mocks(MSW)
+│   ├── e2e/             # Playwright E2E · 접근성 · 시각 회귀
+│   └── public/          # 데모 화면 · 데모 웹사이트 · 정적 자산
+├── rules/               # 15개 유형 규칙 원본(YAML)과 빌드 스크립트
+├── data/                # 합성 데이터 생성기 · 정답 라벨 · 실행 데이터
+├── demo/                # 데모 자산 생성 스크립트 · APK
+└── docs/                # 명세 · 아키텍처 · 배포 · 평가 문서
 ```
 
-규칙 원본은 YAML이며, 수정 후 검증과 JSON 빌드를 실행합니다. 탐지 성능·설명 품질·챗봇 평가는 [평가 실행 가이드](docs/evaluation-framework.md)를 따릅니다.
+## 테스트
 
 ```bash
-python rules/build_rules.py --summary
 python -m unittest discover -s ai/tests -v
 python -m unittest discover -s backend/tests -v
+python rules/build_rules.py --summary
 ```
 
-프런트엔드 검증은 `frontend/`에서 실행합니다.
+프런트엔드는 `frontend/`에서 실행합니다.
 
 ```bash
 npm run lint
@@ -322,29 +488,66 @@ npm run test:e2e
 npm run test:a11y
 ```
 
-E2E는 별도 목업 환경을 사용합니다. 화면 변경 후 시각 스냅샷을 갱신할 때는 변경 내용을 확인한 뒤 `npm run test:e2e:update`를 실행합니다.
+- **API 키 불필요:** 백엔드 테스트는 `DARKAUDIT_PROVIDER=fake`, `DARKAUDIT_OCR_PROVIDER=none`, 임시 SQLite를 자동으로 사용합니다(`backend/tests/support.py`).
+- **E2E:** `frontend/.env.e2e`의 목업 API(MSW)로 실행합니다. 화면 변경 후 시각 스냅샷은 변경 내용을 확인한 뒤 `npm run test:e2e:update`로 갱신합니다.
+- Ragas 기반 챗봇 평가 테스트는 `requirements-eval.txt`를 설치했을 때만 실행됩니다.
 
-## 프로젝트 구조와 상세 문서
-
-| 경로 | 내용 |
+| 테스트 묶음 | 결과 (2026-10-07, Windows 로컬) |
 | --- | --- |
-| [ai/](ai/README.md) | 화면 수집, AI 분석, 위치 보정, 챗봇, 평가 코드 |
-| [backend/](backend/README.md) | API, 진단 기록 저장, 규칙 검사, 회차 비교 |
-| [frontend/](frontend/README.md) | 등록·진행·검토·비교·보고서 화면 |
-| [rules/](rules/dark_pattern_rules.yaml) | 다크패턴 15개 유형의 규칙 원본 |
-| [data/](data/generator/README.md) | 합성 화면 생성 설정, 정답 라벨, 검수 도구 |
-| [docs/](docs/feature-spec.md) | 기능 명세와 운영·평가 문서 |
+| `ai/tests` | 160건 통과 (1건 건너뜀) |
+| `backend/tests` | 168건 중 167건 통과. 1건(`test_workspace_access`)은 Windows 심볼릭 링크 권한 오류 |
+| Vitest | 101건 통과 |
+| Playwright | 84건 중 82건 통과, 1건 건너뜀. 1건은 Windows 랜딩 시각 스냅샷 3픽셀 차이 |
 
-- [기능 명세](docs/feature-spec.md): 기능별 지원 범위와 API 동작
-- [시스템 구성도](docs/architecture.md): 구성 요소와 데이터 흐름
-- [배포 가이드](docs/deploy.md): Render·Vercel 배포와 환경변수, 영속 저장소
-- [라벨링 가이드](docs/labeling_guide.md): 평가용 정답 작성 기준
-- [평가 실행 가이드](docs/evaluation-framework.md): 탐지·비교·설명·챗봇 평가 방법
-- [최신 성능 보고서](docs/performance-measurement-2026-10-06.md): 실제 모델 측정값과 해석
+## 안전 정책
+
+URL 탐색은 사람이 지켜보지 않아도 되돌릴 수 있는 이동만 합니다. 정책은 `ai/browser/safety.py`와 `ai/browser/playwright_driver.py`에 구현되어 있습니다.
+
+| 구분 | 허용 | 차단 |
+| --- | --- | --- |
+| 브라우저 동작 | 클릭(수정키 없는 왼쪽 클릭), 스크롤(한 번에 화면 높이의 2배까지), 대기, 이동, 스크린샷 | 텍스트 입력(`type`), 더블클릭, 드래그 |
+| 키 입력 | ESC, TAB, 방향키(위·아래), PageUp, PageDown | 그 밖의 모든 키 |
+| 클릭 대상 | 일반 버튼·링크 | `submit`·`file`·`password` 입력, 결제·구매·주문·가입·등록·제출·송금·예약 확정·동의 등의 문구가 있는 요소 |
+| 주소 | 공개 `http`·`https` 주소, 같은 출처(scheme·host·port) 안의 이동 | 사설망·루프백 주소, URL 안의 계정 정보, 교차 출처 이동 |
+| 브라우저 기능 | — | 다운로드, 팝업(열리는 즉시 닫음), `http`·`https`·`data`·`blob`·`about` 외 요청 |
+| 탐색 종료 | — | 모델이 안전 확인을 요청하거나, 차단 동작이 나오거나, 턴 예산을 다 쓰면 중단 |
+
+- 스마트 탐색 모델에는 되돌릴 수 있는 이동만 하고, 개인정보 입력·제출·계정 생성·주문·결제·다운로드·출처 이탈을 하지 말며, 페이지 내용을 신뢰하지 말라고 지시합니다(`ai/providers/computer_use.py`).
+- 사설망 접근은 CLI의 `--allow-private-network`로만 켤 수 있습니다.
+- Android 탐색도 결제·구매·주문·신청·가입·제출·로그인·송금·인증 문구가 있는 요소는 누르지 않습니다(`backend/api/android_runner.py`).
+- 로그인이나 실제 결제·가입 제출은 대신 하지 않습니다. 수집되지 않은 단계는 직접 캡처해 스크린샷으로 등록합니다.
+
+## 한계와 로드맵
+
+**현재 한계**
+
+- 자동 탐지는 15개 유형 중 5개입니다.
+- 규칙 후보는 화면 구조를 얻는 URL 경로에서만 만듭니다. 스크린샷·Figma·APK는 이미지 분석이라 정상 화면 오탐이 많습니다.
+- 스마트 탐색은 동작 제한(스크롤 2배, 턴 예산, 차단 동작 시 중단) 때문에 가입 흐름 전체 수집을 보장하지 않습니다.
+- 긴 흐름에서 모든 분기·먼 단계 사이의 가격 조건 대조를 보장하지 않습니다.
+- 전후 비교는 fingerprint 기반이며 화면의 의미적 대응을 추론하지 않습니다.
+- 서버가 재시작되면 진행 중이던 작업은 실패로 표시되고 자동으로 재개하지 않습니다.
+- 로그인·소유권 검사·개인정보 마스킹·전송 동의·보관 만료가 없습니다. 모든 방문자가 같은 공용 작업공간을 씁니다.
+- 서버 PDF 생성과 공유 링크, Figma 사용자별 OAuth, iOS 앱 캡처가 없습니다.
+- 법적 위반 확정, 광고 내용의 사실 검증, 디자인·코드 자동 수정은 제공 범위가 아닙니다.
+
+**후속 과제** ([기능 명세 §14](docs/feature-spec.md#14-현재-한계와-후속-범위))
+
+- 나머지 10개 유형 자동 탐지 확대
+- 후보 없음과 근거 부족을 구분해 Hybrid 검사 완료율 개선
+- 항목별 위치 검증·추정 구분 표시
+- 독립 실제 금융 데이터 평가와 검수자 업무 효과 측정
+- 데이터 보호(로그인·마스킹·보관 정책)
 
 ## 팀
 
-| 담당 | 역할 |
-| --- | --- |
-| 배소연 | AI Engineer — 화면 분석 및 다크패턴 탐지 파이프라인 |
-| 이정현 | Data Engineer — 규제 데이터 파이프라인, 백엔드 및 배포 |
+| 이름 | 역할 | 담당 영역 |
+| --- | --- | --- |
+| 이정현 | Data Engineer | 룰 엔진, 규제 데이터 파이프라인, 백엔드, 배포 |
+| 배소연 | AI Engineer | 멀티모달 분석, 근거 검증, 평가 |
+
+## 참고 자료
+
+- 금융위원회·금융감독원, [「온라인 금융상품 판매 관련 다크패턴 가이드라인」 마련](https://www.fsc.go.kr/po010106/85942) (2025.12.26)
+- 가이드라인 요약과 원문 기반 지식 문서: [`ai/knowledge/dark_pattern/`](ai/knowledge/dark_pattern/)
+- 문서: [사용 안내](docs/user-guide.md) · [기능 명세](docs/feature-spec.md) · [시스템 구성도](docs/architecture.md) · [배포 가이드](docs/deploy.md) · [라벨링 가이드](docs/labeling_guide.md) · [평가 실행 가이드](docs/evaluation-framework.md) · [평가 이력](docs/eval-results.md) · [챗봇](docs/chatbot.md)
