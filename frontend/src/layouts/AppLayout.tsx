@@ -11,6 +11,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Brand } from "@/components/common/Brand";
+import { brandLogo } from "@/components/common/brandLogo";
 import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
 import { cn } from "@/lib/cn";
 import "./workspace.css";
@@ -45,7 +46,7 @@ function Sidebar({
         {!collapsed || mobile ? (
           <Brand dark />
         ) : (
-          <span className="px-1 text-xl font-bold text-brand-600">D</span>
+          <img alt="DarkAudit" className="h-6 w-auto" src={brandLogo({ compact: true })} />
         )}
         <button
           aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
@@ -205,7 +206,7 @@ export function AppLayout() {
           >
             <Menu size={20} />
           </button>
-          <Brand dark />
+          <Brand dark compact />
         </div>
         <div className="workspace-topbar">
           <span>

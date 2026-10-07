@@ -55,7 +55,10 @@ it("includes all findings, saved decisions and incomplete analysis in the report
   expect(screen.getByText(/검토 후보 · 이미지 중심/)).toBeVisible();
   expect(screen.getByText(/미지원 규칙 2개/)).toBeVisible();
   expect(screen.getByText(/재검증 판정 보류/)).toBeVisible();
-  expect(screen.getAllByRole("img")).toHaveLength(audit.screens.length);
+  expect(screen.getAllByRole("img", { name: /분석 대상 화면$/ })).toHaveLength(
+    audit.screens.length,
+  );
+  expect(screen.getByRole("img", { name: "DarkAudit" })).toBeInTheDocument();
   expect(screen.queryByText(/심각도/)).not.toBeInTheDocument();
 });
 

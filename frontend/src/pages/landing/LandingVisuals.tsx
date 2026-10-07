@@ -1,3 +1,4 @@
+import { brandLogo } from "@/components/common/brandLogo";
 import { ArrowDownRight, ArrowRight, Check, FileText, MessageSquare, ScanLine } from "lucide-react";
 import { LandingPhoto } from "./LandingPhoto";
 import { ScreenCanvas } from "@/features/finding-review/ScreenCanvas";
@@ -249,7 +250,7 @@ export function ReportPreview({ mini = false }: { mini?: boolean }) {
     <div className={`lp-report${mini ? " lp-report-mini" : ""}`}>
       <div className="lp-report-top">
         <span>
-          DarkAudit<span>.</span>
+          <img alt="DarkAudit" className="lp-brand-logo" src={brandLogo({ dark: true })} />
         </span>
         <span>REVIEW REPORT</span>
       </div>
@@ -307,7 +308,7 @@ export function FindingWorkspace() {
       <div className="lp-workspace">
         <div className="lp-workspace-bar">
           <strong>
-            DarkAudit<span>.</span>
+            <img alt="DarkAudit" className="lp-brand-logo" src={brandLogo()} />
           </strong>
           <span>
             펫보험 가입 흐름 <span aria-hidden="true">/</span> 화면 검토

@@ -1,5 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#213542"/>
-  <path d="M8.5 8.5h5.5a7.5 7.5 0 0 1 0 15h-5.5z" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
-  <circle cx="26" cy="22.6" r="2.4" fill="#b79a63"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 14 112 112" width="124" height="124" role="img" aria-label="DarkAudit">
+<style>@media (prefers-color-scheme: dark){.f{stroke:#FFFFFF}}</style>
+<g transform="translate(-6 -6) scale(1.0)"><g transform="matrix(1 -0.2 0 1 0 20.0)">
+<path d="M84 110 H42 a12 12 0 0 1 -12 -12 V44 a12 12 0 0 1 12 -12 H96 a12 12 0 0 1 12 12 V86" fill="none" class="f" stroke="#141B34" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="48" y="54" width="40" height="11" rx="5.5" fill="#86A3F2"/>
+<rect x="48" y="72" width="28" height="11" rx="5.5" fill="#86A3F2"/>
+</g>
+<circle cx="106" cy="106.8" r="13" fill="#2563EB"/></g>
 </svg>
