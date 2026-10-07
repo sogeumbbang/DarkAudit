@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  로그인 없이 바로 사용할 수 있고, 준비된 데모 진단 결과를 바로 볼 수 있습니다 · <a href="https://dark-audit-seven.vercel.app/app/overview?audit=audit-45&amp;version=1"><b>데모 결과 바로 보기</b></a>
+  로그인 없이 바로 사용할 수 있고, 준비된 데모 진단 결과를 바로 볼 수 있습니다 · <a href="https://dark-audit-seven.vercel.app/app/overview?audit=audit-47&amp;version=1"><b>데모 결과 바로 보기</b></a>
 </p>
 
 <p align="center">
@@ -51,8 +51,8 @@
 </tr>
 </table>
 
-**펫케어 보험 데모 전후 비교: 8건 중 8건 해결 (100%)**<br>
-<sub>출처 · 로컬 실행 기록 [`docs/eval/pet-recheck-2026-10-07.json`](docs/eval/pet-recheck-2026-10-07.json) 1회차</sub>
+**펫케어 보험 데모 전후 비교: 6건 중 5건 해결 (83.3%) · 유지 1건(화면 05 DA-07)**<br>
+<sub>출처 · 배포 서버 audit-47</sub>
 
 <details>
 <summary><b>회차별 결과</b></summary>
@@ -63,6 +63,8 @@
 | 2회차 | 7 | 1 | 6 | 1 (화면 05 · DA-07) | 85.7% |
 
 2026-10-07 로컬 실행 · `gpt-5.6-luna` · Tesseract OCR. 원자료: [`docs/eval/pet-recheck-2026-10-07.json`](docs/eval/pet-recheck-2026-10-07.json)
+
+모델 판정은 실행마다 조금씩 달라질 수 있습니다.
 
 </details>
 
