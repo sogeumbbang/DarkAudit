@@ -34,9 +34,12 @@ test("landing visual", async ({ page }) => {
   await page.goto("/landing");
   await page.getByRole("heading", { name: /다 만든 화면,/ }).waitFor();
   await waitForStableLayout(page);
+  // 같은 Windows라도 기기마다 글꼴 안티앨리어싱이 몇 픽셀 갈린다(약 1,100만 픽셀 중 3개).
+  // 레이아웃이 바뀌면 수천 픽셀이 달라지므로 이 폭은 허용한다.
   await expect(page).toHaveScreenshot("landing.png", {
     fullPage: true,
     animations: "disabled",
+    maxDiffPixels: 100,
     // CI must have time for two full-page captures, including image encoding.
     timeout: 15_000,
   });
