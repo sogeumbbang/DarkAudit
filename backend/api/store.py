@@ -288,6 +288,7 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict, run: AuditRun | No
     """진단 요약. run 을 주면 그 회차의 화면·탐지 항목을, 없으면 최신 완료 회차를 담는다."""
     from .access import sign_image
     from . import jobs
+    from .protection import is_protected_audit
     run = run or latest_completed_run(audit)
 
     screens_src = run.screens if run else (audit.runs[-1].screens if audit.runs else [])
@@ -353,6 +354,7 @@ def to_audit_dto(session: Session, audit: Audit, rules: dict, run: AuditRun | No
         latestRunId=f"run-{run.id}" if run else None,
         latestJobId=jobs.latest(DATA_DIR, f"audit-{audit.id}"),
         demoPreset=audit.demo_preset,
+        deletionProtected=is_protected_audit(f"audit-{audit.id}"),
         demoVariant=(audit.runs[-1].analysis_summary or {}).get("demoVariant") if audit.runs else None,
         analysisSummary=(run.analysis_summary or {}) if run else (
             (audit.runs[-1].analysis_summary or {}) if audit.runs else {}

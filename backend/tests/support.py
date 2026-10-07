@@ -35,6 +35,8 @@ class IsolatedApiTestCase(unittest.TestCase):
                     "FIGMA_ACCESS_TOKEN": "test-token",
                     "FIGMA_MAX_FRAMES": "5",
                     "DARKAUDIT_OCR_PROVIDER": "none",
+                    # 개발자 셸의 보호 목록이 테스트에 새지 않게 비운다.
+                    "PROTECTED_AUDIT_IDS": "",
                 },
             )
         )

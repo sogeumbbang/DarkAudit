@@ -104,6 +104,8 @@ export type ProductType = "insurance" | "deposit" | "loan" | "investment" | "oth
 export type AuditDto = {
   demoPreset?: DemoPreset | null;
   demoVariant?: DemoVariant | null;
+  /** PROTECTED_AUDIT_IDS 에 든 대표 데모라 삭제할 수 없다. */
+  deletionProtected?: boolean;
   productType?: ProductType | null;
   createdAt?: string | null;
   id: string;
