@@ -194,7 +194,7 @@ function ChatbotPanel() {
           />
           <button
             aria-label="보내기"
-            className="rounded-control bg-brand-600 p-2.5 text-white hover:bg-brand-500 disabled:opacity-50"
+            className="flex items-center justify-center rounded-control bg-brand-600 p-2.5 text-white hover:bg-brand-500 disabled:opacity-50"
             disabled={!draft.trim() || pending}
             type="submit"
           >

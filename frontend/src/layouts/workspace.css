@@ -236,6 +236,10 @@
     display: none;
   }
 }
+/* The reserved scrollbar gutter takes the root background; match the review canvas below. */
+html:has(.workspace--overview) {
+  background-color: #f3f6f8;
+}
 /* Keep the review canvas theme local to the overview route. */
 .workspace--overview {
   --color-background: #f3f6f8;
