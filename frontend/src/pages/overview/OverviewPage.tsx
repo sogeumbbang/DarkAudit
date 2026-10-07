@@ -835,7 +835,7 @@ export function OverviewPage() {
       ) : (
         <ReviewSummary audit={audit} />
       )}
-      <AnalysisNotice summary={audit.analysisSummary} />
+      <AnalysisNotice summary={audit.analysisSummary} findingCount={audit.findings.length} />
       <section aria-label="진단 요약" className="map-toolbar">
         <div role="group" aria-label="점검 항목 필터" className="overview-filters">
           {findingFilters.map(({ value, label }) => (

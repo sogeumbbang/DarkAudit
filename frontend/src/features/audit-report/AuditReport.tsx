@@ -151,7 +151,7 @@ export function AuditReport({ audit, onClose }: { audit: AuditDto; onClose: () =
         </section>
         <section className="audit-report-scope">
           <h2>02. 분석 범위와 한계</h2>
-          <AnalysisNotice summary={summary} />
+          <AnalysisNotice summary={summary} findingCount={audit.findings.length} />
         </section>
         {!audit.findings.length && (
           <p>탐지된 항목이 없습니다. 분석 범위와 한계를 함께 확인하세요.</p>

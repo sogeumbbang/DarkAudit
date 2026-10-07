@@ -7,7 +7,13 @@ const statuses = {
   not_supported: "미지원",
 };
 
-export function AnalysisNotice({ summary }: { summary?: AnalysisSummary }) {
+export function AnalysisNotice({
+  summary,
+  findingCount,
+}: {
+  summary?: AnalysisSummary;
+  findingCount: number;
+}) {
   const incomplete = summary?.complete !== true;
   const assessments = summary?.ruleAssessments ?? [];
   const needsAttention = assessments.filter(
@@ -29,7 +35,8 @@ export function AnalysisNotice({ summary }: { summary?: AnalysisSummary }) {
         {incomplete ? "검사 범위와 추가 확인 사항" : "수집한 화면의 지원 규칙 검사 완료"}
       </h2>
       {incomplete && <p>분석 완료 여부를 확인하거나 추가 검토가 필요합니다.</p>}
-      <p>탐지 0건이 전체 화면과 규칙에 문제가 없다는 뜻은 아닙니다.</p>
+      {/* 탐지가 있으면 이 경고가 결과와 어긋나 보여서, 0건일 때만 보여준다. */}
+      {findingCount === 0 && <p>탐지 0건이 전체 화면과 규칙에 문제가 없다는 뜻은 아닙니다.</p>}
       {summary?.supportedRules && (
         <p>
           지원 규칙 {summary.supportedRules.length}개 · 분석 화면 {summary.analyzedScreenCount ?? 0}
