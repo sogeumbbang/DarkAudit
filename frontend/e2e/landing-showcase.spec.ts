@@ -43,11 +43,11 @@ test("feature tabs change the preview and support keyboard navigation", async ({
   await expect(first).toBeFocused();
 
   for (const [label, title] of [
-    ["화면 검토", /놓치기 쉬운 곳에,/],
+    ["화면 검토", /놓치기 쉬운 곳을/],
     ["탐지 결과", /무엇을 발견했는지,/],
-    ["검토 기준", /수정의 이유에도,/],
-    ["개선 권고", /발견한 문제를,/],
-    ["기록 · 보고서", /화면의 발견을,/],
+    ["검토 기준", /수정이 필요한 이유를/],
+    ["개선 권고", /발견한 문제,/],
+    ["기록 · 보고서", /검토한 내용을/],
   ] as const) {
     await tabs.getByRole("tab", { name: label, exact: true }).click();
     const panel = page.getByRole("tabpanel", { name: label, exact: true });

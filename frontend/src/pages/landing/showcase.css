@@ -71,7 +71,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  padding-block: clamp(56px, 7vw, 96px);
+  padding-block: clamp(48px, 6vw, 80px);
 }
 .lp-intro-copy {
   position: relative;
@@ -167,8 +167,8 @@
 .lp-product-panel {
   display: grid;
   grid-template-columns: minmax(0, 49fr) minmax(0, 51fr);
-  min-height: 648px;
-  padding: 32px;
+  min-height: 0;
+  padding: 24px;
   gap: 24px;
   background: var(--section-gradient);
   border-radius: 20px;
@@ -459,7 +459,7 @@
   }
   .lp-intro {
     width: calc(100% - 32px);
-    padding: 52px 0;
+    padding: 44px 0;
   }
   .landing-page .lp-intro h1 {
     font-size: clamp(36px, 9.9vw, 59px);

@@ -31,9 +31,6 @@ describe("LandingPage", () => {
       "href",
       "/app/guidelines",
     );
-    expect(screen.getByRole("link", { name: /화면 등록하고 시작하기/ })).toHaveAttribute(
-      "href",
-      "/app/audits/new",
-    );
+    expect(screen.queryByRole("link", { name: /화면 등록하고 시작하기/ })).not.toBeInTheDocument();
   });
 });

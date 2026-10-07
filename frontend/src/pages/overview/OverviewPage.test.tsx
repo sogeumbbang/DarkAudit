@@ -69,6 +69,7 @@ describe("OverviewPage", () => {
       "true",
     );
     expect(marker).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("textbox", { name: "수정 결정 기록" })).toBeVisible();
     expect(screen.getByLabelText("미리보기 배율")).toHaveTextContent("100%");
     await userEvent.click(screen.getByRole("button", { name: "확대" }));
     await userEvent.click(screen.getByRole("button", { name: "2번 순차적 가격 공개 관련 영역" }));

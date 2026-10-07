@@ -24,11 +24,19 @@ test("dashboard manages multiple audits and links to their details", async ({
     await expect(page.getByRole("cell", { name: "2024. 5. 13.", exact: true })).toBeVisible();
   }
   await expect(page.locator("dl dd:first-of-type")).toHaveText(["2건", "0건", "1건", "3건"]);
+  await expect(page.getByText("전체 진단", { exact: true })).toBeInViewport();
+  await expect(page.getByRole("link", { name: "이어서 검토하기", exact: true })).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("dashboard.png"), fullPage: true });
+  await expect(page.getByRole("link", { name: "검사 과정 보기" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /상세 보기/ })).toHaveCount(0);
   await page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true }).click();
   await expect(page.getByRole("heading", { name: "진단 결과 상세", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "진단 관리", exact: true }).click();
   await expect(page.getByRole("heading", { name: "진단 기록", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "검사 과정 보기" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /상세 보기/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "진단 결과 상세", exact: true })).toBeVisible();
   if (isMobile) await page.getByRole("button", { name: "메뉴 열기" }).click();
   const nav = page.getByRole("navigation", { name: "주요 메뉴" }).filter({ visible: true });
   await expect(nav.getByRole("link")).toHaveText(["대시보드", "새 진단", "진단 기록", "검토 기준"]);

@@ -8,11 +8,12 @@ const steps = [
   },
   {
     title: "AI 진단",
-    description: "지원 유형에 해당하는 문구와 UI 패턴을 찾아 화면 속 근거와 함께 제시합니다.",
+    description:
+      "지원하는 다크패턴 유형에 해당하는 문구와 UI 패턴을 찾아 화면 속 근거와 함께 보여줍니다.",
   },
   {
     title: "담당자 검토",
-    description: "탐지 근거와 개선 권고를 확인하고, 수정 결정과 해결 상태를 기록합니다.",
+    description: "탐지 근거와 개선 권고를 확인하고 수정 여부와 해결 상태를 기록합니다.",
   },
   {
     title: "결과 관리",
@@ -56,7 +57,7 @@ function StepPreview({ stage }: { stage: number }) {
           <strong>담당자 검토</strong>
           <span>의견 예시</span>
         </div>
-        <p>기본 선택을 해제해주세요.</p>
+        <p>기본 선택을 해제해 주세요.</p>
         <span className="lp-step-review-status">
           <i />
           검토 중
@@ -98,15 +99,15 @@ export function WorkflowSection() {
             검토 결과 관리까지
           </h2>
           <p>
-            AI가 근거를 찾고, 담당자가 판단합니다.
+            AI가 근거를 찾고 담당자가 판단합니다.
             <br />
-            하나의 흐름으로 이어지는 검토.
+            화면 입력부터 결과 관리까지 이어집니다.
           </p>
         </div>
         <figure className="lp-process-photo">
           <LandingPhoto kind="workspace" sizes="(max-width: 959px) 90vw, 46vw" />
           <figcaption>
-            더 명확한 화면은,
+            더 명확한 화면은
             <br />
             세심한 검토에서 시작됩니다.
           </figcaption>

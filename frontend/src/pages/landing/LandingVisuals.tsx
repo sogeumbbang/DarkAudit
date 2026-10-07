@@ -18,13 +18,13 @@ const exampleFinding: FindingDto = {
   ruleId: "DA-04",
   riskType: "PRESELECTED_OPTION",
   title: "유료 옵션 사전 선택",
-  description: "선택적 유료 특약이 미리 선택되어 있습니다.",
+  description: "선택 사항인 유료 특약이 미리 선택되어 있습니다.",
   screenIds: [exampleScreen.id],
   element: "피부질환 케어 특약 체크박스",
   severity: "REVIEW",
   status: "open",
   confidence: 0,
-  recommendation: "선택 특약을 미선택 상태로 제공하세요.",
+  recommendation: "선택 특약의 기본 체크를 해제하세요.",
   guideline: "특정옵션의 사전선택",
   bbox: {
     screenId: exampleScreen.id,
@@ -143,13 +143,13 @@ export function FindingCard({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`lp-finding-card${compact ? " is-compact" : ""}`}>
       <div className="lp-card-meta">
-        <span className="lp-tiny">FINDING 01</span>
+        <span className="lp-tiny">탐지 결과 01</span>
         <Status />
       </div>
       <p className="lp-card-title">
-        선택하기 전에,
+        고르기도 전에
         <br />
-        선택되어 있습니다.
+        이미 선택돼 있습니다.
       </p>
       <p className="lp-card-description">
         유료 특약이 기본으로 선택되어
@@ -167,7 +167,7 @@ export function RuleCard() {
   return (
     <div className="lp-rule-card">
       <div className="lp-card-meta">
-        <span className="lp-tiny">RULE REFERENCE</span>
+        <span className="lp-tiny">검토 기준</span>
         <ArrowDownRight size={19} aria-hidden="true" />
       </div>
       <div className="lp-rule-heading">
@@ -175,7 +175,7 @@ export function RuleCard() {
         <span>오도형 ④</span>
       </div>
       <p>특정옵션의 사전선택</p>
-      <span className="lp-card-description">발견한 화면을 검토 기준과 연결합니다.</span>
+      <span className="lp-card-description">화면에서 발견한 문제에 해당하는 검토 기준입니다.</span>
     </div>
   );
 }
@@ -183,7 +183,7 @@ export function RuleCard() {
 export function EvidenceCard() {
   return (
     <div className="lp-evidence-card">
-      <span className="lp-tiny">EVIDENCE / 화면 속 근거</span>
+      <span className="lp-tiny">화면 속 근거</span>
       <div className="lp-evidence-quote">
         <span aria-hidden="true">“</span>
         <p>
@@ -204,11 +204,11 @@ export function FixCard() {
   return (
     <div className="lp-fix-card">
       <div className="lp-card-meta">
-        <span className="lp-tiny">FIX / 개선 권고</span>
+        <span className="lp-tiny">개선 권고</span>
         <ArrowRight size={19} aria-hidden="true" />
       </div>
-      <p className="lp-card-title">선택은 사용자가 직접 하도록.</p>
-      <p className="lp-card-description">초기 체크를 해제하고, 추가 비용을 명확하게 표시하세요.</p>
+      <p className="lp-card-title">사용자가 직접 선택하도록 바꾸세요.</p>
+      <p className="lp-card-description">기본 체크를 해제하고 추가 비용을 명확하게 표시하세요.</p>
       <OptionRow selected={false} compact />
     </div>
   );
@@ -235,10 +235,10 @@ export function ReviewNote() {
         <MessageSquare size={17} aria-hidden="true" />
       </span>
       <div>
-        <span className="lp-tiny">REVIEW NOTE · 검토 의견 예시</span>
+        <span className="lp-tiny">검토 의견 예시</span>
         <p>
           보장 내용과 비용을 확인한 뒤<br />
-          직접 선택하도록 변경이 필요합니다.
+          직접 선택할 수 있도록 바꿔야 합니다.
         </p>
       </div>
     </div>
@@ -252,14 +252,14 @@ export function ReportPreview({ mini = false }: { mini?: boolean }) {
         <span>
           <img alt="DarkAudit" className="lp-brand-logo" src={brandLogo({ dark: true })} />
         </span>
-        <span>REVIEW REPORT</span>
+        <span>검토 보고서</span>
       </div>
       <div className="lp-report-body">
         <span className="lp-tiny">금융 UX 진단 · 보고서 예시</span>
         <p className="lp-report-title">
-          화면의 발견을,
+          검토한 내용을
           <br />
-          검토의 기록으로.
+          기록으로 남깁니다.
         </p>
         <div className="lp-report-subject">
           <FileText size={18} aria-hidden="true" />
@@ -277,8 +277,8 @@ export function ReportPreview({ mini = false }: { mini?: boolean }) {
           <strong>DA-04</strong>
         </div>
         <div className="lp-report-excerpt">
-          <span className="lp-tiny">OBSERVATION</span>
-          <p>선택적 유료 특약이 미리 선택되어 있습니다.</p>
+          <span className="lp-tiny">관찰 내용</span>
+          <p>선택 사항인 유료 특약이 미리 선택되어 있습니다.</p>
           <div className="lp-document-lines" aria-hidden="true">
             <i />
             <i />
@@ -318,7 +318,7 @@ export function FindingWorkspace() {
         <div className="lp-workspace-body">
           <div className="lp-workspace-canvas">
             <div className="lp-card-meta">
-              <span className="lp-tiny">WHERE / 02 · 옵션 선택</span>
+              <span className="lp-tiny">발견 위치 / 02 · 옵션 선택</span>
               <ScanLine size={18} aria-hidden="true" />
             </div>
             <AnnotatedScreen />
@@ -329,34 +329,34 @@ export function FindingWorkspace() {
           </div>
           <div className="lp-workspace-detail">
             <div className="lp-card-meta">
-              <span className="lp-tiny">FINDING 01</span>
+              <span className="lp-tiny">탐지 결과 01</span>
               <Status />
             </div>
-            <span className="lp-tiny lp-what">WHAT / 발견한 문제</span>
+            <span className="lp-tiny lp-what">발견한 문제</span>
             <h3>
               유료 옵션
               <br />
               사전선택
             </h3>
             <div className="lp-observation">
-              <span className="lp-tiny">OBSERVATION</span>
+              <span className="lp-tiny">관찰 내용</span>
               <p>월 3,200원이 추가되는 피부질환 케어 특약이 기본 선택되어 있습니다.</p>
             </div>
             <div className="lp-workspace-rule">
-              <span className="lp-tiny">RULE</span>
+              <span className="lp-tiny">검토 기준</span>
               <span className="lp-rule-code">DA-04</span>
               <span>특정옵션의 사전선택</span>
             </div>
             <div className="lp-why">
-              <span className="lp-tiny">WHY / 검토가 필요한 이유</span>
-              <p>사용자가 인지하지 못한 상태에서 추가 비용이 선택될 수 있습니다.</p>
+              <span className="lp-tiny">검토가 필요한 이유</span>
+              <p>사용자가 모르는 사이에 추가 비용이 드는 옵션이 선택될 수 있습니다.</p>
             </div>
             <div className="lp-workspace-fix">
-              <span className="lp-tiny">FIX / 개선 방향</span>
+              <span className="lp-tiny">개선 방향</span>
               <p>
-                기본 선택을 해제하고,
+                기본 선택을 해제해
                 <br />
-                <strong>사용자가 직접 선택하도록.</strong>
+                <strong>사용자가 직접 선택하도록 바꾸세요.</strong>
               </p>
               <ArrowDownRight size={22} aria-hidden="true" />
             </div>
@@ -377,7 +377,7 @@ export function ChoiceStory() {
         </div>
         <div className="lp-story-copy">
           <p className="lp-eyebrow">
-            <span /> BEHIND EVERY SCREEN
+            <span /> 화면 너머의 사용자
           </p>
           <h2 id="lp-choice-title">
             검토하는 건 화면,
@@ -387,9 +387,9 @@ export function ChoiceStory() {
           <p>
             한 번의 체크, 한 줄의 안내가
             <br />
-            누군가의 금융 생활을 바꿀 수 있으니까.
+            누군가의 금융 생활을 바꿀 수 있습니다.
             <br />
-            선택의 순간을 더 명확하게 만듭니다.
+            사용자가 분명히 알고 선택하도록 돕습니다.
           </p>
         </div>
       </div>

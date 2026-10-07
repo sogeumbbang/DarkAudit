@@ -101,10 +101,10 @@ export function LandingPage() {
                 <span>다 살펴본 건가요?</span>
               </h1>
               <p className="lp-intro-description">
-                놓치기 쉬운 다크패턴 위험부터 <br />
-                수정이 필요한 이유까지.
+                놓치기 쉬운 다크패턴 위험과 <br />
+                수정이 필요한 이유를 확인하세요.
                 <br />
-                금융상품 가입 화면을 근거와 함께 검토하세요.
+                금융상품 가입 화면을 근거와 함께 검토합니다.
               </p>
               <Button asChild className="lp-primary-action">
                 <Link to="/app/audits/new">
@@ -132,19 +132,20 @@ export function LandingPage() {
                   <span className="lp-chapter-number">03</span> 탐지 근거
                 </p>
                 <h2 id="finding-title">
-                  문제의 위치에서,
+                  문제의 위치부터
                   <br />
-                  수정의 이유까지.
+                  수정이 필요한 이유까지.
                 </h2>
               </div>
               <p>
-                어디에서 무엇을 발견했는지, 왜 확인해야 하고 어떻게 바꿀 수 있는지. 화면과 근거를
-                나란히 읽어보세요.
+                어디에서 무엇을 발견했는지 화면과 근거를 함께 확인하세요.
+                <br />
+                검토가 필요한 이유와 수정 방법도 살펴볼 수 있습니다.
               </p>
             </div>
             <FindingWorkspace />
             <p className="lp-workspace-disclaimer">
-              AI가 제시한 위험 후보와 개선 권고는 담당자의 검토가 필요합니다.
+              AI가 제시한 위험 후보와 개선 권고는 담당자가 검토해야 합니다.
             </p>
           </div>
         </section>
@@ -157,26 +158,25 @@ export function LandingPage() {
                   <span className="lp-chapter-number">04</span> 개선 방향
                 </p>
                 <h2 id="comparison-title">
-                  작은 수정으로,
+                  작은 수정으로
                   <br />
-                  분명해지는 선택.
+                  선택이 분명해집니다.
                 </h2>
               </div>
-              <p>기본 선택을 해제해 사용자가 직접 결정하도록.</p>
             </div>
             <div className="lp-comparison">
               <div className="lp-comparison-before">
                 <div className="lp-card-meta">
-                  <span className="lp-tiny">BEFORE / 발견한 화면</span>
+                  <span className="lp-tiny">수정 전 / 발견한 화면</span>
                   <Status>사전선택</Status>
                 </div>
                 <MiniScreen />
                 <div className="lp-comparison-caption">
                   <span className="lp-annotation-dot" />
                   <p>
-                    선택하기 전에,
+                    사용자가 고르기도 전에
                     <br />
-                    <strong>추가 비용이 이미 선택된 상태.</strong>
+                    <strong>추가 비용이 드는 옵션이 선택돼 있습니다.</strong>
                   </p>
                 </div>
               </div>
@@ -185,22 +185,22 @@ export function LandingPage() {
               </div>
               <div className="lp-comparison-after">
                 <div className="lp-card-meta">
-                  <span className="lp-tiny">AFTER / 개선 방향 예시</span>
+                  <span className="lp-tiny">수정 후 / 개선 방향 예시</span>
                   <Status safe>직접 선택</Status>
                 </div>
                 <MiniScreen corrected />
                 <div className="lp-comparison-caption">
                   <Check size={20} aria-hidden="true" />
                   <p>
-                    보장 내용과 비용을 확인하고,
+                    보장 내용과 비용을 확인한 뒤
                     <br />
-                    <strong>필요한 옵션만 직접 선택.</strong>
+                    <strong>필요한 옵션만 직접 선택합니다.</strong>
                   </p>
                 </div>
               </div>
             </div>
             <p className="lp-example-note">
-              개선 권고를 시각화한 예시입니다. 실제 화면 수정은 담당자가 진행합니다.
+              개선 권고를 화면에 적용한 예시입니다. 실제 화면은 담당자가 수정합니다.
             </p>
           </div>
         </section>
@@ -218,12 +218,12 @@ export function LandingPage() {
                 <span className="lp-chapter-number">05</span> 검토 기록
               </p>
               <h2 id="report-title">
-                발견에서
+                발견한 문제와
                 <br />
-                끝나지 않도록.
+                검토 결과를 기록하세요.
               </h2>
               <p>
-                진단 결과에 근거와 개선 권고를 담고,
+                진단 결과에 근거와 개선 권고를 담고
                 <br />
                 담당자의 판단을 기록으로 남깁니다.
               </p>
@@ -231,19 +231,21 @@ export function LandingPage() {
                 <div>
                   <span>01</span>
                   <p>
-                    <strong>어디를 확인할지</strong>화면 위치와 탐지 근거를 함께.
+                    <strong>어디를 확인할지</strong>문제가 있는 화면 위치와 탐지 근거를 확인합니다.
                   </p>
                 </div>
                 <div>
                   <span>02</span>
                   <p>
-                    <strong>어떻게 개선할지</strong>기준에 연결된 구체적인 개선 권고.
+                    <strong>어떻게 개선할지</strong>검토 기준에 따른 구체적인 개선 권고를
+                    살펴봅니다.
                   </p>
                 </div>
                 <div>
                   <span>03</span>
                   <p>
-                    <strong>무엇이 처리됐는지</strong>검토 의견, 해결 상태, PDF 보고서까지.
+                    <strong>무엇을 처리했는지</strong>검토 의견과 해결 상태를 남기고 PDF 보고서로
+                    공유합니다.
                   </p>
                 </div>
               </div>
@@ -257,26 +259,21 @@ export function LandingPage() {
         <section className="lp-closing" aria-labelledby="lp-closing-title">
           <div className="lp-container lp-closing-inner">
             <h2 id="lp-closing-title">
-              이제, 내 화면을
+              이제 내 화면을
               <br />
-              살펴볼 차례
+              살펴보세요.
             </h2>
             <div className="lp-closing-copy">
               <p>
-                사용자에게 닿기 전,
-                <br />한 번 더 깊이 살펴보세요.
+                사용자가 만나기 전에
+                <br />한 번 더 꼼꼼히 살펴보세요.
               </p>
-              <Button asChild className="lp-closing-button">
-                <Link to="/app/audits/new">
-                  화면 등록하고 시작하기 <ArrowRight size={18} aria-hidden="true" />
-                </Link>
-              </Button>
             </div>
           </div>
           <footer className="lp-footer lp-container">
             <Brand dark />
             <p>금융 화면을 더 명확하게. 선택을 더 공정하게.</p>
-            <span>Financial UX · Consumer Protection</span>
+            <span>금융 UX · 소비자 보호</span>
           </footer>
         </section>
       </main>

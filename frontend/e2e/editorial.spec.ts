@@ -14,7 +14,7 @@ test("editorial layouts fit the viewport across the product", async ({ page }, t
     await page.goto(route);
     await expect(page.getByRole("heading", { name: heading, exact: true }).first()).toBeVisible();
     if (name === "dashboard")
-      await expect(page.getByRole("link", { name: "이어서 검토하기", exact: true })).toBeVisible();
+      await expect(page.getByText("전체 진단", { exact: true })).toBeVisible();
     if (name === "records")
       await expect(
         page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true }),
@@ -35,12 +35,14 @@ test("editorial layouts fit the viewport across the product", async ({ page }, t
   }
 });
 
-test("continue reviewing opens the indicated finding and separates its evidence", async ({
-  page,
-}) => {
+test("audit records open the review and show its evidence", async ({ page }) => {
   await page.goto("/app/dashboard");
-  await page.getByRole("link", { name: "이어서 검토하기", exact: true }).click();
-  await expect(page).toHaveURL(/finding=/);
+  await page.getByRole("link", { name: "보험 가입 흐름 v1", exact: true }).click();
+  await expect(page).toHaveURL(/audit=/);
+  await page
+    .getByRole("navigation", { name: "점검 항목" })
+    .getByRole("button", { name: /유료 옵션 사전 선택/ })
+    .click();
   const finding = page.locator("#finding-detail-panel");
   for (const label of [
     "WHERE · 대상 요소",
@@ -70,9 +72,7 @@ test("review and creation remain usable on tablet and narrow screens", async ({ 
       await page.goto(route);
       await expect(page.getByRole("heading", { name: heading, exact: true }).first()).toBeVisible();
       if (route === "/app/dashboard")
-        await expect(
-          page.getByRole("link", { name: "이어서 검토하기", exact: true }),
-        ).toBeVisible();
+        await expect(page.getByText("전체 진단", { exact: true })).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,

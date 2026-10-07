@@ -107,21 +107,6 @@ function AuditRow({ audit }: { audit: AuditDto }) {
         </p>
       </div>
       <div className="audit-record-actions flex flex-wrap items-center gap-3">
-        {audit.latestJobId && (
-          <Link
-            className="px-3 py-2 text-sm font-semibold text-brand-700 hover:underline"
-            to={`/app/audits/new?job=${encodeURIComponent(audit.latestJobId)}`}
-          >
-            검사 과정 보기
-          </Link>
-        )}
-        <Link
-          className="inline-flex items-center gap-2 rounded-control px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-          to={`/app/overview?audit=${encodeURIComponent(audit.id)}`}
-          aria-label={`${audit.name} 상세 결과`}
-        >
-          상세 결과 <ArrowRight size={15} />
-        </Link>
         {confirming ? (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-danger">화면과 탐지 결과가 함께 삭제됩니다.</span>

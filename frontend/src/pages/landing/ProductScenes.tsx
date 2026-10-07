@@ -7,7 +7,7 @@ export function ScreenExhibit() {
     <div className="lp-screen-exhibit">
       <div className="lp-exhibit-heading">
         <ScanLine size={16} aria-hidden="true" />
-        <span>SCREEN REVIEW</span>
+        <span>화면 검토</span>
         <span>검토 예시</span>
       </div>
       <div className="lp-exhibit-rail" aria-hidden="true">
@@ -22,7 +22,7 @@ export function ScreenExhibit() {
       <div className="lp-exhibit-caption">
         <span className="lp-annotation-dot" />
         <div>
-          <span>WHERE / 발견 위치</span>
+          <span>발견 위치</span>
           <strong>02. 옵션 선택 화면</strong>
         </div>
         <span className="lp-rule-code">DA-04</span>
@@ -47,7 +47,7 @@ export function FindingExhibit() {
       <div className="lp-evidence-connector">
         <span />
         <ArrowDown size={17} aria-hidden="true" />
-        <span>근거에서 발견 항목으로</span>
+        <span>이 근거로 발견한 항목</span>
       </div>
       <FindingCard />
     </div>
@@ -58,18 +58,18 @@ export function ChoiceExhibit() {
   return (
     <div className="lp-decision-scene">
       <LandingPhoto kind="choice" sizes="(max-width: 639px) 90vw, 600px" />
-      <span className="lp-decision-eyebrow">A CLEARER CHOICE</span>
+      <span className="lp-decision-eyebrow">사용자가 직접 선택하도록</span>
       <div className="lp-decision-card">
         <div className="lp-card-meta">
-          <span className="lp-tiny">FIX / 개선 방향 예시</span>
+          <span className="lp-tiny">개선 방향 예시</span>
           <span className="lp-decision-check">
             <Check size={16} aria-hidden="true" />
           </span>
         </div>
         <p>
-          필요한 보장만,
+          필요한 보장만
           <br />
-          내가 직접 선택하도록.
+          직접 선택하세요.
         </p>
         <OptionRow selected={false} compact />
         <div className="lp-decision-footer">

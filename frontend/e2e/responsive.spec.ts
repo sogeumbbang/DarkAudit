@@ -5,7 +5,7 @@ test("adapts content to phone, tablet and desktop widths", async ({ page }, test
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const [name, route, ready] of [
-      ["dashboard", "/app/dashboard", "이어서 검토하기"],
+      ["dashboard", "/app/dashboard", "전체 진단"],
       ["review", "/app/overview?finding=finding-preselected-option", "보험 가입 흐름 v1"],
       ["create", "/app/audits/new", "AI UX 진단 시작"],
       ["records", "/app/audits", "보험 가입 흐름 v1"],

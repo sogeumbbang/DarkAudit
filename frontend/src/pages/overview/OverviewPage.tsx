@@ -299,12 +299,7 @@ function FindingDetails({
             검토 기준 전체 보기
           </Link>
         </details>
-        <details className="mt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-muted">
-            수정 결정 기록
-          </summary>
-          <FindingDecisionNote finding={finding} />
-        </details>
+        <FindingDecisionNote finding={finding} />
         <button
           aria-label="탐지 메타데이터"
           aria-expanded={showMetadata}

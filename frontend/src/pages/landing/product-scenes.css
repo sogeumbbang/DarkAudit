@@ -219,9 +219,11 @@
 /* Editorial chapter: people first, with a UI detail that explains the purpose. */
 .lp-story-scene {
   position: relative;
+  display: grid;
+  align-items: center;
   border-radius: 20px;
   overflow: hidden;
-  min-height: 600px;
+  min-height: 480px;
   background: var(--lp-light-blue);
   color: var(--lp-ink);
   isolation: isolate;
@@ -249,7 +251,7 @@
 }
 .lp-story-copy {
   position: relative;
-  padding: 60px 0 58px 56px;
+  padding: 48px 0 48px 56px;
   width: 52%;
 }
 .lp-story-copy .lp-eyebrow {
@@ -424,10 +426,10 @@
     font-size: 23px;
   }
   .lp-story-scene {
-    min-height: 600px;
+    min-height: 440px;
   }
   .lp-story-copy {
-    padding: 55px 0 60px 32px;
+    padding: 40px 0 40px 32px;
     width: 63%;
   }
   .lp-story-copy > p:not(.lp-eyebrow) {
@@ -547,13 +549,14 @@
   .lp-story-scene {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     min-height: 0;
     border-radius: 26px;
-    padding-bottom: 25px;
+    padding-bottom: 0;
   }
   .lp-story-copy {
     width: 100%;
-    padding: 38px 26px 30px;
+    padding: 32px 26px 24px;
     order: -1;
   }
   .lp-story-copy .lp-eyebrow {
@@ -572,7 +575,7 @@
   .lp-story-photo {
     position: relative;
     inset: auto;
-    height: 300px;
+    height: 280px;
     z-index: auto;
   }
   .lp-story-photo .lp-photo {
