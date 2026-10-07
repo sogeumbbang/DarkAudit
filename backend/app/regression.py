@@ -92,7 +92,7 @@ def _findings(session: Session, run_id: int) -> dict[str, Finding]:
 
 
 def _previously_resolved(session: Session, audit_id: int, before_version: int) -> set[str]:
-    """이전 회차들에서 한 번이라도 RESOLVED 로 기록된 fingerprint."""
+    """이전 회차들에서 비교 판정이나 담당자 표시로 한 번이라도 해결된 fingerprint."""
     runs = session.scalars(
         select(AuditRun).where(
             AuditRun.audit_id == audit_id, AuditRun.version < before_version
@@ -101,7 +101,7 @@ def _previously_resolved(session: Session, audit_id: int, before_version: int) -
     out: set[str] = set()
     for r in runs:
         for f in r.findings:
-            if f.status == FindingStatus.RESOLVED:
+            if FindingStatus.RESOLVED in (f.comparison_status, f.status):
                 out.add(f.fingerprint)
     return out
 
@@ -302,19 +302,20 @@ def compare(
         if fp in ever_resolved:
             report.regressed.append(ch)
             if update_statuses and can_verify(cf.rule_id):
-                cf.status = FindingStatus.REGRESSED
+                cf.comparison_status = FindingStatus.REGRESSED
         else:
             report.new.append(ch)
 
-    # 이전 회차 Finding 의 상태를 갱신한다.
+    # 이전 회차 Finding 의 비교 판정을 남긴다.
     # 다음 비교에서 재발 여부를 판단하려면 이 기록이 남아 있어야 한다.
+    # 담당자가 표시한 status 는 그 회차의 기록이라 건드리지 않는다.
     if update_statuses:
         resolved_fps = {c.fingerprint for c in report.resolved}
         for fp, pf in prev.items():
             if fp in resolved_fps:
-                pf.status = FindingStatus.RESOLVED
-            elif can_verify(pf.rule_id) and pf.status != FindingStatus.REVIEWING:
-                pf.status = FindingStatus.OPEN
+                pf.comparison_status = FindingStatus.RESOLVED
+            elif can_verify(pf.rule_id):
+                pf.comparison_status = FindingStatus.OPEN
 
         session.flush()
     return report

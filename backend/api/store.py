@@ -84,6 +84,15 @@ def init_db() -> None:
         if column not in existing:
             with _engine.begin() as connection:
                 connection.execute(text(f"ALTER TABLE finding ADD COLUMN {column} {sql_type}"))
+    if "comparison_status" not in existing:
+        # 예전에는 회차 비교 판정을 status 에 덮어썼다. 다음 회차가 있는 항목의 status 는
+        # 그 판정이므로 옮겨 두어야 재발 판정과 전후 비교가 그대로 유지된다.
+        with _engine.begin() as connection:
+            connection.execute(text("ALTER TABLE finding ADD COLUMN comparison_status VARCHAR(16)"))
+            connection.execute(text("""UPDATE finding SET comparison_status = CAST(status AS VARCHAR(16))
+                WHERE run_id IN (SELECT r.id FROM audit_run r WHERE EXISTS (
+                    SELECT 1 FROM audit_run n WHERE n.audit_id = r.audit_id
+                    AND n.version > r.version AND n.status = 'DONE'))"""))
 
     # Records created before image signing also belong to the public workspace.
     # Preserve existing secrets so already-issued image URLs keep working.
