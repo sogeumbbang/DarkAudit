@@ -232,7 +232,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .is-animated .exploration-scan::after {
-    animation: exploration-scan 3.5s ease-in-out infinite alternate;
+    animation: exploration-scan 1.2s linear -0.45s infinite alternate;
   }
   .is-animated .exploration-pointer.is-click::after {
     content: "";
