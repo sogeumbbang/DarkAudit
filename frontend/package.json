@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
     "test:a11y": "playwright test e2e/accessibility.spec.ts",
-    "lighthouse": "lighthouse http://127.0.0.1:4173 --chrome-path=\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=./reports/lighthouse.json --quiet",
+    "lighthouse": "lighthouse http://127.0.0.1:4173 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=./reports/lighthouse.json --quiet",
     "api:types": "openapi-typescript http://localhost:8000/openapi.json -o src/api/generated/schema.d.ts"
   },
   "dependencies": {

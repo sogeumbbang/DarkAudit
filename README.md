@@ -200,3 +200,4 @@ flowchart TB
 
 - 금융위원회·금융감독원, [「온라인 금융상품 판매 관련 다크패턴 가이드라인」 마련](https://www.fsc.go.kr/po010106/85942) (2025.12.26)
 - 문서: [사용 안내](docs/user-guide.md) · [평가](docs/evaluation.md) · [기능 명세](docs/feature-spec.md) · [개발 안내](docs/DEVELOPMENT.md)
+- 라이선스: [MIT](LICENSE)
